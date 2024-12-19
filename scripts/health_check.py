@@ -1,13 +1,10 @@
+
 #!/usr/bin/env python3
 import requests
 import sys
 import time
 import logging
 from pathlib import Path
-
-# Configure logging
-log_dir = Path('logs')
-log_dir.mkdir(exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,47 +17,38 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-def check_system_health(url: str, timeout: int = 30) -> bool:
-    """
-    Check system health and exit with appropriate status code
-    
-    Args:
-        url: Health check endpoint URL
-        timeout: Timeout in seconds
-    
-    Returns:
-        bool: True if system is healthy, False otherwise
-    """
-    try:
-        response = requests.get(url, timeout=timeout)
-        health_data = response.json()
-        
-        if health_data['status'] == 'unhealthy':
-            logger.error("System is unhealthy!")
-            for check in health_data['checks']:
-                if check['status'] == 'fail':
-                    logger.error(f"{check['name']}: {check['message']}")
+def check_health(url: str, max_retries: int = 3, retry_delay: int = 5) -> bool:
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, timeout=10)
+            health_data = response.json()
+            
+            if health_data['status'] == 'healthy':
+                logger.info("System is healthy")
+                return True
+            
+            if health_data['status'] == 'degraded':
+                logger.warning("System is degraded - attempting recovery")
+                time.sleep(retry_delay)
+                continue
+                
+            logger.error(f"System is unhealthy: {health_data}")
             return False
             
-        elif health_data['status'] == 'degraded':
-            logger.warning("System is degraded:")
-            for check in health_data['checks']:
-                if "Warning" in check['message']:
-                    logger.warning(f"{check['name']}: {check['message']}")
-            return True
-            
-        else:
-            logger.info("System is healthy")
-            return True
-            
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return False
+        except Exception as e:
+            logger.error(f"Health check failed (attempt {attempt + 1}/{max_retries}): {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+            else:
+                return False
+    
+    return False
 
 if __name__ == "__main__":
-    url = "http://localhost:8082/health"
+    urls = [
+        "http://0.0.0.0:8080/health",
+        "http://0.0.0.0:8080/api/health"
+    ]
     
-    if check_system_health(url):
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    healthy = all(check_health(url) for url in urls)
+    sys.exit(0 if healthy else 1)
