@@ -171,3 +171,69 @@ export const useUpdateProgress = () => {
     },
   });
 };
+
+// Learning path types
+export interface LearningPath {
+  id: number;
+  userId: number;
+  name: string;
+  description: string;
+  difficulty: string;
+  estimatedCompletionTime: number;
+  courses: {
+    course: Course;
+    order: number;
+    isRequired: boolean;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserPreferences {
+  learningStyle: string;
+  preferredStudyTime: number;
+  preferredTopics: string[];
+}
+
+// Learning path hooks
+export const useGenerateLearningPath = () => {
+  return useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await fetch(`/api/users/${userId}/learning-paths`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      return res.json();
+    },
+  });
+};
+
+export const useLearningPaths = (userId: number) => {
+  return useQuery<LearningPath[]>({
+    queryKey: [`/api/users/${userId}/learning-paths`],
+  });
+};
+
+export const useUpdatePreferences = () => {
+  return useMutation({
+    mutationFn: async ({ userId, preferences }: { userId: number; preferences: UserPreferences }) => {
+      const res = await fetch(`/api/users/${userId}/preferences`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferences),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      return res.json();
+    },
+  });
+};

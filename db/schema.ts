@@ -15,6 +15,9 @@ export const users = pgTable("users", {
   level: integer("level").default(1).notNull(),
   streakCount: integer("streak_count").default(0).notNull(),
   lastActive: timestamp("last_active").defaultNow().notNull(),
+  learningStyle: text("learning_style").default("visual").notNull(),
+  preferredStudyTime: integer("preferred_study_time").default(60).notNull(), // minutes per day
+  preferredTopics: text("preferred_topics").default("[]").notNull(),
 });
 
 export const courses = pgTable("courses", {
@@ -23,6 +26,10 @@ export const courses = pgTable("courses", {
   description: text("description").notNull(),
   instructorId: integer("instructor_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  difficulty: text("difficulty").default("intermediate").notNull(),
+  prerequisites: text("prerequisites").default("[]").notNull(),
+  topics: text("topics").default("[]").notNull(),
+  estimatedHours: integer("estimated_hours").default(10).notNull(),
 });
 
 export const modules = pgTable("modules", {
@@ -53,10 +60,63 @@ export const badges = pgTable("badges", {
   requiredPoints: integer("required_points").notNull(),
   category: text("category").notNull(),
   tier: text("tier").default("bronze").notNull(), // bronze, silver, gold, platinum
-  unlockCondition: text("unlock_condition").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Learning paths and recommendations
+export const learningPaths = pgTable("learning_paths", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  difficulty: text("difficulty").default("intermediate").notNull(),
+  estimatedCompletionTime: integer("estimated_completion_time").notNull(), // in minutes
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const learningPathCourses = pgTable("learning_path_courses", {
+  id: serial("id").primaryKey(),
+  learningPathId: integer("learning_path_id").references(() => learningPaths.id).notNull(),
+  courseId: integer("course_id").references(() => courses.id).notNull(),
+  order: integer("order").notNull(),
+  isRequired: boolean("is_required").default(true).notNull(),
+});
+
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  key: text("key").notNull(),
+  value: text("value").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Add relations
+export const learningPathRelations = relations(learningPaths, ({ one, many }) => ({
+  user: one(users, {
+    fields: [learningPaths.userId],
+    references: [users.id],
+  }),
+  courses: many(learningPathCourses),
+}));
+
+export const learningPathCourseRelations = relations(learningPathCourses, ({ one }) => ({
+  learningPath: one(learningPaths, {
+    fields: [learningPathCourses.learningPathId],
+    references: [learningPaths.id],
+  }),
+  course: one(courses, {
+    fields: [learningPathCourses.courseId],
+    references: [courses.id],
+  }),
+}));
+
+export const userPreferenceRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
+}));
 export const userBadges = pgTable("user_badges", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
@@ -112,6 +172,7 @@ export const userBadgeRelations = relations(userBadges, ({ one }) => ({
     references: [badges.id],
   }),
 }));
+
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users);

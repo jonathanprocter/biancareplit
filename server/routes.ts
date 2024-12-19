@@ -1,8 +1,9 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { users, courses, modules, enrollments, badges, userBadges, extendedInsertUserSchema } from "@db/schema";
-import { eq, and, lte, sql } from "drizzle-orm";
+import { users, courses, modules, enrollments, badges, userBadges, extendedInsertUserSchema, learningPaths, learningPathCourses } from "@db/schema";
+import { eq, and, lte, sql, desc } from "drizzle-orm";
+import { generatePersonalizedPath } from "./services/recommendations";
 import { hash, compare } from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
@@ -281,6 +282,88 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: "Failed to update progress" });
     }
   });
+  // Learning path routes
+  app.post("/api/users/:userId/learning-paths", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (userId !== req.session.userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const learningPath = await generatePersonalizedPath(userId);
+      
+      const pathWithCourses = await db.query.learningPaths.findFirst({
+        where: eq(learningPaths.id, learningPath.id),
+        with: {
+          courses: {
+            with: {
+              course: true,
+            },
+          },
+        },
+      });
+
+      res.json(pathWithCourses);
+    } catch (error) {
+      console.error("[API] Failed to generate learning path:", error);
+      res.status(500).json({ message: "Failed to generate learning path" });
+    }
+  });
+
+  app.get("/api/users/:userId/learning-paths", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (userId !== req.session.userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const paths = await db.query.learningPaths.findMany({
+        where: eq(learningPaths.userId, userId),
+        with: {
+          courses: {
+            with: {
+              course: true,
+            },
+          },
+        },
+        orderBy: desc(learningPaths.createdAt),
+      });
+
+      res.json(paths);
+    } catch (error) {
+      console.error("[API] Failed to fetch learning paths:", error);
+      res.status(500).json({ message: "Failed to fetch learning paths" });
+    }
+  });
+
+  app.put("/api/users/:userId/preferences", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (userId !== req.session.userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const { learningStyle, preferredStudyTime, preferredTopics } = req.body;
+
+      const [user] = await db.update(users)
+        .set({
+          learningStyle,
+          preferredStudyTime,
+          preferredTopics: JSON.stringify(preferredTopics),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      res.json(user);
+    } catch (error) {
+      console.error("[API] Failed to update preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
