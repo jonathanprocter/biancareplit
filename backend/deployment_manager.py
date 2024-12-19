@@ -12,15 +12,23 @@ def create_production_app() -> Flask:
     app = Flask(__name__)
     
     try:
-        # Load configuration
+        # Load production configuration
         config_manager.init_app(app)
+        app.config['ENV'] = 'production'
+        app.config['DEBUG'] = False
         
-        # Initialize middleware
+        # Initialize middleware with error handling
         middleware_manager.initialize_app(app)
         
-        # Initialize monitoring
+        # Initialize monitoring and metrics
         deployment_monitor = DeploymentMonitor()
         deployment_monitor.init_app(app)
+        
+        # Verify system state
+        from backend.config.system_verifier import SystemVerification
+        system_verifier = SystemVerification(context_manager)
+        if not system_verifier.verify_system():
+            raise RuntimeError("System verification failed")
         
         # Set production configs
         app.config['ENV'] = 'production'
