@@ -3,6 +3,7 @@ import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
 import { Dashboard } from "@/pages/Dashboard";
 import { Course } from "@/pages/Courses";
+import { UserProgress } from "@/pages/Progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 
@@ -13,6 +14,7 @@ function App() {
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/courses/:id" component={Course} />
+      <Route path="/progress" component={UserProgress} />
       <Route component={NotFound} />
     </Switch>
   );

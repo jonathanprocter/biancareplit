@@ -107,3 +107,53 @@ export const useEnroll = () => {
     },
   });
 };
+export interface UserProgress {
+  totalPoints: number;
+  accuracy: number;
+  enrollments: (Enrollment & {
+    course: Course;
+  })[];
+  badges: Array<{
+    id: number;
+    name: string;
+    description: string;
+    imageUrl: string;
+    earnedAt: string;
+  }>;
+}
+
+export const useUserProgress = (userId: number) => {
+  return useQuery<UserProgress>({
+    queryKey: [`/api/users/${userId}/progress`],
+  });
+};
+
+export const useUpdateProgress = () => {
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      enrollmentId,
+      correct,
+    }: {
+      userId: number;
+      enrollmentId: number;
+      correct: boolean;
+    }) => {
+      const res = await fetch(`/api/users/${userId}/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enrollmentId, correct }),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      return res.json();
+    },
+    onSuccess: (_, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/progress`] });
+    },
+  });
+};

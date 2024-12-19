@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { users, courses, modules, enrollments, extendedInsertUserSchema } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { users, courses, modules, enrollments, badges, userBadges, extendedInsertUserSchema } from "@db/schema";
+import { eq, and, lte, sql } from "drizzle-orm";
 import { hash, compare } from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
@@ -154,6 +154,90 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Gamification routes
+  app.get("/api/users/:userId/progress", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Get user's enrollments with progress
+      const enrollments = await db.query.enrollments.findMany({
+        where: eq(enrollments.userId, userId),
+        with: {
+          course: true,
+        },
+      });
+
+      // Get user's badges
+      const userBadges = await db.query.userBadges.findMany({
+        where: eq(userBadges.userId, userId),
+        with: {
+          badge: true,
+        },
+      });
+
+      // Calculate total points and progress
+      const totalPoints = enrollments.reduce((sum, enrollment) => sum + enrollment.points, 0);
+      const accuracy = enrollments.reduce((sum, enrollment) => {
+        if (enrollment.totalAttempts === 0) return sum;
+        return sum + (enrollment.correctAnswers / enrollment.totalAttempts);
+      }, 0) / Math.max(enrollments.length, 1);
+
+      res.json({
+        totalPoints,
+        accuracy: Math.round(accuracy * 100),
+        enrollments,
+        badges: userBadges.map(ub => ({
+          ...ub.badge,
+          earnedAt: ub.earnedAt,
+        })),
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user progress" });
+    }
+  });
+
+  app.post("/api/users/:userId/progress", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { enrollmentId, correct } = req.body;
+
+      // Update enrollment progress
+      const [enrollment] = await db.update(enrollments)
+        .set({
+          points: sql`${enrollments.points} + ${correct ? 10 : 0}`,
+          correctAnswers: sql`${enrollments.correctAnswers} + ${correct ? 1 : 0}`,
+          totalAttempts: sql`${enrollments.totalAttempts} + 1`,
+        })
+        .where(eq(enrollments.id, enrollmentId))
+        .returning();
+
+      // Check for badge eligibility
+      const availableBadges = await db.query.badges.findMany({
+        where: lte(badges.requiredPoints, enrollment.points),
+      });
+
+      const existingBadges = await db.query.userBadges.findMany({
+        where: eq(userBadges.userId, userId),
+      });
+
+      const newBadges = availableBadges.filter(
+        badge => !existingBadges.some(ub => ub.badgeId === badge.id)
+      );
+
+      if (newBadges.length > 0) {
+        await db.insert(userBadges).values(
+          newBadges.map(badge => ({
+            userId,
+            badgeId: badge.id,
+          }))
+        );
+      }
+
+      res.json({ enrollment, newBadges });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update progress" });
+    }
+  });
   const httpServer = createServer(app);
   return httpServer;
 }
