@@ -9,8 +9,11 @@ health_checker = HealthCheck()
 
 @bp.route('/health')
 def health_check():
-    health_status = health_checker.get_system_health()
-    return jsonify(health_status), 200 if health_status['status'] == 'healthy' else 503
+    try:
+        health_status = health_checker.get_system_health()
+        return jsonify(health_status), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @bp.route('/api/health')
 def api_health():
