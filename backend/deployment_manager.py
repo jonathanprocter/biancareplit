@@ -42,4 +42,5 @@ def create_production_app() -> Flask:
 def run_production():
     app = create_production_app()
     port = int(os.getenv('PORT', 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    port = int(os.getenv('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)

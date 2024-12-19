@@ -6,8 +6,10 @@ class DeploymentConfig:
     
     # Base application configuration
     BASE_DIR = Path(__file__).parent.parent
-    ENV = os.getenv('FLASK_ENV', 'development')
-    DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+    ENV = os.getenv('FLASK_ENV', 'production')
+    DEBUG = False
+    HOST = '0.0.0.0'
+    PORT = int(os.getenv('PORT', 8080))
     
     # Database configuration
     DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///app.db')
