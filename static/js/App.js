@@ -1,7 +1,12 @@
 
-const { useState } = React;
+const { useState, useEffect } = React;
+import { FlashcardSystem } from './flashcard-system.js';
 
 const App = () => {
+  useEffect(() => {
+    const flashcardSystem = new FlashcardSystem();
+    flashcardSystem.initialize();
+  }, []);
   const [currentView, setCurrentView] = useState('flashcards');
   
   const renderView = () => {
