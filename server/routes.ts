@@ -1,7 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { users, courses, modules, enrollments, badges, userBadges, extendedInsertUserSchema, learningPaths, learningPathCourses } from "@db/schema";
+import { users, courses, modules, enrollments, badges, userBadges, extendedInsertUserSchema, learningPaths, learningPathCourses, learningStyleQuestions } from "@db/schema";
+import { submitQuizResponses } from "./services/learning-style-assessment";
 import { eq, and, lte, sql, desc } from "drizzle-orm";
 import { generatePersonalizedPath } from "./services/recommendations";
 import { hash, compare } from "bcrypt";
@@ -195,11 +196,7 @@ export function registerRoutes(app: Express): Server {
       const userId = parseInt(req.params.userId);
       
       // Get user's enrollments with progress
-      type EnrollmentWithCourse = typeof enrollments.$inferSelect & {
-        course: typeof courses.$inferSelect;
-      };
-      
-      const enrollments: EnrollmentWithCourse[] = await db.query.enrollments.findMany({
+      const userEnrollments = await db.query.enrollments.findMany({
         where: eq(enrollments.userId, userId),
         with: {
           course: true,
@@ -207,7 +204,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       // Get user's badges
-      const userBadges = await db.query.userBadges.findMany({
+      const earnedBadges = await db.query.userBadges.findMany({
         where: eq(userBadges.userId, userId),
         with: {
           badge: true,
@@ -215,18 +212,18 @@ export function registerRoutes(app: Express): Server {
       });
 
       // Calculate total points and progress
-      const totalPoints = enrollments.reduce((sum: number, enrollment) => 
+      const totalPoints = userEnrollments.reduce((sum, enrollment) => 
         sum + (enrollment.points || 0), 0);
-      const accuracy = enrollments.reduce((sum: number, enrollment) => {
+      const accuracy = userEnrollments.reduce((sum, enrollment) => {
         if (!enrollment.totalAttempts) return sum;
         return sum + ((enrollment.correctAnswers || 0) / enrollment.totalAttempts);
-      }, 0) / Math.max(enrollments.length, 1);
+      }, 0) / Math.max(userEnrollments.length, 1);
 
       res.json({
         totalPoints,
         accuracy: Math.round(accuracy * 100),
-        enrollments,
-        badges: userBadges.map(ub => ({
+        enrollments: userEnrollments,
+        badges: earnedBadges.map(ub => ({
           ...ub.badge,
           earnedAt: ub.earnedAt,
         })),
@@ -361,6 +358,36 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("[API] Failed to update preferences:", error);
       res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
+  // Learning Style Assessment Routes
+  app.get("/api/learning-style/questions", requireAuth, async (req, res) => {
+    try {
+      const questions = await db.query.learningStyleQuestions.findMany({
+        orderBy: desc(learningStyleQuestions.id),
+      });
+      res.json(questions);
+    } catch (error) {
+      console.error("[API] Failed to fetch learning style questions:", error);
+      res.status(500).json({ message: "Failed to fetch questions" });
+    }
+  });
+
+  app.post("/api/learning-style/submit", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const responses = req.body.responses;
+
+      if (!Array.isArray(responses) || responses.length === 0) {
+        return res.status(400).json({ message: "Invalid response format" });
+      }
+
+      const result = await submitQuizResponses(userId, responses);
+      res.json(result);
+    } catch (error) {
+      console.error("[API] Failed to submit learning style responses:", error);
+      res.status(500).json({ message: "Failed to process quiz responses" });
     }
   });
 

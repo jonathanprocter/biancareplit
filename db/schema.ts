@@ -32,6 +32,32 @@ export const courses = pgTable("courses", {
   estimatedHours: integer("estimated_hours").default(10).notNull(),
 });
 
+export const learningStyleQuestions = pgTable("learning_style_questions", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  category: text("category").notNull(), // visual, auditory, kinesthetic, reading/writing
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const learningStyleResponses = pgTable("learning_style_responses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  questionId: integer("question_id").references(() => learningStyleQuestions.id).notNull(),
+  response: integer("response").notNull(), // Scale of 1-5
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const learningStyleResults = pgTable("learning_style_results", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  visualScore: integer("visual_score").notNull(),
+  auditoryScore: integer("auditory_score").notNull(),
+  kinestheticScore: integer("kinesthetic_score").notNull(),
+  readingWritingScore: integer("reading_writing_score").notNull(),
+  dominantStyle: text("dominant_style").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 export const modules = pgTable("modules", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
