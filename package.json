@@ -2,6 +2,13 @@
   "name": "ai-bot-template",
   "version": "1.0.0",
   "type": "module",
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react",
+      "@babel/preset-typescript"
+    ]
+  },
   "main": "index.js",
   "scripts": {
     "start": "webpack serve --mode development",
@@ -14,7 +21,7 @@
   "dependencies": {
     "@mui/material": "^5.15.0",
     "@mui/icons-material": "^5.15.0",
-    "@mui/core": "^5.0.0-alpha.75",
+    "@mui/core": "^5.0.0-alpha.74",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.1",
     "@babel/core": "^7.26.0",
