@@ -85,7 +85,11 @@ async function analyzeResponses(responses: any[]) {
       }]
     });
 
-    return JSON.parse(message.content[0].text);
+    const content = message.content[0];
+    if (content.type !== 'text') {
+      throw new Error('Unexpected response type from Anthropic API');
+    }
+    return JSON.parse(content.text);
   } catch (error) {
     console.error('Error analyzing responses:', error);
     return {

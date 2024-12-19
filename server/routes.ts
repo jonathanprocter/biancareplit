@@ -188,7 +188,11 @@ export function registerRoutes(app: Express): Server {
         totalAttempts: 0
       }).returning();
 
-      res.json(enrollment[0]);
+      if (!enrollment) {
+        throw new Error("Failed to create enrollment");
+      }
+
+      res.json(enrollment);
     } catch (error) {
       res.status(500).json({ message: "Failed to enroll" });
     }
