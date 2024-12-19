@@ -1,62 +1,35 @@
 
 const App = () => {
-  const [input, setInput] = React.useState('');
-  const [messages, setMessages] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    setIsLoading(true);
-    setMessages(prev => [...prev, { role: 'user', content: input }]);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: input })
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) throw new Error(data.error || 'Something went wrong');
-      
-      setMessages(prev => [...prev, { role: 'bot', content: data.reply }]);
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages(prev => [...prev, { role: 'error', content: error.message }]);
-    } finally {
-      setIsLoading(false);
-      setInput('');
+  const [currentView, setCurrentView] = React.useState('flashcards');
+  
+  const renderView = () => {
+    switch(currentView) {
+      case 'flashcards':
+        return <FlashcardManager />;
+      case 'quiz':
+        return <Quiz />;
+      case 'analytics':
+        return <Analytics />;
+      case 'ai-chat':
+        return <AIChat />;
+      default:
+        return <FlashcardManager />;
     }
   };
 
   return (
-    <div className="app">
-      <div className="chat-container">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`message ${msg.role}`}>
-            {msg.content}
-          </div>
-        ))}
-        {isLoading && <div className="message bot">Thinking...</div>}
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
-          disabled={isLoading}
-        />
-        <button type="submit" disabled={isLoading || !input.trim()}>
-          Send
-        </button>
-      </form>
+    <div className="app-container">
+      <nav className="bg-blue-600 p-4">
+        <ul className="flex space-x-4">
+          <li><button onClick={() => setCurrentView('flashcards')} className="text-white">Flashcards</button></li>
+          <li><button onClick={() => setCurrentView('quiz')} className="text-white">Quiz</button></li>
+          <li><button onClick={() => setCurrentView('analytics')} className="text-white">Analytics</button></li>
+          <li><button onClick={() => setCurrentView('ai-chat')} className="text-white">AI Chat</button></li>
+        </ul>
+      </nav>
+      <main className="p-4">
+        {renderView()}
+      </main>
     </div>
   );
 };
