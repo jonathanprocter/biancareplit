@@ -56,11 +56,7 @@ def health_check():
 @app.route('/')
 def home():
     app.logger.info('Home page accessed')
-    return jsonify({
-        'message': 'Welcome to the API',
-        'status': 'operational',
-        'documentation': '/api/docs'
-    })
+    return render_template('index.html')
 
 # Middleware for request logging
 @app.before_request
