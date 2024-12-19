@@ -1,0 +1,19 @@
+
+environment: production
+server:
+  host: '0.0.0.0'
+  port: 8080
+  workers: 4
+  threads: 2
+  timeout: 120
+
+requirements:
+  - python3-pip
+  - python3
+  - gunicorn
+
+bind: "0.0.0.0:8080"
+worker_class: 'gthread'
+workers: 4
+threads: 2
+timeout: 120

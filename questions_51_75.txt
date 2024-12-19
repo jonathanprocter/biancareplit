@@ -1,0 +1,12 @@
+[ADVANCED LEVEL QUESTIONS (51-75)]
+
+Question 51 (Advanced; NCLEX Category: Pharmacological and Parenteral Therapies)
+A patient's medication profile includes a drug extensively metabolized by CYP450 enzymes. Genetic testing suggests the patient is a poor metabolizer. How should the nurse integrate this complex information to enhance medication safety and efficacy?
+A. Proceed with the standard dose without adjustments.
+B. Collaborate with the provider and pharmacist to consider dose reduction or an alternative medication less affected by CYP450 variants, and closely monitor therapeutic response and side effects.
+C. Encourage the patient to take extra doses for effectiveness.
+D. Disregard genetic testing results.
+Correct Answer: B
+Rationale: Advanced practice involves using pharmacogenomic data to personalize treatment. Adjusting therapy based on metabolic status prevents toxicity and subtherapeutic outcomes, reflecting a high level of clinical reasoning.
+
+[Content continues with all 25 questions...]

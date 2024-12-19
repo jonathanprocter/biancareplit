@@ -1,0 +1,102 @@
+{
+  "development": {
+    "app": {
+      "name": "NCLEX Coaching Platform",
+      "environment": "development",
+      "debug": true,
+      "host": "0.0.0.0",
+      "port": 8082,
+      "secret_key": "${SECRET_KEY}",
+      "allowed_origins": ["http://localhost:3000"]
+    },
+    "websocket": {
+      "url": "ws://localhost:8082/ws",
+      "reconnectAttempts": 5,
+      "reconnectInterval": 3000,
+      "pingInterval": 30000,
+      "timeout": 5000
+    },
+    "metrics": {
+      "enabled": true,
+      "collectInterval": 5000,
+      "maxDataPoints": 100,
+      "retentionPeriod": 86400,
+      "thresholds": {
+        "latency": 1000,
+        "errorRate": 5,
+        "uptimeMin": 99
+      }
+    },
+    "healthCheck": {
+      "enabled": true,
+      "interval": 30000,
+      "timeout": 5000,
+      "port": 8082,
+      "retries": 3,
+      "thresholds": {
+        "cpu": {
+          "warning": 80,
+          "critical": 90
+        },
+        "memory": {
+          "warning": 80,
+          "critical": 90
+        },
+        "disk": {
+          "warning": 80,
+          "critical": 90
+        }
+      }
+    }
+  },
+  "production": {
+    "app": {
+      "name": "NCLEX Coaching Platform",
+      "environment": "production",
+      "debug": false,
+      "host": "0.0.0.0",
+      "port": 8082,
+      "secret_key": "${SECRET_KEY}",
+      "allowed_origins": ["https://nclex-coach.example.com"]
+    },
+    "websocket": {
+      "url": "wss://api.example.com/ws",
+      "reconnectAttempts": 10,
+      "reconnectInterval": 5000,
+      "pingInterval": 30000,
+      "timeout": 10000
+    },
+    "metrics": {
+      "enabled": true,
+      "collectInterval": 10000,
+      "maxDataPoints": 1000,
+      "retentionPeriod": 604800,
+      "thresholds": {
+        "latency": 500,
+        "errorRate": 1,
+        "uptimeMin": 99.9
+      }
+    },
+    "healthCheck": {
+      "enabled": true,
+      "interval": 60000,
+      "timeout": 10000,
+      "port": 8082,
+      "retries": 5,
+      "thresholds": {
+        "cpu": {
+          "warning": 70,
+          "critical": 85
+        },
+        "memory": {
+          "warning": 75,
+          "critical": 85
+        },
+        "disk": {
+          "warning": 75,
+          "critical": 85
+        }
+      }
+    }
+  }
+}

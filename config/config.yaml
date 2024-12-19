@@ -1,0 +1,22 @@
+
+ai_service:
+  model: "gpt-4"
+  temperature: 0.7
+  max_tokens: 2000
+  request_timeout: 30
+  batch_size: 5
+
+openai:
+  api_key: ${OPENAI_API_KEY}
+  organization: ${OPENAI_ORG_ID}
+
+analytics:
+  refresh_interval: 5000
+  websocket_url: "ws://0.0.0.0:81/ws"
+  metrics_endpoint: "/api/metrics"
+
+adaptive_learning:
+  min_questions: 5
+  max_difficulty_jump: 1
+  performance_threshold: 0.75
+  adaptation_rate: 0.3

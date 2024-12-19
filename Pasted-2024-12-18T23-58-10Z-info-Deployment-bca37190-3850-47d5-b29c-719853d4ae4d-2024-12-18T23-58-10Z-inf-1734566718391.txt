@@ -1,0 +1,61 @@
+2024-12-18T23:58:10Z info: Deployment: bca37190-3850-47d5-b29c-719853d4ae4d
+2024-12-18T23:58:10Z info: Build: 735d68e6-5b57-4f63-bbd0-e81204b45811
+2024-12-18T23:58:10Z info: Connecting to builder
+2024-12-18T23:58:10Z info: Deployment: bca37190-3850-47d5-b29c-719853d4ae4d
+2024-12-18T23:58:10Z info: Build: 735d68e6-5b57-4f63-bbd0-e81204b45811
+2024-12-18T23:58:10Z info: Connecting to builder
+2024-12-18T23:58:14Z info: Builder connected
+2024-12-18T23:58:14Z info: Installing packages
+--> npm install
+
+npm warn skipping integrity check for git dependency ssh://git@github.com/dmarcos/three-bmfont-text.git
+
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+
+npm warn deprecated @types/date-fns@2.6.3: This is a stub types definition. date-fns provides its own type definitions, so you do not need this installed.
+
+npm warn deprecated @babel/plugin-proposal-class-properties@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-class-properties instead.
+
+npm warn deprecated @babel/plugin-proposal-numeric-separator@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-numeric-separator instead.
+
+npm warn deprecated @babel/plugin-proposal-optional-chaining@7.21.0: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-optional-chaining instead.
+
+npm warn deprecated @babel/plugin-proposal-private-methods@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-private-methods instead.
+
+npm warn deprecated @babel/plugin-proposal-nullish-coalescing-operator@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-nullish-coalescing-operator instead.
+
+npm warn deprecated @babel/plugin-proposal-object-rest-spread@7.20.7: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-object-rest-spread instead.
+
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+
+added 1246 packages, and audited 1247 packages in 50s
+
+220 packages are looking for funding
+  run `npm fund` for details
+
+
+8 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+npm notice
+npm notice New major version of npm available! 10.8.1 -> 11.0.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.0.0
+npm notice To update run: npm install -g npm@11.0.0
+npm notice
+
+2024-12-18T23:59:06Z info: Skipping Build as no Build command set
+2024-12-18T23:59:06Z info: Pushing pid1 binary layer...
+2024-12-18T23:59:08Z info: Created pid1 binary layer
+2024-12-18T23:59:13Z info: Pushing hosting layer...
+2024-12-18T23:59:13Z info: Pushing Repl layer...
+2024-12-18T23:59:13Z info: Retrieved cached nix layer
+2024-12-18T23:59:13Z info: Created hosting layer
+2024-12-19T00:04:18Z info: Created Repl layer
+2024-12-19T00:04:18Z info: Pushing Repl (cache) layer...
+2024-12-19T00:04:19Z info: Created Repl (cache) layer
+2024-12-19T00:04:19Z error: image size is over the limit of 8 GiB

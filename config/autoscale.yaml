@@ -1,0 +1,19 @@
+
+autoscale:
+  enabled: true
+  min_instances: 1
+  max_instances: 3
+  target_cpu_utilization: 80
+  cooldown_period: 300
+  scale_up_increment: 1
+  scale_down_increment: 1
+  metrics:
+    collection_interval: 60
+    retention_days: 7
+  health_check:
+    enabled: true
+    interval: 30
+    timeout: 5
+    unhealthy_threshold: 3
+    healthy_threshold: 2
+    path: /api/health

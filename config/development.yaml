@@ -1,0 +1,15 @@
+
+flask:
+  SECRET_KEY: 'dev-secret-key'
+  DEBUG: true
+  TESTING: false
+  SERVER_NAME: null
+  PREFERRED_URL_SCHEME: 'http'
+  
+database:
+  SQLALCHEMY_DATABASE_URI: 'sqlite:///app.db'
+  SQLALCHEMY_TRACK_MODIFICATIONS: false
+
+logging:
+  level: DEBUG
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

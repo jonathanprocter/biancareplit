@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCLEX Flashcard Review</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/globals.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-background font-sans antialiased">
+    <!-- Loading indicator -->
+    <div id="loading" class="fixed top-0 left-0 w-full h-full bg-white bg-opacity-75 flex items-center justify-center" style="display: none;">
+        <div class="text-lg">Loading flashcards...</div>
+    </div>
+
+    <!-- Error message container -->
+    <div id="error-message" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4" style="display: none;"></div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav-menu">
+            <button class="nav-button" onclick="window.location.href='/'">
+                📚 Back to Dashboard
+            </button>
+        </div>
+    </nav>
+
+    <div id="flashcard-root" class="container mx-auto px-4 py-8"></div>
+
+    <!-- Initialize flashcard interface -->
+    <script type="module">
+        const initializeFlashcards = async () => {
+            const loadingIndicator = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            const flashcardRoot = document.getElementById('flashcard-root');
+
+            const showError = (message) => {
+                console.error(message);
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                loadingIndicator.style.display = 'none';
+            };
+
+            const hideError = () => {
+                errorMessage.style.display = 'none';
+            };
+
+            try {
+                if (!flashcardRoot) {
+                    throw new Error('Flashcard container not found');
+                }
+
+                loadingIndicator.style.display = 'flex';
+                hideError();
+
+                // Import the FlashcardInterface module with retry logic
+                const importWithRetry = async (retries = 3) => {
+                    for (let i = 0; i < retries; i++) {
+                        try {
+                            console.log('Loading FlashcardInterface module...');
+                            const module = await import('/static/js/dist/FlashcardInterface.bundle.js');
+                            if (!module.default) {
+                                throw new Error('FlashcardInterface module not found');
+                            }
+                            return module.default;
+                        } catch (error) {
+                            console.warn(`Import attempt ${i + 1} failed:`, error);
+                            if (i === retries - 1) throw error;
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
+                    }
+                };
+
+                const FlashcardInterface = await importWithRetry();
+                
+                if (!FlashcardInterface?.initialize) {
+                    throw new Error('Invalid FlashcardInterface module structure');
+                }
+
+                // Initialize the system with proper error handling
+                console.log('Initializing flashcard system...');
+                try {
+                    const system = await FlashcardInterface.initialize(flashcardRoot);
+                    
+                    if (!system?.initialized) {
+                        const error = system.getInitializationError();
+                        if (error) {
+                            throw error;
+                        }
+                        throw new Error('System initialization incomplete');
+                    }
+
+                    // Store reference and hide loading
+                    window.flashcardSystem = system;
+                    loadingIndicator.style.display = 'none';
+                    console.log('Flashcard system initialized successfully');
+                } catch (error) {
+                    console.error('Initialization failed:', error);
+                    showError(`Initialization failed: ${error.message}. Please refresh the page or contact support if the issue persists.`);
+                }
+
+                // Store reference and hide loading
+                window.flashcardSystem = system;
+                loadingIndicator.style.display = 'none';
+                console.log('Flashcard system initialized successfully');
+
+            } catch (error) {
+                const errorMessage = `Initialization failed: ${error.message}. Please refresh the page or contact support if the issue persists.`;
+                showError(errorMessage);
+                console.error('Detailed initialization error:', error);
+            }
+        };
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeFlashcards);
+        } else {
+            initializeFlashcards();
+        }
+    </script>
+</body>
+</html>

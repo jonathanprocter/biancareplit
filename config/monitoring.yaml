@@ -1,0 +1,17 @@
+
+metrics:
+  collection_interval: 30
+  retention_days: 7
+  prometheus_enabled: true
+
+alerts:
+  cpu_threshold: 80
+  memory_threshold: 85
+  disk_threshold: 90
+  
+health_check:
+  interval: 60
+  timeout: 5
+  endpoints:
+    - /api/health
+    - /monitoring/health

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCLEX Flashcard Review</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/globals.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+<script defer src="/static/js/dist/vendors-node_modules_react-dom_index_js-node_modules_react_index_js-node_modules_webpack-dev--ebe624.bundle.js"></script><script defer src="/static/js/dist/vendors-node_modules_react_jsx-runtime_js-node_modules_babel_runtime-corejs3_core-js-stable_i-01112c.bundle.js"></script><script defer src="/static/js/dist/static_js_flashcard-system_js-webpack_sharing_consume_default_react_react-webpack_sharing_pro-8969d7.bundle.js"></script><script defer src="/static/js/dist/static_js_components_ContentFlashcardIntegration_jsx.bundle.js"></script><script defer src="/static/js/dist/main.bundle.js"></script><script defer src="/static/js/dist/vendors-node_modules_babel_runtime-corejs3_core-js-stable_instance_trim_js-node_modules_babel-39af08.bundle.js"></script><script defer src="/static/js/dist/system.bundle.js"></script><script defer src="/static/js/dist/remoteEntry.js"></script></head>
+<body class="min-h-screen bg-background font-sans antialiased">
+    <!-- Loading indicator -->
+    <div id="loading" class="fixed top-0 left-0 w-full h-full bg-white bg-opacity-75 flex items-center justify-center" style="display: none;">
+        <div class="text-lg">Loading flashcards...</div>
+    </div>
+
+    <!-- Error message container -->
+    <div id="error-message" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4" style="display: none;"></div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav-menu">
+            <button class="nav-button" onclick="window.location.href='/'">
+                📚 Back to Dashboard
+            </button>
+        </div>
+    </nav>
+
+    <div id="flashcard-root" class="container mx-auto px-4 py-8"></div>
+
+    <!-- Load React dependencies -->
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+
+    <!-- Load your bundled JavaScript -->
+    <script src="{{ url_for('static', filename='js/dist/bundle.js') }}"></script>
+
+    <!-- Initialize flashcard interface -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingIndicator = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            const flashcardRoot = document.getElementById('flashcard-root');
+
+            // Show loading indicator
+            loadingIndicator.style.display = 'flex';
+
+            // Initialize flashcard interface
+            try {
+                if (window.initializeFlashcardInterface) {
+                    window.initializeFlashcardInterface(flashcardRoot)
+                        .then(() => {
+                            loadingIndicator.style.display = 'none';
+                        })
+                        .catch(error => {
+                            console.error('Error initializing flashcards:', error);
+                            errorMessage.textContent = 'Failed to load flashcards. Please refresh the page.';
+                            errorMessage.style.display = 'block';
+                            loadingIndicator.style.display = 'none';
+                        });
+                } else {
+                    throw new Error('Flashcard interface not found');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = 'Failed to initialize flashcard interface. Please refresh the page.';
+                errorMessage.style.display = 'block';
+                loadingIndicator.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
