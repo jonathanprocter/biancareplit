@@ -29,6 +29,7 @@ export function registerRoutes(app: Express): Server {
 
   // Auth routes
   app.post("/api/register", async (req, res) => {
+    console.log("[API] Registration attempt:", req.body.username);
     try {
       const userData = extendedInsertUserSchema.parse(req.body);
       
@@ -41,9 +42,11 @@ export function registerRoutes(app: Express): Server {
       });
       
       if (existingUser) {
+        console.log("[API] Registration failed: Username taken -", userData.username);
         return res.status(400).json({ message: "Username already taken" });
       }
       if (existingEmail) {
+        console.log("[API] Registration failed: Email exists -", userData.email);
         return res.status(400).json({ message: "Email already registered" });
       }
 
@@ -55,6 +58,10 @@ export function registerRoutes(app: Express): Server {
         .values({
           ...userData,
           password: hashedPassword,
+          role: "student", // Default role
+          totalPoints: 0,
+          level: 1,
+          streakCount: 0,
         })
         .returning({
           id: users.id,
@@ -64,8 +71,10 @@ export function registerRoutes(app: Express): Server {
 
       // Auto login after registration
       req.session.userId = user.id;
+      console.log("[API] Registration successful:", user.username);
       res.status(201).json(user);
     } catch (error) {
+      console.error("[API] Registration error:", error);
       if (error.name === "ZodError") {
         return res.status(400).json({ message: error.errors[0].message });
       }
@@ -74,19 +83,33 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/login", async (req, res) => {
+    console.log("[API] Login attempt for username:", req.body.username);
     const { username, password } = req.body;
     try {
       const user = await db.query.users.findFirst({
         where: eq(users.username, username)
       });
       
-      if (!user || !(await compare(password, user.password))) {
+      if (!user) {
+        console.log("[API] Login failed: User not found -", username);
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const isValidPassword = await compare(password, user.password);
+      if (!isValidPassword) {
+        console.log("[API] Login failed: Invalid password -", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       req.session.userId = user.id;
-      res.json({ id: user.id, username: user.username, role: user.role });
+      console.log("[API] Login successful:", username);
+      res.json({ 
+        id: user.id, 
+        username: user.username, 
+        role: user.role 
+      });
     } catch (error) {
+      console.error("[API] Login error:", error);
       res.status(500).json({ message: "Server error" });
     }
   });
