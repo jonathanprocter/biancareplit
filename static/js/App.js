@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import '../css/styles.css';
 
 const App = () => {
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [input, setInput] = React.useState('');
+  const [messages, setMessages] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,4 +61,4 @@ const App = () => {
   );
 };
 
-export default App;
+ReactDOM.render(<App />, document.getElementById('root'));
