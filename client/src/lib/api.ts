@@ -68,7 +68,10 @@ export const useLogin = () => {
         throw new Error(await res.text());
       }
 
-      return res.json();
+      const userData = await res.json();
+      localStorage.setItem('userId', userData.id.toString());
+      localStorage.setItem('username', userData.username);
+      return userData;
     },
   });
 };

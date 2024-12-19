@@ -3,13 +3,18 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
+// Base tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
   email: text("email").unique().notNull(),
   role: text("role").default("student").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  totalPoints: integer("total_points").default(0).notNull(),
+  level: integer("level").default(1).notNull(),
+  streakCount: integer("streak_count").default(0).notNull(),
+  lastActive: timestamp("last_active").defaultNow().notNull(),
 });
 
 export const courses = pgTable("courses", {
@@ -47,6 +52,9 @@ export const badges = pgTable("badges", {
   imageUrl: text("image_url").notNull(),
   requiredPoints: integer("required_points").notNull(),
   category: text("category").notNull(),
+  tier: text("tier").default("bronze").notNull(), // bronze, silver, gold, platinum
+  unlockCondition: text("unlock_condition").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const userBadges = pgTable("user_badges", {

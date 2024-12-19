@@ -30,7 +30,8 @@ export function Navigation() {
             <Button
               variant="ghost"
               onClick={() => {
-                // TODO: Implement logout
+                localStorage.removeItem('userId');
+                localStorage.removeItem('username');
                 window.location.href = "/";
               }}
             >

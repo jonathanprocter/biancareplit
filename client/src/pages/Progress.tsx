@@ -5,7 +5,7 @@ import { Badge } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function UserProgress() {
-  const userId = 1; // TODO: Get from auth context
+  const userId = parseInt(localStorage.getItem('userId') || '1');
   const { data: progress, isLoading } = useUserProgress(userId);
 
   if (isLoading) {
