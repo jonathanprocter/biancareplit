@@ -6,17 +6,21 @@ import { Course } from "@/pages/Courses";
 import { UserProgress } from "@/pages/Progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
+import { Navigation } from "@/components/Navigation";
 
 function App() {
   return (
-    <Switch>
-      <Route path="/" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/courses/:id" component={Course} />
-      <Route path="/progress" component={UserProgress} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <Navigation />
+      <Switch>
+        <Route path="/" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/courses/:id" component={Course} />
+        <Route path="/progress" component={UserProgress} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 
