@@ -170,8 +170,8 @@ export function registerRoutes(app: Express): Server {
     try {
       const existing = await db.query.enrollments.findFirst({
         where: and(
-          eq(enrollments.userId, userId),
-          eq(enrollments.courseId, courseId)
+          eq(enrollments.userId, Number(userId)),
+          eq(enrollments.courseId, Number(courseId))
         )
       });
 
@@ -179,9 +179,13 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Already enrolled" });
       }
 
-      const enrollment = await db.insert(enrollments).values({
-        userId,
-        courseId,
+      const [enrollment] = await db.insert(enrollments).values({
+        userId: Number(userId),
+        courseId: Number(courseId),
+        completed: false,
+        points: 0,
+        correctAnswers: 0,
+        totalAttempts: 0
       }).returning();
 
       res.json(enrollment[0]);
