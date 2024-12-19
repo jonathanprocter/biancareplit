@@ -1,5 +1,4 @@
-
-from flask import jsonify, current_app
+from flask import jsonify, current_app, Flask
 import logging
 import traceback
 from typing import Dict, Any
@@ -12,28 +11,19 @@ class ErrorMiddleware:
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app):
+    def init_app(self, app: Flask) -> None:
         @app.errorhandler(Exception)
-        def handle_exception(error):
-            logger.error(f"Unhandled exception: {str(error)}\n{traceback.format_exc()}")
-            return self._format_error(error)
+        def handle_error(error):
+            logger.error(f"Unhandled error: {str(error)}")
+            return jsonify({
+                'error': 'Internal server error',
+                'status': 500
+            }), 500
 
         @app.errorhandler(404)
         def not_found(error):
-            return self._format_error(error, status=404)
+            return jsonify({'error': 'Not Found', 'status': 404, 'success': False}), 404
 
         @app.errorhandler(500)
         def server_error(error):
-            return self._format_error(error, status=500)
-
-    def _format_error(self, error: Exception, status: int = 500) -> Dict[str, Any]:
-        response = {
-            'error': str(error),
-            'status': status,
-            'success': False
-        }
-        
-        if current_app.debug:
-            response['traceback'] = traceback.format_exc()
-            
-        return jsonify(response), status
+            return jsonify({'error': 'Internal Server Error', 'status': 500, 'success': False}), 500
