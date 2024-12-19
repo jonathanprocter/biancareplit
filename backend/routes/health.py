@@ -5,8 +5,15 @@ from datetime import datetime
 
 bp = Blueprint('health', __name__)
 
-@bp.route('/health', methods=['GET'])
+@bp.route('/health')
 def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
+@bp.route('/api/health')
+def api_health():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.utcnow().isoformat(),
@@ -14,11 +21,4 @@ def health_check():
             'cpu_percent': psutil.cpu_percent(),
             'memory_percent': psutil.virtual_memory().percent
         }
-    })
-
-@bp.route('/api/health', methods=['GET'])
-def api_health():
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.utcnow().isoformat()
     })
