@@ -7,31 +7,6 @@ export interface User {
   role: string;
 }
 
-export interface RegisterData {
-  username: string;
-  password: string;
-  email: string;
-}
-
-export const useRegister = () => {
-  return useMutation({
-    mutationFn: async (data: RegisterData) => {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        throw new Error(await res.text());
-      }
-
-      return res.json() as Promise<User>;
-    },
-  });
-};
-
 export interface Course {
   id: number;
   title: string;
@@ -45,6 +20,7 @@ export interface Module {
   title: string;
   content: string;
   order: number;
+  courseId: number;
 }
 
 export interface Enrollment {
@@ -53,8 +29,31 @@ export interface Enrollment {
   courseId: number;
   enrolledAt: string;
   completed: boolean;
+  points: number;
+  correctAnswers: number;
+  totalAttempts: number;
 }
 
+export interface Badge {
+  id: number;
+  name: string;
+  description: string;
+  imageUrl: string;
+  requiredPoints: number;
+  category: string;
+  earnedAt?: string;
+}
+
+export interface UserProgress {
+  totalPoints: number;
+  accuracy: number;
+  enrollments: (Enrollment & {
+    course: Course;
+  })[];
+  badges: Badge[];
+}
+
+// Auth hooks
 export const useLogin = () => {
   return useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
@@ -69,11 +68,35 @@ export const useLogin = () => {
         throw new Error(await res.text());
       }
 
-      return res.json() as Promise<User>;
+      return res.json();
     },
   });
 };
 
+export const useRegister = () => {
+  return useMutation({
+    mutationFn: async (userData: {
+      username: string;
+      password: string;
+      email: string;
+    }) => {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      return res.json();
+    },
+  });
+};
+
+// Course hooks
 export const useCourses = () => {
   return useQuery<Course[]>({
     queryKey: ["/api/courses"],
@@ -100,31 +123,19 @@ export const useEnroll = () => {
         throw new Error(await res.text());
       }
 
-      return res.json() as Promise<Enrollment>;
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
     },
   });
 };
-export interface UserProgress {
-  totalPoints: number;
-  accuracy: number;
-  enrollments: (Enrollment & {
-    course: Course;
-  })[];
-  badges: Array<{
-    id: number;
-    name: string;
-    description: string;
-    imageUrl: string;
-    earnedAt: string;
-  }>;
-}
 
+// Progress hooks
 export const useUserProgress = (userId: number) => {
   return useQuery<UserProgress>({
     queryKey: [`/api/users/${userId}/progress`],
+    staleTime: 30000, // Refresh every 30 seconds
   });
 };
 

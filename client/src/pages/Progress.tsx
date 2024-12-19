@@ -75,14 +75,20 @@ export function UserProgress() {
               {progress?.badges.map((badge) => (
                 <div
                   key={badge.id}
-                  className="flex items-start space-x-3 p-3 bg-secondary rounded-lg"
+                  className="group relative flex items-start space-x-3 p-3 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
                 >
-                  <Badge className="h-8 w-8 text-primary" />
+                  <Badge className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                   <div>
                     <h3 className="font-medium">{badge.name}</h3>
                     <p className="text-sm text-muted-foreground">
                       {badge.description}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Earned on {new Date(badge.earnedAt!).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                    {badge.category}
                   </div>
                 </div>
               ))}
