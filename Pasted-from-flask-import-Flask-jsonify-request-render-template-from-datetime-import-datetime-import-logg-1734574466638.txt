@@ -1,0 +1,110 @@
+from flask import Flask, jsonify, request, render_template
+from datetime import datetime
+import logging
+import os
+from logging.handlers import RotatingFileHandler
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Configure logging
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
+file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+file_handler.setLevel(logging.INFO)
+app.logger.addHandler(file_handler)
+app.logger.setLevel(logging.INFO)
+app.logger.info('Application startup')
+
+# Configuration
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key-here'
+    # Add other configuration variables as needed
+
+app.config.from_object(Config)
+
+# Basic error handling
+@app.errorhandler(404)
+def not_found_error(error):
+    app.logger.error(f'Page not found: {request.url}')
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error(f'Server Error: {error}')
+    return jsonify({'error': 'Internal server error'}), 500
+
+# Health check endpoints
+@app.route('/health')
+@app.route('/api/health')
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'environment': os.environ.get('FLASK_ENV', 'development'),
+        'version': '1.0.0'
+    })
+
+# Root endpoint
+@app.route('/')
+def home():
+    app.logger.info('Home page accessed')
+    return jsonify({
+        'message': 'Welcome to the API',
+        'status': 'operational',
+        'documentation': '/api/docs'  # If you have API documentation
+    })
+
+# Example API endpoint
+@app.route('/api/v1/example', methods=['GET'])
+def example_endpoint():
+    return jsonify({
+        'message': 'Example API endpoint',
+        'data': {'key': 'value'}
+    })
+
+# Example protected endpoint (you can add authentication later)
+@app.route('/api/v1/protected', methods=['GET'])
+def protected_endpoint():
+    # Add authentication logic here
+    return jsonify({
+        'message': 'Protected endpoint',
+        'data': {'secure': 'data'}
+    })
+
+# Middleware for request logging
+@app.before_request
+def before_request():
+    app.logger.info(f'Request: {request.method} {request.url}')
+
+@app.after_request
+def after_request(response):
+    # Log the response status
+    app.logger.info(f'Response: {response.status}')
+    return response
+
+# CLI commands for database management (if needed)
+@app.cli.command("init-db")
+def init_db():
+    """Initialize the database."""
+    # Add database initialization logic here
+    print("Database initialized")
+
+def create_app():
+    """Application factory function"""
+    return app
+
+if __name__ == '__main__':
+    # Get port from environment variable or default to 8080
+    port = int(os.environ.get('PORT', 8080))
+    
+    # Run the application
+    app.run(
+        host='0.0.0.0',  # Makes the server publicly available
+        port=port,
+        debug=True  # Set to False in production
+    )
