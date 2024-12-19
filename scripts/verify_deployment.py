@@ -15,8 +15,8 @@ class DeploymentVerifier:
         self.base_url = base_url
         self.required_endpoints = [
             "/api/health",
-            "/api/metrics",
-            "/api/status"
+            "/health/health",
+            "/api/metrics"
         ]
         self.required_services = [
             "flask",
