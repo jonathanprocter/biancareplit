@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { users, courses, modules, enrollments, badges, userBadges, extendedInsertUserSchema } from "@db/schema";
@@ -6,6 +6,13 @@ import { eq, and, lte, sql } from "drizzle-orm";
 import { hash, compare } from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
+
+// Extend express-session types
+declare module "express-session" {
+  interface SessionData {
+    userId: number;
+  }
+}
 
 export function registerRoutes(app: Express): Server {
   const memoryStore = MemoryStore(session);
@@ -20,7 +27,11 @@ export function registerRoutes(app: Express): Server {
   }));
 
   // Authentication middleware
-  const requireAuth = (req: any, res: any, next: any) => {
+  const requireAuth = (
+    req: Request,
+    res: Response,
+    next: (error?: any) => void
+  ) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -73,9 +84,9 @@ export function registerRoutes(app: Express): Server {
       req.session.userId = user.id;
       console.log("[API] Registration successful:", user.username);
       res.status(201).json(user);
-    } catch (error) {
+    } catch (error: any) {
       console.error("[API] Registration error:", error);
-      if (error.name === "ZodError") {
+      if (error?.name === "ZodError") {
         return res.status(400).json({ message: error.errors[0].message });
       }
       res.status(500).json({ message: "Failed to create account" });
@@ -183,7 +194,11 @@ export function registerRoutes(app: Express): Server {
       const userId = parseInt(req.params.userId);
       
       // Get user's enrollments with progress
-      const enrollments = await db.query.enrollments.findMany({
+      type EnrollmentWithCourse = typeof enrollments.$inferSelect & {
+        course: typeof courses.$inferSelect;
+      };
+      
+      const enrollments: EnrollmentWithCourse[] = await db.query.enrollments.findMany({
         where: eq(enrollments.userId, userId),
         with: {
           course: true,
@@ -199,10 +214,11 @@ export function registerRoutes(app: Express): Server {
       });
 
       // Calculate total points and progress
-      const totalPoints = enrollments.reduce((sum, enrollment) => sum + enrollment.points, 0);
-      const accuracy = enrollments.reduce((sum, enrollment) => {
-        if (enrollment.totalAttempts === 0) return sum;
-        return sum + (enrollment.correctAnswers / enrollment.totalAttempts);
+      const totalPoints = enrollments.reduce((sum: number, enrollment) => 
+        sum + (enrollment.points || 0), 0);
+      const accuracy = enrollments.reduce((sum: number, enrollment) => {
+        if (!enrollment.totalAttempts) return sum;
+        return sum + ((enrollment.correctAnswers || 0) / enrollment.totalAttempts);
       }, 0) / Math.max(enrollments.length, 1);
 
       res.json({
@@ -227,16 +243,20 @@ export function registerRoutes(app: Express): Server {
       // Update enrollment progress
       const [enrollment] = await db.update(enrollments)
         .set({
-          points: sql`${enrollments.points} + ${correct ? 10 : 0}`,
-          correctAnswers: sql`${enrollments.correctAnswers} + ${correct ? 1 : 0}`,
-          totalAttempts: sql`${enrollments.totalAttempts} + 1`,
+          points: sql`COALESCE(${enrollments.points}, 0) + ${correct ? 10 : 0}`,
+          correctAnswers: sql`COALESCE(${enrollments.correctAnswers}, 0) + ${correct ? 1 : 0}`,
+          totalAttempts: sql`COALESCE(${enrollments.totalAttempts}, 0) + 1`,
         })
         .where(eq(enrollments.id, enrollmentId))
         .returning();
 
+      if (!enrollment) {
+        throw new Error("Failed to update enrollment");
+      }
+
       // Check for badge eligibility
       const availableBadges = await db.query.badges.findMany({
-        where: lte(badges.requiredPoints, enrollment.points),
+        where: eq(badges.requiredPoints, sql`${enrollment.points}`),
       });
 
       const existingBadges = await db.query.userBadges.findMany({
