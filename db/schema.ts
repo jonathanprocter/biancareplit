@@ -11,15 +11,66 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   role: text("role").default("student").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  totalPoints: integer("total_points").default(0).notNull(),
-  level: integer("level").default(1).notNull(),
-  streakCount: integer("streak_count").default(0).notNull(),
+  totalPoints: integer("total_points").default(0),
+  level: integer("level").default(1),
+  streakCount: integer("streak_count").default(0),
   lastActive: timestamp("last_active").defaultNow().notNull(),
-  learningStyle: text("learning_style").default("visual").notNull(),
-  preferredStudyTime: integer("preferred_study_time").default(60).notNull(), // minutes per day
-  preferredTopics: text("preferred_topics").default("[]").notNull(),
+  learningStyle: text("learning_style"),
+  preferredStudyTime: integer("preferred_study_time").default(30),
+  preferredTopics: text("preferred_topics").default("[]"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Learning style assessment tables
+export const learningStyleQuestions = pgTable("learning_style_questions", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  category: text("category").notNull(), // visual, auditory, kinesthetic, reading/writing
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const learningStyleResponses = pgTable("learning_style_responses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  questionId: integer("question_id").references(() => learningStyleQuestions.id, { onDelete: 'cascade' }).notNull(),
+  response: integer("response").notNull(), // Scale of 1-5
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const learningStyleResults = pgTable("learning_style_results", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  visualScore: integer("visual_score").notNull(),
+  auditoryScore: integer("auditory_score").notNull(),
+  kinestheticScore: integer("kinesthetic_score").notNull(),
+  readingWritingScore: integer("reading_writing_score").notNull(),
+  dominantStyle: text("dominant_style").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Add learning style relations
+export const learningStyleQuestionRelations = relations(learningStyleQuestions, ({ many }) => ({
+  responses: many(learningStyleResponses),
+}));
+
+export const learningStyleResponseRelations = relations(learningStyleResponses, ({ one }) => ({
+  user: one(users, {
+    fields: [learningStyleResponses.userId],
+    references: [users.id],
+  }),
+  question: one(learningStyleQuestions, {
+    fields: [learningStyleResponses.questionId],
+    references: [learningStyleQuestions.id],
+  }),
+}));
+
+export const learningStyleResultRelations = relations(learningStyleResults, ({ one }) => ({
+  user: one(users, {
+    fields: [learningStyleResults.userId],
+    references: [users.id],
+  }),
+}));
 export const courses = pgTable("courses", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -32,32 +83,6 @@ export const courses = pgTable("courses", {
   estimatedHours: integer("estimated_hours").default(10).notNull(),
 });
 
-export const learningStyleQuestions = pgTable("learning_style_questions", {
-  id: serial("id").primaryKey(),
-  question: text("question").notNull(),
-  category: text("category").notNull(), // visual, auditory, kinesthetic, reading/writing
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const learningStyleResponses = pgTable("learning_style_responses", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  questionId: integer("question_id").references(() => learningStyleQuestions.id).notNull(),
-  response: integer("response").notNull(), // Scale of 1-5
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const learningStyleResults = pgTable("learning_style_results", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  visualScore: integer("visual_score").notNull(),
-  auditoryScore: integer("auditory_score").notNull(),
-  kinestheticScore: integer("kinesthetic_score").notNull(),
-  readingWritingScore: integer("reading_writing_score").notNull(),
-  dominantStyle: text("dominant_style").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
 export const modules = pgTable("modules", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
