@@ -1,16 +1,27 @@
-"""Main application module for the NCLEX coaching platform."""
-import os
-from flask import Flask
-from backend import create_app
-from backend.routes.health import bp as health_bp
 
-app = create_app()
-app.register_blueprint(health_bp)
+from flask import Flask, jsonify
+from datetime import datetime
+import psutil
+
+app = Flask(__name__)
+
+@app.route('/health')
+def health():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
+@app.route('/api/health')
+def api_health():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'system': {
+            'cpu_percent': psutil.cpu_percent(),
+            'memory_percent': psutil.virtual_memory().percent
+        }
+    })
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 8080))
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=True
-    )
+    app.run(host='0.0.0.0', port=8080)
