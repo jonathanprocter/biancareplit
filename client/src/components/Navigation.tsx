@@ -3,12 +3,24 @@ import { Button } from "@/components/ui/button";
 
 export function Navigation() {
   const [location] = useLocation();
+  const publicRoutes = ["/", "/register"];
   
-  const isLoggedIn = !["/", "/register"].includes(location);
-  
-  if (!isLoggedIn) {
+  if (publicRoutes.includes(location)) {
     return null;
   }
+
+  const linkClass = (path: string) =>
+    `text-lg font-semibold ${
+      location === path 
+        ? "text-primary" 
+        : "text-foreground hover:text-primary"
+    }`;
+
+  const handleLogout = () => {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    window.location.href = "/";
+  };
 
   return (
     <nav className="bg-background border-b border-border">
@@ -16,24 +28,20 @@ export function Navigation() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/dashboard">
-              <a className={`text-lg font-semibold ${location === "/dashboard" ? "text-primary" : "text-foreground hover:text-primary"}`}>
+              <span className={linkClass("/dashboard")}>
                 Dashboard
-              </a>
+              </span>
             </Link>
             <Link href="/progress">
-              <a className={`text-lg font-semibold ${location === "/progress" ? "text-primary" : "text-foreground hover:text-primary"}`}>
+              <span className={linkClass("/progress")}>
                 My Progress
-              </a>
+              </span>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
-              onClick={() => {
-                localStorage.removeItem('userId');
-                localStorage.removeItem('username');
-                window.location.href = "/";
-              }}
+              onClick={handleLogout}
             >
               Logout
             </Button>
