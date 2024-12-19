@@ -1,4 +1,3 @@
-
 """Main application module for the NCLEX coaching platform."""
 import os
 from backend import create_app
