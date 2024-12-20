@@ -1,4 +1,3 @@
-
 autoscale:
   enabled: true
   min_instances: 1

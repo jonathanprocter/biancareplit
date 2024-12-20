@@ -1,4 +1,3 @@
-
 import { Request, Response, NextFunction } from 'express';
 
 export class AppError extends Error {
@@ -12,7 +11,12 @@ export class AppError extends Error {
   }
 }
 
-export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = (
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   console.error('Application error:', err);
 
   if (res.headersSent) {
@@ -26,7 +30,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     error: {
       message,
       status,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   });
 };

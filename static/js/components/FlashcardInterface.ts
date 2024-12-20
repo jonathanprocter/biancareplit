@@ -62,7 +62,9 @@ class FlashcardSystem {
       };
 
       // Initialize and execute middleware system
-      const middlewareSystem = await initializeMiddlewareSystem(config.middleware);
+      const middlewareSystem = await initializeMiddlewareSystem(
+        config.middleware
+      );
       await middlewareSystem.execute(context);
 
       console.log('Configuration loaded:', {
@@ -126,10 +128,16 @@ class FlashcardSystem {
       try {
         console.log(`Initializing ${component.name}...`);
         const success = await component.init();
-        console.log(`${component.name} initialization ${success ? 'successful' : 'failed'}`);
+        console.log(
+          `${component.name} initialization ${
+            success ? 'successful' : 'failed'
+          }`
+        );
 
         if (!success && component.required) {
-          throw new Error(`Required component ${component.name} failed to initialize`);
+          throw new Error(
+            `Required component ${component.name} failed to initialize`
+          );
         }
       } catch (error) {
         console.error(`Error initializing ${component.name}:`, error);
@@ -173,7 +181,10 @@ class FlashcardSystem {
     }
   }
 
-  public getInitializationState(): InitializationState & { initialized: boolean; error?: string } {
+  public getInitializationState(): InitializationState & {
+    initialized: boolean;
+    error?: string;
+  } {
     return {
       ...this.initializationState,
       initialized: this.initialized,
@@ -198,15 +209,17 @@ export const FlashcardInterface = {
 
       if (!this.instance) {
         if (!this.instancePromise) {
-          this.instancePromise = new Promise<FlashcardSystem>(async (resolve, reject) => {
-            try {
-              console.log('Creating new FlashcardSystem instance...');
-              this.instance = new FlashcardSystem(rootElement);
-              resolve(this.instance);
-            } catch (error) {
-              reject(error);
+          this.instancePromise = new Promise<FlashcardSystem>(
+            async (resolve, reject) => {
+              try {
+                console.log('Creating new FlashcardSystem instance...');
+                this.instance = new FlashcardSystem(rootElement);
+                resolve(this.instance);
+              } catch (error) {
+                reject(error);
+              }
             }
-          });
+          );
         }
         await this.instancePromise;
       }

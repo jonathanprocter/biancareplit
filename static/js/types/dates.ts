@@ -13,12 +13,16 @@ export const DifficultyLevel = {
   Hard: 'hard',
 } as const;
 
-export type DifficultyLevel = (typeof DifficultyLevel)[keyof typeof DifficultyLevel];
+export type DifficultyLevel =
+  (typeof DifficultyLevel)[keyof typeof DifficultyLevel];
 
 export interface DateFormatOptions {
   format?: string;
   includeTime?: boolean;
-  locale?: Pick<Locale, 'code' | 'formatLong' | 'localize' | 'match' | 'options'>;
+  locale?: Pick<
+    Locale,
+    'code' | 'formatLong' | 'localize' | 'match' | 'options'
+  >;
   timeZone?: string;
   relative?: boolean;
 }
@@ -58,7 +62,9 @@ export const createFormattedDateResult = (
 });
 
 // Helper function to create invalid date result
-export const createInvalidDateResult = (formatted: string): FormattedDateResult => ({
+export const createInvalidDateResult = (
+  formatted: string
+): FormattedDateResult => ({
   formatted,
   valid: false,
   date: null,
@@ -80,7 +86,12 @@ export const DEFAULT_TIME_FORMAT = 'p';
 export const DEFAULT_DATETIME_FORMAT = `${DEFAULT_DATE_FORMAT} ${DEFAULT_TIME_FORMAT}`;
 
 // Component variants
-export type ButtonVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success';
+export type ButtonVariant =
+  | 'default'
+  | 'secondary'
+  | 'destructive'
+  | 'outline'
+  | 'success';
 export type BadgeVariant = ButtonVariant;
 export type BadgeDisplayVariant = BadgeVariant | null | undefined;
 
@@ -89,7 +100,10 @@ export interface DateFormatterConfig {
   defaultTimeZone: string;
   defaultFormat?: string;
   defaultTimeFormat?: string;
-  defaultLocale?: Pick<Locale, 'code' | 'formatLong' | 'localize' | 'match' | 'options'>;
+  defaultLocale?: Pick<
+    Locale,
+    'code' | 'formatLong' | 'localize' | 'match' | 'options'
+  >;
   formats?: {
     [key: string]: Intl.DateTimeFormatOptions;
   };
@@ -97,7 +111,8 @@ export interface DateFormatterConfig {
 
 export const isDifficultyLevel = (value: unknown): value is DifficultyLevel => {
   return (
-    typeof value === 'string' && Object.values(DifficultyLevel).includes(value as DifficultyLevel)
+    typeof value === 'string' &&
+    Object.values(DifficultyLevel).includes(value as DifficultyLevel)
   );
 };
 

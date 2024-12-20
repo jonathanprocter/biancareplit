@@ -41,14 +41,21 @@ class QuestionLoader {
 
   async _makeRequest(category, retryCount) {
     try {
-      console.log(`Loading questions for category: ${category} (attempt ${retryCount + 1})`);
+      console.log(
+        `Loading questions for category: ${category} (attempt ${
+          retryCount + 1
+        })`
+      );
 
-      const response = await fetch(`${this.baseUrl}/api/nursing/questions/${category}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `${this.baseUrl}/api/nursing/questions/${category}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -70,7 +77,7 @@ class QuestionLoader {
 
         // Exponential backoff
         const backoffTime = Math.min(1000 * Math.pow(2, retryCount), 8000);
-        await new Promise((resolve) => setTimeout(resolve, backoffTime));
+        await new Promise(resolve => setTimeout(resolve, backoffTime));
 
         return this.loadQuestionsForCategory(category, retryCount + 1);
       }
@@ -80,24 +87,30 @@ class QuestionLoader {
   }
 
   async generateAdditionalQuestions(section) {
-    if (this.questionCache.get(section)?.length >= this.MINIMUM_QUESTIONS_THRESHOLD) {
+    if (
+      this.questionCache.get(section)?.length >=
+      this.MINIMUM_QUESTIONS_THRESHOLD
+    ) {
       return true;
     }
 
     try {
       console.log(`Generating additional questions for section: ${section}`);
 
-      const response = await fetch(`${this.baseUrl}/api/nursing/questions/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          section: section,
-          count: this.BATCH_SIZE,
-          difficulty: 'mixed',
-        }),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/api/nursing/questions/generate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            section: section,
+            count: this.BATCH_SIZE,
+            difficulty: 'mixed',
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to generate questions: ${response.status}`);
@@ -108,16 +121,26 @@ class QuestionLoader {
       if (newQuestions.questions && Array.isArray(newQuestions.questions)) {
         const cacheKey = `${section}-${new Date().toISOString().split('T')[0]}`;
         const currentQuestions = this.questionCache.get(cacheKey) || [];
-        this.questionCache.set(cacheKey, [...currentQuestions, ...newQuestions.questions]);
+        this.questionCache.set(cacheKey, [
+          ...currentQuestions,
+          ...newQuestions.questions,
+        ]);
 
-        console.log(`Successfully added ${newQuestions.questions.length} questions to ${section}`);
+        console.log(
+          `Successfully added ${newQuestions.questions.length} questions to ${section}`
+        );
         return true;
       }
 
       return false;
     } catch (error) {
-      console.error(`Failed to generate additional questions for ${section}:`, error);
-      showError(`Failed to generate questions for ${section}: ${error.message}`);
+      console.error(
+        `Failed to generate additional questions for ${section}:`,
+        error
+      );
+      showError(
+        `Failed to generate questions for ${section}: ${error.message}`
+      );
       return false;
     }
   }

@@ -1,5 +1,11 @@
 import { db } from '@db';
-import { users, courses, enrollments, learningPaths, learningPathCourses } from '@db/schema';
+import {
+  users,
+  courses,
+  enrollments,
+  learningPaths,
+  learningPathCourses,
+} from '@db/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
 
 interface RecommendationFactors {
@@ -27,7 +33,7 @@ export async function generatePersonalizedPath(
     where: and(eq(enrollments.userId, userId), eq(enrollments.completed, true)),
   });
 
-  const completedCourseIds = completedEnrollments.map((e) => e.courseId);
+  const completedCourseIds = completedEnrollments.map(e => e.courseId);
 
   const factors: RecommendationFactors = {
     learningStyle: user.learningStyle,
@@ -46,8 +52,14 @@ export async function generatePersonalizedPath(
     .values({
       userId,
       name: `Personalized Path - ${new Date().toLocaleDateString()}`,
-      description: 'Automatically generated based on your progress and preferences',
-      difficulty: user.level <= 2 ? 'beginner' : user.level <= 4 ? 'intermediate' : 'advanced',
+      description:
+        'Automatically generated based on your progress and preferences',
+      difficulty:
+        user.level <= 2
+          ? 'beginner'
+          : user.level <= 4
+          ? 'intermediate'
+          : 'advanced',
       estimatedCompletionTime: recommendedCourses.reduce(
         (sum, course) => sum + course.estimatedHours * 60,
         0
@@ -75,50 +87,67 @@ async function findRecommendedCourses(factors: RecommendationFactors) {
   });
 
   // Enhanced scoring system with additional factors
-  const scoredCourses = availableCourses.map((course) => {
+  const scoredCourses = availableCourses.map(course => {
     try {
-      const topics = Array.isArray(course.topics) ? course.topics : JSON.parse(course.topics || '[]');
-      
+      const topics = Array.isArray(course.topics)
+        ? course.topics
+        : JSON.parse(course.topics || '[]');
+
       // Topic preference score (0-10)
-      const topicMatchScore = factors.preferredTopics.filter((topic) =>
-        topics.includes(topic)
-      ).length * 2;
+      const topicMatchScore =
+        factors.preferredTopics.filter(topic => topics.includes(topic)).length *
+        2;
 
       // Time fit score (0-10, lower is better)
-      const timeMatchScore = 10 - Math.min(10, Math.abs(factors.availableTimeMinutes - (course.estimatedHours || 1) * 60) / 30);
+      const timeMatchScore =
+        10 -
+        Math.min(
+          10,
+          Math.abs(
+            factors.availableTimeMinutes - (course.estimatedHours || 1) * 60
+          ) / 30
+        );
 
       // Enhanced difficulty matching (0-10)
       const difficultyMap = { beginner: 1, intermediate: 2, advanced: 3 };
       const userDifficultyLevel = Math.ceil(factors.currentLevel / 2);
-      const courseDifficultyLevel = difficultyMap[course.difficulty as keyof typeof difficultyMap] || 2;
-      
+      const courseDifficultyLevel =
+        difficultyMap[course.difficulty as keyof typeof difficultyMap] || 2;
+
       // Adaptive difficulty - slightly challenge the user
       const preferredDifficulty = Math.min(3, userDifficultyLevel + 0.5);
-      const difficultyScore = 10 - Math.abs(preferredDifficulty - courseDifficultyLevel) * 3;
+      const difficultyScore =
+        10 - Math.abs(preferredDifficulty - courseDifficultyLevel) * 3;
 
       // Learning pace adjustment
-      const learningPaceScore = factors.completedCourseIds.length > 0 ? 
-        Math.min(10, (factors.completedCourseIds.length / 5) * 10) : 5;
+      const learningPaceScore =
+        factors.completedCourseIds.length > 0
+          ? Math.min(10, (factors.completedCourseIds.length / 5) * 10)
+          : 5;
 
       // Progressive learning score - favor courses that build on completed ones
-      const prerequisites = Array.isArray(course.prerequisites) ? 
-        course.prerequisites : 
-        JSON.parse(course.prerequisites || '[]');
-      const progressiveScore = prerequisites.some(p => factors.completedCourseIds.includes(p)) ? 10 : 0;
+      const prerequisites = Array.isArray(course.prerequisites)
+        ? course.prerequisites
+        : JSON.parse(course.prerequisites || '[]');
+      const progressiveScore = prerequisites.some(p =>
+        factors.completedCourseIds.includes(p)
+      )
+        ? 10
+        : 0;
 
       // Weighted scoring (total max: 100)
-      const totalScore = 
-        topicMatchScore * 2 +        // Max 20: Topic relevance
-        timeMatchScore * 1.5 +       // Max 15: Time fit
-        difficultyScore * 2.5 +      // Max 25: Adaptive difficulty
-        learningPaceScore * 1 +      // Max 10: Learning pace
-        progressiveScore * 3;        // Max 30: Progressive learning
+      const totalScore =
+        topicMatchScore * 2 + // Max 20: Topic relevance
+        timeMatchScore * 1.5 + // Max 15: Time fit
+        difficultyScore * 2.5 + // Max 25: Adaptive difficulty
+        learningPaceScore * 1 + // Max 10: Learning pace
+        progressiveScore * 3; // Max 30: Progressive learning
 
       return {
         ...course,
         score: totalScore,
         matchDetails: {
-          topicMatch: Math.round(topicMatchScore / 2),  // Normalize to 0-10
+          topicMatch: Math.round(topicMatchScore / 2), // Normalize to 0-10
           timeMatch: Math.round(timeMatchScore),
           difficultyMatch: Math.round(difficultyScore),
           learningPace: Math.round(learningPaceScore),

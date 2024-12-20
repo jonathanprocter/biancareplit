@@ -47,7 +47,11 @@ class AICoachService {
       console.log('Health check response:', data);
 
       if (!response.ok) {
-        throw new Error(`API health check failed: ${response.status} - ${JSON.stringify(data)}`);
+        throw new Error(
+          `API health check failed: ${response.status} - ${JSON.stringify(
+            data
+          )}`
+        );
       }
       return true;
     } catch (error) {
@@ -74,7 +78,9 @@ class AICoachService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Server error: ${response.status} - ${JSON.stringify(errorData)}`);
+        throw new Error(
+          `Server error: ${response.status} - ${JSON.stringify(errorData)}`
+        );
       }
 
       return await response.json();
@@ -101,7 +107,9 @@ class AICoachService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Server error: ${response.status} - ${JSON.stringify(errorData)}`);
+        throw new Error(
+          `Server error: ${response.status} - ${JSON.stringify(errorData)}`
+        );
       }
 
       return await response.json();
@@ -119,7 +127,9 @@ class AICoachService {
       'fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
     notification.innerHTML = `
             <p class="font-bold">Error</p>
-            <p>${error.message || 'An error occurred with the AI Coach service'}</p>
+            <p>${
+              error.message || 'An error occurred with the AI Coach service'
+            }</p>
         `;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 5000);

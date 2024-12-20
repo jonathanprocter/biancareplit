@@ -31,10 +31,10 @@ interface SkillTreeVisualizationProps {
   height?: number;
 }
 
-export function SkillTreeVisualization({ 
+export function SkillTreeVisualization({
   skills,
   width = 800,
-  height = 600 
+  height = 600,
 }: SkillTreeVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [nodes, setNodes] = useState<SkillNode[]>([]);
@@ -47,7 +47,7 @@ export function SkillTreeVisualization({
       ...skill,
       x: Math.random() * width,
       y: Math.random() * height,
-      velocity: { x: 0, y: 0 }
+      velocity: { x: 0, y: 0 },
     }));
     setNodes(initialNodes);
   }, [skills, width, height]);
@@ -57,13 +57,13 @@ export function SkillTreeVisualization({
     setNodes(prevNodes => {
       const newNodes = prevNodes.map(node => ({
         ...node,
-        velocity: node.velocity || { x: 0, y: 0 }
+        velocity: node.velocity || { x: 0, y: 0 },
       }));
-      
+
       // Apply forces
       for (let i = 0; i < newNodes.length; i++) {
         const node = newNodes[i];
-        
+
         // Repulsion between nodes
         for (let j = 0; j < newNodes.length; j++) {
           if (i === j) continue;
@@ -72,12 +72,12 @@ export function SkillTreeVisualization({
           const dy = other.y - node.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           if (distance < 1) continue;
-          
+
           const force = Math.min(2000, 1000 / (distance * distance));
           node.velocity.x -= (dx / distance) * force * 0.05;
           node.velocity.y -= (dy / distance) * force * 0.05;
         }
-        
+
         // Attraction along prerequisites
         node.prerequisites.forEach(prereqId => {
           const prereq = newNodes.find(n => n.id === prereqId);
@@ -91,25 +91,25 @@ export function SkillTreeVisualization({
             node.velocity.y += dy * strength;
           }
         });
-        
+
         // Center gravity
         const centerForce = 0.005;
         node.velocity.x += (width / 2 - node.x) * centerForce;
         node.velocity.y += (height / 2 - node.y) * centerForce;
-        
+
         // Apply velocity with damping
         const damping = 0.7;
         node.x += node.velocity.x * damping;
         node.y += node.velocity.y * damping;
         node.velocity.x *= damping;
         node.velocity.y *= damping;
-        
+
         // Boundary constraints with padding
         const padding = 50;
         node.x = Math.max(padding, Math.min(width - padding, node.x));
         node.y = Math.max(padding, Math.min(height - padding, node.y));
       }
-      
+
       return newNodes;
     });
   }, [width, height]);
@@ -123,9 +123,9 @@ export function SkillTreeVisualization({
       simulateForces();
       animationFrameId = requestAnimationFrame(animate);
     };
-    
+
     animate();
-    
+
     return () => {
       isAnimating = false;
       if (animationFrameId) {
@@ -135,34 +135,36 @@ export function SkillTreeVisualization({
   }, [simulateForces]);
 
   const renderConnections = useCallback(() => {
-    return nodes.flatMap(node =>
-      node.prerequisites.map(prereqId => {
-        const prereq = nodes.find(n => n.id === prereqId);
-        if (!prereq) return null;
-        
-        const key = `${node.id}-${prereqId}`;
-        const strokeColor = node.mastered ? "#22c55e" : "#94a3b8";
-        
-        return (
-          <motion.line
-            key={key}
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ 
-              pathLength: 1, 
-              opacity: 1,
-              x1: prereq.x,
-              y1: prereq.y,
-              x2: node.x,
-              y2: node.y
-            }}
-            transition={{ duration: 0.6, ease: "easeInOut" }}
-            stroke={strokeColor}
-            strokeWidth={2}
-            strokeDasharray="4"
-          />
-        );
-      })
-    ).filter(Boolean);
+    return nodes
+      .flatMap(node =>
+        node.prerequisites.map(prereqId => {
+          const prereq = nodes.find(n => n.id === prereqId);
+          if (!prereq) return null;
+
+          const key = `${node.id}-${prereqId}`;
+          const strokeColor = node.mastered ? '#22c55e' : '#94a3b8';
+
+          return (
+            <motion.line
+              key={key}
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{
+                pathLength: 1,
+                opacity: 1,
+                x1: prereq.x,
+                y1: prereq.y,
+                x2: node.x,
+                y2: node.y,
+              }}
+              transition={{ duration: 0.6, ease: 'easeInOut' }}
+              stroke={strokeColor}
+              strokeWidth={2}
+              strokeDasharray="4"
+            />
+          );
+        })
+      )
+      .filter(Boolean);
   }, [nodes]);
 
   return (
@@ -174,13 +176,13 @@ export function SkillTreeVisualization({
         className="absolute inset-0"
       >
         <g>{renderConnections()}</g>
-        {nodes.map((node) => (
+        {nodes.map(node => (
           <g key={node.id}>
             <motion.circle
               cx={node.x}
               cy={node.y}
               r={30}
-              fill={node.mastered ? "#22c55e" : "#94a3b8"}
+              fill={node.mastered ? '#22c55e' : '#94a3b8'}
               opacity={hoveredSkill === node.id ? 0.8 : 0.6}
               whileHover={{ scale: 1.1 }}
               onClick={() => setSelectedSkill(node)}
@@ -211,8 +213,12 @@ export function SkillTreeVisualization({
             <Card className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">{selectedSkill.name}</h3>
-                  <p className="text-sm text-gray-500">{selectedSkill.description}</p>
+                  <h3 className="text-lg font-semibold">
+                    {selectedSkill.name}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {selectedSkill.description}
+                  </p>
                 </div>
                 <button
                   onClick={() => setSelectedSkill(null)}
@@ -221,10 +227,12 @@ export function SkillTreeVisualization({
                   ×
                 </button>
               </div>
-              
+
               <div className="mt-4 space-y-2">
                 <div className="flex items-center gap-2">
-                  <Badge variant={selectedSkill.mastered ? "success" : "secondary"}>
+                  <Badge
+                    variant={selectedSkill.mastered ? 'success' : 'secondary'}
+                  >
                     {selectedSkill.mastered ? (
                       <CheckCircle className="w-4 h-4 mr-1" />
                     ) : (
@@ -234,7 +242,7 @@ export function SkillTreeVisualization({
                   </Badge>
                   <Badge variant="outline">{selectedSkill.category}</Badge>
                 </div>
-                
+
                 {selectedSkill.prerequisites.length > 0 && (
                   <div className="text-sm">
                     <span className="font-medium">Prerequisites:</span>
@@ -247,7 +255,9 @@ export function SkillTreeVisualization({
                             variant="outline"
                             className="cursor-pointer"
                             onClick={() => {
-                              const prereqNode = nodes.find(n => n.id === prereqId);
+                              const prereqNode = nodes.find(
+                                n => n.id === prereqId
+                              );
                               if (prereqNode) setSelectedSkill(prereqNode);
                             }}
                           >

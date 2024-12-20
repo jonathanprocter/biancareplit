@@ -1,4 +1,3 @@
-
-url: "sqlite:///app.db"
+url: 'sqlite:///app.db'
 pool_size: 5
 pool_timeout: 30

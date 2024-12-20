@@ -6,9 +6,9 @@ const Analytics = () => {
 
   useEffect(() => {
     fetch('/api/analytics/dashboard')
-      .then((res) => res.json())
-      .then((data) => setAnalyticsData(data))
-      .catch((err) => console.error('Analytics error:', err));
+      .then(res => res.json())
+      .then(data => setAnalyticsData(data))
+      .catch(err => console.error('Analytics error:', err));
   }, []);
 
   if (!analyticsData) return <div>Loading analytics...</div>;

@@ -31,8 +31,14 @@ const initialQuestionBank: InitialQuestionBank = {
   questions: [
     {
       id: 'SAFE_BEG_001',
-      question: 'Which of the following is the first step in implementing standard precautions?',
-      options: ['Put on sterile gloves', 'Perform hand hygiene', 'Wear a mask', 'Put on a gown'],
+      question:
+        'Which of the following is the first step in implementing standard precautions?',
+      options: [
+        'Put on sterile gloves',
+        'Perform hand hygiene',
+        'Wear a mask',
+        'Put on a gown',
+      ],
       correctAnswer: 1,
       explanation:
         'Hand hygiene is always the first step in standard precautions as it is the most effective way to prevent the spread of infections.',
@@ -56,11 +62,18 @@ const initialQuestionBank: InitialQuestionBank = {
   ],
   categories: {
     'Safe and Effective Care Environment': {
-      subcategories: ['Infection Control', 'Safety and Infection Control', 'Management of Care'],
+      subcategories: [
+        'Infection Control',
+        'Safety and Infection Control',
+        'Management of Care',
+      ],
       questionCount: 0,
     },
     'Health Promotion and Maintenance': {
-      subcategories: ['Growth and Development', 'Prevention and Early Detection of Disease'],
+      subcategories: [
+        'Growth and Development',
+        'Prevention and Early Detection of Disease',
+      ],
       questionCount: 0,
     },
     'Psychosocial Integrity': {
@@ -149,7 +162,9 @@ class NCLEXQuestionBank {
 
     return `Correct Answer: ${correctAnswer}\n\nExplanation:\n${explanation}${
       keyPoints ? `\n\nKey Points:\n${keyPoints}` : ''
-    }${relatedConcepts ? `\n\nRelated Concepts:\n${relatedConcepts}` : ''}`.trim();
+    }${
+      relatedConcepts ? `\n\nRelated Concepts:\n${relatedConcepts}` : ''
+    }`.trim();
   }
 
   createFlashcard(question: NCLEXQuestion): any {
@@ -171,12 +186,18 @@ class NCLEXQuestionBank {
         reviewCount: 0,
       };
     } catch (error) {
-      console.error(`Failed to create flashcard for question ${question.id}:`, error);
+      console.error(
+        `Failed to create flashcard for question ${question.id}:`,
+        error
+      );
       return null;
     }
   }
 
-  async adjustQuestionDifficulty(userId: string, category: string): Promise<string | undefined> {
+  async adjustQuestionDifficulty(
+    userId: string,
+    category: string
+  ): Promise<string | undefined> {
     try {
       const userMetrics = this.adaptiveMetrics.userPerformance.get(userId);
       if (!userMetrics) return;
@@ -227,10 +248,13 @@ class NCLEXQuestionBank {
       userMetrics.totalAttempts++;
       if (isCorrect) userMetrics.correctAnswers++;
       userMetrics.averageTime =
-        (userMetrics.averageTime * (userMetrics.totalAttempts - 1) + timeTaken) /
+        (userMetrics.averageTime * (userMetrics.totalAttempts - 1) +
+          timeTaken) /
         userMetrics.totalAttempts;
 
-      const categoryStrength = userMetrics.categoryStrengths.get(question.category) || {
+      const categoryStrength = userMetrics.categoryStrengths.get(
+        question.category
+      ) || {
         correct: 0,
         total: 0,
       };
@@ -254,14 +278,16 @@ class NCLEXQuestionBank {
     try {
       console.log('Initializing NCLEX Question Bank...');
 
-      Object.entries(initialQuestionBank.categories).forEach(([category, data]) => {
-        this.categories.set(category, {
-          subcategories: new Set(data.subcategories),
-          questionCount: 0,
-        });
-      });
+      Object.entries(initialQuestionBank.categories).forEach(
+        ([category, data]) => {
+          this.categories.set(category, {
+            subcategories: new Set(data.subcategories),
+            questionCount: 0,
+          });
+        }
+      );
 
-      initialQuestionBank.questions.forEach((questionData) => {
+      initialQuestionBank.questions.forEach(questionData => {
         const question = this.createQuestion(questionData);
         this.questions.set(question.id, question);
 
@@ -298,16 +324,19 @@ class NCLEXQuestionBank {
     };
   }
 
-  getQuestionsByCategory(category: string, difficulty: string): NCLEXQuestion[] {
+  getQuestionsByCategory(
+    category: string,
+    difficulty: string
+  ): NCLEXQuestion[] {
     return Array.from(this.questions.values()).filter(
-      (q) => q.category === category && q.difficulty === difficulty
+      q => q.category === category && q.difficulty === difficulty
     );
   }
 
   getDueFlashcards(): any[] {
     const now = new Date();
     return Array.from(this.flashcards.values())
-      .filter((card) => card.nextReviewDate <= now)
+      .filter(card => card.nextReviewDate <= now)
       .sort((a, b) => a.nextReviewDate - b.nextReviewDate);
   }
 
@@ -327,8 +356,11 @@ class NCLEXQuestionBank {
 
 const QuestionBankContext = React.createContext<QuestionBankContextType>(null);
 
-const QuestionBankProvider: React.FC<QuestionBankProviderProps> = ({ children }) => {
-  const [questionBank, setQuestionBank] = useState<QuestionBankContextType>(null);
+const QuestionBankProvider: React.FC<QuestionBankProviderProps> = ({
+  children,
+}) => {
+  const [questionBank, setQuestionBank] =
+    useState<QuestionBankContextType>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -354,7 +386,8 @@ const QuestionBankProvider: React.FC<QuestionBankProviderProps> = ({ children })
       'div',
       { className: 'text-center p-4' },
       React.createElement('div', {
-        className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2',
+        className:
+          'animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2',
       }),
       React.createElement('div', null, 'Initializing question bank...')
     );
@@ -369,7 +402,11 @@ const QuestionBankProvider: React.FC<QuestionBankProviderProps> = ({ children })
     );
   }
 
-  return React.createElement(QuestionBankContext.Provider, { value: questionBank }, children);
+  return React.createElement(
+    QuestionBankContext.Provider,
+    { value: questionBank },
+    children
+  );
 };
 
 export { NCLEXQuestionBank, QuestionBankProvider, QuestionBankContext };

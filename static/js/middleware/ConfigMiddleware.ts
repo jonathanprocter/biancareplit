@@ -46,7 +46,10 @@ export class ConfigMiddleware extends BaseMiddleware {
     }
   }
 
-  protected async _execute(context: ExecutionContext, next: NextFunction): Promise<void> {
+  protected async _execute(
+    context: ExecutionContext,
+    next: NextFunction
+  ): Promise<void> {
     try {
       // Validate context
       const validatedContext = ConfigContextSchema.parse(context);

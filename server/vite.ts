@@ -28,7 +28,9 @@ export async function setupVite(app: Express, server: Server) {
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
-        if (msg.includes('[TypeScript] Found 0 errors. Watching for file changes')) {
+        if (
+          msg.includes('[TypeScript] Found 0 errors. Watching for file changes')
+        ) {
           log('no errors found', 'tsc');
           return;
         }
@@ -55,7 +57,12 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(__dirname, '..', 'client', 'index.html');
+      const clientTemplate = path.resolve(
+        __dirname,
+        '..',
+        'client',
+        'index.html'
+      );
 
       // always reload the index.html file from disk incase it changes
       const template = await fs.promises.readFile(clientTemplate, 'utf-8');

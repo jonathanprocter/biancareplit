@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -13,24 +12,24 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     hmr: {
-      clientPort: 443
+      clientPort: 443,
     },
     proxy: {
       '/api': {
         target: 'http://0.0.0.0:3001',
         changeOrigin: true,
-        secure: false
-      }
-    }
+        secure: false,
+      },
+    },
   },
   root: path.resolve(__dirname, './client'),
   build: {
     outDir: '../dist',
-    sourcemap: true
+    sourcemap: true,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './client/src')
-    }
-  }
+      '@': path.resolve(__dirname, './client/src'),
+    },
+  },
 });

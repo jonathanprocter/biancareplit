@@ -10,7 +10,10 @@ export const useApi = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const request = async <T>(url: string, options: ApiOptions = {}): Promise<T | null> => {
+  const request = async <T>(
+    url: string,
+    options: ApiOptions = {}
+  ): Promise<T | null> => {
     const { retries = 3, retryDelay = 1000, ...axiosOptions } = options;
 
     setIsLoading(true);
@@ -33,7 +36,9 @@ export const useApi = () => {
           throw error;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, retryDelay * attempts));
+        await new Promise(resolve =>
+          setTimeout(resolve, retryDelay * attempts)
+        );
       }
     }
 

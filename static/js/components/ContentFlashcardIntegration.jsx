@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Progress } from '../../components/ui/progress';
 import flashcardSystem, { FlashcardSystem } from '../flashcard-system';
@@ -77,13 +82,18 @@ class ErrorBoundary extends React.Component {
                 </p>
                 {this.state.errorTime && (
                   <p className="text-sm text-gray-500 mb-4">
-                    Error occurred at: {new Date(this.state.errorTime).toLocaleString()}
+                    Error occurred at:{' '}
+                    {new Date(this.state.errorTime).toLocaleString()}
                   </p>
                 )}
               </div>
 
               <div className="space-y-4">
-                <Button className="w-full" variant="outline" onClick={this.handleRetry}>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={this.handleRetry}
+                >
                   Try Again
                 </Button>
 
@@ -92,18 +102,19 @@ class ErrorBoundary extends React.Component {
                 </Button>
               </div>
 
-              {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
-                <details className="mt-4 text-left">
-                  <summary className="cursor-pointer text-sm text-gray-600">
-                    Technical Details
-                  </summary>
-                  <pre className="mt-2 text-xs bg-gray-100 p-4 rounded overflow-auto">
-                    {this.state.error?.stack}
-                    <hr className="my-2" />
-                    {this.state.errorInfo.componentStack}
-                  </pre>
-                </details>
-              )}
+              {process.env.NODE_ENV === 'development' &&
+                this.state.errorInfo && (
+                  <details className="mt-4 text-left">
+                    <summary className="cursor-pointer text-sm text-gray-600">
+                      Technical Details
+                    </summary>
+                    <pre className="mt-2 text-xs bg-gray-100 p-4 rounded overflow-auto">
+                      {this.state.error?.stack}
+                      <hr className="my-2" />
+                      {this.state.errorInfo.componentStack}
+                    </pre>
+                  </details>
+                )}
             </div>
           </CardContent>
         </Card>
@@ -154,7 +165,7 @@ const ContentFlashcardIntegration = () => {
               )
             : {};
         const validSlots = Array.isArray(slots)
-          ? slots.filter((slot) => slot && typeof slot.id === 'number')
+          ? slots.filter(slot => slot && typeof slot.id === 'number')
           : [];
 
         // Enhanced progress calculation considering multiple factors
@@ -167,18 +178,28 @@ const ContentFlashcardIntegration = () => {
         // Calculate completion progress using logarithmic scale with safety check
         const completionProgress =
           validCompletedCards > 0
-            ? Math.min(1, Math.log(validCompletedCards + 1) / Math.log(BASE_TARGET + 1))
+            ? Math.min(
+                1,
+                Math.log(validCompletedCards + 1) / Math.log(BASE_TARGET + 1)
+              )
             : 0;
 
         // Calculate category coverage with validation
         const uniqueCategories = Object.keys(validCategories).length;
         const TARGET_CATEGORIES = 5; // Minimum number of categories to cover
-        const categoryProgress = Math.min(1, uniqueCategories / TARGET_CATEGORIES);
+        const categoryProgress = Math.min(
+          1,
+          uniqueCategories / TARGET_CATEGORIES
+        );
 
         // Calculate slot efficiency (completed slots vs total slots)
-        const completedSlots = validSlots.filter((slot) => slot?.completed).length;
+        const completedSlots = validSlots.filter(
+          slot => slot?.completed
+        ).length;
         const slotProgress =
-          validSlots.length > 0 ? Math.min(1, completedSlots / validSlots.length) : 0;
+          validSlots.length > 0
+            ? Math.min(1, completedSlots / validSlots.length)
+            : 0;
 
         // Weighted average of all components with validation
         const totalProgress =
@@ -189,7 +210,10 @@ const ContentFlashcardIntegration = () => {
           100;
 
         // Ensure progress stays between 0-100 with rounding
-        const finalProgress = Math.min(100, Math.max(0, Math.round(totalProgress)));
+        const finalProgress = Math.min(
+          100,
+          Math.max(0, Math.round(totalProgress))
+        );
 
         // Update progress state
         setProgress(finalProgress);
@@ -228,7 +252,7 @@ const ContentFlashcardIntegration = () => {
         // Initialize flashcard system with proper validation
         if (!flashcardSystem.initialized) {
           console.log('Initializing flashcard system...');
-          const initResult = await flashcardSystem.initialize().catch((err) => {
+          const initResult = await flashcardSystem.initialize().catch(err => {
             console.error('Flashcard system initialization failed:', err);
             throw new Error(`Initialization failed: ${err.message}`);
           });
@@ -241,32 +265,58 @@ const ContentFlashcardIntegration = () => {
 
         // Fetch and validate analytics data
         console.log('Fetching initial analytics...');
-        const initialAnalytics = await flashcardSystem.initializeAnalytics().catch((err) => {
-          console.error('Analytics initialization failed:', err);
-          throw new Error(`Analytics failed: ${err.message}`);
-        });
+        const initialAnalytics = await flashcardSystem
+          .initializeAnalytics()
+          .catch(err => {
+            console.error('Analytics initialization failed:', err);
+            throw new Error(`Analytics failed: ${err.message}`);
+          });
 
         // Validate analytics data structure
-        const requiredFields = ['totalStudyTime', 'completedCards', 'accuracy', 'categoryProgress'];
-        const missingFields = requiredFields.filter((field) => !(field in initialAnalytics));
+        const requiredFields = [
+          'totalStudyTime',
+          'completedCards',
+          'accuracy',
+          'categoryProgress',
+        ];
+        const missingFields = requiredFields.filter(
+          field => !(field in initialAnalytics)
+        );
 
         if (missingFields.length > 0) {
-          console.error('Invalid analytics data - missing fields:', missingFields);
-          throw new Error(`Invalid analytics data: missing ${missingFields.join(', ')}`);
+          console.error(
+            'Invalid analytics data - missing fields:',
+            missingFields
+          );
+          throw new Error(
+            `Invalid analytics data: missing ${missingFields.join(', ')}`
+          );
         }
 
         // Update analytics state with validation
-        setAnalytics((prevAnalytics) => ({
+        setAnalytics(prevAnalytics => ({
           ...prevAnalytics,
-          totalStudyTime: Math.max(0, Number(initialAnalytics.totalStudyTime) || 0),
-          completedCards: Math.max(0, Number(initialAnalytics.completedCards) || 0),
-          accuracy: Math.min(1, Math.max(0, Number(initialAnalytics.accuracy) || 0)),
+          totalStudyTime: Math.max(
+            0,
+            Number(initialAnalytics.totalStudyTime) || 0
+          ),
+          completedCards: Math.max(
+            0,
+            Number(initialAnalytics.completedCards) || 0
+          ),
+          accuracy: Math.min(
+            1,
+            Math.max(0, Number(initialAnalytics.accuracy) || 0)
+          ),
           categoryProgress: initialAnalytics.categoryProgress || {},
           lastUpdate: Date.now(),
         }));
 
         // Update progress with validated completedCards
-        const validCompletedCards = Math.max(0, Number(initialAnalytics.completedCards) || 0);
+        const validCompletedCards = Math.max(
+          0,
+          Number(initialAnalytics.completedCards) || 0
+        );
         updateProgress(validCompletedCards);
 
         // Create and validate new study session
@@ -279,13 +329,18 @@ const ContentFlashcardIntegration = () => {
         }
 
         // Update study slots with the new validated session
-        setStudySlots((prev) => {
-          const validSlots = prev.filter((slot) => slot && typeof slot.id === 'number');
+        setStudySlots(prev => {
+          const validSlots = prev.filter(
+            slot => slot && typeof slot.id === 'number'
+          );
           return [...validSlots, session];
         });
 
         setInitialized(true);
-        console.log('System initialized successfully with session:', session.id);
+        console.log(
+          'System initialized successfully with session:',
+          session.id
+        );
       } catch (err) {
         console.error(`Failed to initialize (attempt ${retryCount + 1}):`, err);
 
@@ -293,7 +348,7 @@ const ContentFlashcardIntegration = () => {
           const delay = RETRY_DELAY * Math.pow(2, retryCount);
           console.log(`Retrying in ${delay}ms...`);
 
-          await new Promise((resolve) => setTimeout(resolve, delay));
+          await new Promise(resolve => setTimeout(resolve, delay));
           return initializeSystem(retryCount + 1);
         }
 
@@ -331,7 +386,7 @@ const ContentFlashcardIntegration = () => {
         if (!newSlot?.id) {
           throw new Error('Failed to create new study slot');
         }
-        setStudySlots((prev) => [...prev, newSlot]);
+        setStudySlots(prev => [...prev, newSlot]);
         return { status: 'new_slot_created', slotId: newSlot.id };
       }
 
@@ -347,16 +402,23 @@ const ContentFlashcardIntegration = () => {
       }
 
       // Enhanced duration calculation with improved validation and outlier handling
-      const slotDuration = Math.max(0, Math.floor((endTime - startTime) / 1000));
+      const slotDuration = Math.max(
+        0,
+        Math.floor((endTime - startTime) / 1000)
+      );
       const MIN_DURATION = 1; // Minimum 1 second
       const MAX_DURATION = 7200; // Cap at 2 hours to prevent outliers
       const INACTIVE_THRESHOLD = 300; // 5 minutes threshold for inactivity
 
       // Validate and adjust duration
-      let activeTime = Math.min(Math.max(slotDuration, MIN_DURATION), MAX_DURATION);
+      let activeTime = Math.min(
+        Math.max(slotDuration, MIN_DURATION),
+        MAX_DURATION
+      );
 
       // Track and handle inactive periods
-      const inactiveTime = slotDuration > MAX_DURATION ? slotDuration - MAX_DURATION : 0;
+      const inactiveTime =
+        slotDuration > MAX_DURATION ? slotDuration - MAX_DURATION : 0;
       if (inactiveTime > 0) {
         console.warn(`Detected inactive period: ${inactiveTime}s`);
         window.dispatchEvent(
@@ -377,13 +439,13 @@ const ContentFlashcardIntegration = () => {
         // Create a new slot if break is too long
         if (breakDuration > INACTIVE_THRESHOLD * 2) {
           const newSlot = flashcardSystem.startNewSession('content');
-          setStudySlots((prev) => [...prev, newSlot]);
+          setStudySlots(prev => [...prev, newSlot]);
           return updateAnalytics(); // Recursive call with new slot
         }
       }
 
       // Enhanced slot validation and analysis
-      const validSlots = studySlots.filter((slot) => {
+      const validSlots = studySlots.filter(slot => {
         const isValid =
           slot &&
           typeof slot.duration === 'number' &&
@@ -397,21 +459,24 @@ const ContentFlashcardIntegration = () => {
       });
 
       // Calculate session metrics with outlier detection
-      const sessionDurations = validSlots.map((slot) => slot.duration);
+      const sessionDurations = validSlots.map(slot => slot.duration);
       const averageSessionDuration =
         sessionDurations.length > 0
-          ? sessionDurations.reduce((sum, duration) => sum + duration, 0) / sessionDurations.length
+          ? sessionDurations.reduce((sum, duration) => sum + duration, 0) /
+            sessionDurations.length
           : 0;
 
       // Detect and handle outlier sessions
       const stdDev = Math.sqrt(
         sessionDurations.reduce(
-          (sum, duration) => sum + Math.pow(duration - averageSessionDuration, 2),
+          (sum, duration) =>
+            sum + Math.pow(duration - averageSessionDuration, 2),
           0
         ) / (sessionDurations.length || 1)
       );
 
-      const isOutlier = Math.abs(slotDuration - averageSessionDuration) > 2 * stdDev;
+      const isOutlier =
+        Math.abs(slotDuration - averageSessionDuration) > 2 * stdDev;
       if (isOutlier) {
         console.warn('Outlier session detected:', {
           duration: slotDuration,
@@ -427,14 +492,15 @@ const ContentFlashcardIntegration = () => {
         slotId: currentSlot.id,
         completedCards: Math.max(0, Number(analytics.completedCards) || 0),
         accuracy: Math.min(1, Math.max(0, Number(analytics.accuracy) || 0)),
-        categoryProgress: Object.entries(analytics.categoryProgress || {}).reduce(
-          (acc, [key, value]) => {
-            const normalizedKey = key.toLowerCase().trim();
-            const normalizedValue = Math.max(0, Number(value) || 0);
-            return normalizedKey ? { ...acc, [normalizedKey]: normalizedValue } : acc;
-          },
-          {}
-        ),
+        categoryProgress: Object.entries(
+          analytics.categoryProgress || {}
+        ).reduce((acc, [key, value]) => {
+          const normalizedKey = key.toLowerCase().trim();
+          const normalizedValue = Math.max(0, Number(value) || 0);
+          return normalizedKey
+            ? { ...acc, [normalizedKey]: normalizedValue }
+            : acc;
+        }, {}),
         timestamp: now,
         metadata: {
           sessionType: currentSlot.type || 'standard',
@@ -447,28 +513,42 @@ const ContentFlashcardIntegration = () => {
         },
       };
 
-      console.log('Updating analytics with enhanced payload:', analyticsPayload);
+      console.log(
+        'Updating analytics with enhanced payload:',
+        analyticsPayload
+      );
 
       // Save results with improved error handling
-      const updatedAnalytics = await flashcardSystem.saveResult(analyticsPayload).catch((err) => {
-        console.error('Failed to save result:', err);
-        throw new Error(`Analytics update failed: ${err.message}`);
-      });
+      const updatedAnalytics = await flashcardSystem
+        .saveResult(analyticsPayload)
+        .catch(err => {
+          console.error('Failed to save result:', err);
+          throw new Error(`Analytics update failed: ${err.message}`);
+        });
 
       // Comprehensive data validation
       if (!updatedAnalytics || typeof updatedAnalytics !== 'object') {
         throw new Error('Invalid analytics response format');
       }
 
-      const requiredFields = ['totalStudyTime', 'completedCards', 'accuracy', 'categoryProgress'];
-      const missingFields = requiredFields.filter((field) => !(field in updatedAnalytics));
+      const requiredFields = [
+        'totalStudyTime',
+        'completedCards',
+        'accuracy',
+        'categoryProgress',
+      ];
+      const missingFields = requiredFields.filter(
+        field => !(field in updatedAnalytics)
+      );
 
       if (missingFields.length > 0) {
-        throw new Error(`Missing required analytics fields: ${missingFields.join(', ')}`);
+        throw new Error(
+          `Missing required analytics fields: ${missingFields.join(', ')}`
+        );
       }
 
       // Update analytics state with enhanced validation
-      setAnalytics((prev) => {
+      setAnalytics(prev => {
         const normalizedCategoryProgress = Object.entries(
           updatedAnalytics.categoryProgress || {}
         ).reduce(
@@ -489,7 +569,10 @@ const ContentFlashcardIntegration = () => {
             prev.completedCards,
             Number(updatedAnalytics.completedCards) || 0
           ),
-          accuracy: Math.min(1, Math.max(0, Number(updatedAnalytics.accuracy) || 0)),
+          accuracy: Math.min(
+            1,
+            Math.max(0, Number(updatedAnalytics.accuracy) || 0)
+          ),
           categoryProgress: {
             ...prev.categoryProgress,
             ...normalizedCategoryProgress,
@@ -499,8 +582,8 @@ const ContentFlashcardIntegration = () => {
       });
 
       // Update study slots with enhanced tracking
-      setStudySlots((prev) =>
-        prev.map((slot) => {
+      setStudySlots(prev =>
+        prev.map(slot => {
           if (slot.id !== currentSlot.id) return slot;
 
           return {
@@ -518,7 +601,10 @@ const ContentFlashcardIntegration = () => {
       );
 
       // Update progress with improved calculation
-      const validCompletedCards = Math.max(0, Number(updatedAnalytics.completedCards) || 0);
+      const validCompletedCards = Math.max(
+        0,
+        Number(updatedAnalytics.completedCards) || 0
+      );
       updateProgress(validCompletedCards);
 
       // Emit success event for monitoring
@@ -562,12 +648,18 @@ const ContentFlashcardIntegration = () => {
         await initializeSystem();
 
         // Listen for flashcard system events
-        const initHandler = (event) => {
-          console.log('[ContentFlashcardIntegration] System initialized:', event.detail);
+        const initHandler = event => {
+          console.log(
+            '[ContentFlashcardIntegration] System initialized:',
+            event.detail
+          );
         };
 
-        const errorHandler = (event) => {
-          console.error('[ContentFlashcardIntegration] System error:', event.detail);
+        const errorHandler = event => {
+          console.error(
+            '[ContentFlashcardIntegration] System error:',
+            event.detail
+          );
           setError(event.detail.error);
         };
 
@@ -582,7 +674,10 @@ const ContentFlashcardIntegration = () => {
           }
         };
       } catch (err) {
-        console.error('[ContentFlashcardIntegration] Initialization failed:', err);
+        console.error(
+          '[ContentFlashcardIntegration] Initialization failed:',
+          err
+        );
         setError(err.message);
       } finally {
         setLoading(false);
@@ -643,26 +738,40 @@ const ContentFlashcardIntegration = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div>
-              <h4 className="font-semibold text-sm text-gray-600">Study Time</h4>
-              <p className="text-2xl font-bold">{Math.floor(analytics.totalStudyTime / 60)}m</p>
+              <h4 className="font-semibold text-sm text-gray-600">
+                Study Time
+              </h4>
+              <p className="text-2xl font-bold">
+                {Math.floor(analytics.totalStudyTime / 60)}m
+              </p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm text-gray-600">Cards Completed</h4>
+              <h4 className="font-semibold text-sm text-gray-600">
+                Cards Completed
+              </h4>
               <p className="text-2xl font-bold">{analytics.completedCards}</p>
             </div>
             <div>
               <h4 className="font-semibold text-sm text-gray-600">Accuracy</h4>
-              <p className="text-2xl font-bold">{Math.round(analytics.accuracy * 100)}%</p>
+              <p className="text-2xl font-bold">
+                {Math.round(analytics.accuracy * 100)}%
+              </p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm text-gray-600">Categories</h4>
-              <p className="text-2xl font-bold">{Object.keys(analytics.categoryProgress).length}</p>
+              <h4 className="font-semibold text-sm text-gray-600">
+                Categories
+              </h4>
+              <p className="text-2xl font-bold">
+                {Object.keys(analytics.categoryProgress).length}
+              </p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold text-sm text-gray-600">Study Sessions</h4>
-            {studySlots.map((slot) => (
+            <h4 className="font-semibold text-sm text-gray-600">
+              Study Sessions
+            </h4>
+            {studySlots.map(slot => (
               <div
                 key={slot.id}
                 className={`flex justify-between items-center p-3 rounded-lg border ${

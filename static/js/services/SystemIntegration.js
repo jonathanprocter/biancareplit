@@ -29,15 +29,17 @@ class SystemIntegration extends EventEmitter {
 
       const result = await this.flashcardSystem.initialize();
       if (!result.success) {
-        throw new Error(result.error || 'Failed to initialize flashcard system');
+        throw new Error(
+          result.error || 'Failed to initialize flashcard system'
+        );
       }
 
       // Set up event listeners
-      this.flashcardSystem.on('cardAdded', (card) => {
+      this.flashcardSystem.on('cardAdded', card => {
         this.emit('cardAdded', card);
       });
 
-      this.flashcardSystem.on('resultSaved', (result) => {
+      this.flashcardSystem.on('resultSaved', result => {
         this.emit('resultSaved', result);
       });
 
@@ -83,7 +85,7 @@ const systemIntegration = new SystemIntegration();
 // Initialize when the DOM is loaded
 if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {
-    systemIntegration.initialize().catch((error) => {
+    systemIntegration.initialize().catch(error => {
       console.error('[SystemIntegration] Failed to initialize:', error);
     });
   });

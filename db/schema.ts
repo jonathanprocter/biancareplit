@@ -1,4 +1,11 @@
-import { pgTable, text, serial, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  boolean,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { relations } from 'drizzle-orm';
@@ -56,27 +63,36 @@ export const learningStyleResults = pgTable('learning_style_results', {
 });
 
 // Add learning style relations
-export const learningStyleQuestionRelations = relations(learningStyleQuestions, ({ many }) => ({
-  responses: many(learningStyleResponses),
-}));
+export const learningStyleQuestionRelations = relations(
+  learningStyleQuestions,
+  ({ many }) => ({
+    responses: many(learningStyleResponses),
+  })
+);
 
-export const learningStyleResponseRelations = relations(learningStyleResponses, ({ one }) => ({
-  user: one(users, {
-    fields: [learningStyleResponses.userId],
-    references: [users.id],
-  }),
-  question: one(learningStyleQuestions, {
-    fields: [learningStyleResponses.questionId],
-    references: [learningStyleQuestions.id],
-  }),
-}));
+export const learningStyleResponseRelations = relations(
+  learningStyleResponses,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [learningStyleResponses.userId],
+      references: [users.id],
+    }),
+    question: one(learningStyleQuestions, {
+      fields: [learningStyleResponses.questionId],
+      references: [learningStyleQuestions.id],
+    }),
+  })
+);
 
-export const learningStyleResultRelations = relations(learningStyleResults, ({ one }) => ({
-  user: one(users, {
-    fields: [learningStyleResults.userId],
-    references: [users.id],
-  }),
-}));
+export const learningStyleResultRelations = relations(
+  learningStyleResults,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [learningStyleResults.userId],
+      references: [users.id],
+    }),
+  })
+);
 export const courses = pgTable('courses', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
@@ -165,31 +181,40 @@ export const userPreferences = pgTable('user_preferences', {
 });
 
 // Add relations
-export const learningPathRelations = relations(learningPaths, ({ one, many }) => ({
-  user: one(users, {
-    fields: [learningPaths.userId],
-    references: [users.id],
-  }),
-  courses: many(learningPathCourses),
-}));
+export const learningPathRelations = relations(
+  learningPaths,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [learningPaths.userId],
+      references: [users.id],
+    }),
+    courses: many(learningPathCourses),
+  })
+);
 
-export const learningPathCourseRelations = relations(learningPathCourses, ({ one }) => ({
-  learningPath: one(learningPaths, {
-    fields: [learningPathCourses.learningPathId],
-    references: [learningPaths.id],
-  }),
-  course: one(courses, {
-    fields: [learningPathCourses.courseId],
-    references: [courses.id],
-  }),
-}));
+export const learningPathCourseRelations = relations(
+  learningPathCourses,
+  ({ one }) => ({
+    learningPath: one(learningPaths, {
+      fields: [learningPathCourses.learningPathId],
+      references: [learningPaths.id],
+    }),
+    course: one(courses, {
+      fields: [learningPathCourses.courseId],
+      references: [courses.id],
+    }),
+  })
+);
 
-export const userPreferenceRelations = relations(userPreferences, ({ one }) => ({
-  user: one(users, {
-    fields: [userPreferences.userId],
-    references: [users.id],
-  }),
-}));
+export const userPreferenceRelations = relations(
+  userPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userPreferences.userId],
+      references: [users.id],
+    }),
+  })
+);
 export const userBadges = pgTable('user_badges', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')

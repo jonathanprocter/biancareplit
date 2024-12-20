@@ -61,14 +61,14 @@ export const InstructorDashboard: React.FC = () => {
             <input
               type="file"
               accept=".pdf,.docx,.txt"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={e => setFile(e.target.files?.[0] || null)}
               className="border p-2 w-full"
             />
           </div>
           <div>
             <select
               value={contentType}
-              onChange={(e) => setContentType(e.target.value)}
+              onChange={e => setContentType(e.target.value)}
               className="border p-2 w-full"
             >
               <option value="general">General Content</option>
@@ -81,7 +81,7 @@ export const InstructorDashboard: React.FC = () => {
               type="text"
               placeholder="Topic"
               value={topic}
-              onChange={(e) => setTopic(e.target.value)}
+              onChange={e => setTopic(e.target.value)}
               className="border p-2 w-full"
             />
           </div>
@@ -101,7 +101,7 @@ export const InstructorDashboard: React.FC = () => {
           <div>
             <textarea
               value={overview}
-              onChange={(e) => setOverview(e.target.value)}
+              onChange={e => setOverview(e.target.value)}
               placeholder="Enter course overview..."
               className="border p-2 w-full h-32"
             />
@@ -109,7 +109,7 @@ export const InstructorDashboard: React.FC = () => {
           <div>
             <select
               value={timeframe}
-              onChange={(e) => setTimeframe(e.target.value)}
+              onChange={e => setTimeframe(e.target.value)}
               className="border p-2 w-full"
             >
               <option value="daily">Daily Overview</option>

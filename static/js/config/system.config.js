@@ -107,10 +107,13 @@ class ConfigurationManager {
       if (typeof definition === 'object' && !('type' in definition)) {
         this.validateConfiguration(config[key], definition);
       } else {
-        const expectedType = typeof definition === 'string' ? definition : definition.type;
+        const expectedType =
+          typeof definition === 'string' ? definition : definition.type;
         const valueType = typeof config[key];
         if (valueType !== expectedType) {
-          throw new Error(`Invalid type for ${key}. Expected ${expectedType}, got ${valueType}`);
+          throw new Error(
+            `Invalid type for ${key}. Expected ${expectedType}, got ${valueType}`
+          );
         }
       }
     }

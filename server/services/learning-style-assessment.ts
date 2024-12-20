@@ -1,6 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { db } from '@db';
-import { learningStyleQuestions, learningStyleResponses, learningStyleResults } from '@db/schema';
+import {
+  learningStyleQuestions,
+  learningStyleResponses,
+  learningStyleResults,
+} from '@db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 // the newest Anthropic model is "claude-3-5-sonnet-20241022" which was released October 22, 2024
@@ -20,7 +24,7 @@ export async function submitQuizResponses(
 ) {
   // Save responses
   await db.insert(learningStyleResponses).values(
-    responses.map((r) => ({
+    responses.map(r => ({
       userId,
       questionId: r.questionId,
       response: r.response,
@@ -29,7 +33,7 @@ export async function submitQuizResponses(
 
   // Get questions with responses
   const questionsWithResponses = await Promise.all(
-    responses.map(async (r) => {
+    responses.map(async r => {
       const question = await db.query.learningStyleQuestions.findFirst({
         where: eq(learningStyleQuestions.id, r.questionId),
       });
@@ -99,7 +103,10 @@ async function analyzeResponses(responses: any[]) {
     console.error('Error analyzing responses:', error);
     return {
       learningStyleAnalysis: 'Unable to generate AI analysis at this time.',
-      recommendations: ['Focus on varied learning materials', 'Try different study methods'],
+      recommendations: [
+        'Focus on varied learning materials',
+        'Try different study methods',
+      ],
       strengths: ['Self-awareness in taking this assessment'],
       areasForImprovement: ['Consider exploring multiple learning approaches'],
     };
@@ -114,7 +121,7 @@ function calculateScores(responses: any[]) {
     readingWriting: 0,
   };
 
-  responses.forEach((response) => {
+  responses.forEach(response => {
     const score = response.response;
     switch (response.category) {
       case 'visual':

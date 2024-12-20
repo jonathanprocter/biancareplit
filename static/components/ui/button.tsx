@@ -19,8 +19,10 @@ const Button = React.forwardRef<
         'disabled:pointer-events-none disabled:opacity-50',
         {
           primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-          secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-          outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+          secondary:
+            'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          outline:
+            'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         }[variant],
         {
           sm: 'h-8 px-3 text-xs',

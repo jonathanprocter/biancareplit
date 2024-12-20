@@ -32,7 +32,11 @@ export const ConnectionStatus: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="font-semibold">Connection Status</span>
-          <div className={`w-3 h-3 rounded-full ${getStatusColor(connectionQuality)}`} />
+          <div
+            className={`w-3 h-3 rounded-full ${getStatusColor(
+              connectionQuality
+            )}`}
+          />
         </div>
 
         <div className="space-y-2 text-sm">

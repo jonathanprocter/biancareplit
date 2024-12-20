@@ -48,12 +48,24 @@ class PerformanceMiddleware extends BaseMiddleware {
       return result;
     } catch (error) {
       // Track error performance
-      await this.trackPerformance(context, startTime, memoryStart, 'error', error);
+      await this.trackPerformance(
+        context,
+        startTime,
+        memoryStart,
+        'error',
+        error
+      );
       throw error;
     }
   }
 
-  async trackPerformance(context, startTime, memoryStart, status, error = null) {
+  async trackPerformance(
+    context,
+    startTime,
+    memoryStart,
+    status,
+    error = null
+  ) {
     const endTime = performance.now();
     const duration = endTime - startTime;
     const memoryUsed = this.getMemoryUsage() - memoryStart;
@@ -95,7 +107,8 @@ class PerformanceMiddleware extends BaseMiddleware {
 
     // Update average duration
     const oldTotal =
-      this.aggregateMetrics.averageDuration * (this.aggregateMetrics.totalRequests - 1);
+      this.aggregateMetrics.averageDuration *
+      (this.aggregateMetrics.totalRequests - 1);
     this.aggregateMetrics.averageDuration =
       (oldTotal + metrics.duration) / this.aggregateMetrics.totalRequests;
 
@@ -155,7 +168,9 @@ class PerformanceMiddleware extends BaseMiddleware {
       }
 
       if (cleanedCount > 0) {
-        console.log(`[PerformanceMiddleware] Cleaned ${cleanedCount} old metrics`);
+        console.log(
+          `[PerformanceMiddleware] Cleaned ${cleanedCount} old metrics`
+        );
       }
     }, 60 * 60 * 1000); // Run every hour
   }
@@ -185,7 +200,8 @@ class PerformanceMiddleware extends BaseMiddleware {
       errorRate:
         this.aggregateMetrics.totalRequests > 0
           ? (
-              (this.aggregateMetrics.totalErrors / this.aggregateMetrics.totalRequests) *
+              (this.aggregateMetrics.totalErrors /
+                this.aggregateMetrics.totalRequests) *
               100
             ).toFixed(2)
           : 0,
@@ -199,11 +215,17 @@ class PerformanceMiddleware extends BaseMiddleware {
     if (this.aggregateMetrics.totalRequests === 0) return 100;
 
     const errorPenalty =
-      (this.aggregateMetrics.totalErrors / this.aggregateMetrics.totalRequests) * 30;
+      (this.aggregateMetrics.totalErrors /
+        this.aggregateMetrics.totalRequests) *
+      30;
     const warningPenalty =
-      (this.aggregateMetrics.warningCount / this.aggregateMetrics.totalRequests) * 15;
+      (this.aggregateMetrics.warningCount /
+        this.aggregateMetrics.totalRequests) *
+      15;
     const criticalPenalty =
-      (this.aggregateMetrics.criticalCount / this.aggregateMetrics.totalRequests) * 25;
+      (this.aggregateMetrics.criticalCount /
+        this.aggregateMetrics.totalRequests) *
+      25;
 
     const baseScore = 100;
     const finalScore = Math.max(

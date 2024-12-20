@@ -32,7 +32,9 @@ const StudyCoach: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState<NCLEXQuestion | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<NCLEXQuestion | null>(
+    null
+  );
 
   useEffect(() => {
     // Add initial greeting
@@ -81,7 +83,7 @@ const StudyCoach: React.FC = () => {
 
       const question = await response.json();
       setCurrentQuestion(question);
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
@@ -90,11 +92,12 @@ const StudyCoach: React.FC = () => {
       ]);
     } catch (error) {
       console.error('Error generating NCLEX question:', error);
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an error generating the question. Please try again.',
+          content:
+            'Sorry, I encountered an error generating the question. Please try again.',
         },
       ]);
     } finally {
@@ -107,7 +110,7 @@ const StudyCoach: React.FC = () => {
 
     const userMessage = inputValue.trim();
     setInputValue('');
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
     if (
@@ -118,10 +121,13 @@ const StudyCoach: React.FC = () => {
     } else {
       try {
         const response = await aiCoachService.getStudyTip(userMessage);
-        setMessages((prev) => [...prev, { role: 'assistant', content: response.tip }]);
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: response.tip },
+        ]);
       } catch (error) {
         console.error('Error getting response:', error);
-        setMessages((prev) => [
+        setMessages(prev => [
           ...prev,
           {
             role: 'assistant',
@@ -173,8 +179,8 @@ const StudyCoach: React.FC = () => {
       <div className="chat-input">
         <textarea
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={(e) => {
+          onChange={e => setInputValue(e.target.value)}
+          onKeyPress={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               handleSendMessage();
@@ -183,7 +189,11 @@ const StudyCoach: React.FC = () => {
           placeholder="Ask a question..."
           rows={2}
         />
-        <button onClick={handleSendMessage} disabled={isLoading} className="btn btn-primary">
+        <button
+          onClick={handleSendMessage}
+          disabled={isLoading}
+          className="btn btn-primary"
+        >
           Send
         </button>
       </div>

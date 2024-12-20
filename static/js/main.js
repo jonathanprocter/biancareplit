@@ -85,8 +85,12 @@ const initializeApp = async () => {
   try {
     // Initialize core services and middleware
     const { configManager } = await import('./config/system.config.js');
-    const { initializeMiddlewareSystem } = await import('./middleware/system.middleware.js');
-    const { default: SystemIntegration } = await import('./SystemIntegration.js');
+    const { initializeMiddlewareSystem } = await import(
+      './middleware/system.middleware.js'
+    );
+    const { default: SystemIntegration } = await import(
+      './SystemIntegration.js'
+    );
 
     try {
       // Initialize configuration first
@@ -130,8 +134,11 @@ const initializeApp = async () => {
       });
 
       // Add global error boundary for system integration
-      window.addEventListener('unhandledrejection', (event) => {
-        console.error('[SystemIntegration] Unhandled promise rejection:', event.reason);
+      window.addEventListener('unhandledrejection', event => {
+        console.error(
+          '[SystemIntegration] Unhandled promise rejection:',
+          event.reason
+        );
         systemIntegration.handleError(event.reason);
       });
 
@@ -142,17 +149,17 @@ const initializeApp = async () => {
 
       // Register enhanced event handlers
       if (middleware.eventEmitter) {
-        middleware.eventEmitter.on('performance_warning', (data) => {
+        middleware.eventEmitter.on('performance_warning', data => {
           console.warn('Performance warning:', data);
           systemIntegration.handlePerformanceWarning(data);
         });
 
-        middleware.eventEmitter.on('error', (error) => {
+        middleware.eventEmitter.on('error', error => {
           console.error('Middleware error:', error);
           systemIntegration.handleError(error);
         });
 
-        middleware.eventEmitter.on('analytics_update', (data) => {
+        middleware.eventEmitter.on('analytics_update', data => {
           console.log('Analytics update received:', data);
           systemIntegration.handleAnalyticsUpdate(data);
         });
@@ -161,7 +168,10 @@ const initializeApp = async () => {
       console.log('Enhanced middleware system initialized successfully');
 
       // Make system integration available globally in development
-      if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      if (
+        process.env.NODE_ENV === 'development' &&
+        typeof window !== 'undefined'
+      ) {
         window.systemIntegration = systemIntegration;
       }
 
@@ -172,7 +182,10 @@ const initializeApp = async () => {
       console.log('Flashcard system initialized successfully');
 
       // Make the system available globally in development
-      if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      if (
+        process.env.NODE_ENV === 'development' &&
+        typeof window !== 'undefined'
+      ) {
         window.flashcardSystem = flashcardSystem;
         //EnhancedFlashcardSystem is removed because it's not defined in the new code
       }
@@ -194,7 +207,8 @@ const initializeApp = async () => {
     console.error('Failed to initialize application:', error);
     const errorMessage = document.getElementById('error-message');
     if (errorMessage) {
-      errorMessage.textContent = 'Application initialization failed. Please refresh the page.';
+      errorMessage.textContent =
+        'Application initialization failed. Please refresh the page.';
       errorMessage.style.display = 'block';
     }
   }

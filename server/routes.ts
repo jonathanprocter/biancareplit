@@ -42,7 +42,11 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Authentication middleware
-  const requireAuth = (req: Request, res: Response, next: (error?: any) => void) => {
+  const requireAuth = (
+    req: Request,
+    res: Response,
+    next: (error?: any) => void
+  ) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -64,11 +68,17 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (existingUser) {
-        console.log('[API] Registration failed: Username taken -', userData.username);
+        console.log(
+          '[API] Registration failed: Username taken -',
+          userData.username
+        );
         return res.status(400).json({ message: 'Username already taken' });
       }
       if (existingEmail) {
-        console.log('[API] Registration failed: Email exists -', userData.email);
+        console.log(
+          '[API] Registration failed: Email exists -',
+          userData.email
+        );
         return res.status(400).json({ message: 'Email already registered' });
       }
 
@@ -240,14 +250,16 @@ export function registerRoutes(app: Express): Server {
       const accuracy =
         userEnrollments.reduce((sum, enrollment) => {
           if (!enrollment.totalAttempts) return sum;
-          return sum + (enrollment.correctAnswers || 0) / enrollment.totalAttempts;
+          return (
+            sum + (enrollment.correctAnswers || 0) / enrollment.totalAttempts
+          );
         }, 0) / Math.max(userEnrollments.length, 1);
 
       res.json({
         totalPoints,
         accuracy: Math.round(accuracy * 100),
         enrollments: userEnrollments,
-        badges: earnedBadges.map((ub) => ({
+        badges: earnedBadges.map(ub => ({
           ...ub.badge,
           earnedAt: ub.earnedAt,
         })),
@@ -267,7 +279,9 @@ export function registerRoutes(app: Express): Server {
         .update(enrollments)
         .set({
           points: sql`COALESCE(${enrollments.points}, 0) + ${correct ? 10 : 0}`,
-          correctAnswers: sql`COALESCE(${enrollments.correctAnswers}, 0) + ${correct ? 1 : 0}`,
+          correctAnswers: sql`COALESCE(${enrollments.correctAnswers}, 0) + ${
+            correct ? 1 : 0
+          }`,
           totalAttempts: sql`COALESCE(${enrollments.totalAttempts}, 0) + 1`,
         })
         .where(eq(enrollments.id, enrollmentId))
@@ -287,12 +301,12 @@ export function registerRoutes(app: Express): Server {
       });
 
       const newBadges = availableBadges.filter(
-        (badge) => !existingBadges.some((ub) => ub.badgeId === badge.id)
+        badge => !existingBadges.some(ub => ub.badgeId === badge.id)
       );
 
       if (newBadges.length > 0) {
         await db.insert(userBadges).values(
-          newBadges.map((badge) => ({
+          newBadges.map(badge => ({
             userId,
             badgeId: badge.id,
           }))
@@ -305,89 +319,100 @@ export function registerRoutes(app: Express): Server {
     }
   });
   // Learning path routes
-  app.post('/api/users/:userId/learning-paths', requireAuth, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
+  app.post(
+    '/api/users/:userId/learning-paths',
+    requireAuth,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId);
 
-      if (isNaN(userId) || userId !== req.session.userId) {
-        return res.status(403).json({ message: 'Unauthorized' });
-      }
+        if (isNaN(userId) || userId !== req.session.userId) {
+          return res.status(403).json({ message: 'Unauthorized' });
+        }
 
-      console.log('[API] Generating learning path for user:', userId);
-      
-      const learningPath = await generatePersonalizedPath(userId);
-      
-      if (!learningPath) {
-        throw new Error('Failed to generate learning path');
-      }
+        console.log('[API] Generating learning path for user:', userId);
 
-      const pathWithCourses = await db.query.learningPaths.findFirst({
-        where: eq(learningPaths.id, learningPath.id),
-        with: {
-          courses: {
-            with: {
-              course: {
-                with: {
-                  instructor: true,
+        const learningPath = await generatePersonalizedPath(userId);
+
+        if (!learningPath) {
+          throw new Error('Failed to generate learning path');
+        }
+
+        const pathWithCourses = await db.query.learningPaths.findFirst({
+          where: eq(learningPaths.id, learningPath.id),
+          with: {
+            courses: {
+              with: {
+                course: {
+                  with: {
+                    instructor: true,
+                  },
                 },
               },
             },
           },
-        },
-      });
+        });
 
-      if (!pathWithCourses) {
-        throw new Error('Failed to fetch generated learning path');
+        if (!pathWithCourses) {
+          throw new Error('Failed to fetch generated learning path');
+        }
+
+        console.log(
+          '[API] Successfully generated learning path:',
+          pathWithCourses.id
+        );
+        res.json(pathWithCourses);
+      } catch (error) {
+        console.error('[API] Failed to generate learning path:', error);
+        res.status(500).json({
+          message: 'Failed to generate learning path',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
       }
-
-      console.log('[API] Successfully generated learning path:', pathWithCourses.id);
-      res.json(pathWithCourses);
-    } catch (error) {
-      console.error('[API] Failed to generate learning path:', error);
-      res.status(500).json({ 
-        message: 'Failed to generate learning path',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
     }
-  });
+  );
 
-  app.get('/api/users/:userId/learning-paths', requireAuth, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
+  app.get(
+    '/api/users/:userId/learning-paths',
+    requireAuth,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId);
 
-      if (isNaN(userId) || userId !== req.session.userId) {
-        return res.status(403).json({ message: 'Unauthorized' });
-      }
+        if (isNaN(userId) || userId !== req.session.userId) {
+          return res.status(403).json({ message: 'Unauthorized' });
+        }
 
-      console.log('[API] Fetching learning paths for user:', userId);
+        console.log('[API] Fetching learning paths for user:', userId);
 
-      const paths = await db.query.learningPaths.findMany({
-        where: eq(learningPaths.userId, userId),
-        with: {
-          courses: {
-            with: {
-              course: {
-                with: {
-                  instructor: true,
+        const paths = await db.query.learningPaths.findMany({
+          where: eq(learningPaths.userId, userId),
+          with: {
+            courses: {
+              with: {
+                course: {
+                  with: {
+                    instructor: true,
+                  },
                 },
               },
+              orderBy: [{ order: 'asc' }],
             },
-            orderBy: [{ order: 'asc' }],
           },
-        },
-        orderBy: [{ createdAt: 'desc' }],
-      });
+          orderBy: [{ createdAt: 'desc' }],
+        });
 
-      console.log('[API] Found learning paths:', paths.length);
-      res.json(paths);
-    } catch (error) {
-      console.error('[API] Failed to fetch learning paths:', error);
-      res.status(500).json({ 
-        message: 'Failed to fetch learning paths',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+        console.log('[API] Found learning paths:', paths.length);
+        res.json(paths);
+      } catch (error) {
+        console.error('[API] Failed to fetch learning paths:', error);
+        res.status(500).json({
+          message: 'Failed to fetch learning paths',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
     }
-  });
+  );
 
   app.put('/api/users/:userId/preferences', requireAuth, async (req, res) => {
     try {

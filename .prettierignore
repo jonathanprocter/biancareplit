@@ -1,9 +1,36 @@
 
+# Dependencies
 node_modules
+.npm
+.yarn
+
+# Build outputs
 dist
 build
 coverage
 .next
 public
+
+# Python related
+__pycache__
+*.pyc
+.pythonlibs
+.venv
+venv
+
+# Generated files
 *.min.js
 *.d.ts
+.cache
+.local
+
+# IDE and system files
+.vscode
+.idea
+.DS_Store
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -117,7 +117,7 @@ export const servicesContainer = new ServicesContainer();
 // Initialize on page load
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
-    servicesContainer.initialize().catch((error) => {
+    servicesContainer.initialize().catch(error => {
       console.error('Failed to initialize services:', error);
     });
   });

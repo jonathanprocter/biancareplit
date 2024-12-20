@@ -9,7 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -17,6 +17,7 @@
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": ".",
+    "types": ["node", "prettier"],
     "paths": {
       "@/*": ["./client/src/*"],
       "@db": ["./db/index.ts"],
@@ -24,10 +25,6 @@
       "@server/*": ["./server/*"]
     }
   },
-  "include": [
-    "client/src/**/*",
-    "db/**/*",
-    "server/**/*"
-  ],
+  "include": ["client/src/**/*", "db/**/*", "server/**/*"],
   "exclude": ["node_modules", "dist", "build"]
 }

@@ -94,7 +94,7 @@ async function startServer() {
 }
 
 // Start the server
-startServer().catch((error) => {
+startServer().catch(error => {
   console.error('Fatal error during server startup:', error);
   process.exit(1);
 });

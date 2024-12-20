@@ -20,7 +20,10 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: Date | string, options: DateFormatOptions = {}): string {
+export function formatDate(
+  date: Date | string,
+  options: DateFormatOptions = {}
+): string {
   const parsedDate = typeof date === 'string' ? parseISO(date) : date;
 
   if (!isValid(parsedDate)) {
@@ -100,13 +103,24 @@ export function calculateConfidence(
 
   // Adjust based on difficulty
   if (difficulty === 'advanced' || difficulty === 'hard') baseConfidence -= 1;
-  else if (difficulty === 'beginner' || difficulty === 'easy') baseConfidence += 1;
+  else if (difficulty === 'beginner' || difficulty === 'easy')
+    baseConfidence += 1;
 
   // Ensure confidence is between 1-5
   return Math.max(1, Math.min(5, baseConfidence));
 }
 
 // Re-export everything from dates module
-export { isDifficultyLevel, DEFAULT_DATE_FORMAT, DEFAULT_TIME_FORMAT, DEFAULT_DATETIME_FORMAT };
+export {
+  isDifficultyLevel,
+  DEFAULT_DATE_FORMAT,
+  DEFAULT_TIME_FORMAT,
+  DEFAULT_DATETIME_FORMAT,
+};
 
-export type { DateFormatOptions, FormattedDateResult, DifficultyLevel, DateFormatterConfig };
+export type {
+  DateFormatOptions,
+  FormattedDateResult,
+  DifficultyLevel,
+  DateFormatterConfig,
+};

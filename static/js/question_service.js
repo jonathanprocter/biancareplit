@@ -114,14 +114,14 @@ class QuestionService {
   startBufferMaintenance() {
     // Check buffer levels every minute
     setInterval(() => {
-      this.fillBuffers().catch((error) => {
+      this.fillBuffers().catch(error => {
         console.error('Error in buffer maintenance:', error);
       });
     }, 60000);
 
     // Listen for window focus events to refresh buffers
     window.addEventListener('focus', () => {
-      this.fillBuffers().catch((error) => {
+      this.fillBuffers().catch(error => {
         console.error('Error in buffer refresh:', error);
       });
     });
@@ -133,7 +133,7 @@ class QuestionService {
 
       // If buffer is getting low, trigger a fill
       if (buffer.length < this.MIN_BUFFER_SIZE) {
-        this.fillBuffers().catch((error) => {
+        this.fillBuffers().catch(error => {
           console.error('Error filling buffers:', error);
         });
       }
@@ -163,9 +163,11 @@ const questionService = new QuestionService();
 
 // Start the service when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-  questionService.initialize().catch((error) => {
+  questionService.initialize().catch(error => {
     console.error('Failed to initialize QuestionService:', error);
-    showErrorNotification('Question service initialization failed. Please refresh the page.');
+    showErrorNotification(
+      'Question service initialization failed. Please refresh the page.'
+    );
   });
 });
 

@@ -12,7 +12,12 @@ import {
 import { useToast } from '../../hooks/use-toast';
 import type { SystemIntegration } from '../types/js/SystemIntegration';
 import type { StudyMaterialHandler } from '../types/js/study-material-handler';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../../components/ui/tabs';
 import { Search } from 'lucide-react';
 
 // Add debug logging utility
@@ -53,7 +58,9 @@ interface QuestionBankContextType {
 }
 
 const FlashcardContext = React.createContext<FlashcardContextType | null>(null);
-const QuestionBankContext = React.createContext<QuestionBankContextType | null>(null);
+const QuestionBankContext = React.createContext<QuestionBankContextType | null>(
+  null
+);
 
 const FlashcardManager: React.FC = () => {
   // State with proper type definitions
@@ -76,7 +83,9 @@ const FlashcardManager: React.FC = () => {
         debug('Checking system status...');
         const statusResponse = await fetch('/api/system/status');
         if (!statusResponse.ok) {
-          throw new Error(`System status check failed: ${statusResponse.status}`);
+          throw new Error(
+            `System status check failed: ${statusResponse.status}`
+          );
         }
 
         const statusData = await statusResponse.json();
@@ -88,7 +97,9 @@ const FlashcardManager: React.FC = () => {
 
         // Load and initialize system integration
         debug('Loading SystemIntegration module...');
-        const SystemIntegrationModule = await import('../services/SystemIntegration').catch(err => {
+        const SystemIntegrationModule = await import(
+          '../services/SystemIntegration'
+        ).catch(err => {
           debug('Failed to import SystemIntegration:', err);
           throw new Error('Failed to load system integration module');
         });
@@ -100,7 +111,11 @@ const FlashcardManager: React.FC = () => {
         debug('System initialization result:', initResult);
 
         if (!initResult?.success) {
-          throw new Error(`System initialization failed: ${initResult?.error || 'unknown error'}`);
+          throw new Error(
+            `System initialization failed: ${
+              initResult?.error || 'unknown error'
+            }`
+          );
         }
 
         // Initialize flashcard system
@@ -116,7 +131,9 @@ const FlashcardManager: React.FC = () => {
         debug('Loading flashcards...');
         const flashcardsResponse = await fetch('/api/flashcards');
         if (!flashcardsResponse.ok) {
-          throw new Error(`Failed to fetch flashcards: ${flashcardsResponse.status}`);
+          throw new Error(
+            `Failed to fetch flashcards: ${flashcardsResponse.status}`
+          );
         }
 
         const flashcardsData = await flashcardsResponse.json();
@@ -137,9 +154,9 @@ const FlashcardManager: React.FC = () => {
         });
 
         debug('Initialization completed successfully');
-
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown initialization error';
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown initialization error';
         debug('Initialization failed:', errorMessage);
         setError(errorMessage);
         // Notify user of the error
@@ -157,13 +174,14 @@ const FlashcardManager: React.FC = () => {
   }, [toast]); // Add toast to dependencies
 
   const getFilteredFlashcards = () => {
-    return flashcards.filter((card) => {
+    return flashcards.filter(card => {
       const matchesSearch =
         searchTerm === '' ||
         card.front.toLowerCase().includes(searchTerm.toLowerCase()) ||
         card.back.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesDifficulty = filterDifficulty === 'all' || card.difficulty === filterDifficulty;
+      const matchesDifficulty =
+        filterDifficulty === 'all' || card.difficulty === filterDifficulty;
 
       return matchesSearch && matchesDifficulty;
     });
@@ -204,7 +222,9 @@ const FlashcardManager: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold">Flashcards Dashboard</h2>
-                  <Badge variant="secondary">Total Cards: {flashcardCount}</Badge>
+                  <Badge variant="secondary">
+                    Total Cards: {flashcardCount}
+                  </Badge>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4">
@@ -215,12 +235,15 @@ const FlashcardManager: React.FC = () => {
                         placeholder="Search flashcards..."
                         className="pl-8"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={e => setSearchTerm(e.target.value)}
                       />
                     </div>
                   </div>
 
-                  <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
+                  <Select
+                    value={filterDifficulty}
+                    onValueChange={setFilterDifficulty}
+                  >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
@@ -234,22 +257,30 @@ const FlashcardManager: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getFilteredFlashcards().map((card) => (
-                    <Card key={card.id} className="hover:shadow-lg transition-shadow">
+                  {getFilteredFlashcards().map(card => (
+                    <Card
+                      key={card.id}
+                      className="hover:shadow-lg transition-shadow"
+                    >
                       <div className="p-4">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           <Badge variant="secondary" className="capitalize">
                             {card.difficulty}
                           </Badge>
-                          {card.keywords.map((keyword) => (
-                            <Badge key={keyword} variant="outline" className="capitalize">
+                          {card.keywords.map(keyword => (
+                            <Badge
+                              key={keyword}
+                              variant="outline"
+                              className="capitalize"
+                            >
                               {keyword.replace(/_/g, ' ')}
                             </Badge>
                           ))}
                         </div>
                         <p className="font-medium mb-2">{card.front}</p>
                         <div className="text-sm text-gray-500">
-                          Created: {new Date(card.createdAt).toLocaleDateString()}
+                          Created:{' '}
+                          {new Date(card.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </Card>
@@ -273,7 +304,9 @@ const FlashcardManager: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="knowledge-map">
-              <div className="p-4">Knowledge map visualization coming soon...</div>
+              <div className="p-4">
+                Knowledge map visualization coming soon...
+              </div>
             </TabsContent>
           </Tabs>
         </div>

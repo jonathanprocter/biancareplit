@@ -1,21 +1,20 @@
-
 middleware:
   cors:
     enabled: true
-    origins: 
-      - "https://${REPL_SLUG}.${REPL_OWNER}.repl.co"
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    origins:
+      - 'https://${REPL_SLUG}.${REPL_OWNER}.repl.co'
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
   security:
     enabled: true
     rate_limit: 100
     rate_window: 3600
   logging:
     enabled: true
-    level: "INFO"
-    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level: 'INFO'
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
   metrics:
     enabled: true
-    path: "/metrics"
+    path: '/metrics'
   health:
     enabled: true
-    path: "/health"
+    path: '/health'

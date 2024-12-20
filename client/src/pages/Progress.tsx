@@ -14,12 +14,14 @@ export function UserProgress() {
   // Transform progress data into skill tree format
   const skillTreeData = useMemo(() => {
     if (!progress) return [];
-    
+
     return progress.enrollments.map(enrollment => ({
       id: enrollment.course.id.toString(),
       name: enrollment.course.title,
-      level: Math.ceil((enrollment.correctAnswers / enrollment.totalAttempts) * 3),
-      mastered: (enrollment.correctAnswers / enrollment.totalAttempts) > 0.8,
+      level: Math.ceil(
+        (enrollment.correctAnswers / enrollment.totalAttempts) * 3
+      ),
+      mastered: enrollment.correctAnswers / enrollment.totalAttempts > 0.8,
       prerequisites: enrollment.course.prerequisites || [],
       category: enrollment.course.category,
       description: enrollment.course.description,
@@ -134,7 +136,8 @@ export function UserProgress() {
                           {badge.description}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Earned on {new Date(badge.earnedAt!).toLocaleDateString()}
+                          Earned on{' '}
+                          {new Date(badge.earnedAt!).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
@@ -156,7 +159,9 @@ export function UserProgress() {
                 {progress?.enrollments.map(enrollment => (
                   <div key={enrollment.id}>
                     <div className="flex justify-between mb-2">
-                      <span className="font-medium">{enrollment.course.title}</span>
+                      <span className="font-medium">
+                        {enrollment.course.title}
+                      </span>
                       <span className="text-sm text-muted-foreground">
                         {enrollment.correctAnswers} / {enrollment.totalAttempts}{' '}
                         correct
@@ -165,7 +170,8 @@ export function UserProgress() {
                     <Progress
                       value={
                         enrollment.totalAttempts > 0
-                          ? (enrollment.correctAnswers / enrollment.totalAttempts) *
+                          ? (enrollment.correctAnswers /
+                              enrollment.totalAttempts) *
                             100
                           : 0
                       }

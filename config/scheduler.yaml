@@ -1,12 +1,11 @@
-
 daily_summary:
   enabled: true
-  schedule: "0 17 * * *"  # 5 PM daily
-  timezone: "UTC"
+  schedule: '0 17 * * *' # 5 PM daily
+  timezone: 'UTC'
   retry_attempts: 3
-  retry_delay: 300  # 5 minutes
+  retry_delay: 300 # 5 minutes
 
 email_notifications:
   enabled: true
-  from_address: "noreply@yourdomain.com"
-  subject_template: "Daily NCLEX Study Summary - {date}"
+  from_address: 'noreply@yourdomain.com'
+  subject_template: 'Daily NCLEX Study Summary - {date}'

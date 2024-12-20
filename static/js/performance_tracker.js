@@ -24,7 +24,7 @@ class PerformanceTracker {
   }
 
   setupEventListeners() {
-    document.addEventListener('questionAnswered', async (event) => {
+    document.addEventListener('questionAnswered', async event => {
       const { questionId, isCorrect, timeTaken, category } = event.detail;
       await this.trackPerformance(questionId, isCorrect, timeTaken, category);
     });
@@ -85,7 +85,9 @@ class PerformanceTracker {
                     <div class="mastered-topics">
                         <h4>Topics Mastered Today</h4>
                         <ul>
-                            ${topicsMastered.map((topic) => `<li>${topic}</li>`).join('')}
+                            ${topicsMastered
+                              .map(topic => `<li>${topic}</li>`)
+                              .join('')}
                         </ul>
                     </div>
                 `
@@ -94,7 +96,7 @@ class PerformanceTracker {
                 <div class="recommendations">
                     ${this.todayStats.recommendations
                       .map(
-                        (rec) => `
+                        rec => `
                         <div class="recommendation-item">${rec}</div>
                     `
                       )
