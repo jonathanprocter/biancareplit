@@ -10,6 +10,18 @@ interface ProgressData {
   timeSpent: number;
   strengthAreas: string[];
   weakAreas: string[];
+  trends: {
+    pastPerformance: number[];
+    predictedPerformance: number[];
+    targetPerformance: number;
+    dates: string[];
+  };
+  learningPath: {
+    currentTopic: string;
+    nextTopics: string[];
+    completionRate: number;
+    estimatedTimeToTarget: number;
+  };
 }
 
 export const DailyWelcomeCard = () => {
@@ -116,12 +128,70 @@ export const DailyWelcomeCard = () => {
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-primary/5 rounded-lg">
-          <h3 className="font-semibold mb-2">Today's Study Recommendation</h3>
-          <p className="text-sm text-muted-foreground">
-            Focus on {progress.weakAreas[0]} today. We've prepared targeted questions 
-            and flashcards to help strengthen your understanding in this area.
-          </p>
+        <div className="mt-6 space-y-4">
+          {/* Performance Trends */}
+          <div className="p-4 bg-primary/5 rounded-lg">
+            <h3 className="font-semibold mb-4">Your Learning Journey</h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Current Performance:</span>
+                <span className="font-medium">{accuracyRate}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Target Performance:</span>
+                <span className="font-medium">{progress.trends.targetPerformance}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Estimated Time to Target:</span>
+                <span className="font-medium">{progress.learningPath.estimatedTimeToTarget} days</span>
+              </div>
+              <div className="mt-4">
+                <div className="h-24 w-full">
+                  {/* Add performance trend chart here using recharts */}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Learning Path Progress */}
+          <div className="p-4 bg-primary/5 rounded-lg">
+            <h3 className="font-semibold mb-2">Your Learning Path</h3>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium">Current Topic:</p>
+                <p className="text-sm text-muted-foreground">{progress.learningPath.currentTopic}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Coming Up Next:</p>
+                <ul className="list-disc list-inside text-sm text-muted-foreground">
+                  {progress.learningPath.nextTopics.map((topic, index) => (
+                    <li key={index}>{topic}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="pt-2">
+                <p className="text-sm font-medium">Completion Rate:</p>
+                <div className="w-full h-2 bg-gray-200 rounded-full mt-1">
+                  <div 
+                    className="h-full bg-primary rounded-full"
+                    style={{ width: `${progress.learningPath.completionRate}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {progress.learningPath.completionRate}% complete
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Today's Recommendation */}
+          <div className="p-4 bg-primary/5 rounded-lg">
+            <h3 className="font-semibold mb-2">Today's Study Recommendation</h3>
+            <p className="text-sm text-muted-foreground">
+              Focus on {progress.weakAreas[0]} today. We've prepared targeted questions 
+              and flashcards to help strengthen your understanding in this area.
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>
