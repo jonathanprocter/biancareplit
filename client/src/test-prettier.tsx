@@ -2,11 +2,7 @@ import { type FC, useState, useEffect } from 'react';
 
 interface TestProps {
   title: string;
-  items: Array<{
-    id: number;
-    name: string;
-    description: string;
-  }>;
+  items: Array<{ id: number; name: string; description: string }>;
 }
 
 // React component formatting test with more complex JSX
