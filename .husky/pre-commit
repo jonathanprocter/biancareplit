@@ -11,8 +11,8 @@ echo "${YELLOW}📝 Running pre-commit checks...${NC}"
 
 # Run Prettier on staged files
 echo "${YELLOW}🎨 Running Prettier...${NC}"
-if ! npx prettier --check "**/*.{js,jsx,ts,tsx,json,css,scss,md}"; then
-  echo "${RED}❌ Prettier check failed. Run 'npm run format' to fix formatting issues.${NC}"
+if ! npx prettier --write --list-different "$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|jsx|ts|tsx|json|css|scss|md)$')"; then
+  echo "${RED}❌ Prettier check failed. Run 'npx prettier --write .' to fix formatting issues.${NC}"
   exit 1
 fi
 
