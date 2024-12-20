@@ -1,8 +1,8 @@
-import { useCourse, useEnroll } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useCourse, useEnroll } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function Course({ params }: { params: { id: string } }) {
   const courseId = parseInt(params.id);
@@ -14,14 +14,14 @@ export function Course({ params }: { params: { id: string } }) {
     try {
       await enroll.mutateAsync(courseId);
       toast({
-        title: "Success",
-        description: "You have been enrolled in the course",
+        title: 'Success',
+        description: 'You have been enrolled in the course',
       });
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Failed to enroll",
-        description: error instanceof Error ? error.message : "Please try again",
+        variant: 'destructive',
+        title: 'Failed to enroll',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     }
   };
@@ -54,11 +54,8 @@ export function Course({ params }: { params: { id: string } }) {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">{course.title}</h1>
-        <Button
-          onClick={handleEnroll}
-          disabled={enroll.isPending}
-        >
-          {enroll.isPending ? "Enrolling..." : "Enroll Now"}
+        <Button onClick={handleEnroll} disabled={enroll.isPending}>
+          {enroll.isPending ? 'Enrolling...' : 'Enroll Now'}
         </Button>
       </div>
 

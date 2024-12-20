@@ -1,5 +1,4 @@
-
-import { format, parseISO } from 'date-fns'
+import { format, parseISO } from 'date-fns';
 
 export interface DateFormatOptions {
   format?: string;
@@ -37,19 +36,19 @@ export class DateFormatter {
     try {
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
       const formatStr = options.format || this.defaultFormat;
-      
+
       return {
         formatted: format(dateObj, formatStr),
         valid: true,
         timestamp: dateObj.getTime(),
-        date: dateObj
+        date: dateObj,
       };
     } catch (error) {
       return {
         formatted: 'Invalid date',
         valid: false,
         timestamp: 0,
-        date: new Date(0)
+        date: new Date(0),
       };
     }
   }

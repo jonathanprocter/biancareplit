@@ -7,7 +7,7 @@ export function createBaseQuestion(data: NCLEXQuestionData): NCLEXQuestion {
     rationale: data.rationale || { keyPoints: [] },
     relatedConcepts: data.relatedConcepts || [],
     topic: data.topic || 'General',
-    subcategory: data.subcategory || data.category
+    subcategory: data.subcategory || data.category,
   };
 }
 

@@ -20,7 +20,7 @@ export class MiddlewareManager {
 
     try {
       console.log('Initializing middleware manager...');
-      
+
       // Ensure configuration is initialized
       if (!configManager.isInitialized()) {
         await configManager.initialize();
@@ -40,7 +40,7 @@ export class MiddlewareManager {
   }
 
   public addMiddleware(middleware: BaseMiddleware): void {
-    if (this.middlewares.some(m => m.getName() === middleware.getName())) {
+    if (this.middlewares.some((m) => m.getName() === middleware.getName())) {
       throw new Error(`Middleware '${middleware.getName()}' already registered`);
     }
 
@@ -73,7 +73,7 @@ export class MiddlewareManager {
   }
 
   public removeMiddleware(name: string): void {
-    this.middlewares = this.middlewares.filter(m => m.getName() !== name);
+    this.middlewares = this.middlewares.filter((m) => m.getName() !== name);
   }
 
   public getMiddlewares(): BaseMiddleware[] {

@@ -1,227 +1,228 @@
 .flashcard {
-    position: relative;
-    width: 100%;
-    max-width: 600px;
-    margin: 20px auto;
-    perspective: 1000px;
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+  perspective: 1000px;
 }
 
 .flashcard-content {
-    position: relative;
-    width: 100%;
-    height: 300px;
-    text-align: center;
-    transition: transform 0.8s;
-    transform-style: preserve-3d;
-    cursor: pointer;
-    background-color: white;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    border-radius: 10px;
+  position: relative;
+  width: 100%;
+  height: 300px;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
 .flashcard-content.flipped {
-    transform: rotateY(180deg);
+  transform: rotateY(180deg);
 }
 
-.flashcard-front, .flashcard-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.flashcard-front,
+.flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .flashcard-back {
-    transform: rotateY(180deg);
-    background-color: #f8f9fa;
+  transform: rotateY(180deg);
+  background-color: #f8f9fa;
 }
 
 .nclex-category {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background-color: #e3f2fd;
-    color: #1976d2;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.9em;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.9em;
 }
 
 .difficulty-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.9em;
-    font-weight: bold;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.9em;
+  font-weight: bold;
 }
 
 .difficulty-badge.beginner {
-    background-color: #c8e6c9;
-    color: #2e7d32;
+  background-color: #c8e6c9;
+  color: #2e7d32;
 }
 
 .difficulty-badge.intermediate {
-    background-color: #fff3e0;
-    color: #f57c00;
+  background-color: #fff3e0;
+  color: #f57c00;
 }
 
 .difficulty-badge.advanced {
-    background-color: #ffcdd2;
-    color: #c62828;
+  background-color: #ffcdd2;
+  color: #c62828;
 }
 
 .flashcard-controls {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .flashcard-controls button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 5px;
-    background-color: #1976d2;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  background-color: #1976d2;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 .flashcard-controls button:hover {
-    background-color: #1565c0;
+  background-color: #1565c0;
 }
 
 .flashcard-info {
-    text-align: center;
-    margin-top: 10px;
-    color: #666;
-    font-size: 0.9em;
+  text-align: center;
+  margin-top: 10px;
+  color: #666;
+  font-size: 0.9em;
 }
 
 #flashcardArea {
-    padding: 20px;
-    min-height: 400px;
+  padding: 20px;
+  min-height: 400px;
 }
 
 #flashcardArea p {
-    text-align: center;
-    color: #666;
-    margin-top: 20px;
+  text-align: center;
+  color: #666;
+  margin-top: 20px;
 }
 
 .ai-enhanced-content {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
 }
 
 .ai-enhanced-content h4 {
-    color: #1976d2;
-    margin-bottom: 10px;
+  color: #1976d2;
+  margin-bottom: 10px;
 }
 
 .related-concepts {
-    margin-bottom: 15px;
+  margin-bottom: 15px;
 }
 
 .related-concepts ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
 }
 
 .related-concepts li {
-    background-color: #e3f2fd;
-    color: #1976d2;
-    display: inline-block;
-    margin: 2px 4px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.9em;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  display: inline-block;
+  margin: 2px 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.9em;
 }
 
 .study-tips {
-    background-color: #fff3e0;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-top: 10px;
+  background-color: #fff3e0;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-top: 10px;
 }
 
 .study-tips p {
-    color: #f57c00;
-    margin: 0;
-    font-style: italic;
+  color: #f57c00;
+  margin: 0;
+  font-style: italic;
 }
 
 .clinical-notes {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .clinical-notes h4 {
-    color: #2c3e50;
-    margin-bottom: 15px;
-    font-weight: 600;
-    font-size: 1.1em;
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: 8px;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-weight: 600;
+  font-size: 1.1em;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 8px;
 }
 
 .clinical-content {
-    font-size: 0.95em;
-    line-height: 1.6;
-    color: #495057;
+  font-size: 0.95em;
+  line-height: 1.6;
+  color: #495057;
 }
 
 .clinical-content p {
-    margin: 8px 0;
-    padding-left: 15px;
-    position: relative;
+  margin: 8px 0;
+  padding-left: 15px;
+  position: relative;
 }
 
 .clinical-content p:before {
-    content: "•";
-    position: absolute;
-    left: 0;
-    color: #6c757d;
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #6c757d;
 }
 
 .clinical-section {
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: white;
-    border-radius: 8px;
-    border-left: 4px solid #4a90e2;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
 }
 
 .clinical-section h5 {
-    color: #4a90e2;
-    margin-bottom: 10px;
-    font-weight: 600;
+  color: #4a90e2;
+  margin-bottom: 10px;
+  font-weight: 600;
 }
 
 .clinical-section ul {
-    list-style-type: none;
-    padding-left: 0;
-    margin: 0;
+  list-style-type: none;
+  padding-left: 0;
+  margin: 0;
 }
 
 .clinical-section li {
-    padding: 5px 0 5px 20px;
-    position: relative;
+  padding: 5px 0 5px 20px;
+  position: relative;
 }
 
 .clinical-section li:before {
-    content: "•";
-    position: absolute;
-    left: 5px;
-    color: #6c757d;
+  content: '•';
+  position: absolute;
+  left: 5px;
+  color: #6c757d;
 }

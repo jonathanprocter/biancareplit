@@ -1,22 +1,26 @@
+app:
+  name: 'NCLEX Study System'
+  env: ${FLASK_ENV:-development}
+  debug: ${FLASK_DEBUG:-false}
+  host: '0.0.0.0'
+  port: 8080
 
-ai_service:
-  model: "gpt-4"
-  temperature: 0.7
-  max_tokens: 2000
+database:
+  url: ${DATABASE_URL:-sqlite:///app.db}
+  pool_size: 20
+  max_overflow: 10
+
+monitoring:
+  log_level: ${LOG_LEVEL:-INFO}
+  metrics_interval: 30
+  health_check_interval: 60
+
+middleware:
+  cors_enabled: true
+  cache_enabled: true
   request_timeout: 30
-  batch_size: 5
-
-openai:
-  api_key: ${OPENAI_API_KEY}
-  organization: ${OPENAI_ORG_ID}
 
 analytics:
-  refresh_interval: 5000
-  websocket_url: "ws://0.0.0.0:81/ws"
-  metrics_endpoint: "/api/metrics"
-
-adaptive_learning:
-  min_questions: 5
-  max_difficulty_jump: 1
-  performance_threshold: 0.75
-  adaptation_rate: 0.3
+  enabled: true
+  tracking_interval: 5000
+  retention_days: 30

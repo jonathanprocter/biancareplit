@@ -2,8 +2,22 @@ modules = ["nodejs-20", "postgresql-16", "python-3.11", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
+[env]
+ENABLE_CJS_IMPORTS = "true"
+
 [nix]
-channel = "stable-24_05"
+channel = "stable-22_11"
+
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
+syntax = "javascript"
+
+[languages.javascript.languageServer]
+start = [ "typescript-language-server", "--stdio" ]
+
+[formatters.prettier]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx,*.json,*.css,*.scss,*.md}"
+command = ["npx", "prettier", "--write"]
 
 [deployment]
 deploymentTarget = "cloudrun"

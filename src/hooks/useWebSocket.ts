@@ -64,7 +64,6 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
     };
   }, [connect, socket]);
 
-
   return { isConnected };
 };
 

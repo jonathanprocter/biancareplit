@@ -11,51 +11,53 @@ const ApiConfigSchema = z.object({
 });
 
 // Middleware configuration schema
-const MiddlewareConfigSchema = z.object({
-  enabled: z.boolean(),
-  logging: z.object({
-    level: z.enum(['debug', 'info', 'warn', 'error']),
-    format: z.enum(['json', 'text']),
-    fallbackToConsole: z.boolean(),
-  }),
-  analytics: z.object({
+const MiddlewareConfigSchema = z
+  .object({
     enabled: z.boolean(),
-    sampleRate: z.number(),
-    bufferSize: z.number(),
-    flushInterval: z.number(),
-  }),
-  performance: z.object({
-    enabled: z.boolean(),
-    warningThreshold: z.number(),
-    criticalThreshold: z.number(),
-    sampling: z.object({
-      enabled: z.boolean(),
-      rate: z.number(),
+    logging: z.object({
+      level: z.enum(['debug', 'info', 'warn', 'error']),
+      format: z.enum(['json', 'text']),
+      fallbackToConsole: z.boolean(),
     }),
-  }),
-}).default({
-  enabled: true,
-  logging: {
-    level: 'info',
-    format: 'json',
-    fallbackToConsole: true,
-  },
-  analytics: {
+    analytics: z.object({
+      enabled: z.boolean(),
+      sampleRate: z.number(),
+      bufferSize: z.number(),
+      flushInterval: z.number(),
+    }),
+    performance: z.object({
+      enabled: z.boolean(),
+      warningThreshold: z.number(),
+      criticalThreshold: z.number(),
+      sampling: z.object({
+        enabled: z.boolean(),
+        rate: z.number(),
+      }),
+    }),
+  })
+  .default({
     enabled: true,
-    sampleRate: 100,
-    bufferSize: 100,
-    flushInterval: 30000,
-  },
-  performance: {
-    enabled: true,
-    warningThreshold: 1000,
-    criticalThreshold: 3000,
-    sampling: {
-      enabled: true,
-      rate: 0.1,
+    logging: {
+      level: 'info',
+      format: 'json',
+      fallbackToConsole: true,
     },
-  },
-});
+    analytics: {
+      enabled: true,
+      sampleRate: 100,
+      bufferSize: 100,
+      flushInterval: 30000,
+    },
+    performance: {
+      enabled: true,
+      warningThreshold: 1000,
+      criticalThreshold: 3000,
+      sampling: {
+        enabled: true,
+        rate: 0.1,
+      },
+    },
+  });
 
 const FeatureFlagsSchema = z.object({
   analytics: z.boolean(),
@@ -77,15 +79,17 @@ const SecurityConfigSchema = z.object({
 export type MiddlewareConfig = z.infer<typeof MiddlewareConfigSchema>;
 
 // Main configuration schema with initialization status
-export const ConfigSchema = z.object({
-  version: z.string(),
-  environment: z.enum(['development', 'production', 'test']),
-  api: ApiConfigSchema,
-  features: FeatureFlagsSchema,
-  security: SecurityConfigSchema,
-  middleware: MiddlewareConfigSchema,
-  initialized: z.boolean(),
-}).strict();
+export const ConfigSchema = z
+  .object({
+    version: z.string(),
+    environment: z.enum(['development', 'production', 'test']),
+    api: ApiConfigSchema,
+    features: FeatureFlagsSchema,
+    security: SecurityConfigSchema,
+    middleware: MiddlewareConfigSchema,
+    initialized: z.boolean(),
+  })
+  .strict();
 
 // Export the final Config type
 export type Config = z.infer<typeof ConfigSchema>;
@@ -150,7 +154,10 @@ class ConfigManager {
     // Default configuration with initialized flag
     this.config = ConfigSchema.parse({
       version: CONFIG_VERSION,
-      environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as 'development' | 'production' | 'test',
+      environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as
+        | 'development'
+        | 'production'
+        | 'test',
       api: {
         baseUrl: '/api',
         timeout: 30000,
@@ -210,11 +217,14 @@ class ConfigManager {
 
     try {
       console.log('Initializing configuration...');
-      
+
       // Load environment-specific configuration
       const envConfig = {
         version: CONFIG_VERSION,
-        environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as 'development' | 'production' | 'test',
+        environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as
+          | 'development'
+          | 'production'
+          | 'test',
         api: {
           baseUrl: process.env.API_BASE_URL || '/api',
           timeout: parseInt(process.env.API_TIMEOUT || '30000'),
@@ -240,7 +250,7 @@ class ConfigManager {
       // Merge with default config
       this.config = {
         ...this.config,
-        ...envConfig
+        ...envConfig,
       };
 
       // Validate configuration

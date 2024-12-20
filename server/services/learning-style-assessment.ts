@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { db } from "@db";
-import { learningStyleQuestions, learningStyleResponses, learningStyleResults } from "@db/schema";
-import { eq, desc } from "drizzle-orm";
+import { db } from '@db';
+import { learningStyleQuestions, learningStyleResponses, learningStyleResults } from '@db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 // the newest Anthropic model is "claude-3-5-sonnet-20241022" which was released October 22, 2024
 const anthropic = new Anthropic({
@@ -20,7 +20,7 @@ export async function submitQuizResponses(
 ) {
   // Save responses
   await db.insert(learningStyleResponses).values(
-    responses.map(r => ({
+    responses.map((r) => ({
       userId,
       questionId: r.questionId,
       response: r.response,
@@ -48,14 +48,17 @@ export async function submitQuizResponses(
   const dominantStyle = getDominantStyle(scores);
 
   // Save results
-  const [result] = await db.insert(learningStyleResults).values({
-    userId,
-    visualScore: scores.visual,
-    auditoryScore: scores.auditory,
-    kinestheticScore: scores.kinesthetic,
-    readingWritingScore: scores.readingWriting,
-    dominantStyle,
-  }).returning();
+  const [result] = await db
+    .insert(learningStyleResults)
+    .values({
+      userId,
+      visualScore: scores.visual,
+      auditoryScore: scores.auditory,
+      kinestheticScore: scores.kinesthetic,
+      readingWritingScore: scores.readingWriting,
+      dominantStyle,
+    })
+    .returning();
 
   return {
     scores,
@@ -68,11 +71,12 @@ export async function submitQuizResponses(
 async function analyzeResponses(responses: any[]) {
   try {
     const message = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1000,
-      messages: [{
-        role: "user",
-        content: `Analyze these learning style quiz responses and provide personalized learning recommendations:
+      messages: [
+        {
+          role: 'user',
+          content: `Analyze these learning style quiz responses and provide personalized learning recommendations:
         ${JSON.stringify(responses, null, 2)}
         
         Provide the analysis in this JSON format:
@@ -81,8 +85,9 @@ async function analyzeResponses(responses: any[]) {
           "recommendations": string[], // List of 3-5 specific learning strategies
           "strengths": string[], // List of 2-3 learning strengths
           "areasForImprovement": string[] // List of 2-3 areas that could be improved
-        }`
-      }]
+        }`,
+        },
+      ],
     });
 
     const content = message.content[0];
@@ -93,10 +98,10 @@ async function analyzeResponses(responses: any[]) {
   } catch (error) {
     console.error('Error analyzing responses:', error);
     return {
-      learningStyleAnalysis: "Unable to generate AI analysis at this time.",
-      recommendations: ["Focus on varied learning materials", "Try different study methods"],
-      strengths: ["Self-awareness in taking this assessment"],
-      areasForImprovement: ["Consider exploring multiple learning approaches"]
+      learningStyleAnalysis: 'Unable to generate AI analysis at this time.',
+      recommendations: ['Focus on varied learning materials', 'Try different study methods'],
+      strengths: ['Self-awareness in taking this assessment'],
+      areasForImprovement: ['Consider exploring multiple learning approaches'],
     };
   }
 }
@@ -109,7 +114,7 @@ function calculateScores(responses: any[]) {
     readingWriting: 0,
   };
 
-  responses.forEach(response => {
+  responses.forEach((response) => {
     const score = response.response;
     switch (response.category) {
       case 'visual':
@@ -131,6 +136,5 @@ function calculateScores(responses: any[]) {
 }
 
 function getDominantStyle(scores: Record<string, number>) {
-  return Object.entries(scores)
-    .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+  return Object.entries(scores).reduce((a, b) => (a[1] > b[1] ? a : b))[0];
 }

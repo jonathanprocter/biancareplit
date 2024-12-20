@@ -30,7 +30,7 @@ export class AdaptiveLearningSystem {
       questionHistory: [],
       loading: false,
       error: null,
-      sessionStartTime: Date.now()
+      sessionStartTime: Date.now(),
     };
   }
 
@@ -38,12 +38,12 @@ export class AdaptiveLearningSystem {
     try {
       this.state.loading = true;
       await this.config.initialize();
-      
+
       const response = await fetch('/api/questions/next', {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -67,7 +67,7 @@ export class AdaptiveLearningSystem {
 
       const timeSpent = Math.floor((Date.now() - this.state.sessionStartTime) / 1000);
       const isCorrect = answer === this.state.currentQuestion.correctAnswer;
-      
+
       const attempt: QuestionAttempt = {
         questionId: this.state.currentQuestion.id,
         timestamp: new Date().toISOString(),
@@ -77,7 +77,7 @@ export class AdaptiveLearningSystem {
           timeSpent,
           isCorrect,
           this.state.currentQuestion.difficulty
-        )
+        ),
       };
 
       this.state.questionHistory.push(attempt);
@@ -93,9 +93,9 @@ export class AdaptiveLearningSystem {
     const response = await fetch('/api/attempts', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(attempt)
+      body: JSON.stringify(attempt),
     });
 
     if (!response.ok) {
@@ -107,8 +107,8 @@ export class AdaptiveLearningSystem {
     const response = await fetch('/api/questions/next', {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {

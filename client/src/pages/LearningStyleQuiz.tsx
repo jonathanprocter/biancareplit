@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface Question {
   id: number;
@@ -27,16 +27,16 @@ export function LearningStyleQuiz() {
   const { toast } = useToast();
 
   const { data: questions, isLoading } = useQuery<Question[]>({
-    queryKey: ["/api/learning-style/questions"],
+    queryKey: ['/api/learning-style/questions'],
   });
 
   const submitQuiz = useMutation({
     mutationFn: async (responses: QuizResponse[]) => {
-      const res = await fetch("/api/learning-style/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/learning-style/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ responses }),
-        credentials: "include",
+        credentials: 'include',
       });
 
       if (!res.ok) {
@@ -47,16 +47,16 @@ export function LearningStyleQuiz() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Quiz Completed!",
-        description: "Your learning style has been analyzed.",
+        title: 'Quiz Completed!',
+        description: 'Your learning style has been analyzed.',
       });
-      setLocation("/dashboard");
+      setLocation('/dashboard');
     },
     onError: (error) => {
       toast({
-        variant: "destructive",
-        title: "Failed to submit quiz",
-        description: error instanceof Error ? error.message : "Please try again",
+        variant: 'destructive',
+        title: 'Failed to submit quiz',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     },
   });
@@ -110,9 +110,9 @@ export function LearningStyleQuiz() {
   const handleSubmit = () => {
     if (responses.length !== questions.length) {
       toast({
-        variant: "destructive",
-        title: "Please answer all questions",
-        description: "Some questions are still unanswered.",
+        variant: 'destructive',
+        title: 'Please answer all questions',
+        description: 'Some questions are still unanswered.',
       });
       return;
     }
@@ -132,23 +132,21 @@ export function LearningStyleQuiz() {
             <p className="text-lg font-medium">{currentQ.question}</p>
             <RadioGroup
               onValueChange={handleResponse}
-              value={
-                responses.find((r) => r.questionId === currentQ.id)?.response?.toString()
-              }
+              value={responses.find((r) => r.questionId === currentQ.id)?.response?.toString()}
             >
               {[1, 2, 3, 4, 5].map((value) => (
                 <div key={value} className="flex items-center space-x-2">
                   <RadioGroupItem value={value.toString()} id={`rating-${value}`} />
                   <Label htmlFor={`rating-${value}`}>
                     {value === 1
-                      ? "Strongly Disagree"
+                      ? 'Strongly Disagree'
                       : value === 2
-                      ? "Disagree"
+                      ? 'Disagree'
                       : value === 3
-                      ? "Neutral"
+                      ? 'Neutral'
                       : value === 4
-                      ? "Agree"
-                      : "Strongly Agree"}
+                      ? 'Agree'
+                      : 'Strongly Agree'}
                   </Label>
                 </div>
               ))}
@@ -164,17 +162,14 @@ export function LearningStyleQuiz() {
               Previous
             </Button>
             {currentQuestion === questions.length - 1 ? (
-              <Button
-                onClick={handleSubmit}
-                disabled={submitQuiz.isPending}
-              >
+              <Button onClick={handleSubmit} disabled={submitQuiz.isPending}>
                 {submitQuiz.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Submitting...
                   </>
                 ) : (
-                  "Submit Quiz"
+                  'Submit Quiz'
                 )}
               </Button>
             ) : (

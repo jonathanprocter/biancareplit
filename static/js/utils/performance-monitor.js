@@ -5,7 +5,7 @@ class PerformanceMonitor {
       bundleSize: new Map(),
       loadTimes: [],
       resourceUsage: new Map(),
-      componentMetrics: new Map()
+      componentMetrics: new Map(),
     };
 
     this.setupPerformanceObserver();
@@ -41,7 +41,7 @@ class PerformanceMonitor {
     const metrics = this.metrics.componentMetrics.get(componentName) || {
       renders: 0,
       totalDuration: 0,
-      averageDuration: 0
+      averageDuration: 0,
     };
 
     metrics.renders += 1;
@@ -70,18 +70,20 @@ class PerformanceMonitor {
         userAgent: navigator.userAgent,
         url: window.location.href,
         performance: {
-          memory: performance.memory ? {
-            usedJSHeapSize: performance.memory.usedJSHeapSize,
-            totalJSHeapSize: performance.memory.totalJSHeapSize
-          } : null,
+          memory: performance.memory
+            ? {
+                usedJSHeapSize: performance.memory.usedJSHeapSize,
+                totalJSHeapSize: performance.memory.totalJSHeapSize,
+              }
+            : null,
           navigation: performance.getEntriesByType('navigation')[0],
-          resources: performance.getEntriesByType('resource').slice(-5)
-        }
-      }
+          resources: performance.getEntriesByType('resource').slice(-5),
+        },
+      },
     };
 
     this.metrics.loadTimes.push(measure);
-    
+
     // Log performance issues
     if (measure.duration > 1000) {
       console.warn(`Performance warning: ${measure.name} took ${measure.duration}ms`);
@@ -99,7 +101,7 @@ class PerformanceMonitor {
       bundleSizes: Object.fromEntries(this.metrics.bundleSize),
       loadTimes: this.metrics.loadTimes,
       componentMetrics: Object.fromEntries(this.metrics.componentMetrics),
-      resourceUtilization: Object.fromEntries(this.metrics.resourceUsage)
+      resourceUtilization: Object.fromEntries(this.metrics.resourceUsage),
     };
   }
 
@@ -110,9 +112,11 @@ class PerformanceMonitor {
       ...metrics,
       summary: {
         totalBundleSize: Object.values(metrics.bundleSizes).reduce((a, b) => a + b, 0),
-        averageLoadTime: metrics.loadTimes.reduce((acc, curr) => acc + curr.duration, 0) / metrics.loadTimes.length || 0,
-        componentsTracked: Object.keys(metrics.componentMetrics).length
-      }
+        averageLoadTime:
+          metrics.loadTimes.reduce((acc, curr) => acc + curr.duration, 0) /
+            metrics.loadTimes.length || 0,
+        componentsTracked: Object.keys(metrics.componentMetrics).length,
+      },
     };
   }
 }

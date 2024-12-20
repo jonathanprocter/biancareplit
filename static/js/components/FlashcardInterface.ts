@@ -46,34 +46,34 @@ class FlashcardSystem {
 
     try {
       console.log('Starting FlashcardSystem initialization...');
-      
+
       // Initialize configuration first
       await this.initializeConfiguration();
-      
+
       // Get configuration
       const config = configManager.getConfig();
-      
+
       // Create middleware context
       const context: MiddlewareContext = {
         timestamp: new Date().toISOString(),
         requestId: `init_${Date.now()}`,
         environment: config.environment,
-        config
+        config,
       };
-      
+
       // Initialize and execute middleware system
       const middlewareSystem = await initializeMiddlewareSystem(config.middleware);
       await middlewareSystem.execute(context);
-      
+
       console.log('Configuration loaded:', {
         version: config.version,
         environment: config.environment,
-        features: Object.keys(config.features)
+        features: Object.keys(config.features),
       });
-      
+
       // Initialize required components sequentially
       await this.initializeComponents(config);
-      
+
       this.initialized = true;
       console.log('FlashcardSystem initialization completed successfully');
       return this;
@@ -106,7 +106,7 @@ class FlashcardSystem {
           this.initializationState.analyticsInitialized = success;
           return success;
         },
-        required: false
+        required: false,
       },
       {
         name: 'studyMaterial',
@@ -116,8 +116,8 @@ class FlashcardSystem {
           this.initializationState.studyMaterialInitialized = success;
           return success;
         },
-        required: true
-      }
+        required: true,
+      },
     ];
 
     for (const component of initSequence) {
@@ -127,7 +127,7 @@ class FlashcardSystem {
         console.log(`Initializing ${component.name}...`);
         const success = await component.init();
         console.log(`${component.name} initialization ${success ? 'successful' : 'failed'}`);
-        
+
         if (!success && component.required) {
           throw new Error(`Required component ${component.name} failed to initialize`);
         }
@@ -148,9 +148,9 @@ class FlashcardSystem {
         environment: config.environment,
         timestamp: new Date().toISOString(),
         sessions: [],
-        results: []
+        results: [],
       };
-      
+
       localStorage.setItem('flashcardAnalytics', JSON.stringify(analytics));
       this.analyticsReady = true;
       console.log('Analytics initialized successfully');
@@ -177,7 +177,7 @@ class FlashcardSystem {
     return {
       ...this.initializationState,
       initialized: this.initialized,
-      error: this.initializationError?.message
+      error: this.initializationError?.message,
     };
   }
 
@@ -222,20 +222,20 @@ export const FlashcardInterface = {
       console.log('Initializing FlashcardInterface...');
       const system = await this.create(rootElement);
       await system.initialize();
-      
+
       const initState = system.getInitializationState();
       console.log('FlashcardInterface initialization completed:', initState);
-      
+
       if (!initState.initialized) {
         throw new Error('Initialization incomplete: ' + initState.error);
       }
-      
+
       return system;
     } catch (error) {
       console.error('Failed to initialize FlashcardInterface:', error);
       throw error;
     }
-  }
+  },
 };
 
 export default FlashcardInterface;

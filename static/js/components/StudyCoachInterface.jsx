@@ -24,16 +24,16 @@ const StudyCoachInterface = () => {
     if (!inputValue.trim()) return;
 
     setIsLoading(true);
-    setMessages(prev => [...prev, { role: 'user', content: inputValue }]);
+    setMessages((prev) => [...prev, { role: 'user', content: inputValue }]);
 
     try {
       const response = await systemIntegration.studyCoach?.askQuestion(inputValue.trim());
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
-        { role: 'error', content: 'Failed to get response. Please try again.' }
+        { role: 'error', content: 'Failed to get response. Please try again.' },
       ]);
     } finally {
       setIsLoading(false);
@@ -78,11 +78,7 @@ const StudyCoachInterface = () => {
                 }
               }}
             />
-            <Button
-              onClick={handleSendMessage}
-              disabled={isLoading}
-              className="whitespace-nowrap"
-            >
+            <Button onClick={handleSendMessage} disabled={isLoading} className="whitespace-nowrap">
               {isLoading ? 'Sending...' : 'Send'}
             </Button>
           </div>

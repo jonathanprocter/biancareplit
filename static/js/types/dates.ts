@@ -10,10 +10,10 @@ export const DifficultyLevel = {
   Expert: 'expert',
   Easy: 'easy',
   Medium: 'medium',
-  Hard: 'hard'
+  Hard: 'hard',
 } as const;
 
-export type DifficultyLevel = typeof DifficultyLevel[keyof typeof DifficultyLevel];
+export type DifficultyLevel = (typeof DifficultyLevel)[keyof typeof DifficultyLevel];
 
 export interface DateFormatOptions {
   format?: string;
@@ -96,7 +96,9 @@ export interface DateFormatterConfig {
 }
 
 export const isDifficultyLevel = (value: unknown): value is DifficultyLevel => {
-  return typeof value === 'string' && Object.values(DifficultyLevel).includes(value as DifficultyLevel);
+  return (
+    typeof value === 'string' && Object.values(DifficultyLevel).includes(value as DifficultyLevel)
+  );
 };
 
 // Type guard for checking if a value is a valid locale

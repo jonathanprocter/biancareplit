@@ -1,0 +1,12 @@
+
+aiohttp
+flask
+flask-cors
+flask-limiter
+flask-migrate
+flask-sqlalchemy
+openai
+psutil
+pyjwt
+python-dotenv
+sqlalchemy

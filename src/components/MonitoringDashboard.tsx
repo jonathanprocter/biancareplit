@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -28,14 +27,14 @@ export const MonitoringDashboard: React.FC = () => {
         setMetrics(data.data);
         setIsLoading(false);
       }
-    }
+    },
   });
 
   useEffect(() => {
     // Initial load
     fetch('/api/monitoring/metrics')
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setMetrics(data);
         setIsLoading(false);
       });
@@ -43,8 +42,8 @@ export const MonitoringDashboard: React.FC = () => {
 
   const { data: alerts, isLoading: alertsLoading } = useQuery<Alert[]>({
     queryKey: ['alerts'],
-    queryFn: () => fetch('/api/monitoring/alerts').then(res => res.json()),
-    refetchInterval: 10000
+    queryFn: () => fetch('/api/monitoring/alerts').then((res) => res.json()),
+    refetchInterval: 10000,
   });
 
   if (metricsLoading || alertsLoading) {
@@ -54,7 +53,7 @@ export const MonitoringDashboard: React.FC = () => {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">System Monitoring</h2>
-      
+
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white p-4 rounded shadow">
           <h3 className="font-semibold mb-2">CPU Usage</h3>
@@ -70,7 +69,7 @@ export const MonitoringDashboard: React.FC = () => {
         <h3 className="font-semibold mb-2">Active Alerts</h3>
         <div className="space-y-2">
           {alerts?.map((alert, idx) => (
-            <div 
+            <div
               key={idx}
               className={`p-3 rounded ${
                 alert.severity === 'critical' ? 'bg-red-100' : 'bg-yellow-100'

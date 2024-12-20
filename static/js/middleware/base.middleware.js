@@ -11,92 +11,92 @@ import { z } from 'zod';
 
 // Context schema
 const ExecutionContextSchema = z.object({
-    operation: z.string(),
-    timestamp: z.string().optional(),
-    requestId: z.string().optional(),
-    data: z.record(z.any()).optional(),
-    config: z.record(z.any()).optional(),
-    environment: z.enum(['development', 'production', 'test']).optional(),
+  operation: z.string(),
+  timestamp: z.string().optional(),
+  requestId: z.string().optional(),
+  data: z.record(z.any()).optional(),
+  config: z.record(z.any()).optional(),
+  environment: z.enum(['development', 'production', 'test']).optional(),
 });
 
 export class BaseMiddleware {
-    /** @type {string} */
-    name;
-    /** @type {boolean} */
-    enabled;
-    /** @type {number} */
-    priority;
-    /** @type {Object} */
-    options;
+  /** @type {string} */
+  name;
+  /** @type {boolean} */
+  enabled;
+  /** @type {number} */
+  priority;
+  /** @type {Object} */
+  options;
 
-    /**
-     * @param {MiddlewareOptions} [options={}]
-     */
-    constructor(options = {}) {
-        this.options = options;
-        this.name = options.name || this.constructor.name;
-        this.enabled = options.enabled !== undefined ? options.enabled : true;
-        this.priority = options.priority || 0;
-    }
+  /**
+   * @param {MiddlewareOptions} [options={}]
+   */
+  constructor(options = {}) {
+    this.options = options;
+    this.name = options.name || this.constructor.name;
+    this.enabled = options.enabled !== undefined ? options.enabled : true;
+    this.priority = options.priority || 0;
+  }
 
-    /**
-     * @param {z.infer<typeof ExecutionContextSchema>} context
-     * @param {() => Promise<any>} next
-     * @returns {Promise<any>}
-     */
-    async execute(context, next) {
-        if (!this.enabled) return next();
-        
-        try {
-            const startTime = performance.now();
-            const validatedContext = ExecutionContextSchema.parse(context);
-            const result = await this._execute(validatedContext, next);
-            const endTime = performance.now();
-            
-            if (this.options.trackPerformance) {
-                console.log(`[${this.name}] Execution time: ${endTime - startTime}ms`);
-            }
-            
-            return result;
-        } catch (error) {
-            console.error(`[${this.name}] Error:`, error);
-            throw error;
-        }
-    }
+  /**
+   * @param {z.infer<typeof ExecutionContextSchema>} context
+   * @param {() => Promise<any>} next
+   * @returns {Promise<any>}
+   */
+  async execute(context, next) {
+    if (!this.enabled) return next();
 
-    /**
-     * @protected
-     * @param {z.infer<typeof ExecutionContextSchema>} context
-     * @param {() => Promise<any>} next
-     * @returns {Promise<any>}
-     */
-    async _execute(context, next) {
-        throw new Error('_execute method must be implemented by middleware class');
-    }
+    try {
+      const startTime = performance.now();
+      const validatedContext = ExecutionContextSchema.parse(context);
+      const result = await this._execute(validatedContext, next);
+      const endTime = performance.now();
 
-    getName() {
-        return this.name;
-    }
+      if (this.options.trackPerformance) {
+        console.log(`[${this.name}] Execution time: ${endTime - startTime}ms`);
+      }
 
-    isEnabled() {
-        return this.enabled;
+      return result;
+    } catch (error) {
+      console.error(`[${this.name}] Error:`, error);
+      throw error;
     }
+  }
 
-    getPriority() {
-        return this.priority;
-    }
+  /**
+   * @protected
+   * @param {z.infer<typeof ExecutionContextSchema>} context
+   * @param {() => Promise<any>} next
+   * @returns {Promise<any>}
+   */
+  async _execute(context, next) {
+    throw new Error('_execute method must be implemented by middleware class');
+  }
 
-    enable() {
-        this.enabled = true;
-    }
+  getName() {
+    return this.name;
+  }
 
-    disable() {
-        this.enabled = false;
-    }
+  isEnabled() {
+    return this.enabled;
+  }
 
-    setPriority(priority) {
-        this.priority = priority;
-    }
+  getPriority() {
+    return this.priority;
+  }
+
+  enable() {
+    this.enabled = true;
+  }
+
+  disable() {
+    this.enabled = false;
+  }
+
+  setPriority(priority) {
+    this.priority = priority;
+  }
 }
 
 export { ExecutionContextSchema };

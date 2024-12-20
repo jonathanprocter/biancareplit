@@ -1,2 +1,2 @@
 export default ContentFlashcardIntegration;
-declare function ContentFlashcardIntegration(): import("react/jsx-runtime").JSX.Element;
+declare function ContentFlashcardIntegration(): import('react/jsx-runtime').JSX.Element;

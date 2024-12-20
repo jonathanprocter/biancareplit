@@ -1,36 +1,36 @@
 
-import os
-import logging
-from typing import Optional, Dict, Any
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
-logger = logging.getLogger(__name__)
+import os
+import logging
 
 db = SQLAlchemy()
 migrate = Migrate()
+logger = logging.getLogger(__name__)
 
 class DatabaseConfig:
-    """Database configuration manager"""
-    def __init__(self, app: Optional[Flask] = None):
-        self.app = app
-        if app is not None:
-            self.init_app(app)
-
     def init_app(self, app: Flask) -> None:
-        """Initialize database with Flask application"""
         try:
-            app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+            database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@0.0.0.0:5432/postgres')
+            app.config['SQLALCHEMY_DATABASE_URI'] = database_url
             app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+            app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+                'pool_size': 20,
+                'pool_timeout': 30,
+                'pool_recycle': 3600,
+                'max_overflow': 10,
+                'echo': False
+            }
             
             db.init_app(app)
             migrate.init_app(app, db)
             
             with app.app_context():
                 db.create_all()
-                logger.info("Database initialized successfully")
+                db.session.execute('SELECT 1')
+                logger.info("Database connection established successfully")
                 
         except Exception as e:
-            logger.error(f"Failed to initialize database: {str(e)}")
+            logger.error(f"Database initialization failed: {str(e)}")
             raise

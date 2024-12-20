@@ -57,7 +57,7 @@ const AdaptiveLearningInterface: React.FC = () => {
   const [studySession, setStudySession] = useState<StudySession>({
     startTime: Date.now(),
     questionStartTime: Date.now(),
-    currentStreak: 0
+    currentStreak: 0,
   });
 
   useEffect(() => {
@@ -68,9 +68,9 @@ const AdaptiveLearningInterface: React.FC = () => {
   // Reset question timer when new content is loaded
   useEffect(() => {
     if (currentContent) {
-      setStudySession(prev => ({
+      setStudySession((prev) => ({
         ...prev,
-        questionStartTime: Date.now()
+        questionStartTime: Date.now(),
       }));
     }
   }, [currentContent]);
@@ -79,7 +79,7 @@ const AdaptiveLearningInterface: React.FC = () => {
     try {
       const [patternsResponse, performanceResponse] = await Promise.all([
         fetch('/api/learning-patterns'),
-        fetch('/api/performance-data')
+        fetch('/api/performance-data'),
       ]);
 
       const patterns: LearningPattern = await patternsResponse.json();
@@ -108,8 +108,8 @@ const AdaptiveLearningInterface: React.FC = () => {
         },
         body: JSON.stringify({
           learningPatterns: patterns,
-          performanceData: performance
-        })
+          performanceData: performance,
+        }),
       });
 
       const content: AdaptiveContent = await response.json();
@@ -123,10 +123,10 @@ const AdaptiveLearningInterface: React.FC = () => {
 
   const handleAnswerSubmission = async (answer: number): Promise<void> => {
     if (!currentContent) return;
-    
+
     setSelectedAnswer(answer);
     const timeSpent = calculateTimeSpent(studySession.questionStartTime);
-    
+
     try {
       const response = await fetch('/api/adaptive-content/submit-answer', {
         method: 'POST',
@@ -141,8 +141,8 @@ const AdaptiveLearningInterface: React.FC = () => {
             timeSpent,
             answer === currentContent.options.indexOf(currentContent.correct_answer),
             isDifficultyLevel(currentContent.difficulty) ? currentContent.difficulty : 'medium'
-          )
-        })
+          ),
+        }),
       });
 
       const result: ApiResponse<{
@@ -159,10 +159,10 @@ const AdaptiveLearningInterface: React.FC = () => {
         }
 
         // Update study session stats
-        setStudySession(prev => ({
+        setStudySession((prev) => ({
           ...prev,
           currentStreak: result.data.feedback.correct ? prev.currentStreak + 1 : 0,
-          questionStartTime: Date.now()
+          questionStartTime: Date.now(),
         }));
       }
     } catch (error) {
@@ -170,7 +170,7 @@ const AdaptiveLearningInterface: React.FC = () => {
       setFeedback({
         correct: false,
         message: 'Failed to submit answer. Please try again.',
-        explanation: 'A network error occurred.'
+        explanation: 'A network error occurred.',
       });
     }
   };
@@ -191,7 +191,7 @@ const AdaptiveLearningInterface: React.FC = () => {
     recommendedTopics: [],
     strengthAreas: [],
     difficultyLevel: 'beginner',
-    learningTrend: 'stable'
+    learningTrend: 'stable',
   });
 
   useEffect(() => {
@@ -205,10 +205,10 @@ const AdaptiveLearningInterface: React.FC = () => {
       const response = await fetch('/api/nclex-coach/adaptive-insights', {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
-      
+
       if (response.ok) {
         const insights = await response.json();
         setAdaptiveInsights(insights);
@@ -234,7 +234,9 @@ const AdaptiveLearningInterface: React.FC = () => {
               <h3 className="font-semibold">Recommended Focus Areas</h3>
               <ul className="list-disc pl-4">
                 {adaptiveInsights.recommendedTopics.map((topic, index) => (
-                  <li key={index} className="text-sm text-gray-600">{topic}</li>
+                  <li key={index} className="text-sm text-gray-600">
+                    {topic}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -242,7 +244,9 @@ const AdaptiveLearningInterface: React.FC = () => {
               <h3 className="font-semibold">Strength Areas</h3>
               <ul className="list-disc pl-4">
                 {adaptiveInsights.strengthAreas.map((area, index) => (
-                  <li key={index} className="text-sm text-green-600">{area}</li>
+                  <li key={index} className="text-sm text-green-600">
+                    {area}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -250,11 +254,13 @@ const AdaptiveLearningInterface: React.FC = () => {
           <div className="mt-4">
             <div className="flex items-center justify-between">
               <span>Current Learning Level</span>
-              <Badge 
+              <Badge
                 variant={
-                  adaptiveInsights.learningTrend === 'improving' ? 'success' :
-                  adaptiveInsights.learningTrend === 'stable' ? 'default' : 
-                  'destructive'
+                  adaptiveInsights.learningTrend === 'improving'
+                    ? 'success'
+                    : adaptiveInsights.learningTrend === 'stable'
+                    ? 'default'
+                    : 'destructive'
                 }
               >
                 {adaptiveInsights.difficultyLevel}
@@ -278,27 +284,21 @@ const AdaptiveLearningInterface: React.FC = () => {
               <span>{performanceData?.overallProgress || 0}%</span>
             </div>
             <Progress value={performanceData?.overallProgress || 0} />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div className="p-4 bg-blue-50 rounded-lg">
                 <div className="font-semibold">Current Level</div>
-                <div className="mt-2 text-2xl">
-                  {learningPatterns?.currentLevel || 'Beginner'}
-                </div>
+                <div className="mt-2 text-2xl">{learningPatterns?.currentLevel || 'Beginner'}</div>
               </div>
-              
+
               <div className="p-4 bg-green-50 rounded-lg">
                 <div className="font-semibold">Topics Mastered</div>
-                <div className="mt-2 text-2xl">
-                  {performanceData?.masteredTopics || 0}
-                </div>
+                <div className="mt-2 text-2xl">{performanceData?.masteredTopics || 0}</div>
               </div>
-              
+
               <div className="p-4 bg-purple-50 rounded-lg">
                 <div className="font-semibold">Study Streak</div>
-                <div className="mt-2 text-2xl">
-                  {performanceData?.studyStreak || 0} days
-                </div>
+                <div className="mt-2 text-2xl">{performanceData?.studyStreak || 0} days</div>
               </div>
             </div>
           </div>
@@ -323,12 +323,12 @@ const AdaptiveLearningInterface: React.FC = () => {
               {/* Question or Content Display */}
               <div className="p-4 border rounded-lg">
                 <div className="font-medium mb-4">{currentContent.question}</div>
-                
+
                 <div className="space-y-2">
                   {currentContent.options?.map((option, index) => (
                     <Button
                       key={index}
-                      variant={selectedAnswer === index ? "secondary" : "outline"}
+                      variant={selectedAnswer === index ? 'secondary' : 'outline'}
                       className="w-full justify-start text-left"
                       onClick={() => handleAnswerSubmission(index)}
                     >
@@ -340,32 +340,20 @@ const AdaptiveLearningInterface: React.FC = () => {
 
               {/* Feedback Display */}
               {feedback && (
-                <div className={`p-4 rounded-lg ${
-                  feedback.correct ? 'bg-green-50' : 'bg-red-50'
-                }`}>
+                <div className={`p-4 rounded-lg ${feedback.correct ? 'bg-green-50' : 'bg-red-50'}`}>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className={
-                      feedback.correct ? 'text-green-500' : 'text-red-500'
-                    } />
-                    <span className="font-medium">
-                      {feedback.message}
-                    </span>
+                    <CheckCircle className={feedback.correct ? 'text-green-500' : 'text-red-500'} />
+                    <span className="font-medium">{feedback.message}</span>
                   </div>
-                  <div className="mt-2">
-                    {feedback.explanation}
-                  </div>
+                  <div className="mt-2">{feedback.explanation}</div>
                 </div>
               )}
 
               {/* Content Metadata */}
               <div className="flex flex-wrap gap-2">
-                <Badge>
-                  {currentContent.difficulty} Difficulty
-                </Badge>
-                <Badge variant="outline">
-                  {currentContent.topic}
-                </Badge>
-                {currentContent.tags?.map(tag => (
+                <Badge>{currentContent.difficulty} Difficulty</Badge>
+                <Badge variant="outline">{currentContent.topic}</Badge>
+                {currentContent.tags?.map((tag) => (
                   <Badge key={tag} variant="secondary">
                     {tag}
                   </Badge>
@@ -397,9 +385,7 @@ const AdaptiveLearningInterface: React.FC = () => {
                 </div>
                 <div>
                   <div className="font-medium">{insight.title}</div>
-                  <div className="text-sm text-gray-600">
-                    {insight.description}
-                  </div>
+                  <div className="text-sm text-gray-600">{insight.description}</div>
                 </div>
               </div>
             ))}

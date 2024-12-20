@@ -7,12 +7,12 @@ declare function previousQuestion(): void;
 declare function showError(message: any): void;
 declare function showStoredFeedback(questionId: any): void;
 declare namespace state {
-    let questions: never[];
-    let currentQuestionIndex: number;
-    let score: number;
-    let totalAnswered: number;
-    let answerHistory: {};
-    let startTime: null;
-    let sessionStartTime: number;
-    let studyDuration: number;
+  let questions: never[];
+  let currentQuestionIndex: number;
+  let score: number;
+  let totalAnswered: number;
+  let answerHistory: {};
+  let startTime: null;
+  let sessionStartTime: number;
+  let studyDuration: number;
 }

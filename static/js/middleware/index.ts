@@ -11,7 +11,10 @@ export interface MiddlewareContext {
 }
 
 export type NextFunction = () => Promise<void> | void;
-export type MiddlewareFunction = (context: MiddlewareContext, next: NextFunction) => Promise<void> | void;
+export type MiddlewareFunction = (
+  context: MiddlewareContext,
+  next: NextFunction
+) => Promise<void> | void;
 
 const LogLevelSchema = z.enum(['debug', 'info', 'warn', 'error']);
 type LogLevel = z.infer<typeof LogLevelSchema>;
@@ -58,10 +61,10 @@ class MiddlewareManager {
 
   async execute(context: MiddlewareContext) {
     let index = 0;
-    
+
     const next = async (): Promise<void> => {
       if (index >= this.middlewares.length) return;
-      
+
       const middleware = this.middlewares[index++];
       await middleware(context, next);
     };

@@ -1,2 +1,2 @@
 export default FlashcardInterface;
-declare function FlashcardInterface(): import("react/jsx-runtime").JSX.Element;
+declare function FlashcardInterface(): import('react/jsx-runtime').JSX.Element;

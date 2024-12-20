@@ -12,11 +12,11 @@ export type MiddlewareOptions = z.infer<typeof MiddlewareOptionsSchema>;
 
 // Execution context schema
 const ExecutionContextSchema = z.object({
-    operation: z.string(),
-    timestamp: z.string(),
-    data: z.record(z.any()).optional(),
-    config: z.record(z.any()).optional(),
-    environment: z.enum(['development', 'production', 'test']).optional(),
+  operation: z.string(),
+  timestamp: z.string(),
+  data: z.record(z.any()).optional(),
+  config: z.record(z.any()).optional(),
+  environment: z.enum(['development', 'production', 'test']).optional(),
 });
 
 export type ExecutionContext = z.infer<typeof ExecutionContextSchema>;

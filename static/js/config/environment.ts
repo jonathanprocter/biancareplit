@@ -4,10 +4,10 @@ import { z } from 'zod';
 export const Environment = {
   Development: 'development',
   Production: 'production',
-  Test: 'test'
+  Test: 'test',
 } as const;
 
-export type EnvironmentType = typeof Environment[keyof typeof Environment];
+export type EnvironmentType = (typeof Environment)[keyof typeof Environment];
 
 // Environment validation schema
 export const EnvironmentSchema = z.enum(['development', 'production', 'test']);

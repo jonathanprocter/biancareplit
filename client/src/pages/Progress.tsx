@@ -1,8 +1,8 @@
-import { useUserProgress } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useUserProgress } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function UserProgress() {
   const userId = parseInt(localStorage.getItem('userId') || '1');
@@ -39,7 +39,7 @@ export function UserProgress() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <h1 className="text-3xl font-bold">Your Progress</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -54,7 +54,7 @@ export function UserProgress() {
                 </div>
                 <Progress value={Math.min((progress?.totalPoints || 0) / 10, 100)} />
               </div>
-              
+
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">Accuracy</span>
@@ -80,9 +80,7 @@ export function UserProgress() {
                   <Badge className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                   <div>
                     <h3 className="font-medium">{badge.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {badge.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{badge.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Earned on {new Date(badge.earnedAt!).toLocaleDateString()}
                     </p>

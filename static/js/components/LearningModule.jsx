@@ -56,10 +56,7 @@ const LearningModule = () => {
       <div className="error-container p-4 bg-red-50 border border-red-200 rounded-md">
         <h2 className="text-xl font-semibold text-red-700 mb-2">Initialization Error</h2>
         <p className="text-red-600">{error}</p>
-        <Button 
-          className="mt-4"
-          onClick={() => window.location.reload()}
-        >
+        <Button className="mt-4" onClick={() => window.location.reload()}>
           Retry
         </Button>
       </div>

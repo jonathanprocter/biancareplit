@@ -1,52 +1,58 @@
-import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
-import { relations } from "drizzle-orm";
+import { pgTable, text, serial, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { z } from 'zod';
+import { relations } from 'drizzle-orm';
 
 // Base tables
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").unique().notNull(),
-  password: text("password").notNull(),
-  email: text("email").unique().notNull(),
-  role: text("role").default("student").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  totalPoints: integer("total_points").default(0),
-  level: integer("level").default(1),
-  streakCount: integer("streak_count").default(0),
-  lastActive: timestamp("last_active").defaultNow().notNull(),
-  learningStyle: text("learning_style"),
-  preferredStudyTime: integer("preferred_study_time").default(30),
-  preferredTopics: text("preferred_topics").default("[]"),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  username: text('username').unique().notNull(),
+  password: text('password').notNull(),
+  email: text('email').unique().notNull(),
+  role: text('role').default('student').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  totalPoints: integer('total_points').default(0),
+  level: integer('level').default(1),
+  streakCount: integer('streak_count').default(0),
+  lastActive: timestamp('last_active').defaultNow().notNull(),
+  learningStyle: text('learning_style'),
+  preferredStudyTime: integer('preferred_study_time').default(30),
+  preferredTopics: text('preferred_topics').default('[]'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Learning style assessment tables
-export const learningStyleQuestions = pgTable("learning_style_questions", {
-  id: serial("id").primaryKey(),
-  question: text("question").notNull(),
-  category: text("category").notNull(), // visual, auditory, kinesthetic, reading/writing
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const learningStyleQuestions = pgTable('learning_style_questions', {
+  id: serial('id').primaryKey(),
+  question: text('question').notNull(),
+  category: text('category').notNull(), // visual, auditory, kinesthetic, reading/writing
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const learningStyleResponses = pgTable("learning_style_responses", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  questionId: integer("question_id").references(() => learningStyleQuestions.id, { onDelete: 'cascade' }).notNull(),
-  response: integer("response").notNull(), // Scale of 1-5
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const learningStyleResponses = pgTable('learning_style_responses', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  questionId: integer('question_id')
+    .references(() => learningStyleQuestions.id, { onDelete: 'cascade' })
+    .notNull(),
+  response: integer('response').notNull(), // Scale of 1-5
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const learningStyleResults = pgTable("learning_style_results", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  visualScore: integer("visual_score").notNull(),
-  auditoryScore: integer("auditory_score").notNull(),
-  kinestheticScore: integer("kinesthetic_score").notNull(),
-  readingWritingScore: integer("reading_writing_score").notNull(),
-  dominantStyle: text("dominant_style").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const learningStyleResults = pgTable('learning_style_results', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  visualScore: integer('visual_score').notNull(),
+  auditoryScore: integer('auditory_score').notNull(),
+  kinestheticScore: integer('kinesthetic_score').notNull(),
+  readingWritingScore: integer('reading_writing_score').notNull(),
+  dominantStyle: text('dominant_style').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Add learning style relations
@@ -71,75 +77,91 @@ export const learningStyleResultRelations = relations(learningStyleResults, ({ o
     references: [users.id],
   }),
 }));
-export const courses = pgTable("courses", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  instructorId: integer("instructor_id").references(() => users.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  difficulty: text("difficulty").default("intermediate").notNull(),
-  prerequisites: text("prerequisites").default("[]").notNull(),
-  topics: text("topics").default("[]").notNull(),
-  estimatedHours: integer("estimated_hours").default(10).notNull(),
+export const courses = pgTable('courses', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  instructorId: integer('instructor_id')
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  difficulty: text('difficulty').default('intermediate').notNull(),
+  prerequisites: text('prerequisites').default('[]').notNull(),
+  topics: text('topics').default('[]').notNull(),
+  estimatedHours: integer('estimated_hours').default(10).notNull(),
 });
 
-export const modules = pgTable("modules", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  courseId: integer("course_id").references(() => courses.id).notNull(),
-  order: integer("order").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+export const modules = pgTable('modules', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .notNull(),
+  order: integer('order').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const enrollments = pgTable("enrollments", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  courseId: integer("course_id").references(() => courses.id).notNull(),
-  enrolledAt: timestamp("enrolled_at").defaultNow(),
-  completed: boolean("completed").default(false),
-  points: integer("points").default(0),
-  correctAnswers: integer("correct_answers").default(0),
-  totalAttempts: integer("total_attempts").default(0),
+export const enrollments = pgTable('enrollments', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .notNull(),
+  enrolledAt: timestamp('enrolled_at').defaultNow(),
+  completed: boolean('completed').default(false),
+  points: integer('points').default(0),
+  correctAnswers: integer('correct_answers').default(0),
+  totalAttempts: integer('total_attempts').default(0),
 });
 
-export const badges = pgTable("badges", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  imageUrl: text("image_url").notNull(),
-  requiredPoints: integer("required_points").notNull(),
-  category: text("category").notNull(),
-  tier: text("tier").default("bronze").notNull(), // bronze, silver, gold, platinum
+export const badges = pgTable('badges', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  imageUrl: text('image_url').notNull(),
+  requiredPoints: integer('required_points').notNull(),
+  category: text('category').notNull(),
+  tier: text('tier').default('bronze').notNull(), // bronze, silver, gold, platinum
 });
 
 // Learning paths and recommendations
-export const learningPaths = pgTable("learning_paths", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  difficulty: text("difficulty").default("intermediate").notNull(),
-  estimatedCompletionTime: integer("estimated_completion_time").notNull(), // in minutes
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const learningPaths = pgTable('learning_paths', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  difficulty: text('difficulty').default('intermediate').notNull(),
+  estimatedCompletionTime: integer('estimated_completion_time').notNull(), // in minutes
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const learningPathCourses = pgTable("learning_path_courses", {
-  id: serial("id").primaryKey(),
-  learningPathId: integer("learning_path_id").references(() => learningPaths.id).notNull(),
-  courseId: integer("course_id").references(() => courses.id).notNull(),
-  order: integer("order").notNull(),
-  isRequired: boolean("is_required").default(true).notNull(),
+export const learningPathCourses = pgTable('learning_path_courses', {
+  id: serial('id').primaryKey(),
+  learningPathId: integer('learning_path_id')
+    .references(() => learningPaths.id)
+    .notNull(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .notNull(),
+  order: integer('order').notNull(),
+  isRequired: boolean('is_required').default(true).notNull(),
 });
 
-export const userPreferences = pgTable("user_preferences", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  key: text("key").notNull(),
-  value: text("value").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const userPreferences = pgTable('user_preferences', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  key: text('key').notNull(),
+  value: text('value').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Add relations
@@ -168,11 +190,15 @@ export const userPreferenceRelations = relations(userPreferences, ({ one }) => (
     references: [users.id],
   }),
 }));
-export const userBadges = pgTable("user_badges", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  badgeId: integer("badge_id").references(() => badges.id).notNull(),
-  earnedAt: timestamp("earned_at").defaultNow(),
+export const userBadges = pgTable('user_badges', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  badgeId: integer('badge_id')
+    .references(() => badges.id)
+    .notNull(),
+  earnedAt: timestamp('earned_at').defaultNow(),
 });
 
 // Relations
@@ -224,13 +250,12 @@ export const userBadgeRelations = relations(userBadges, ({ one }) => ({
   }),
 }));
 
-
 // Schemas
 export const insertUserSchema = createInsertSchema(users);
 export const extendedInsertUserSchema = insertUserSchema.extend({
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  email: z.string().email("Invalid email format"),
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email('Invalid email format'),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
 });
 export const selectUserSchema = createSelectSchema(users);
 

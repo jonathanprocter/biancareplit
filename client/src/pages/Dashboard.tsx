@@ -1,8 +1,8 @@
-import { useCourses } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useCourses } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useLocation } from 'wouter';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function Dashboard() {
   const { data: courses, isLoading } = useCourses();
@@ -39,13 +39,8 @@ export function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-gray-600">{course.description}</p>
-              <div className="text-sm">
-                Instructor: {course.instructor.username}
-              </div>
-              <Button
-                onClick={() => setLocation(`/courses/${course.id}`)}
-                className="w-full"
-              >
+              <div className="text-sm">Instructor: {course.instructor.username}</div>
+              <Button onClick={() => setLocation(`/courses/${course.id}`)} className="w-full">
                 View Course
               </Button>
             </CardContent>

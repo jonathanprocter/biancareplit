@@ -11,15 +11,19 @@ export const ConnectionStatus: React.FC = () => {
     lastError,
     connectionQuality,
     checkConnection,
-    resetConnection
+    resetConnection,
   } = useConnection();
 
   const getStatusColor = (quality: 'good' | 'fair' | 'poor') => {
     switch (quality) {
-      case 'good': return 'bg-green-500';
-      case 'fair': return 'bg-yellow-500';
-      case 'poor': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'good':
+        return 'bg-green-500';
+      case 'fair':
+        return 'bg-yellow-500';
+      case 'poor':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
@@ -36,9 +40,7 @@ export const ConnectionStatus: React.FC = () => {
           <div>API: {apiConnected ? 'Connected' : 'Disconnected'}</div>
           <div>Latency: {latency}ms</div>
           {networkType && <div>Network: {networkType}</div>}
-          {lastError && (
-            <div className="text-red-600">Error: {lastError}</div>
-          )}
+          {lastError && <div className="text-red-600">Error: {lastError}</div>}
         </div>
 
         <div className="flex space-x-2">

@@ -12,8 +12,8 @@ const system = systemIntegration;
 
 // Make flashcard system available globally in development
 if (process.env.NODE_ENV === 'development') {
-    window.flashcardSystem = flashcardSystem;
-    window.system = system;
+  window.flashcardSystem = flashcardSystem;
+  window.system = system;
 }
 
 // Create Question Bank Context
@@ -76,7 +76,7 @@ function App() {
 const initializeApp = async () => {
   console.log('Initializing React application...');
   const rootElement = document.getElementById('flashcard-root');
-  
+
   if (!rootElement) {
     console.error('Root element #flashcard-root not found');
     return;
@@ -88,100 +88,98 @@ const initializeApp = async () => {
     const { initializeMiddlewareSystem } = await import('./middleware/system.middleware.js');
     const { default: SystemIntegration } = await import('./SystemIntegration.js');
 
-            try {
-                // Initialize configuration first
-                await configManager.initialize();
-                console.log('Configuration manager initialized successfully');
+    try {
+      // Initialize configuration first
+      await configManager.initialize();
+      console.log('Configuration manager initialized successfully');
 
-                // Initialize system integration with enhanced middleware support and fallback options
-                const systemIntegration = await SystemIntegration.initialize({
-                    ...configManager.getConfig(),
-                    wsUrl: `ws://${window.location.hostname}:81/ws`,
-                    middleware: {
-                        logging: {
-                            enabled: true,
-                            level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
-                            format: 'json',
-                            fallbackToConsole: true
-                        },
-                        performance: {
-                            enabled: true,
-                            warningThreshold: 2000,
-                            criticalThreshold: 5000,
-                            samplingRate: 0.1
-                        },
-                        analytics: {
-                            enabled: true,
-                            realtime: false,
-                            updateInterval: 10000,
-                            batchSize: 50
-                        },
-                        errorHandling: {
-                            retryAttempts: 3,
-                            retryDelay: 1000,
-                            fallbackUI: true
-                        }
-                    },
-                    initialization: {
-                        timeout: 10000,
-                        retryAttempts: 3,
-                        parallel: false
-                    }
-                });
+      // Initialize system integration with enhanced middleware support and fallback options
+      const systemIntegration = await SystemIntegration.initialize({
+        ...configManager.getConfig(),
+        wsUrl: `ws://${window.location.hostname}:81/ws`,
+        middleware: {
+          logging: {
+            enabled: true,
+            level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
+            format: 'json',
+            fallbackToConsole: true,
+          },
+          performance: {
+            enabled: true,
+            warningThreshold: 2000,
+            criticalThreshold: 5000,
+            samplingRate: 0.1,
+          },
+          analytics: {
+            enabled: true,
+            realtime: false,
+            updateInterval: 10000,
+            batchSize: 50,
+          },
+          errorHandling: {
+            retryAttempts: 3,
+            retryDelay: 1000,
+            fallbackUI: true,
+          },
+        },
+        initialization: {
+          timeout: 10000,
+          retryAttempts: 3,
+          parallel: false,
+        },
+      });
 
-                // Add global error boundary for system integration
-                window.addEventListener('unhandledrejection', (event) => {
-                    console.error('[SystemIntegration] Unhandled promise rejection:', event.reason);
-                    systemIntegration.handleError(event.reason);
-                });
-                
-                console.log('System integration initialized successfully');
+      // Add global error boundary for system integration
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('[SystemIntegration] Unhandled promise rejection:', event.reason);
+        systemIntegration.handleError(event.reason);
+      });
 
-                // Initialize middleware system with enhanced integration
-                const middleware = await initializeMiddlewareSystem(systemIntegration);
-                
-                // Register enhanced event handlers
-                if (middleware.eventEmitter) {
-                    middleware.eventEmitter.on('performance_warning', (data) => {
-                        console.warn('Performance warning:', data);
-                        systemIntegration.handlePerformanceWarning(data);
-                    });
-                
-                    middleware.eventEmitter.on('error', (error) => {
-                        console.error('Middleware error:', error);
-                        systemIntegration.handleError(error);
-                    });
+      console.log('System integration initialized successfully');
 
-                    middleware.eventEmitter.on('analytics_update', (data) => {
-                        console.log('Analytics update received:', data);
-                        systemIntegration.handleAnalyticsUpdate(data);
-                    });
-                }
-            
-                console.log('Enhanced middleware system initialized successfully');
+      // Initialize middleware system with enhanced integration
+      const middleware = await initializeMiddlewareSystem(systemIntegration);
 
-                // Make system integration available globally in development
-                if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-                    window.systemIntegration = systemIntegration;
-                }
+      // Register enhanced event handlers
+      if (middleware.eventEmitter) {
+        middleware.eventEmitter.on('performance_warning', (data) => {
+          console.warn('Performance warning:', data);
+          systemIntegration.handlePerformanceWarning(data);
+        });
 
-                console.log('All services initialized and configured successfully');
+        middleware.eventEmitter.on('error', (error) => {
+          console.error('Middleware error:', error);
+          systemIntegration.handleError(error);
+        });
 
+        middleware.eventEmitter.on('analytics_update', (data) => {
+          console.log('Analytics update received:', data);
+          systemIntegration.handleAnalyticsUpdate(data);
+        });
+      }
 
-                // Initialize the flashcard system
-                await flashcardSystem.initialize();
-                console.log('Flashcard system initialized successfully');
+      console.log('Enhanced middleware system initialized successfully');
 
-                // Make the system available globally in development
-                if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-                    window.flashcardSystem = flashcardSystem;
-                    //EnhancedFlashcardSystem is removed because it's not defined in the new code
-                }
-            } catch (error) {
-                console.error('Failed to initialize systems:', error);
-                throw error;
-            }
+      // Make system integration available globally in development
+      if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+        window.systemIntegration = systemIntegration;
+      }
 
+      console.log('All services initialized and configured successfully');
+
+      // Initialize the flashcard system
+      await flashcardSystem.initialize();
+      console.log('Flashcard system initialized successfully');
+
+      // Make the system available globally in development
+      if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+        window.flashcardSystem = flashcardSystem;
+        //EnhancedFlashcardSystem is removed because it's not defined in the new code
+      }
+    } catch (error) {
+      console.error('Failed to initialize systems:', error);
+      throw error;
+    }
 
     // Create and render React root
     const root = createRoot(rootElement);
@@ -190,7 +188,7 @@ const initializeApp = async () => {
         <App />
       </React.StrictMode>
     );
-    
+
     console.log('React application mounted successfully');
   } catch (error) {
     console.error('Failed to initialize application:', error);

@@ -1,0 +1,9 @@
+
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run prettier on staged files
+npx pretty-quick --staged
+
+# Exit with the status of pretty-quick
+exit $?

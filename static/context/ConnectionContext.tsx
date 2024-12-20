@@ -26,17 +26,14 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     latency: 0,
     networkType: null,
     reconnecting: false,
-    lastError: null
+    lastError: null,
   });
 
-  const { isConnected: wsConnected, sendMessage } = useWebSocket(
-    'ws://localhost:8082/ws',
-    {
-      onMessage: (data) => handleWebSocketMessage(data),
-      reconnectAttempts: 5,
-      reconnectInterval: 3000
-    }
-  );
+  const { isConnected: wsConnected, sendMessage } = useWebSocket('ws://localhost:8082/ws', {
+    onMessage: (data) => handleWebSocketMessage(data),
+    reconnectAttempts: 5,
+    reconnectInterval: 3000,
+  });
 
   const { request } = useApi();
 
@@ -44,7 +41,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const connection = (navigator as any).connection;
     if (connection) {
       const updateNetworkType = () => {
-        setState(prev => ({ ...prev, networkType: connection.effectiveType }));
+        setState((prev) => ({ ...prev, networkType: connection.effectiveType }));
       };
       connection.addEventListener('change', updateNetworkType);
       updateNetworkType();
@@ -59,7 +56,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         try {
           await request('/health');
           const latency = Date.now() - start;
-          setState(prev => ({ ...prev, latency }));
+          setState((prev) => ({ ...prev, latency }));
         } catch (error) {
           console.error('Latency check failed:', error);
         }
@@ -73,22 +70,22 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const handleWebSocketMessage = (data: any) => {
     switch (data.type) {
       case 'connection_status':
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           wsConnected: data.connected,
-          lastError: data.error || null
+          lastError: data.error || null,
         }));
         break;
       case 'latency':
-        setState(prev => ({ ...prev, latency: data.value }));
+        setState((prev) => ({ ...prev, latency: data.value }));
         break;
     }
   };
 
   const checkConnection = async (): Promise<boolean> => {
     try {
-      setState(prev => ({ ...prev, reconnecting: true }));
-      
+      setState((prev) => ({ ...prev, reconnecting: true }));
+
       const apiResult = await request('/health');
       const apiConnected = !!apiResult;
 
@@ -96,19 +93,19 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         sendMessage({ type: 'ping' });
       }
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         apiConnected,
         reconnecting: false,
-        lastError: null
+        lastError: null,
       }));
 
       return apiConnected && wsConnected;
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         reconnecting: false,
-        lastError: error instanceof Error ? error.message : 'Unknown error'
+        lastError: error instanceof Error ? error.message : 'Unknown error',
       }));
       return false;
     }
@@ -131,7 +128,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         ...state,
         checkConnection,
         resetConnection,
-        connectionQuality: getConnectionQuality()
+        connectionQuality: getConnectionQuality(),
       }}
     >
       {children}

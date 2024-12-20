@@ -29,9 +29,7 @@ export const StudyProgressTracker = ({ currentSession, analytics }) => {
           </div>
           <div>
             <h4 className="font-semibold text-sm text-gray-600">Total Time</h4>
-            <p className="text-2xl font-bold">
-              {Math.floor(analytics.totalStudyTime / 60)}m
-            </p>
+            <p className="text-2xl font-bold">{Math.floor(analytics.totalStudyTime / 60)}m</p>
           </div>
           <div>
             <h4 className="font-semibold text-sm text-gray-600">Cards Done</h4>

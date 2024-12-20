@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 export const InstructorDashboard: React.FC = () => {
@@ -54,7 +53,7 @@ export const InstructorDashboard: React.FC = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Instructor Dashboard</h1>
-      
+
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Upload Study Material</h2>
         <form onSubmit={handleFileUpload} className="space-y-4">
@@ -127,11 +126,7 @@ export const InstructorDashboard: React.FC = () => {
         </form>
       </div>
 
-      {message && (
-        <div className="mt-4 p-4 bg-gray-100 rounded">
-          {message}
-        </div>
-      )}
+      {message && <div className="mt-4 p-4 bg-gray-100 rounded">{message}</div>}
     </div>
   );
 };

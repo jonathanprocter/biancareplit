@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { createBaseQuestion } from '../utils/questionUtils';
-import type { 
-  NCLEXQuestion, 
-  InitialQuestionBank, 
-  NCLEXQuestionData, 
+import type {
+  NCLEXQuestion,
+  InitialQuestionBank,
+  NCLEXQuestionData,
   CategoryData,
   QuestionBankConfig,
-  MiddlewareConfig 
+  MiddlewareConfig,
 } from '../types/nclex';
 import { z } from 'zod';
 
@@ -20,7 +20,9 @@ export interface QuestionBankProviderProps {
 export type QuestionBankContextType = NCLEXQuestionBank | null;
 
 // Type guard
-export function isQuestionBankInitialized(value: QuestionBankContextType): value is NCLEXQuestionBank {
+export function isQuestionBankInitialized(
+  value: QuestionBankContextType
+): value is NCLEXQuestionBank {
   return value !== null && value instanceof NCLEXQuestionBank;
 }
 
@@ -28,52 +30,52 @@ export function isQuestionBankInitialized(value: QuestionBankContextType): value
 const initialQuestionBank: InitialQuestionBank = {
   questions: [
     {
-      id: "SAFE_BEG_001",
-      question: "Which of the following is the first step in implementing standard precautions?",
-      options: [
-        "Put on sterile gloves",
-        "Perform hand hygiene",
-        "Wear a mask",
-        "Put on a gown"
-      ],
+      id: 'SAFE_BEG_001',
+      question: 'Which of the following is the first step in implementing standard precautions?',
+      options: ['Put on sterile gloves', 'Perform hand hygiene', 'Wear a mask', 'Put on a gown'],
       correctAnswer: 1,
-      explanation: "Hand hygiene is always the first step in standard precautions as it is the most effective way to prevent the spread of infections.",
-      category: "Safe and Effective Care Environment",
-      subcategory: "Infection Control",
-      difficulty: "BEGINNER",
-      topic: "Standard Precautions",
+      explanation:
+        'Hand hygiene is always the first step in standard precautions as it is the most effective way to prevent the spread of infections.',
+      category: 'Safe and Effective Care Environment',
+      subcategory: 'Infection Control',
+      difficulty: 'BEGINNER',
+      topic: 'Standard Precautions',
       rationale: {
         keyPoints: [
-          "Hand hygiene is the foundation of infection prevention",
-          "Must be performed before any other PPE steps",
-          "Reduces transmission of microorganisms"
-        ]
+          'Hand hygiene is the foundation of infection prevention',
+          'Must be performed before any other PPE steps',
+          'Reduces transmission of microorganisms',
+        ],
       },
       relatedConcepts: [
-        "Personal Protective Equipment (PPE)",
-        "Infection Prevention",
-        "Standard Precautions Protocol"
-      ]
-    }
+        'Personal Protective Equipment (PPE)',
+        'Infection Prevention',
+        'Standard Precautions Protocol',
+      ],
+    },
   ],
   categories: {
-    "Safe and Effective Care Environment": {
-      subcategories: ["Infection Control", "Safety and Infection Control", "Management of Care"],
-      questionCount: 0
+    'Safe and Effective Care Environment': {
+      subcategories: ['Infection Control', 'Safety and Infection Control', 'Management of Care'],
+      questionCount: 0,
     },
-    "Health Promotion and Maintenance": {
-      subcategories: ["Growth and Development", "Prevention and Early Detection of Disease"],
-      questionCount: 0
+    'Health Promotion and Maintenance': {
+      subcategories: ['Growth and Development', 'Prevention and Early Detection of Disease'],
+      questionCount: 0,
     },
-    "Psychosocial Integrity": {
-      subcategories: ["Coping and Adaptation", "Psychosocial Adaptation"],
-      questionCount: 0
+    'Psychosocial Integrity': {
+      subcategories: ['Coping and Adaptation', 'Psychosocial Adaptation'],
+      questionCount: 0,
     },
-    "Physiological Integrity": {
-      subcategories: ["Basic Care and Comfort", "Pharmacological Therapies", "Reduction of Risk Potential"],
-      questionCount: 0
-    }
-  }
+    'Physiological Integrity': {
+      subcategories: [
+        'Basic Care and Comfort',
+        'Pharmacological Therapies',
+        'Reduction of Risk Potential',
+      ],
+      questionCount: 0,
+    },
+  },
 };
 
 interface UserMetrics {
@@ -123,7 +125,7 @@ class NCLEXQuestionBank {
       userPerformance: new Map(),
       categoryProgress: new Map(),
       difficultyAdjustments: new Map(),
-      lastUpdate: null
+      lastUpdate: null,
     };
   }
 
@@ -138,11 +140,11 @@ class NCLEXQuestionBank {
   formatFlashcardBack(question: NCLEXQuestion): string {
     const correctAnswer = question.options[question.correctAnswer];
     const explanation = question.explanation;
-    const keyPoints = Array.isArray(question.rationale?.keyPoints) 
-      ? question.rationale.keyPoints.join('\n') 
+    const keyPoints = Array.isArray(question.rationale?.keyPoints)
+      ? question.rationale.keyPoints.join('\n')
       : '';
-    const relatedConcepts = Array.isArray(question.relatedConcepts) 
-      ? question.relatedConcepts.join(', ') 
+    const relatedConcepts = Array.isArray(question.relatedConcepts)
+      ? question.relatedConcepts.join(', ')
       : '';
 
     return `Correct Answer: ${correctAnswer}\n\nExplanation:\n${explanation}${
@@ -162,11 +164,11 @@ class NCLEXQuestionBank {
           subcategory: question.subcategory,
           difficulty: question.difficulty,
           topic: question.topic,
-          relatedConcepts: question.relatedConcepts || []
+          relatedConcepts: question.relatedConcepts || [],
         },
         nextReviewDate: new Date(),
         lastReviewed: null,
-        reviewCount: 0
+        reviewCount: 0,
       };
     } catch (error) {
       console.error(`Failed to create flashcard for question ${question.id}:`, error);
@@ -174,10 +176,7 @@ class NCLEXQuestionBank {
     }
   }
 
-  async adjustQuestionDifficulty(
-    userId: string,
-    category: string
-  ): Promise<string | undefined> {
+  async adjustQuestionDifficulty(userId: string, category: string): Promise<string | undefined> {
     try {
       const userMetrics = this.adaptiveMetrics.userPerformance.get(userId);
       if (!userMetrics) return;
@@ -198,7 +197,7 @@ class NCLEXQuestionBank {
 
       this.adaptiveMetrics.difficultyAdjustments.set(`${userId}-${category}`, {
         difficulty: newDifficulty,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       });
 
       return newDifficulty;
@@ -209,9 +208,9 @@ class NCLEXQuestionBank {
   }
 
   async updateAdaptiveMetrics(
-    userId: string, 
-    questionId: string, 
-    isCorrect: boolean, 
+    userId: string,
+    questionId: string,
+    isCorrect: boolean,
     timeTaken: number
   ): Promise<UserMetrics | undefined> {
     try {
@@ -222,16 +221,18 @@ class NCLEXQuestionBank {
         correctAnswers: 0,
         totalAttempts: 0,
         averageTime: 0,
-        categoryStrengths: new Map()
+        categoryStrengths: new Map(),
       };
 
       userMetrics.totalAttempts++;
       if (isCorrect) userMetrics.correctAnswers++;
-      userMetrics.averageTime = (userMetrics.averageTime * (userMetrics.totalAttempts - 1) + timeTaken) / userMetrics.totalAttempts;
+      userMetrics.averageTime =
+        (userMetrics.averageTime * (userMetrics.totalAttempts - 1) + timeTaken) /
+        userMetrics.totalAttempts;
 
       const categoryStrength = userMetrics.categoryStrengths.get(question.category) || {
         correct: 0,
-        total: 0
+        total: 0,
       };
       categoryStrength.total++;
       if (isCorrect) categoryStrength.correct++;
@@ -241,7 +242,7 @@ class NCLEXQuestionBank {
       this.adaptiveMetrics.lastUpdate = new Date();
 
       await this.adjustQuestionDifficulty(userId, question.category);
-      
+
       return userMetrics;
     } catch (error) {
       console.error('Error updating adaptive metrics:', error);
@@ -252,24 +253,24 @@ class NCLEXQuestionBank {
   async initialize(): Promise<boolean> {
     try {
       console.log('Initializing NCLEX Question Bank...');
-      
+
       Object.entries(initialQuestionBank.categories).forEach(([category, data]) => {
         this.categories.set(category, {
           subcategories: new Set(data.subcategories),
-          questionCount: 0
+          questionCount: 0,
         });
       });
 
-      initialQuestionBank.questions.forEach(questionData => {
+      initialQuestionBank.questions.forEach((questionData) => {
         const question = this.createQuestion(questionData);
         this.questions.set(question.id, question);
-        
+
         const categoryData = this.categories.get(question.category);
         if (categoryData) {
           categoryData.questionCount++;
           this.categories.set(question.category, categoryData);
         }
-        
+
         const flashcard = this.createFlashcard(question);
         if (flashcard) {
           this.flashcards.set(flashcard.id, flashcard);
@@ -277,8 +278,10 @@ class NCLEXQuestionBank {
       });
 
       this.initialized = true;
-      console.log(`Loaded ${this.questions.size} questions across ${this.categories.size} categories`);
-      
+      console.log(
+        `Loaded ${this.questions.size} questions across ${this.categories.size} categories`
+      );
+
       return true;
     } catch (error) {
       console.error('Failed to initialize question bank:', error);
@@ -291,19 +294,20 @@ class NCLEXQuestionBank {
     return {
       ...baseQuestion,
       rationale: data.rationale || { keyPoints: [] },
-      relatedConcepts: data.relatedConcepts || []
+      relatedConcepts: data.relatedConcepts || [],
     };
   }
 
   getQuestionsByCategory(category: string, difficulty: string): NCLEXQuestion[] {
-    return Array.from(this.questions.values())
-      .filter(q => q.category === category && q.difficulty === difficulty);
+    return Array.from(this.questions.values()).filter(
+      (q) => q.category === category && q.difficulty === difficulty
+    );
   }
 
   getDueFlashcards(): any[] {
     const now = new Date();
     return Array.from(this.flashcards.values())
-      .filter(card => card.nextReviewDate <= now)
+      .filter((card) => card.nextReviewDate <= now)
       .sort((a, b) => a.nextReviewDate - b.nextReviewDate);
   }
 
@@ -314,9 +318,9 @@ class NCLEXQuestionBank {
       categoryCounts: Object.fromEntries(
         Array.from(this.categories.entries()).map(([category, data]) => [
           category,
-          data.questionCount
+          data.questionCount,
         ])
-      )
+      ),
     };
   }
 }
@@ -346,14 +350,20 @@ const QuestionBankProvider: React.FC<QuestionBankProviderProps> = ({ children })
   }, []);
 
   if (loading) {
-    return React.createElement('div', { className: 'text-center p-4' },
-      React.createElement('div', { className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2' }),
+    return React.createElement(
+      'div',
+      { className: 'text-center p-4' },
+      React.createElement('div', {
+        className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2',
+      }),
       React.createElement('div', null, 'Initializing question bank...')
     );
   }
 
   if (error) {
-    return React.createElement('div', { className: 'text-red-500 p-4 border border-red-200 rounded bg-red-50' },
+    return React.createElement(
+      'div',
+      { className: 'text-red-500 p-4 border border-red-200 rounded bg-red-50' },
       React.createElement('div', { className: 'font-semibold mb-1' }, 'Error'),
       React.createElement('div', null, error)
     );
@@ -362,8 +372,4 @@ const QuestionBankProvider: React.FC<QuestionBankProviderProps> = ({ children })
   return React.createElement(QuestionBankContext.Provider, { value: questionBank }, children);
 };
 
-export {
-  NCLEXQuestionBank,
-  QuestionBankProvider,
-  QuestionBankContext
-};
+export { NCLEXQuestionBank, QuestionBankProvider, QuestionBankContext };

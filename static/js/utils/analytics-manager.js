@@ -19,7 +19,7 @@ class AnalyticsManager {
     }
 
     console.log('Initializing analytics dashboard...');
-    
+
     // Track initial page load performance
     if (typeof window !== 'undefined' && window.performance) {
       const navigationEntries = performance.getEntriesByType('navigation');
@@ -31,8 +31,8 @@ class AnalyticsManager {
           metadata: {
             domComplete: navigationEntry.domComplete,
             domInteractive: navigationEntry.domInteractive,
-            loadEventEnd: navigationEntry.loadEventEnd
-          }
+            loadEventEnd: navigationEntry.loadEventEnd,
+          },
         });
       }
     }
@@ -40,18 +40,18 @@ class AnalyticsManager {
     // Setup performance tracking for route changes
     if (typeof window !== 'undefined' && window.PerformanceObserver) {
       let lastRenderTimestamp = performance.now();
-      
+
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           if (entry.entryType === 'measure') {
             this.performanceMonitor.trackCustomMeasure({
               name: entry.name,
               duration: entry.duration,
               metadata: {
                 startTime: entry.startTime,
-                renderTime: performance.now() - lastRenderTimestamp
-              }
+                renderTime: performance.now() - lastRenderTimestamp,
+              },
             });
           }
         });
@@ -63,13 +63,13 @@ class AnalyticsManager {
         observer.observe({ entryTypes: ['measure', 'resource', 'paint'] });
       }
     }
-    
+
     // Add window event listeners with cleanup
     if (typeof document !== 'undefined') {
       const handleVisibilityChange = () => {
         this.performanceMonitor.trackCustomMeasure({
           name: 'visibility-change',
-          value: document.hidden ? 'hidden' : 'visible'
+          value: document.hidden ? 'hidden' : 'visible',
         });
       };
 
@@ -84,7 +84,7 @@ class AnalyticsManager {
   }
 
   cleanup() {
-    this.cleanupListeners.forEach(cleanup => cleanup());
+    this.cleanupListeners.forEach((cleanup) => cleanup());
     this.cleanupListeners.clear();
     this.initialized = false;
   }

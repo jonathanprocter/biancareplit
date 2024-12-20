@@ -1,30 +1,30 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { useLogin } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { useLogin } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'wouter';
 
 export function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const login = useLogin();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login.mutateAsync({ username, password });
-      setLocation("/dashboard");
+      setLocation('/dashboard');
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        variant: 'destructive',
+        title: 'Login failed',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     }
   };
@@ -57,15 +57,11 @@ export function Login() {
                 required
               />
             </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={login.isPending}
-            >
-              {login.isPending ? "Logging in..." : "Login"}
+            <Button type="submit" className="w-full" disabled={login.isPending}>
+              {login.isPending ? 'Logging in...' : 'Login'}
             </Button>
             <p className="text-sm text-center mt-4">
-              Don't have an account?{" "}
+              Don't have an account?{' '}
               <Link href="/register" className="text-blue-600 hover:underline">
                 Register here
               </Link>

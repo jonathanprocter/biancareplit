@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export interface DifficultyLevel {
   id: string;
@@ -31,7 +31,7 @@ export const formatDate = (date: Date | string, options?: Intl.DateTimeFormatOpt
 export const DifficultyLevel = {
   BEGINNER: { id: 'beginner', name: 'Beginner', value: 1 },
   INTERMEDIATE: { id: 'intermediate', name: 'Intermediate', value: 2 },
-  ADVANCED: { id: 'advanced', name: 'Advanced', value: 3 }
+  ADVANCED: { id: 'advanced', name: 'Advanced', value: 3 },
 } as const;
 
-export type DifficultyLevel = typeof DifficultyLevel[keyof typeof DifficultyLevel];
+export type DifficultyLevel = (typeof DifficultyLevel)[keyof typeof DifficultyLevel];

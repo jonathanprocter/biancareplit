@@ -14,13 +14,31 @@ def metrics():
 @bp.route('/status')
 def system_status():
     """Get current system status with metrics and alerts"""
-    metrics = metrics_collector.collect_system_metrics()
+    metrics = metrics_collector.collect_metrics()
     alerts = alert_manager.check_system_metrics(metrics)
+    
+    # Include historical data
+    history = metrics_collector.get_metrics_history()
+    trend = _calculate_trend(history[-10:]) if len(history) >= 10 else 'stable'
+    
     return jsonify({
-        'metrics': metrics,
+        'current': metrics,
+        'history': history[-10:],
         'alerts': alerts,
-        'status': 'critical' if alerts else 'healthy'
+        'status': metrics.get('status', 'unknown'),
+        'trend': trend
     })
+
+def _calculate_trend(history: list) -> str:
+    if not history:
+        return 'stable'
+    
+    recent_status = [m.get('status', 'unknown') for m in history]
+    if recent_status.count('critical') > len(recent_status) * 0.3:
+        return 'deteriorating'
+    elif recent_status.count('healthy') > len(recent_status) * 0.7:
+        return 'improving'
+    return 'stable'
 
 @bp.route('/health')
 def health_check():
