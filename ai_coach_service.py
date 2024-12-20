@@ -71,31 +71,39 @@ class AICoachService:
                 # Verify database connection
                 db.engine.connect().execute(db.text("SELECT 1"))
                 logger.info("Database connection verified successfully")
+                # Initialize required database models
+                db.create_all()
+                logger.info("Database tables created successfully")
             except Exception as e:
-                logger.error(f"Failed to verify database connection: {str(e)}")
+                logger.error(f"Failed to verify database connection or create tables: {str(e)}")
                 raise
         
     @handle_openai_error
-    async def create_flashcard(self, topic):
+    async def create_flashcard(self, topic, difficulty=None):
         """Generate a flashcard for a given topic using OpenAI."""
         try:
-            prompt = f"""Create a comprehensive NCLEX-style flashcard about {topic}. Include:
-            1. A clear, concise question
-            2. A detailed answer
+            prompt = f"""Create a comprehensive NCLEX-style flashcard about {topic} at {difficulty if difficulty else 'intermediate'} level. Include:
+            1. A clear, concise question that tests {topic} knowledge
+            2. A detailed answer with rationale
             3. Key points to remember (3-5 points)
             4. Related concepts (2-3 concepts)
             5. Common pitfalls to avoid (2-3 pitfalls)
-            6. Clinical notes containing:
+            6. Clinical application notes:
                - Patient assessment considerations
                - Key nursing interventions
                - Expected outcomes
                - Critical thinking points
                - Clinical pearls
+            7. Categorization:
+               - Main topic category (e.g., Pharmacology, Medical-Surgical, Pediatric)
+               - Specific subtopic
+               - Cognitive level (Knowledge, Application, Analysis)
+               - NCLEX test plan category
 
             Format the response as JSON:
             {{
                 "question": "The question text",
-                "answer": "The detailed answer",
+                "answer": "The detailed answer with rationale",
                 "key_points": ["point 1", "point 2", "point 3"],
                 "related_concepts": ["concept 1", "concept 2"],
                 "common_pitfalls": ["pitfall 1", "pitfall 2"],
@@ -105,6 +113,13 @@ class AICoachService:
                     "outcomes": ["outcome 1", "outcome 2"],
                     "critical_thinking": ["critical point 1", "critical point 2"],
                     "clinical_pearls": ["pearl 1", "pearl 2"]
+                }},
+                "categorization": {{
+                    "main_topic": "The main nursing topic category",
+                    "subtopic": "Specific subtopic within the main category",
+                    "cognitive_level": "Knowledge|Application|Analysis",
+                    "nclex_category": "The NCLEX test plan category",
+                    "difficulty": "beginner|intermediate|advanced"
                 }}
             }}
             """
@@ -298,3 +313,10 @@ def not_found(error):
 @ai_coach_blueprint.errorhandler(500)
 def server_error(error):
     return jsonify({"error": "Internal server error"}), 500
+
+#  The following features need to be implemented to fully address the user's request:
+#  - Daily welcome card generation and delivery
+#  - Instructor daily email report generation and sending
+#  - Adaptive learning algorithm integration
+#  - Quiz generation and integration with flashcard creation
+#  - Frontend integration for all new features
