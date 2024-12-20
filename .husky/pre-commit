@@ -1,28 +1,39 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Format staged files only
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Get staged files
+echo "${YELLOW}📝 Getting staged files...${NC}"
 files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(js|jsx|ts|tsx|css|scss|json|html|md)$" || true)
+
+# Run Prettier on staged files
 if [ -n "$files" ]; then
-  echo "🎨 Running Prettier on staged files..."
+  echo "${YELLOW}🎨 Running Prettier on staged files...${NC}"
   if ! npx prettier --write $files; then
-    echo "❌ Prettier formatting failed. Please fix the formatting issues."
+    echo "${RED}❌ Prettier formatting failed. Please fix the formatting issues.${NC}"
     exit 1
   fi
-  echo "✅ Prettier formatting completed"
-fi
+  echo "${GREEN}✅ Prettier formatting completed${NC}"
 
-# Run TypeScript type checking on the client directory only
-echo "🔍 Running type check on client files..."
-if ! npx tsc --noEmit --project client/tsconfig.json; then
-  echo "❌ Type check failed. Please fix the TypeScript errors in client files."
-  exit 1
-fi
-echo "✅ Type check passed"
-
-# Stage the formatted files
-if [ -n "$files" ]; then
+  # Stage the formatted files
+  echo "${YELLOW}📨 Staging formatted files...${NC}"
   git add $files
 fi
 
-echo "✨ Pre-commit checks passed!"
+# Check for TypeScript files in client directory
+ts_files=$(echo "$files" | grep -E "client/.*\.(ts|tsx)$" || true)
+if [ -n "$ts_files" ]; then
+  echo "${YELLOW}🔍 Running type check on staged TypeScript files...${NC}"
+  if ! npx tsc --noEmit --project client/tsconfig.json; then
+    echo "${RED}❌ Type check failed. Please fix the TypeScript errors in client files.${NC}"
+    exit 1
+  fi
+  echo "${GREEN}✅ Type check passed${NC}"
+fi
+
+echo "${GREEN}✨ Pre-commit checks passed!${NC}"

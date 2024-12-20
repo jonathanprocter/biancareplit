@@ -9,5 +9,31 @@
   "endOfLine": "lf",
   "jsxSingleQuote": false,
   "bracketSameLine": false,
-  "parser": "typescript"
+  "useTabs": false,
+  "overrides": [
+    {
+      "files": "*.{ts,tsx}",
+      "options": {
+        "parser": "typescript"
+      }
+    },
+    {
+      "files": "*.{js,jsx}",
+      "options": {
+        "parser": "babel"
+      }
+    },
+    {
+      "files": "*.{css,scss}",
+      "options": {
+        "parser": "css"
+      }
+    },
+    {
+      "files": "*.{json,md}",
+      "options": {
+        "parser": "json"
+      }
+    }
+  ]
 }
