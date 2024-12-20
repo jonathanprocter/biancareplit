@@ -60,3 +60,7 @@ coverage
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+
+# Backend generated
+uploads/
+tmp/
