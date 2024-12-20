@@ -11,5 +11,7 @@
   "bracketSameLine": false,
   "proseWrap": "preserve",
   "quoteProps": "as-needed",
-  "embeddedLanguageFormatting": "auto"
+  "embeddedLanguageFormatting": "auto",
+  "htmlWhitespaceSensitivity": "css",
+  "vueIndentScriptAndStyle": true
 }
