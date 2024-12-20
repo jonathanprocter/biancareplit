@@ -552,4 +552,47 @@ export function registerRoutes(app: Express): Server {
 
   const httpServer = createServer(app);
   return httpServer;
+  // Content Upload and Processing Routes
+  app.post('/api/content/upload', requireAuth, async (req, res) => {
+    try {
+      if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).json({ message: 'No files were uploaded.' });
+      }
+
+      const file = req.files.file;
+      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+      
+      if (!allowedTypes.includes(file.mimetype)) {
+        return res.status(400).json({ message: 'Invalid file type. Only PDF, DOCX, and TXT files are allowed.' });
+      }
+
+      // Save file and process content
+      const uploadDir = path.join(__dirname, '..', 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const fileName = `${Date.now()}-${file.name}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      await file.mv(filePath);
+
+      // Process the content using ContentParsingService
+      const contentParser = new ContentParsingService();
+      const content = await contentParser.parseFile(filePath);
+      const analysis = await contentParser.analyzeContent(content);
+      const result = await contentParser.integrateContent(JSON.parse(analysis));
+
+      // Clean up the uploaded file
+      fs.unlinkSync(filePath);
+
+      res.json(result);
+    } catch (error) {
+      console.error('[API] Content upload error:', error);
+      res.status(500).json({ 
+        message: 'Failed to process uploaded content',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 }
