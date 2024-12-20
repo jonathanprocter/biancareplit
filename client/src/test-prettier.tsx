@@ -16,6 +16,8 @@ export const TestComponent: FC<TestProps> = ({ title, items }) => {
   useEffect(() => {
     if (selectedId !== null) {
       console.warn('Selected item:', selectedId);
+      // Log interaction time for analytics
+      console.log('Interaction time:', new Date().toISOString());
     }
   }, [selectedId]);
 
