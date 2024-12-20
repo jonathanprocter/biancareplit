@@ -50,15 +50,21 @@ export function UserProgress() {
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">Total Points</span>
-                  <span className="text-sm font-medium">{progress?.totalPoints}</span>
+                  <span className="text-sm font-medium">
+                    {progress?.totalPoints}
+                  </span>
                 </div>
-                <Progress value={Math.min((progress?.totalPoints || 0) / 10, 100)} />
+                <Progress
+                  value={Math.min((progress?.totalPoints || 0) / 10, 100)}
+                />
               </div>
 
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">Accuracy</span>
-                  <span className="text-sm font-medium">{progress?.accuracy}%</span>
+                  <span className="text-sm font-medium">
+                    {progress?.accuracy}%
+                  </span>
                 </div>
                 <Progress value={progress?.accuracy || 0} />
               </div>
@@ -72,7 +78,7 @@ export function UserProgress() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              {progress?.badges.map((badge) => (
+              {progress?.badges.map(badge => (
                 <div
                   key={badge.id}
                   className="group relative flex items-start space-x-3 p-3 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
@@ -80,7 +86,9 @@ export function UserProgress() {
                   <Badge className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                   <div>
                     <h3 className="font-medium">{badge.name}</h3>
-                    <p className="text-sm text-muted-foreground">{badge.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {badge.description}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Earned on {new Date(badge.earnedAt!).toLocaleDateString()}
                     </p>
@@ -101,18 +109,20 @@ export function UserProgress() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {progress?.enrollments.map((enrollment) => (
+            {progress?.enrollments.map(enrollment => (
               <div key={enrollment.id}>
                 <div className="flex justify-between mb-2">
                   <span className="font-medium">{enrollment.course.title}</span>
                   <span className="text-sm text-muted-foreground">
-                    {enrollment.correctAnswers} / {enrollment.totalAttempts} correct
+                    {enrollment.correctAnswers} / {enrollment.totalAttempts}{' '}
+                    correct
                   </span>
                 </div>
                 <Progress
                   value={
                     enrollment.totalAttempts > 0
-                      ? (enrollment.correctAnswers / enrollment.totalAttempts) * 100
+                      ? (enrollment.correctAnswers / enrollment.totalAttempts) *
+                        100
                       : 0
                   }
                 />

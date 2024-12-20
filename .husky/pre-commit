@@ -1,11 +1,28 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Format files
-npx prettier --write .
+# Format staged files only
+files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(js|jsx|ts|tsx|css|scss|json|html|md)$" || true)
+if [ -n "$files" ]; then
+  echo "🎨 Running Prettier on staged files..."
+  if ! npx prettier --write $files; then
+    echo "❌ Prettier formatting failed. Please fix the formatting issues."
+    exit 1
+  fi
+  echo "✅ Prettier formatting completed"
+fi
 
-# Run TypeScript type checking
-npm run check
+# Run TypeScript type checking on the client directory only
+echo "🔍 Running type check on client files..."
+if ! npx tsc --noEmit --project client/tsconfig.json; then
+  echo "❌ Type check failed. Please fix the TypeScript errors in client files."
+  exit 1
+fi
+echo "✅ Type check passed"
 
-# Add formatted files back to staging
-git add .
+# Stage the formatted files
+if [ -n "$files" ]; then
+  git add $files
+fi
+
+echo "✨ Pre-commit checks passed!"

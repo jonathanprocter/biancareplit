@@ -1,3 +1,4 @@
+// Object formatting test
 export const formattedCode = {
   test: 'This is properly formatted',
   nested: {
@@ -15,17 +16,8 @@ export const formattedCode = {
   },
 };
 
+// Function formatting test
 export function testFunction(param1: string, param2: number): string {
   console.log('Testing Prettier formatting');
   return `${param1}${param2}`;
 }
-
-// Test JSX formatting
-export const TestComponent = () => {
-  return (
-    <div className="container">
-      <h1>Test Component</h1>
-      <p>This is a test of JSX formatting</p>
-    </div>
-  );
-};

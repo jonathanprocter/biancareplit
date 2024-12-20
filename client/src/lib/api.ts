@@ -78,7 +78,11 @@ export const useLogin = () => {
 
 export const useRegister = () => {
   return useMutation({
-    mutationFn: async (userData: { username: string; password: string; email: string }) => {
+    mutationFn: async (userData: {
+      username: string;
+      password: string;
+      email: string;
+    }) => {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -163,7 +167,9 @@ export const useUpdateProgress = () => {
       return res.json();
     },
     onSuccess: (_, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/progress`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/users/${userId}/progress`],
+      });
     },
   });
 };
