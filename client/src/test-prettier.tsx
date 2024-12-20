@@ -15,6 +15,10 @@ export const TestComponent: FC<TestProps> = ({ title, items }) => {
 
   useEffect(() => {
     console.log('Component mounted with title:', title);
+    // Return cleanup function
+    return () => {
+      console.log('Component unmounted');
+    };
   }, [title]);
 
   return (
@@ -26,6 +30,13 @@ export const TestComponent: FC<TestProps> = ({ title, items }) => {
             key={item.id}
             className="border rounded p-4 hover:shadow-lg transition-shadow"
             onClick={() => setSelectedId(item.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setSelectedId(item.id);
+              }
+            }}
           >
             <h2 className="text-xl font-semibold">{item.name}</h2>
             <p className="text-gray-600">{item.description}</p>
