@@ -115,6 +115,8 @@ export const enrollments = pgTable('enrollments', {
   points: integer('points').default(0),
   correctAnswers: integer('correct_answers').default(0),
   totalAttempts: integer('total_attempts').default(0),
+  timeSpent: integer('time_spent').default(0),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const badges = pgTable('badges', {

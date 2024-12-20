@@ -451,6 +451,12 @@ export function registerRoutes(app: Express): Server {
     try {
       const userId = req.session.userId;
       
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      console.log('[API] Fetching daily progress for user:', userId);
+      
       // Get recent quiz attempts and study sessions
       const recentQuizzes = await db.query.enrollments.findMany({
         where: eq(enrollments.userId, Number(userId)),
