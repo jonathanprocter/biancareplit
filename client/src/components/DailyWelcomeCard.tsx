@@ -40,7 +40,7 @@ export const DailyWelcomeCard = () => {
   useEffect(() => {
     const fetchDailyProgress = async () => {
       try {
-        const response = await fetch('/api/daily-progress');
+        const response = await fetch('/api/users/progress/daily');
         if (!response.ok) throw new Error('Failed to fetch daily progress');
         
         const data = await response.json();

@@ -34,18 +34,7 @@ export function registerRoutes(app: Express): Server {
 
   // Register routes below
   // prefix all routes with /api
-  const memoryStore = MemoryStore(session);
-
-  app.use(
-    session({
-      secret: process.env.FLASK_SECRET_KEY || 'development_secret',
-      resave: false,
-      saveUninitialized: false,
-      store: new memoryStore({
-        checkPeriod: 86400000,
-      }),
-    }),
-  );
+  // Session is configured in index.ts
 
   // Authentication middleware
   const requireAuth = (req: Request, res: Response, next: (error?: any) => void) => {
@@ -453,7 +442,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Daily Progress API
-  app.get('/api/daily-progress', requireAuth, async (req, res) => {
+  app.get('/api/users/progress/daily', requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId;
 

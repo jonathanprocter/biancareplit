@@ -38,7 +38,7 @@ const getTierIcon = (tier: string) => {
 export const Achievements = () => {
   const { toast } = useToast();
   const { data: progress, isLoading, error } = useQuery<UserProgress>({
-    queryKey: ['/api/users/progress'],
+    queryKey: ['/api/users/progress/achievements'],
   });
 
   if (isLoading) {
