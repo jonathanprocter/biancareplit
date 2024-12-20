@@ -27,7 +27,14 @@ else
   echo "${YELLOW}No files to format${NC}"
 fi
 
-# TypeScript checks temporarily disabled while setting up Prettier
-# Will be re-enabled after Prettier configuration is verified
+# Run TypeScript check only if there are .ts or .tsx files
+if echo "$STAGED_FILES" | grep -qE '\.tsx?$'; then
+  echo "${YELLOW}🔍 Running TypeScript check...${NC}"
+  if ! npx tsc --noEmit --skipLibCheck; then
+    echo "${RED}❌ TypeScript check failed${NC}"
+    exit 1
+  fi
+  echo "${GREEN}✓ TypeScript check passed${NC}"
+fi
 
 echo "${GREEN}✅ All checks passed!${NC}"
