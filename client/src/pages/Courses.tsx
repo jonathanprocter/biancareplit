@@ -71,7 +71,7 @@ export function Course({ params }: { params: { id: string } }) {
 
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Course Modules</h2>
-        {course.modules.map(module => (
+        {course.modules.map((module) => (
           <Card key={module.id}>
             <CardHeader>
               <CardTitle className="text-xl">

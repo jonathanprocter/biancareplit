@@ -16,7 +16,7 @@ export function UserProgress() {
   const skillTreeData = useMemo(() => {
     if (!progress) return [];
 
-    return progress.enrollments.map(enrollment => ({
+    return progress.enrollments.map((enrollment) => ({
       id: enrollment.course.id.toString(),
       name: enrollment.course.title,
       level: Math.ceil(
@@ -125,7 +125,7 @@ export function UserProgress() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  {progress?.badges.map(badge => (
+                  {progress?.badges.map((badge) => (
                     <div
                       key={badge.id}
                       className="group relative flex items-start space-x-3 p-3 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
@@ -157,7 +157,7 @@ export function UserProgress() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {progress?.enrollments.map(enrollment => (
+                {progress?.enrollments.map((enrollment) => (
                   <div key={enrollment.id}>
                     <div className="flex justify-between mb-2">
                       <span className="font-medium">

@@ -34,7 +34,7 @@ if [ -n "$STAGED_FILES" ]; then
   print_status "🎨 Running Prettier on staged files..."
   
   # Format files with Prettier
-  if ! npx prettier --write $STAGED_FILES --ignore-unknown; then
+  if ! npx prettier --write $STAGED_FILES --ignore-unknown --config .prettierrc; then
     handle_error "Prettier formatting failed"
   fi
   
@@ -45,14 +45,20 @@ else
   print_status "${YELLOW}ℹ️ No files to format${NC}"
 fi
 
-# TypeScript checks
-if echo "$STAGED_FILES" | grep -qE '\.tsx?$'; then
-  print_status "🔍 Running TypeScript checks..."
-  
-  if ! npx tsc --noEmit --skipLibCheck; then
-    handle_error "TypeScript check failed"
+# TypeScript checks for all TypeScript files
+print_status "🔍 Running TypeScript checks..."
+if ! npx tsc --noEmit --skipLibCheck; then
+  handle_error "TypeScript check failed"
+fi
+print_status "${GREEN}✓ TypeScript checks passed${NC}"
+
+# Run ESLint if there are JavaScript/TypeScript files
+if echo "$STAGED_FILES" | grep -qE '\.(js|jsx|ts|tsx)$'; then
+  print_status "🔍 Running ESLint..."
+  if ! npx eslint $STAGED_FILES --fix; then
+    handle_error "ESLint check failed"
   fi
-  print_status "${GREEN}✓ TypeScript checks passed${NC}"
+  print_status "${GREEN}✓ ESLint checks passed${NC}"
 fi
 
 print_status "${GREEN}✅ All checks completed successfully!${NC}"

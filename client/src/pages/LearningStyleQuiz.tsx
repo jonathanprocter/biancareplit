@@ -52,7 +52,7 @@ export function LearningStyleQuiz() {
       });
       setLocation('/dashboard');
     },
-    onError: error => {
+    onError: (error) => {
       toast({
         variant: 'destructive',
         title: 'Failed to submit quiz',
@@ -93,9 +93,9 @@ export function LearningStyleQuiz() {
       response: parseInt(value),
     };
 
-    setResponses(prev => {
+    setResponses((prev) => {
       const existing = prev.findIndex(
-        r => r.questionId === response.questionId
+        (r) => r.questionId === response.questionId
       );
       if (existing !== -1) {
         const newResponses = [...prev];
@@ -106,7 +106,7 @@ export function LearningStyleQuiz() {
     });
 
     if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
+      setCurrentQuestion((prev) => prev + 1);
     }
   };
 
@@ -136,10 +136,10 @@ export function LearningStyleQuiz() {
             <RadioGroup
               onValueChange={handleResponse}
               value={responses
-                .find(r => r.questionId === currentQ.id)
+                .find((r) => r.questionId === currentQ.id)
                 ?.response?.toString()}
             >
-              {[1, 2, 3, 4, 5].map(value => (
+              {[1, 2, 3, 4, 5].map((value) => (
                 <div key={value} className="flex items-center space-x-2">
                   <RadioGroupItem
                     value={value.toString()}
@@ -164,7 +164,9 @@ export function LearningStyleQuiz() {
           <div className="flex justify-between pt-4">
             <Button
               variant="outline"
-              onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
+              onClick={() =>
+                setCurrentQuestion((prev) => Math.max(0, prev - 1))
+              }
               disabled={currentQuestion === 0}
             >
               Previous
@@ -182,8 +184,8 @@ export function LearningStyleQuiz() {
               </Button>
             ) : (
               <Button
-                onClick={() => setCurrentQuestion(prev => prev + 1)}
-                disabled={!responses.find(r => r.questionId === currentQ.id)}
+                onClick={() => setCurrentQuestion((prev) => prev + 1)}
+                disabled={!responses.find((r) => r.questionId === currentQ.id)}
               >
                 Next
               </Button>

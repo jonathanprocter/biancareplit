@@ -46,7 +46,7 @@ export function Register() {
               <Input
                 type="text"
                 value={username}
-                onChange={e => setUsername(e.target.value)}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 minLength={3}
               />
@@ -56,7 +56,7 @@ export function Register() {
               <Input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -65,7 +65,7 @@ export function Register() {
               <Input
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
               />

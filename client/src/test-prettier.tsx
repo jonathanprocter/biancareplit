@@ -25,14 +25,14 @@ export const TestComponent: FC<TestProps> = ({ title, items }) => {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">{title}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {items.map(item => (
+        {items.map((item) => (
           <div
             key={item.id}
             className="border rounded p-4 hover:shadow-lg transition-shadow"
             onClick={() => setSelectedId(item.id)}
             role="button"
             tabIndex={0}
-            onKeyDown={e => {
+            onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 setSelectedId(item.id);
               }

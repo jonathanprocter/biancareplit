@@ -43,7 +43,7 @@ export function SkillTreeVisualization({
 
   // Initialize nodes with random positions
   useEffect(() => {
-    const initialNodes = skills.map(skill => ({
+    const initialNodes = skills.map((skill) => ({
       ...skill,
       x: Math.random() * width,
       y: Math.random() * height,
@@ -54,8 +54,8 @@ export function SkillTreeVisualization({
 
   // Force-directed graph simulation
   const simulateForces = useCallback(() => {
-    setNodes(prevNodes => {
-      const newNodes = prevNodes.map(node => ({
+    setNodes((prevNodes) => {
+      const newNodes = prevNodes.map((node) => ({
         ...node,
         velocity: node.velocity || { x: 0, y: 0 },
       }));
@@ -79,8 +79,8 @@ export function SkillTreeVisualization({
         }
 
         // Attraction along prerequisites
-        node.prerequisites.forEach(prereqId => {
-          const prereq = newNodes.find(n => n.id === prereqId);
+        node.prerequisites.forEach((prereqId) => {
+          const prereq = newNodes.find((n) => n.id === prereqId);
           if (prereq) {
             const dx = prereq.x - node.x;
             const dy = prereq.y - node.y;
@@ -136,9 +136,9 @@ export function SkillTreeVisualization({
 
   const renderConnections = useCallback(() => {
     return nodes
-      .flatMap(node =>
-        node.prerequisites.map(prereqId => {
-          const prereq = nodes.find(n => n.id === prereqId);
+      .flatMap((node) =>
+        node.prerequisites.map((prereqId) => {
+          const prereq = nodes.find((n) => n.id === prereqId);
           if (!prereq) return null;
 
           const key = `${node.id}-${prereqId}`;
@@ -176,7 +176,7 @@ export function SkillTreeVisualization({
         className="absolute inset-0"
       >
         <g>{renderConnections()}</g>
-        {nodes.map(node => (
+        {nodes.map((node) => (
           <g key={node.id}>
             <motion.circle
               cx={node.x}
@@ -247,8 +247,8 @@ export function SkillTreeVisualization({
                   <div className="text-sm">
                     <span className="font-medium">Prerequisites:</span>
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {selectedSkill.prerequisites.map(prereqId => {
-                        const prereq = skills.find(s => s.id === prereqId);
+                      {selectedSkill.prerequisites.map((prereqId) => {
+                        const prereq = skills.find((s) => s.id === prereqId);
                         return (
                           <Badge
                             key={prereqId}
@@ -256,7 +256,7 @@ export function SkillTreeVisualization({
                             className="cursor-pointer"
                             onClick={() => {
                               const prereqNode = nodes.find(
-                                n => n.id === prereqId
+                                (n) => n.id === prereqId
                               );
                               if (prereqNode) setSelectedSkill(prereqNode);
                             }}

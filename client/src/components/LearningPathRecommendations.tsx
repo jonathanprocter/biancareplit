@@ -82,7 +82,7 @@ export function LearningPathRecommendations() {
           </CardContent>
         </Card>
       ) : learningPaths?.length ? (
-        learningPaths.map(path => (
+        learningPaths.map((path) => (
           <Card key={path.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">

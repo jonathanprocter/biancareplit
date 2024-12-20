@@ -56,5 +56,5 @@ export function processItems(
   config: Partial<NestedConfig>
 ): FormattedItem[] {
   console.log('Processing items with config:', config);
-  return items.filter(item => item.status === 'active');
+  return items.filter((item) => item.status === 'active');
 }
