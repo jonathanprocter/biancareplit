@@ -1,4 +1,4 @@
-import { Switch, Route } from 'wouter';
+import { Switch, Route, useLocation } from 'wouter';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { Dashboard } from '@/pages/Dashboard';
@@ -9,22 +9,36 @@ import { LearningPathRecommendations } from '@/components/LearningPathRecommenda
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
+import { DailyWelcomeCard } from '@/components/DailyWelcomeCard';
+import { FileUploadWizard } from '@/components/FileUploadWizard';
 
 function App() {
+  const [location] = useLocation();
+  const isAuthPage = location === '/' || location === '/register';
+
   return (
-    <>
-      <Navigation />
-      <Switch>
-        <Route path="/" component={Login} />
-        <Route path="/register" component={Register} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/courses/:id" component={Course} />
-        <Route path="/progress" component={UserProgress} />
-        <Route path="/learning-style-quiz" component={LearningStyleQuiz} />
-        <Route path="/learning-paths" component={LearningPathRecommendations} />
-        <Route component={NotFound} />
-      </Switch>
-    </>
+    <div className="min-h-screen bg-background">
+      {!isAuthPage && <Navigation />}
+      <main className="container mx-auto px-4 py-8">
+        <Switch>
+          <Route path="/" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/dashboard">
+            {() => (
+              <div className="space-y-8">
+                <DailyWelcomeCard />
+                <FileUploadWizard />
+              </div>
+            )}
+          </Route>
+          <Route path="/courses/:id" component={Course} />
+          <Route path="/progress" component={UserProgress} />
+          <Route path="/learning-style-quiz" component={LearningStyleQuiz} />
+          <Route path="/learning-paths" component={LearningPathRecommendations} />
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+    </div>
   );
 }
 
