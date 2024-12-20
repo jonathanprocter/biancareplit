@@ -47,7 +47,7 @@ class EnhancedFlashcardSystem {
     difficulty = 'medium',
     category = 'nursing',
     nclexCategory = null,
-    keywords = []
+    keywords = [],
   ) {
     try {
       if (!this.initialized) {
@@ -68,7 +68,7 @@ class EnhancedFlashcardSystem {
 
       // Check for duplicates
       const isDuplicate = this.flashcards.some(
-        card => card.front === cleanFront || card.back === cleanBack
+        (card) => card.front === cleanFront || card.back === cleanBack,
       );
 
       if (isDuplicate) {
@@ -90,25 +90,18 @@ class EnhancedFlashcardSystem {
       ];
 
       const normalizedCategory =
-        validCategories.find(c =>
-          category
-            .toLowerCase()
-            .includes(c.toLowerCase().replace(/ & | and /g, ''))
+        validCategories.find((c) =>
+          category.toLowerCase().includes(c.toLowerCase().replace(/ & | and /g, '')),
         ) || 'General Nursing';
 
       // Validate and normalize difficulty
       const validDifficulties = ['beginner', 'intermediate', 'advanced'];
-      const normalizedDifficulty = validDifficulties.includes(
-        difficulty.toLowerCase()
-      )
+      const normalizedDifficulty = validDifficulties.includes(difficulty.toLowerCase())
         ? difficulty.toLowerCase()
         : 'intermediate';
 
       // Show save confirmation dialog first
-      const saveConfirm = await this.showSaveConfirmation(
-        cleanFront,
-        cleanBack
-      );
+      const saveConfirm = await this.showSaveConfirmation(cleanFront, cleanBack);
       if (!saveConfirm || !saveConfirm.confirmed) {
         console.log('User cancelled saving flashcard');
         return false;
@@ -183,12 +176,7 @@ class EnhancedFlashcardSystem {
             answer: cleanBack,
             difficulty: normalizedDifficulty,
             category: normalizedCategory,
-            tags: [
-              ...new Set([
-                ...(Array.isArray(keywords) ? keywords : []),
-                ...tags,
-              ]),
-            ],
+            tags: [...new Set([...(Array.isArray(keywords) ? keywords : []), ...tags])],
             nclexCategory: nclexCategory,
           }),
         });
@@ -240,10 +228,7 @@ class EnhancedFlashcardSystem {
         ...questionData,
         timestamp: new Date().toISOString(),
       });
-      localStorage.setItem(
-        'wrongAnswersDB',
-        JSON.stringify(this.wrongAnswersDB)
-      );
+      localStorage.setItem('wrongAnswersDB', JSON.stringify(this.wrongAnswersDB));
 
       // Create the flashcard
       return await this.createCustomFlashcard(
@@ -252,7 +237,7 @@ class EnhancedFlashcardSystem {
         difficulty,
         category,
         nclexCategory,
-        questionData.keywords || []
+        questionData.keywords || [],
       );
     } catch (error) {
       console.error('Error creating flashcard from missed question:', error);
@@ -276,9 +261,7 @@ class EnhancedFlashcardSystem {
   }
 
   getFlashcardsByCategory(category) {
-    return this.flashcards.filter(
-      f => f.category.toLowerCase() === category.toLowerCase()
-    );
+    return this.flashcards.filter((f) => f.category.toLowerCase() === category.toLowerCase());
   }
 
   render() {
@@ -297,8 +280,7 @@ class EnhancedFlashcardSystem {
     }
 
     const currentCard = this.flashcards[this.currentIndex];
-    const normalizedDifficulty =
-      currentCard.difficulty?.toLowerCase() || 'intermediate';
+    const normalizedDifficulty = currentCard.difficulty?.toLowerCase() || 'intermediate';
 
     this.displayContainer.innerHTML = `
             <div class="flashcard">
@@ -332,9 +314,7 @@ class EnhancedFlashcardSystem {
                                         <h4>Related Concepts:</h4>
                                         <ul>
                                             ${currentCard.relatedConcepts
-                                              .map(
-                                                concept => `<li>${concept}</li>`
-                                              )
+                                              .map((concept) => `<li>${concept}</li>`)
                                               .join('')}
                                         </ul>
                                     </div>
@@ -359,7 +339,7 @@ class EnhancedFlashcardSystem {
                                         <div class="clinical-content">
                                             ${currentCard.clinicalNotes
                                               .split('\n')
-                                              .map(note => `<p>${note}</p>`)
+                                              .map((note) => `<p>${note}</p>`)
                                               .join('')}
                                         </div>
                                     </div>
@@ -376,9 +356,7 @@ class EnhancedFlashcardSystem {
                             <div class="flashcard-tags">
                                 <h4>Tags:</h4>
                                 <ul>
-                                    ${currentCard.tags
-                                      .map(tag => `<li>${tag}</li>`)
-                                      .join('')}
+                                    ${currentCard.tags.map((tag) => `<li>${tag}</li>`).join('')}
                                 </ul>
                             </div>
                         `
@@ -392,16 +370,12 @@ class EnhancedFlashcardSystem {
                     <button onclick="window.flashcardSystem.nextCard()">Next</button>
                 </div>
                 <div class="flashcard-info">
-                    <p>Card ${this.currentIndex + 1} of ${
-      this.flashcards.length
-    }</p>
-                    <p>Created: ${new Date(
-                      currentCard.createdAt
-                    ).toLocaleDateString()}</p>
+                    <p>Card ${this.currentIndex + 1} of ${this.flashcards.length}</p>
+                    <p>Created: ${new Date(currentCard.createdAt).toLocaleDateString()}</p>
                     ${
                       currentCard.lastReviewed
                         ? `<p>Last Reviewed: ${new Date(
-                            currentCard.lastReviewed
+                            currentCard.lastReviewed,
                           ).toLocaleDateString()}</p>`
                         : '<p>Not yet reviewed</p>'
                     }
@@ -423,13 +397,12 @@ class EnhancedFlashcardSystem {
   }
 
   previousCard() {
-    this.currentIndex =
-      (this.currentIndex - 1 + this.flashcards.length) % this.flashcards.length;
+    this.currentIndex = (this.currentIndex - 1 + this.flashcards.length) % this.flashcards.length;
     this.render();
   }
 
   async showSaveConfirmation(front, back) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const confirmDialog = document.createElement('div');
       confirmDialog.className = 'save-confirmation-dialog';
       confirmDialog.innerHTML = `
@@ -462,8 +435,8 @@ class EnhancedFlashcardSystem {
         const tags = document
           .getElementById('tags')
           .value.split(',')
-          .map(tag => tag.trim())
-          .filter(tag => tag.length > 0);
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0);
         document.body.removeChild(confirmDialog);
         resolve({ confirmed: true, tags });
       });

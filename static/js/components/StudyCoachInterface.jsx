@@ -24,16 +24,14 @@ const StudyCoachInterface = () => {
     if (!inputValue.trim()) return;
 
     setIsLoading(true);
-    setMessages(prev => [...prev, { role: 'user', content: inputValue }]);
+    setMessages((prev) => [...prev, { role: 'user', content: inputValue }]);
 
     try {
-      const response = await systemIntegration.studyCoach?.askQuestion(
-        inputValue.trim()
-      );
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      const response = await systemIntegration.studyCoach?.askQuestion(inputValue.trim());
+      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         { role: 'error', content: 'Failed to get response. Please try again.' },
       ]);
@@ -70,21 +68,17 @@ const StudyCoachInterface = () => {
           <div className="flex space-x-2">
             <textarea
               value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
+              onChange={(e) => setInputValue(e.target.value)}
               placeholder="Ask your study coach..."
               className="flex-1 p-2 border rounded-lg"
-              onKeyPress={e => {
+              onKeyPress={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage();
                 }
               }}
             />
-            <Button
-              onClick={handleSendMessage}
-              disabled={isLoading}
-              className="whitespace-nowrap"
-            >
+            <Button onClick={handleSendMessage} disabled={isLoading} className="whitespace-nowrap">
               {isLoading ? 'Sending...' : 'Send'}
             </Button>
           </div>

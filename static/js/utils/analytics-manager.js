@@ -41,9 +41,9 @@ class AnalyticsManager {
     if (typeof window !== 'undefined' && window.PerformanceObserver) {
       let lastRenderTimestamp = performance.now();
 
-      const observer = new PerformanceObserver(list => {
+      const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           if (entry.entryType === 'measure') {
             this.performanceMonitor.trackCustomMeasure({
               name: entry.name,
@@ -75,10 +75,7 @@ class AnalyticsManager {
 
       document.addEventListener('visibilitychange', handleVisibilityChange);
       this.cleanupListeners.add(() => {
-        document.removeEventListener(
-          'visibilitychange',
-          handleVisibilityChange
-        );
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
       });
     }
 
@@ -87,7 +84,7 @@ class AnalyticsManager {
   }
 
   cleanup() {
-    this.cleanupListeners.forEach(cleanup => cleanup());
+    this.cleanupListeners.forEach((cleanup) => cleanup());
     this.cleanupListeners.clear();
     this.initialized = false;
   }
@@ -96,7 +93,7 @@ class AnalyticsManager {
 // Export singleton instance
 export const analyticsManager = singletonManager.getInstance(
   'analyticsManager',
-  () => new AnalyticsManager()
+  () => new AnalyticsManager(),
 );
 
 export default analyticsManager;

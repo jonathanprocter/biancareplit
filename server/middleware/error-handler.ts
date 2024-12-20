@@ -1,22 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 
 export class AppError extends Error {
-  constructor(
-    public message: string,
-    public status: number = 500,
-    public code?: string
-  ) {
+  constructor(public message: string, public status: number = 500, public code?: string) {
     super(message);
     this.name = 'AppError';
   }
 }
 
-export const errorHandler = (
-  err: any,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Application error:', err);
 
   if (res.headersSent) {

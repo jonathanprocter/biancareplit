@@ -24,8 +24,7 @@ export function Login() {
       toast({
         variant: 'destructive',
         title: 'Login failed',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     }
   };

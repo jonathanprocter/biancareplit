@@ -38,7 +38,7 @@ export class ConfigMiddleware extends BaseMiddleware {
       this.config = configManager.getConfig();
       console.log(
         '[ConfigMiddleware] Successfully initialized with config version:',
-        this.config.version
+        this.config.version,
       );
     } catch (error) {
       console.error('[ConfigMiddleware] Initialization failed:', error);
@@ -46,10 +46,7 @@ export class ConfigMiddleware extends BaseMiddleware {
     }
   }
 
-  protected async _execute(
-    context: ExecutionContext,
-    next: NextFunction
-  ): Promise<void> {
+  protected async _execute(context: ExecutionContext, next: NextFunction): Promise<void> {
     try {
       // Validate context
       const validatedContext = ConfigContextSchema.parse(context);

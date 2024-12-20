@@ -13,52 +13,26 @@ print_status() {
   echo "${BLUE}[$(date +%T)]${NC} $1"
 }
 
-# Error handler
-handle_error() {
-  echo "${RED}❌ $1${NC}"
-  exit 1
-}
-
-print_status "🔍 Starting pre-commit checks..."
+print_status "🔍 Starting pre-commit hooks..."
 
 # Check for unstaged changes
 if ! git diff --quiet; then
-  print_status "${YELLOW}⚠️  Warning: You have unstaged changes${NC}"
-  print_status "${YELLOW}💡 Tip: Stage or stash them to ensure clean commits${NC}"
+  echo "${YELLOW}⚠️  Warning: You have unstaged changes${NC}"
+  echo "${YELLOW}💡 Tip: Stage or stash them to ensure clean commits${NC}"
 fi
 
-# Get staged files
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|jsx|ts|tsx|json|css|scss|md)$' || true)
-
-if [ -n "$STAGED_FILES" ]; then
-  print_status "🎨 Running Prettier on staged files..."
-  
-  # Format files with Prettier
-  if ! npx prettier --write $STAGED_FILES --ignore-unknown --config .prettierrc; then
-    handle_error "Prettier formatting failed"
-  fi
-  
-  # Add formatted files back to staging
-  git add $STAGED_FILES
-  print_status "${GREEN}✓ Files formatted successfully${NC}"
-else
-  print_status "${YELLOW}ℹ️ No files to format${NC}"
+# Run lint-staged for code formatting and linting
+print_status "🎨 Running lint-staged checks..."
+if ! npx lint-staged; then
+  echo "${RED}❌ lint-staged checks failed${NC}"
+  exit 1
 fi
 
-# TypeScript checks for all TypeScript files
+# Run TypeScript type checking
 print_status "🔍 Running TypeScript checks..."
 if ! npx tsc --noEmit --skipLibCheck; then
-  handle_error "TypeScript check failed"
-fi
-print_status "${GREEN}✓ TypeScript checks passed${NC}"
-
-# Run ESLint if there are JavaScript/TypeScript files
-if echo "$STAGED_FILES" | grep -qE '\.(js|jsx|ts|tsx)$'; then
-  print_status "🔍 Running ESLint..."
-  if ! npx eslint $STAGED_FILES --fix; then
-    handle_error "ESLint check failed"
-  fi
-  print_status "${GREEN}✓ ESLint checks passed${NC}"
+  echo "${RED}❌ TypeScript check failed${NC}"
+  exit 1
 fi
 
 print_status "${GREEN}✅ All checks completed successfully!${NC}"

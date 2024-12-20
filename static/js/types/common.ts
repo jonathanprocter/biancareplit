@@ -40,10 +40,7 @@ export interface DateDisplayProps {
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export const isDifficultyLevel = (value: unknown): value is DifficultyLevel => {
-  return (
-    typeof value === 'string' &&
-    ['beginner', 'intermediate', 'advanced'].includes(value)
-  );
+  return typeof value === 'string' && ['beginner', 'intermediate', 'advanced'].includes(value);
 };
 
 // Re-export for convenience

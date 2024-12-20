@@ -16,12 +16,8 @@ interface WebSocketMessage {
 const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [reconnectAttempts, setReconnectAttempts] = useState(
-    options.reconnectAttempts || 3
-  );
-  const [reconnectInterval, setReconnectInterval] = useState(
-    options.reconnectInterval || 5000
-  );
+  const [reconnectAttempts, setReconnectAttempts] = useState(options.reconnectAttempts || 3);
+  const [reconnectInterval, setReconnectInterval] = useState(options.reconnectInterval || 5000);
 
   const connect = useCallback(() => {
     const ws = new WebSocket(url);
@@ -31,7 +27,7 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
       setReconnectAttempts(options.reconnectAttempts || 3);
     };
 
-    ws.onmessage = event => {
+    ws.onmessage = (event) => {
       const message: WebSocketMessage = JSON.parse(event.data as string);
       options.onMessage && options.onMessage(message);
       if (message.type === 'metrics') {
@@ -39,7 +35,7 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
       }
     };
 
-    ws.onclose = event => {
+    ws.onclose = (event) => {
       setIsConnected(false);
       if (reconnectAttempts > 0) {
         setTimeout(() => {
@@ -51,7 +47,7 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
       }
     };
 
-    ws.onerror = error => {
+    ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       ws.close();
     };

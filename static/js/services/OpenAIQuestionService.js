@@ -6,30 +6,15 @@ class OpenAIQuestionService {
     this.initializationPromise = null;
     this.categories = {
       pharmacology: {
-        topics: [
-          'Drug Classes',
-          'Administration',
-          'Side Effects',
-          'Interactions',
-        ],
+        topics: ['Drug Classes', 'Administration', 'Side Effects', 'Interactions'],
         difficulties: ['beginner', 'intermediate', 'advanced'],
       },
       'medical-surgical': {
-        topics: [
-          'Cardiovascular',
-          'Respiratory',
-          'Neurological',
-          'Gastrointestinal',
-        ],
+        topics: ['Cardiovascular', 'Respiratory', 'Neurological', 'Gastrointestinal'],
         difficulties: ['beginner', 'intermediate', 'advanced'],
       },
       pediatrics: {
-        topics: [
-          'Growth & Development',
-          'Common Conditions',
-          'Medications',
-          'Care',
-        ],
+        topics: ['Growth & Development', 'Common Conditions', 'Medications', 'Care'],
         difficulties: ['beginner', 'intermediate', 'advanced'],
       },
       maternal: {
@@ -37,12 +22,7 @@ class OpenAIQuestionService {
         difficulties: ['beginner', 'intermediate', 'advanced'],
       },
       psychiatric: {
-        topics: [
-          'Disorders',
-          'Medications',
-          'Therapeutic Communication',
-          'Safety',
-        ],
+        topics: ['Disorders', 'Medications', 'Therapeutic Communication', 'Safety'],
         difficulties: ['beginner', 'intermediate', 'advanced'],
       },
       fundamentals: {
@@ -70,10 +50,7 @@ class OpenAIQuestionService {
     const initialQuestions = 2;
     for (const category of Object.keys(this.categories)) {
       try {
-        const questions = await this.generateQuestionsForCategory(
-          category,
-          initialQuestions
-        );
+        const questions = await this.generateQuestionsForCategory(category, initialQuestions);
         this.questionCache.set(category, questions);
       } catch (error) {
         console.error(`Failed to pre-warm cache for ${category}:`, error);
@@ -113,7 +90,7 @@ class OpenAIQuestionService {
 
   startCacheMaintenance() {
     setInterval(() => {
-      this.maintainCache().catch(error => {
+      this.maintainCache().catch((error) => {
         console.error('Cache maintenance error:', error);
       });
     }, 5 * 60 * 1000);
@@ -124,10 +101,7 @@ class OpenAIQuestionService {
       const cached = this.questionCache.get(category) || [];
       if (cached.length < 5) {
         try {
-          const newQuestions = await this.generateQuestionsForCategory(
-            category,
-            2
-          );
+          const newQuestions = await this.generateQuestionsForCategory(category, 2);
           this.questionCache.set(category, [...cached, ...newQuestions]);
         } catch (error) {
           console.error(`Cache maintenance failed for ${category}:`, error);
@@ -147,7 +121,7 @@ class OpenAIQuestionService {
       if (questions.length < count) {
         const newQuestions = await this.generateQuestionsForCategory(
           category,
-          count - questions.length
+          count - questions.length,
         );
         questions = [...questions, ...newQuestions];
         this.questionCache.set(category, questions);

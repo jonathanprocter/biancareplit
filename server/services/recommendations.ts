@@ -1,11 +1,5 @@
 import { db } from '@db';
-import {
-  users,
-  courses,
-  enrollments,
-  learningPaths,
-  learningPathCourses,
-} from '@db/schema';
+import { users, courses, enrollments, learningPaths, learningPathCourses } from '@db/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
 
 interface RecommendationFactors {
@@ -18,7 +12,7 @@ interface RecommendationFactors {
 }
 
 export async function generatePersonalizedPath(
-  userId: number
+  userId: number,
 ): Promise<typeof learningPaths.$inferSelect> {
   // Get user data and preferences
   const user = await db.query.users.findFirst({
@@ -34,14 +28,12 @@ export async function generatePersonalizedPath(
     where: and(eq(enrollments.userId, userId), eq(enrollments.completed, true)),
   });
 
-  const completedCourseIds = completedEnrollments.map(e => e.courseId);
+  const completedCourseIds = completedEnrollments.map((e) => e.courseId);
 
   const factors: RecommendationFactors = {
     userId: user.id,
     learningStyle: user.learningStyle ?? 'visual',
-    preferredTopics: user.preferredTopics
-      ? JSON.parse(user.preferredTopics)
-      : [],
+    preferredTopics: user.preferredTopics ? JSON.parse(user.preferredTopics) : [],
     availableTimeMinutes: user.preferredStudyTime ?? 60,
     currentLevel: user.level ?? 1,
     completedCourseIds,
@@ -56,17 +48,12 @@ export async function generatePersonalizedPath(
     .values({
       userId,
       name: `Personalized Path - ${new Date().toLocaleDateString()}`,
-      description:
-        'Automatically generated based on your progress and preferences',
+      description: 'Automatically generated based on your progress and preferences',
       difficulty:
-        (user.level ?? 1) <= 2
-          ? 'beginner'
-          : (user.level ?? 1) <= 4
-          ? 'intermediate'
-          : 'advanced',
+        (user.level ?? 1) <= 2 ? 'beginner' : (user.level ?? 1) <= 4 ? 'intermediate' : 'advanced',
       estimatedCompletionTime: recommendedCourses.reduce(
         (sum, course) => sum + course.estimatedHours * 60,
-        0
+        0,
       ),
     })
     .returning();
@@ -78,7 +65,7 @@ export async function generatePersonalizedPath(
       courseId: course.id,
       order: index + 1,
       isRequired: true,
-    }))
+    })),
   );
 
   return learningPath;
@@ -91,7 +78,7 @@ async function findRecommendedCourses(factors: RecommendationFactors) {
   });
 
   // Enhanced scoring system with additional factors
-  const scoredCourses = availableCourses.map(course => {
+  const scoredCourses = availableCourses.map((course) => {
     try {
       const topics = Array.isArray(course.topics)
         ? course.topics
@@ -99,17 +86,14 @@ async function findRecommendedCourses(factors: RecommendationFactors) {
 
       // Topic preference score (0-10)
       const topicMatchScore =
-        factors.preferredTopics.filter(topic => topics.includes(topic)).length *
-        2;
+        factors.preferredTopics.filter((topic) => topics.includes(topic)).length * 2;
 
       // Time fit score (0-10, lower is better)
       const timeMatchScore =
         10 -
         Math.min(
           10,
-          Math.abs(
-            factors.availableTimeMinutes - (course.estimatedHours || 1) * 60
-          ) / 30
+          Math.abs(factors.availableTimeMinutes - (course.estimatedHours || 1) * 60) / 30,
         );
 
       // Enhanced difficulty matching (0-10)
@@ -120,8 +104,7 @@ async function findRecommendedCourses(factors: RecommendationFactors) {
 
       // Adaptive difficulty - slightly challenge the user
       const preferredDifficulty = Math.min(3, userDifficultyLevel + 0.5);
-      const difficultyScore =
-        10 - Math.abs(preferredDifficulty - courseDifficultyLevel) * 3;
+      const difficultyScore = 10 - Math.abs(preferredDifficulty - courseDifficultyLevel) * 3;
 
       // Learning pace adjustment
       const learningPaceScore =
@@ -134,7 +117,7 @@ async function findRecommendedCourses(factors: RecommendationFactors) {
         ? course.prerequisites
         : JSON.parse(course.prerequisites || '[]');
       const progressiveScore = prerequisites.some((p: number) =>
-        factors.completedCourseIds.includes(p)
+        factors.completedCourseIds.includes(p),
       )
         ? 10
         : 0;

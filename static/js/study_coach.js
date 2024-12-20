@@ -1,8 +1,7 @@
 class AIStudyCoach {
   constructor() {
     this.currentFlashcard = null;
-    this.flashcardSystem =
-      window.flashcardSystem || new EnhancedFlashcardSystem();
+    this.flashcardSystem = window.flashcardSystem || new EnhancedFlashcardSystem();
   }
 
   async askQuestion(question) {
@@ -40,27 +39,17 @@ class AIStudyCoach {
       // Extract topics from content
       const nursingTopics = {
         pharmacology: ['medication', 'drug', 'dosage', 'administration'],
-        medical_surgical: [
-          'assessment',
-          'intervention',
-          'care plan',
-          'condition',
-        ],
+        medical_surgical: ['assessment', 'intervention', 'care plan', 'condition'],
         pediatric: ['child', 'pediatric', 'development', 'growth'],
         maternal_newborn: ['pregnancy', 'labor', 'newborn', 'maternal'],
         mental_health: ['psychiatric', 'mental', 'behavioral', 'therapy'],
-        community_health: [
-          'community',
-          'public health',
-          'prevention',
-          'education',
-        ],
+        community_health: ['community', 'public health', 'prevention', 'education'],
         leadership: ['management', 'leadership', 'delegation', 'supervision'],
       };
 
       suggestedTopics = Object.entries(nursingTopics)
         .filter(([category, keywords]) =>
-          keywords.some(keyword => contentKeywords.includes(keyword))
+          keywords.some((keyword) => contentKeywords.includes(keyword)),
         )
         .map(([category]) => category);
 
@@ -114,7 +103,7 @@ class AIStudyCoach {
         flashcard.back,
         flashcard.difficulty,
         flashcard.category,
-        flashcard.tags
+        flashcard.tags,
       );
 
       // Save to backend
@@ -183,7 +172,7 @@ class StudyCoachInterface {
     }
 
     if (userInput) {
-      userInput.onkeypress = e => {
+      userInput.onkeypress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           this.sendMessage();
@@ -261,7 +250,7 @@ class StudyCoachInterface {
     const tags =
       tagsInput?.value
         .split(',')
-        .map(tag => tag.trim())
+        .map((tag) => tag.trim())
         .filter(Boolean) || [];
 
     const result = await this.aiCoach.saveFlashcard(difficulty, tags);
@@ -272,21 +261,15 @@ class StudyCoachInterface {
         `Flashcard saved successfully!\n` +
           `Location: ${result.collection}\n` +
           `Difficulty: ${difficulty}\n` +
-          `Topics: ${tags.join(', ')}`
+          `Topics: ${tags.join(', ')}`,
       );
     } else {
-      this.addMessageToChat(
-        'assistant',
-        'Failed to save flashcard. Please try again.'
-      );
+      this.addMessageToChat('assistant', 'Failed to save flashcard. Please try again.');
     }
   }
 
   skipFlashcard() {
-    this.addMessageToChat(
-      'assistant',
-      'Flashcard skipped. Ask another question!'
-    );
+    this.addMessageToChat('assistant', 'Flashcard skipped. Ask another question!');
   }
 }
 

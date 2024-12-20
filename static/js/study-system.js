@@ -65,10 +65,7 @@ class FlashcardSystem extends EventEmitter {
       // Analytics initialization logic here
       return true;
     } catch (error) {
-      console.error(
-        '[FlashcardSystem] Analytics initialization failed:',
-        error
-      );
+      console.error('[FlashcardSystem] Analytics initialization failed:', error);
       throw error;
     }
   }
@@ -123,7 +120,7 @@ class FlashcardSystem extends EventEmitter {
 if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {
     const system = FlashcardSystem.getInstance();
-    system.initialize().catch(error => {
+    system.initialize().catch((error) => {
       console.error('[FlashcardSystem] Initialization failed:', error);
     });
   });

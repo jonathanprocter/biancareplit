@@ -1,34 +1,35 @@
-export interface MatchDetails {
-  topicMatch: number;
-  timeMatch: number;
-  difficultyMatch: number;
-  learningPace: number;
-  progressive?: number;
-}
+import { MatchDetails } from './match';
 
 export interface Course {
   id: number;
   title: string;
   description: string;
-  category?: string;
-  prerequisites?: number[];
-  topics?: string[];
+  category: string;
+  prerequisites: number[];
+  topics: string[];
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  estimatedHours: number;
   matchDetails?: MatchDetails;
-  completed?: boolean;
-  difficulty?: 'beginner' | 'intermediate' | 'advanced';
-  estimatedHours?: number;
   instructor?: {
     id: number;
     username: string;
   };
   recommendationScore?: number;
-  difficultyLevel?: string;
   estimatedTimeToComplete?: number;
+  completed?: boolean;
 }
 
-export type CourseWithProgress = {
-  course: Course;
+export interface CourseWithProgress extends Course {
   progress: number;
   correctAnswers: number;
   totalAttempts: number;
-};
+}
+
+export interface CourseEnrollment {
+  id: number;
+  course: CourseWithProgress;
+  progress: number;
+  correctAnswers: number;
+  totalAttempts: number;
+  completed?: boolean;
+}

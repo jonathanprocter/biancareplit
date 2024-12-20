@@ -8,6 +8,6 @@ if (container) {
   root.render(
     <React.StrictMode>
       <FlashcardManager />
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 }

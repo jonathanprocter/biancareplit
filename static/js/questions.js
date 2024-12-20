@@ -53,9 +53,7 @@ function displayCurrentQuestion() {
   container.innerHTML = `
         <div class="question-card">
             <div class="question-header">
-                <h3>Question ${state.currentQuestionIndex + 1} of ${
-    state.questions.length
-  }</h3>
+                <h3>Question ${state.currentQuestionIndex + 1} of ${state.questions.length}</h3>
                 <span class="difficulty-badge ${difficultyClass}">${question.difficulty.toUpperCase()}</span> <span class="score">Score: ${
     state.score
   }/${state.totalAnswered}</span>
@@ -69,7 +67,7 @@ function displayCurrentQuestion() {
                         <input type="radio" name="answer" id="option${index}" value="${index}">
                         <label for="option${index}">${option}</label>
                     </div>
-                `
+                `,
                   )
                   .join('')}
                 <button type="submit" class="submit-btn">Submit Answer</button>
@@ -79,9 +77,7 @@ function displayCurrentQuestion() {
                   state.currentQuestionIndex === 0 ? 'disabled' : ''
                 }>← Previous</button>
                 <button type="button" class="action-btn next" onclick="nextQuestion()" ${
-                  state.currentQuestionIndex >= state.questions.length - 1
-                    ? 'disabled'
-                    : ''
+                  state.currentQuestionIndex >= state.questions.length - 1 ? 'disabled' : ''
                 }>Next →</button>
             </div>
         </div>
@@ -167,15 +163,11 @@ async function handleSubmit(event) {
 function showFeedback(result) {
   const container = document.getElementById('questionContainer');
   const feedbackDiv = document.createElement('div');
-  feedbackDiv.className = `feedback ${
-    result.correct ? 'correct' : 'incorrect'
-  }`;
+  feedbackDiv.className = `feedback ${result.correct ? 'correct' : 'incorrect'}`;
   feedbackDiv.innerHTML = `
         <h3>${result.correct ? 'Correct!' : 'Incorrect'}</h3>
         <p>Score: ${state.score}/${state.totalAnswered}</p>
-        <p>Correct Answer: ${
-          result.correct_answer
-        }</p>  <!-- Added correct answer display -->
+        <p>Correct Answer: ${result.correct_answer}</p>  <!-- Added correct answer display -->
         <p>${result.rationale}</p>
     `;
   container.appendChild(feedbackDiv);

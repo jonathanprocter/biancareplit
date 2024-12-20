@@ -42,22 +42,14 @@ class AIQuestionGenerator {
       for (const subtopic of topics[topic]) {
         for (const difficulty of difficulties) {
           console.log(
-            `Generating ${count} questions for ${topic}/${subtopic} at ${difficulty} level`
+            `Generating ${count} questions for ${topic}/${subtopic} at ${difficulty} level`,
           );
 
           try {
-            const questions = await this.generateBatch(
-              topic,
-              subtopic,
-              difficulty,
-              count
-            );
+            const questions = await this.generateBatch(topic, subtopic, difficulty, count);
             generatedQuestions.push(...questions);
           } catch (error) {
-            console.error(
-              `Error generating questions for ${topic}/${subtopic}:`,
-              error
-            );
+            console.error(`Error generating questions for ${topic}/${subtopic}:`, error);
           }
         }
       }
@@ -74,18 +66,10 @@ class AIQuestionGenerator {
           try {
             const topics = {
               Pharmacology: ['Administration', 'Drug Classes', 'Side Effects'],
-              'Medical-Surgical': [
-                'Cardiovascular',
-                'Respiratory',
-                'Neurological',
-              ],
+              'Medical-Surgical': ['Cardiovascular', 'Respiratory', 'Neurological'],
               Pediatrics: ['Growth and Development', 'Common Conditions'],
               Maternal: ['Pregnancy', 'Labor', 'Postpartum'],
-              Psychiatric: [
-                'Disorders',
-                'Medications',
-                'Therapeutic Communication',
-              ],
+              Psychiatric: ['Disorders', 'Medications', 'Therapeutic Communication'],
               Fundamentals: ['Assessment', 'Basic Care', 'Safety'],
             };
 
@@ -95,10 +79,7 @@ class AIQuestionGenerator {
             generateButton.disabled = true;
             generateButton.textContent = 'Generating Questions...';
 
-            const questions = await this.bulkGenerateQuestions(
-              topics,
-              difficulties
-            );
+            const questions = await this.bulkGenerateQuestions(topics, difficulties);
 
             // Dispatch event for NursingContentHandler
             const event = new CustomEvent('questionsGenerated', {

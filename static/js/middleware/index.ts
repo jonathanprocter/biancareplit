@@ -13,7 +13,7 @@ export interface MiddlewareContext {
 export type NextFunction = () => Promise<void> | void;
 export type MiddlewareFunction = (
   context: MiddlewareContext,
-  next: NextFunction
+  next: NextFunction,
 ) => Promise<void> | void;
 
 const LogLevelSchema = z.enum(['debug', 'info', 'warn', 'error']);

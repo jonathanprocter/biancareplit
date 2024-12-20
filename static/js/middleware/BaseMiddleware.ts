@@ -8,10 +8,7 @@ export abstract class BaseMiddleware {
     this.config = null;
   }
 
-  abstract execute(
-    context: MiddlewareContext,
-    next: NextFunction
-  ): Promise<void>;
+  abstract execute(context: MiddlewareContext, next: NextFunction): Promise<void>;
 
   protected validateContext(context: MiddlewareContext): void {
     const ContextSchema = z.object({
@@ -27,10 +24,7 @@ export abstract class BaseMiddleware {
     }
   }
 
-  protected async handleError(
-    error: Error,
-    context: MiddlewareContext
-  ): Promise<void> {
+  protected async handleError(error: Error, context: MiddlewareContext): Promise<void> {
     console.error('Middleware error:', {
       middleware: this.constructor.name,
       error: error.message,

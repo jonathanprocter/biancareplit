@@ -71,7 +71,7 @@ async function startServer() {
     // ALWAYS serve the app on port 5000
     // this serves both the API and the client
     const PORT = 5000;
-    server.listen(PORT, "0.0.0.0", () => {
+    server.listen(PORT, '0.0.0.0', () => {
       log(`serving on port ${PORT}`);
     });
   } catch (error) {
@@ -81,7 +81,7 @@ async function startServer() {
 }
 
 // Start the server
-startServer().catch(error => {
+startServer().catch((error) => {
   console.error('Fatal error during server startup:', error);
   process.exit(1);
 });

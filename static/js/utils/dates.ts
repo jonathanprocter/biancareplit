@@ -32,10 +32,7 @@ export class DateFormatter {
     return DateFormatter.instance;
   }
 
-  public formatDate(
-    date: Date | string,
-    options: DateFormatOptions = {}
-  ): FormattedDateResult {
+  public formatDate(date: Date | string, options: DateFormatOptions = {}): FormattedDateResult {
     try {
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
       const formatStr = options.format || this.defaultFormat;
@@ -59,10 +56,7 @@ export class DateFormatter {
 
 export const dateFormatter = DateFormatter.getInstance();
 
-export const formatDate = (
-  date: Date | string,
-  options?: DateFormatOptions
-): string => {
+export const formatDate = (date: Date | string, options?: DateFormatOptions): string => {
   const result = dateFormatter.formatDate(date, options);
   return result.formatted;
 };

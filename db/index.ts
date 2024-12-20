@@ -3,8 +3,7 @@ import postgres from 'postgres';
 import * as schema from './schema';
 
 const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  'postgres://postgres:postgres@0.0.0.0:5432/postgres';
+  process.env.DATABASE_URL || 'postgres://postgres:postgres@0.0.0.0:5432/postgres';
 
 const client = postgres(DATABASE_URL, {
   max: 20,

@@ -39,13 +39,8 @@ export function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-gray-600">{course.description}</p>
-              <div className="text-sm">
-                Instructor: {course.instructor.username}
-              </div>
-              <Button
-                onClick={() => setLocation(`/courses/${course.id}`)}
-                className="w-full"
-              >
+              <div className="text-sm">Instructor: {course.instructor.username}</div>
+              <Button onClick={() => setLocation(`/courses/${course.id}`)} className="w-full">
                 View Course
               </Button>
             </CardContent>

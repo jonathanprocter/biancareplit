@@ -11,9 +11,7 @@ interface AlertNotificationsProps {
   alerts: Alert[];
 }
 
-export const AlertNotifications: React.FC<AlertNotificationsProps> = ({
-  alerts,
-}) => {
+export const AlertNotifications: React.FC<AlertNotificationsProps> = ({ alerts }) => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
@@ -28,20 +26,13 @@ export const AlertNotifications: React.FC<AlertNotificationsProps> = ({
   return (
     <div className="space-y-2">
       {alerts.map((alert, index) => (
-        <div
-          key={index}
-          className={`p-4 border-l-4 rounded ${getSeverityColor(
-            alert.severity
-          )}`}
-        >
+        <div key={index} className={`p-4 border-l-4 rounded ${getSeverityColor(alert.severity)}`}>
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold">{alert.type}</h3>
               <p className="text-sm">{alert.message}</p>
             </div>
-            <span className="text-xs">
-              {new Date(alert.timestamp).toLocaleTimeString()}
-            </span>
+            <span className="text-xs">{new Date(alert.timestamp).toLocaleTimeString()}</span>
           </div>
         </div>
       ))}

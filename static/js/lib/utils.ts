@@ -20,10 +20,7 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(
-  date: Date | string,
-  options: DateFormatOptions = {}
-): string {
+export function formatDate(date: Date | string, options: DateFormatOptions = {}): string {
   const parsedDate = typeof date === 'string' ? parseISO(date) : date;
 
   if (!isValid(parsedDate)) {
@@ -56,7 +53,7 @@ export function formatDate(
 
 export function getFormattedDate(
   date: Date | string,
-  options: DateFormatOptions = {}
+  options: DateFormatOptions = {},
 ): FormattedDateResult {
   try {
     const parsedDate = typeof date === 'string' ? parseISO(date) : date;
@@ -70,7 +67,7 @@ export function getFormattedDate(
       true,
       parsedDate,
       parsedDate.getTime(),
-      options.relative ? formatDate(parsedDate, { relative: true }) : undefined
+      options.relative ? formatDate(parsedDate, { relative: true }) : undefined,
     );
   } catch (error) {
     console.error('Error in getFormattedDate:', error);
@@ -93,7 +90,7 @@ export function calculateTimeSpent(startTime: number): number {
 export function calculateConfidence(
   timeSpent: number,
   isCorrect: boolean,
-  difficulty: DifficultyLevel
+  difficulty: DifficultyLevel,
 ): number {
   let baseConfidence = isCorrect ? 4 : 2;
 
@@ -103,24 +100,13 @@ export function calculateConfidence(
 
   // Adjust based on difficulty
   if (difficulty === 'advanced' || difficulty === 'hard') baseConfidence -= 1;
-  else if (difficulty === 'beginner' || difficulty === 'easy')
-    baseConfidence += 1;
+  else if (difficulty === 'beginner' || difficulty === 'easy') baseConfidence += 1;
 
   // Ensure confidence is between 1-5
   return Math.max(1, Math.min(5, baseConfidence));
 }
 
 // Re-export everything from dates module
-export {
-  isDifficultyLevel,
-  DEFAULT_DATE_FORMAT,
-  DEFAULT_TIME_FORMAT,
-  DEFAULT_DATETIME_FORMAT,
-};
+export { isDifficultyLevel, DEFAULT_DATE_FORMAT, DEFAULT_TIME_FORMAT, DEFAULT_DATETIME_FORMAT };
 
-export type {
-  DateFormatOptions,
-  FormattedDateResult,
-  DifficultyLevel,
-  DateFormatterConfig,
-};
+export type { DateFormatOptions, FormattedDateResult, DifficultyLevel, DateFormatterConfig };

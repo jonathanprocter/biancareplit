@@ -67,9 +67,7 @@ class TimerManager {
     return {
       sessionStart: this.sessionStartTime,
       questionStart: this.questionStartTime,
-      timeTaken: this.questionStartTime
-        ? Math.floor((now - this.questionStartTime) / 1000)
-        : 0,
+      timeTaken: this.questionStartTime ? Math.floor((now - this.questionStartTime) / 1000) : 0,
       studyDuration: this.studyDuration,
     };
   }
@@ -80,11 +78,9 @@ class TimerManager {
       const minutes = Math.floor((this.studyDuration % 3600) / 60);
       const seconds = this.studyDuration % 60;
 
-      this.timerDisplay.textContent = `${hours
+      this.timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes
         .toString()
-        .padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds
-        .toString()
-        .padStart(2, '0')}`;
+        .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
   }
 }

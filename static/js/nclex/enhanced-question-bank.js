@@ -96,18 +96,14 @@ export class NCLEXFlashcard {
     this.reviewCount++;
     this.lastReviewed = new Date();
     const daysUntilNextReview = this.calculateNextReviewInterval();
-    this.nextReviewDate = new Date(
-      Date.now() + daysUntilNextReview * 24 * 60 * 60 * 1000
-    );
+    this.nextReviewDate = new Date(Date.now() + daysUntilNextReview * 24 * 60 * 60 * 1000);
   }
 
   calculateNextReviewInterval() {
     const baseInterval = 24;
     const confidenceMultiplier = Math.max(0.5, this.confidence / 5);
     const reviewMultiplier = Math.log(this.reviewCount + 1) + 1;
-    return Math.ceil(
-      (baseInterval * confidenceMultiplier * reviewMultiplier) / 24
-    );
+    return Math.ceil((baseInterval * confidenceMultiplier * reviewMultiplier) / 24);
   }
 }
 
@@ -175,7 +171,7 @@ export class NCLEXQuestionBank {
   getDueFlashcards() {
     const now = new Date();
     return Array.from(this.flashcards.values())
-      .filter(card => card.nextReviewDate <= now)
+      .filter((card) => card.nextReviewDate <= now)
       .sort((a, b) => a.nextReviewDate - b.nextReviewDate);
   }
 
@@ -184,12 +180,10 @@ export class NCLEXQuestionBank {
     const categoryDistribution = {};
     const difficultyDistribution = {};
 
-    this.flashcards.forEach(card => {
+    this.flashcards.forEach((card) => {
       const { category, difficulty } = card.metadata;
-      categoryDistribution[category] =
-        (categoryDistribution[category] || 0) + 1;
-      difficultyDistribution[difficulty] =
-        (difficultyDistribution[difficulty] || 0) + 1;
+      categoryDistribution[category] = (categoryDistribution[category] || 0) + 1;
+      difficultyDistribution[difficulty] = (difficultyDistribution[difficulty] || 0) + 1;
     });
 
     return {

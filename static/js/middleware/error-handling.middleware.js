@@ -105,8 +105,7 @@ class ErrorHandlingMiddleware {
     this.errorMetrics.total++;
 
     // Update by error type
-    const currentTypeCount =
-      this.errorMetrics.byType.get(error.constructor.name) || 0;
+    const currentTypeCount = this.errorMetrics.byType.get(error.constructor.name) || 0;
     this.errorMetrics.byType.set(error.constructor.name, currentTypeCount + 1);
 
     // Update by path
@@ -116,8 +115,7 @@ class ErrorHandlingMiddleware {
 
     // Update by status code
     const statusCode = errorResponse.code;
-    const currentStatusCount =
-      this.errorMetrics.byStatusCode.get(statusCode) || 0;
+    const currentStatusCount = this.errorMetrics.byStatusCode.get(statusCode) || 0;
     this.errorMetrics.byStatusCode.set(statusCode, currentStatusCount + 1);
   }
 

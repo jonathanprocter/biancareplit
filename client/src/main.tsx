@@ -17,5 +17,5 @@ root.render(
       <App />
       <Toaster />
     </QueryClientProvider>
-  </StrictMode>
+  </StrictMode>,
 );

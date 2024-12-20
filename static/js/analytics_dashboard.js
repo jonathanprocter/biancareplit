@@ -14,22 +14,22 @@ class AnalyticsDashboard {
 
   setupWebSocket() {
     this.ws = new WebSocket('ws://0.0.0.0:81/ws');
-    this.ws.onmessage = event => {
+    this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       this.updateMetrics(data);
     };
   }
 
   async initializeCharts() {
-    const data = await fetch('/api/metrics/initial').then(r => r.json());
+    const data = await fetch('/api/metrics/initial').then((r) => r.json());
     this.createCharts(data);
   }
 
   startMetricsPolling() {
     setInterval(() => {
       fetch('/api/metrics/current')
-        .then(r => r.json())
-        .then(data => this.updateMetrics(data));
+        .then((r) => r.json())
+        .then((data) => this.updateMetrics(data));
     }, this.updateInterval);
   }
 }

@@ -9,9 +9,7 @@ export const StudyProgressTracker = ({ currentSession, analytics }) => {
   useEffect(() => {
     const timer = setInterval(() => {
       if (currentSession?.startTime) {
-        const elapsed = Math.floor(
-          (Date.now() - currentSession.startTime) / 1000
-        );
+        const elapsed = Math.floor((Date.now() - currentSession.startTime) / 1000);
         setStudyTime(elapsed);
       }
     }, 1000);
@@ -24,18 +22,14 @@ export const StudyProgressTracker = ({ currentSession, analytics }) => {
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div>
-            <h4 className="font-semibold text-sm text-gray-600">
-              Current Session
-            </h4>
+            <h4 className="font-semibold text-sm text-gray-600">Current Session</h4>
             <p className="text-2xl font-bold">
               {Math.floor(studyTime / 60)}m {studyTime % 60}s
             </p>
           </div>
           <div>
             <h4 className="font-semibold text-sm text-gray-600">Total Time</h4>
-            <p className="text-2xl font-bold">
-              {Math.floor(analytics.totalStudyTime / 60)}m
-            </p>
+            <p className="text-2xl font-bold">{Math.floor(analytics.totalStudyTime / 60)}m</p>
           </div>
           <div>
             <h4 className="font-semibold text-sm text-gray-600">Cards Done</h4>
@@ -48,22 +42,18 @@ export const StudyProgressTracker = ({ currentSession, analytics }) => {
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-semibold text-sm text-gray-600">
-            Study Progress
-          </h4>
+          <h4 className="font-semibold text-sm text-gray-600">Study Progress</h4>
           <Progress value={analytics.progress || 0} className="mb-4" />
 
-          {Object.entries(analytics.categoryProgress).map(
-            ([category, progress]) => (
-              <div key={category} className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">{category}</span>
-                  <span className="text-sm text-gray-600">{progress}%</span>
-                </div>
-                <Progress value={progress} className="h-2" />
+          {Object.entries(analytics.categoryProgress).map(([category, progress]) => (
+            <div key={category} className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">{category}</span>
+                <span className="text-sm text-gray-600">{progress}%</span>
               </div>
-            )
-          )}
+              <Progress value={progress} className="h-2" />
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

@@ -21,8 +21,7 @@ export function Course({ params }: { params: { id: string } }) {
       toast({
         variant: 'destructive',
         title: 'Failed to enroll',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     }
   };

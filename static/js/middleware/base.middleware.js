@@ -100,5 +100,4 @@ export class BaseMiddleware {
 }
 
 export { ExecutionContextSchema };
-export const createExecutionContext = data =>
-  ExecutionContextSchema.parse(data);
+export const createExecutionContext = (data) => ExecutionContextSchema.parse(data);

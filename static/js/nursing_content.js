@@ -92,9 +92,9 @@ class StudyTimer {
       const hours = Math.floor(this.activeTime / 3600);
       const minutes = Math.floor((this.activeTime % 3600) / 60);
       const seconds = this.activeTime % 60;
-      this.displayElement.textContent = `${hours}:${minutes
+      this.displayElement.textContent = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds
         .toString()
-        .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        .padStart(2, '0')}`;
     }
   }
 
@@ -158,10 +158,7 @@ class NursingContentHandler {
     try {
       // Setup window event listeners for timer management
       window.addEventListener('beforeunload', () => this.cleanup());
-      window.addEventListener(
-        'visibilitychange',
-        this.handleVisibilityChange.bind(this)
-      );
+      window.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
       console.log('NursingContentHandler initialized with timer');
     } catch (error) {
       console.error('Error in NursingContentHandler constructor:', error);
@@ -185,10 +182,7 @@ class NursingContentHandler {
         this.timer.destroy();
       }
       // Remove all event listeners
-      document.removeEventListener(
-        'visibilitychange',
-        this.handleVisibilityChange
-      );
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange);
       window.removeEventListener('blur', this.handleWindowBlur);
       window.removeEventListener('focus', this.handleWindowFocus);
     } catch (error) {
@@ -225,10 +219,7 @@ class NursingContentHandler {
       };
 
       // Add event listeners
-      document.addEventListener(
-        'visibilitychange',
-        this.handleVisibilityChange
-      );
+      document.addEventListener('visibilitychange', this.handleVisibilityChange);
       window.addEventListener('blur', this.handleWindowBlur);
       window.addEventListener('focus', this.handleWindowFocus);
 
@@ -242,10 +233,7 @@ class NursingContentHandler {
 
   async loadQuestions(category = null) {
     try {
-      const loadingNotification = this.showNotification(
-        'Loading questions...',
-        'info'
-      );
+      const loadingNotification = this.showNotification('Loading questions...', 'info');
       console.log('Loading questions for category:', category || this.category);
 
       category = category || this.category;
@@ -253,12 +241,12 @@ class NursingContentHandler {
 
       if (result.success) {
         this.questions = result.questions.filter(
-          q =>
+          (q) =>
             q &&
             q.question &&
             Array.isArray(q.options) &&
             q.options.length > 0 &&
-            typeof q.correct === 'number'
+            typeof q.correct === 'number',
         );
 
         // Remove loading notification
@@ -275,9 +263,7 @@ class NursingContentHandler {
       this.displayCurrentQuestion();
     }
     if (this.questions.length === 0) {
-      this.showError(
-        'No questions found for the selected category. Please try another category.'
-      );
+      this.showError('No questions found for the selected category. Please try another category.');
       return;
     }
 
@@ -319,9 +305,7 @@ class NursingContentHandler {
       }
 
       // Ensure difficulty is lowercase for consistent CSS class mapping
-      const difficulty = (
-        this.currentQuestion.difficulty || 'intermediate'
-      ).toLowerCase();
+      const difficulty = (this.currentQuestion.difficulty || 'intermediate').toLowerCase();
       const difficultyClass =
         {
           beginner: 'beginner',
@@ -338,25 +322,16 @@ class NursingContentHandler {
                 <div class="question-card">
                     <div class="question-header">
                         <div class="question-meta">
-                            <h3>Question ${this.currentIndex + 1} of ${
-        this.questions.length
-      }</h3>
-                            <span class="category-label">${
-                              this.currentQuestion.category
-                            }</span>
+                            <h3>Question ${this.currentIndex + 1} of ${this.questions.length}</h3>
+                            <span class="category-label">${this.currentQuestion.category}</span>
                         </div>
                         <span class="difficulty-badge ${difficultyClass}">
-                            ${
-                              difficulty.charAt(0).toUpperCase() +
-                              difficulty.slice(1)
-                            }
+                            ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
                         </span>
                     </div>
                     
                     <div class="question-content">
-                        <p class="question-text">${
-                          this.currentQuestion.question
-                        }</p>
+                        <p class="question-text">${this.currentQuestion.question}</p>
                         
                         <form id="questionForm" class="options-form">
                             ${options
@@ -369,12 +344,12 @@ class NursingContentHandler {
                                         class="option-input">
                                     <label class="option-label" for="option${index}">
                                         <span class="option-marker">${String.fromCharCode(
-                                          65 + index
+                                          65 + index,
                                         )}.</span>
                                         <span class="option-text">${option}</span>
                                     </label>
                                 </div>
-                            `
+                            `,
                               )
                               .join('')}
                         </form>
@@ -391,20 +366,14 @@ class NursingContentHandler {
                         </button>
                         <button class="action-btn next"
                             onclick="nursingContent.nextQuestion()"
-                            ${
-                              this.currentIndex >= this.questions.length - 1
-                                ? 'disabled'
-                                : ''
-                            }>
+                            ${this.currentIndex >= this.questions.length - 1 ? 'disabled' : ''}>
                             Next →
                         </button>
                     </div>
                 </div>`;
     } catch (error) {
       console.error('Error displaying question:', error);
-      this.showError(
-        'Failed to display question. Please try refreshing the page.'
-      );
+      this.showError('Failed to display question. Please try refreshing the page.');
     }
   }
 
@@ -446,16 +415,13 @@ class NursingContentHandler {
         requestData: requestData,
       });
 
-      const response = await fetch(
-        `/api/nursing/verify-answer/${this.currentQuestion.id}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestData),
-        }
-      );
+      const response = await fetch(`/api/nursing/verify-answer/${this.currentQuestion.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
 
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}`);
@@ -473,14 +439,12 @@ class NursingContentHandler {
             }\n\nRationale: ${result.rationale}`,
             category: this.currentQuestion.category,
             difficulty: this.currentQuestion.difficulty,
-            nclexCategory:
-              this.currentQuestion.nclex_category || 'Pharmacology',
+            nclexCategory: this.currentQuestion.nclex_category || 'Pharmacology',
             keywords: this.currentQuestion.keywords || [],
             aiEnhanced: true,
             relatedConcepts: this.currentQuestion.related_concepts || [],
             studyTips:
-              result.study_tips ||
-              'Focus on understanding the underlying concepts and rationale.',
+              result.study_tips || 'Focus on understanding the underlying concepts and rationale.',
           };
 
           // Create flashcard with enhanced metadata
@@ -493,17 +457,11 @@ class NursingContentHandler {
             flashcardData.keywords,
             flashcardData.aiEnhanced,
             flashcardData.relatedConcepts,
-            flashcardData.studyTips
+            flashcardData.studyTips,
           );
-          console.log(
-            'Created enhanced flashcard from missed question:',
-            flashcardData
-          );
+          console.log('Created enhanced flashcard from missed question:', flashcardData);
         } catch (error) {
-          console.error(
-            'Error creating flashcard from missed question:',
-            error
-          );
+          console.error('Error creating flashcard from missed question:', error);
         }
       }
 
@@ -515,20 +473,16 @@ class NursingContentHandler {
                       result.correct ? 'feedback-success' : 'feedback-error'
                     }">
                         <div class="feedback-header">
-                            <h3>${
-                              result.correct ? '✓ Correct!' : '✗ Incorrect'
-                            }</h3>
+                            <h3>${result.correct ? '✓ Correct!' : '✗ Incorrect'}</h3>
                         </div>
                         <div class="feedback-content">
                             <p><strong>Your Answer:</strong> Option ${String.fromCharCode(
-                              65 + parseInt(requestData.selected_option)
+                              65 + parseInt(requestData.selected_option),
                             )}</p>
                             <p><strong>Correct Answer:</strong> Option ${String.fromCharCode(
-                              65 + result.correct_answer
+                              65 + result.correct_answer,
                             )}</p>
-                            <p><strong>Explanation:</strong> ${
-                              result.rationale
-                            }</p>
+                            <p><strong>Explanation:</strong> ${result.rationale}</p>
                         </div>
                     </div>`;
       }
@@ -565,10 +519,8 @@ class NursingContentHandler {
   showNotification(message, type = 'error') {
     try {
       // Remove existing notifications of the same type
-      const existingNotifications = document.querySelectorAll(
-        `.notification-${type}`
-      );
-      existingNotifications.forEach(notification => notification.remove());
+      const existingNotifications = document.querySelectorAll(`.notification-${type}`);
+      existingNotifications.forEach((notification) => notification.remove());
 
       const notificationDiv = document.createElement('div');
       notificationDiv.className = `notification-${type} fixed p-4 rounded-lg shadow-lg z-50 transition-all duration-300 flex items-center`;
@@ -582,7 +534,7 @@ class NursingContentHandler {
             'bg-red-100',
             'border-l-4',
             'border-red-500',
-            'text-red-700'
+            'text-red-700',
           );
           break;
         case 'success':
@@ -592,7 +544,7 @@ class NursingContentHandler {
             'bg-green-100',
             'border-l-4',
             'border-green-500',
-            'text-green-700'
+            'text-green-700',
           );
           break;
         case 'info':
@@ -602,7 +554,7 @@ class NursingContentHandler {
             'bg-blue-100',
             'border-l-4',
             'border-blue-500',
-            'text-blue-700'
+            'text-blue-700',
           );
           break;
         case 'warning':
@@ -612,7 +564,7 @@ class NursingContentHandler {
             'bg-yellow-100',
             'border-l-4',
             'border-yellow-500',
-            'text-yellow-700'
+            'text-yellow-700',
           );
           break;
       }
@@ -646,9 +598,7 @@ class NursingContentHandler {
       notificationDiv.innerHTML = `
                 ${icons[type] || ''}
                 <div class="flex flex-col">
-                    <div class="font-semibold">${
-                      type.charAt(0).toUpperCase() + type.slice(1)
-                    }</div>
+                    <div class="font-semibold">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
                     <div class="text-sm">${message}</div>
                 </div>
                 <button onclick="this.parentElement.remove()" class="ml-4 text-gray-500 hover:text-gray-700">
@@ -659,9 +609,7 @@ class NursingContentHandler {
             `;
 
       // Remove existing notifications of the same type
-      document
-        .querySelectorAll(`.${type}-notification`)
-        .forEach(el => el.remove());
+      document.querySelectorAll(`.${type}-notification`).forEach((el) => el.remove());
 
       // Add to DOM with animation
       notificationDiv.style.opacity = '0';

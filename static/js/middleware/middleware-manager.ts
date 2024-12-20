@@ -1,8 +1,4 @@
-import {
-  BaseMiddleware,
-  type ExecutionContext,
-  type NextFunction,
-} from './base.middleware';
+import { BaseMiddleware, type ExecutionContext, type NextFunction } from './base.middleware';
 import { configManager } from '../config/config';
 
 export class MiddlewareManager {
@@ -44,10 +40,8 @@ export class MiddlewareManager {
   }
 
   public addMiddleware(middleware: BaseMiddleware): void {
-    if (this.middlewares.some(m => m.getName() === middleware.getName())) {
-      throw new Error(
-        `Middleware '${middleware.getName()}' already registered`
-      );
+    if (this.middlewares.some((m) => m.getName() === middleware.getName())) {
+      throw new Error(`Middleware '${middleware.getName()}' already registered`);
     }
 
     this.middlewares.push(middleware);
@@ -79,7 +73,7 @@ export class MiddlewareManager {
   }
 
   public removeMiddleware(name: string): void {
-    this.middlewares = this.middlewares.filter(m => m.getName() !== name);
+    this.middlewares = this.middlewares.filter((m) => m.getName() !== name);
   }
 
   public getMiddlewares(): BaseMiddleware[] {

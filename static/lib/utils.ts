@@ -12,13 +12,7 @@ export const cn = (...inputs: ClassValue[]) => {
 };
 
 export const isDifficultyLevel = (value: any): value is DifficultyLevel => {
-  return (
-    value &&
-    typeof value === 'object' &&
-    'id' in value &&
-    'name' in value &&
-    'value' in value
-  );
+  return value && typeof value === 'object' && 'id' in value && 'name' in value && 'value' in value;
 };
 
 export const calculateConfidence = (score: number): number => {
@@ -29,10 +23,7 @@ export const calculateTimeSpent = (startTime: number): string => {
   return `${Math.round((Date.now() - startTime) / 1000)}s`;
 };
 
-export const formatDate = (
-  date: Date | string,
-  options?: Intl.DateTimeFormatOptions
-): string => {
+export const formatDate = (date: Date | string, options?: Intl.DateTimeFormatOptions): string => {
   const dateFormatter = new Intl.DateTimeFormat('en-US', options); //Using Intl.DateTimeFormat for better browser support.
   return dateFormatter.format(typeof date === 'string' ? new Date(date) : date);
 };
@@ -43,5 +34,4 @@ export const DifficultyLevel = {
   ADVANCED: { id: 'advanced', name: 'Advanced', value: 3 },
 } as const;
 
-export type DifficultyLevel =
-  (typeof DifficultyLevel)[keyof typeof DifficultyLevel];
+export type DifficultyLevel = (typeof DifficultyLevel)[keyof typeof DifficultyLevel];

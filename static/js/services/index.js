@@ -61,7 +61,7 @@ class ServicesContainer {
     const nursingContent = new NursingContentHandler(
       this.getService('questionService'),
       this.getService('studyTimer'),
-      this.getService('aiCoach')
+      this.getService('aiCoach'),
     );
     await nursingContent.initialize();
     this.services.set('nursingContentHandler', nursingContent);
@@ -117,7 +117,7 @@ export const servicesContainer = new ServicesContainer();
 // Initialize on page load
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
-    servicesContainer.initialize().catch(error => {
+    servicesContainer.initialize().catch((error) => {
       console.error('Failed to initialize services:', error);
     });
   });

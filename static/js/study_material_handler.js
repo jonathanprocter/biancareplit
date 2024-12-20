@@ -2,21 +2,11 @@ class StudyMaterialHandler {
   constructor() {
     this.form = document.getElementById('uploadMaterialForm');
     this.resultDiv = document.getElementById('uploadResult');
-    this.progressBar = this.form
-      ? this.form.querySelector('.progress-bar')
-      : null;
-    this.uploadProgress = this.form
-      ? this.form.querySelector('.upload-progress')
-      : null;
-    this.uploadStatus = this.form
-      ? this.form.querySelector('.upload-status')
-      : null;
-    this.fileInput = this.form
-      ? this.form.querySelector('#materialFile')
-      : null;
-    this.fileValidationMessage = document.getElementById(
-      'fileValidationMessage'
-    );
+    this.progressBar = this.form ? this.form.querySelector('.progress-bar') : null;
+    this.uploadProgress = this.form ? this.form.querySelector('.upload-progress') : null;
+    this.uploadStatus = this.form ? this.form.querySelector('.upload-status') : null;
+    this.fileInput = this.form ? this.form.querySelector('#materialFile') : null;
+    this.fileValidationMessage = document.getElementById('fileValidationMessage');
 
     if (!this.form || !this.fileInput) {
       console.error('Required upload form elements not found');
@@ -29,8 +19,8 @@ class StudyMaterialHandler {
 
   setupEventListeners() {
     if (this.form && this.fileInput) {
-      this.form.addEventListener('submit', e => this.handleSubmit(e));
-      this.fileInput.addEventListener('change', e => this.validateFile(e));
+      this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+      this.fileInput.addEventListener('change', (e) => this.validateFile(e));
       console.log('Upload form event listeners set up');
     }
   }
@@ -42,8 +32,7 @@ class StudyMaterialHandler {
       return false;
     }
 
-    const validFileType =
-      file.type === 'text/plain' || file.name.endsWith('.txt');
+    const validFileType = file.type === 'text/plain' || file.name.endsWith('.txt');
     if (!validFileType) {
       this.showError('Please upload a valid text file (.txt)');
       this.fileInput.value = '';
@@ -54,9 +43,9 @@ class StudyMaterialHandler {
     const maxSize = 1024 * 1024; // 1MB in bytes
     if (file.size > maxSize) {
       this.showError(
-        `File size exceeds the maximum limit of 1MB (current size: ${(
-          file.size / 1024
-        ).toFixed(1)}KB)`
+        `File size exceeds the maximum limit of 1MB (current size: ${(file.size / 1024).toFixed(
+          1,
+        )}KB)`,
       );
       this.fileInput.value = '';
       return false;
@@ -93,9 +82,7 @@ class StudyMaterialHandler {
       formData.append('file', file);
       formData.append('study_date', new Date().toISOString().split('T')[0]);
 
-      console.log(
-        `Uploading file: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`
-      );
+      console.log(`Uploading file: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
       const response = await fetch('/api/study-materials/submit', {
         method: 'POST',
         body: formData,
@@ -119,9 +106,7 @@ class StudyMaterialHandler {
           console.log('Parsed response:', result);
         } catch (parseError) {
           console.error('Failed to parse response as JSON:', responseText);
-          throw new Error(
-            'Server returned invalid response format. Please try again.'
-          );
+          throw new Error('Server returned invalid response format. Please try again.');
         }
 
         // Validate JSON structure
@@ -133,24 +118,18 @@ class StudyMaterialHandler {
         console.error('Response processing error:', error);
         // Show both error and response for debugging
         this.showError(
-          `Upload failed: ${error.message}\nResponse: ${responseText.substring(
-            0,
-            100
-          )}...`
+          `Upload failed: ${error.message}\nResponse: ${responseText.substring(0, 100)}...`,
         );
         throw error;
       }
 
       if (!response.ok) {
-        const errorMessage =
-          result?.error || result?.details || 'Unknown error';
+        const errorMessage = result?.error || result?.details || 'Unknown error';
         throw new Error(`Server error (${response.status}): ${errorMessage}`);
       }
 
       if (result.success) {
-        this.showSuccess(
-          result.message || 'Study material uploaded successfully!'
-        );
+        this.showSuccess(result.message || 'Study material uploaded successfully!');
         this.form.reset();
 
         if (result.analysis) {
@@ -233,37 +212,26 @@ class StudyMaterialHandler {
   }
   showAnalysis(analysis) {
     try {
-      const parsedAnalysis =
-        typeof analysis === 'string' ? JSON.parse(analysis) : analysis;
+      const parsedAnalysis = typeof analysis === 'string' ? JSON.parse(analysis) : analysis;
       console.log('Displaying analysis:', parsedAnalysis);
 
       const analysisHtml = `
                 <div class="analysis-results mt-3">
                     <h4>Content Analysis</h4>
-                    ${this.renderAnalysisSection(
-                      'Topics',
-                      parsedAnalysis.topics
-                    )}
-                    ${this.renderAnalysisSection(
-                      'Key Points',
-                      parsedAnalysis.key_points
-                    )}
+                    ${this.renderAnalysisSection('Topics', parsedAnalysis.topics)}
+                    ${this.renderAnalysisSection('Key Points', parsedAnalysis.key_points)}
                     ${this.renderAnalysisSection(
                       'NCLEX Categories',
-                      parsedAnalysis.nclex_categories
+                      parsedAnalysis.nclex_categories,
                     )}
                     ${this.renderAnalysisSection(
                       'Learning Objectives',
-                      parsedAnalysis.learning_objectives
+                      parsedAnalysis.learning_objectives,
                     )}
                     <div class="mt-2">
-                        <strong>Difficulty Level:</strong> ${
-                          parsedAnalysis.difficulty_level
-                        }
+                        <strong>Difficulty Level:</strong> ${parsedAnalysis.difficulty_level}
                     </div>
-                    ${this.renderSuggestedQuestions(
-                      parsedAnalysis.suggested_questions
-                    )}
+                    ${this.renderSuggestedQuestions(parsedAnalysis.suggested_questions)}
                 </div>
             `;
       this.resultDiv.insertAdjacentHTML('beforeend', analysisHtml);
@@ -279,7 +247,7 @@ class StudyMaterialHandler {
             <div class="mt-2">
                 <strong>${title}:</strong>
                 <ul class="list-unstyled">
-                    ${items.map(item => `<li>• ${item}</li>`).join('')}
+                    ${items.map((item) => `<li>• ${item}</li>`).join('')}
                 </ul>
             </div>
         `;
@@ -294,9 +262,7 @@ class StudyMaterialHandler {
                   .map(
                     (q, index) => `
                     <div class="question-card mt-2">
-                        <p><strong>Question ${index + 1}:</strong> ${
-                      q.question
-                    }</p>
+                        <p><strong>Question ${index + 1}:</strong> ${q.question}</p>
                         <ul class="options-list">
                             ${q.options
                               .map(
@@ -304,18 +270,14 @@ class StudyMaterialHandler {
                                 <li class="${
                                   i === q.correct_answer ? 'correct-answer' : ''
                                 }">${opt}</li>
-                            `
+                            `,
                               )
                               .join('')}
                         </ul>
-                        <p class="rationale"><strong>Rationale:</strong> ${
-                          q.rationale
-                        }</p>
-                        <p class="category"><strong>Category:</strong> ${
-                          q.category
-                        }</p>
+                        <p class="rationale"><strong>Rationale:</strong> ${q.rationale}</p>
+                        <p class="category"><strong>Category:</strong> ${q.category}</p>
                     </div>
-                `
+                `,
                   )
                   .join('')}
             </div>

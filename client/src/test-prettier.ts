@@ -53,7 +53,7 @@ export const formattedCode: NestedConfig = {
 // Utility function with type safety
 export function processItems(
   items: FormattedItem[],
-  config: Partial<NestedConfig>
+  config: Partial<NestedConfig>,
 ): FormattedItem[] {
   console.log('Processing items with config:', config);
   return items.filter((item) => item.status === 'active');

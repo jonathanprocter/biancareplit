@@ -22,7 +22,7 @@ export const MonitoringDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const { isConnected, sendMessage } = useWebSocket('/api/ws', {
-    onMessage: data => {
+    onMessage: (data) => {
       if (data.type === 'metrics') {
         setMetrics(data.data);
         setIsLoading(false);
@@ -33,8 +33,8 @@ export const MonitoringDashboard: React.FC = () => {
   useEffect(() => {
     // Initial load
     fetch('/api/monitoring/metrics')
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setMetrics(data);
         setIsLoading(false);
       });
@@ -42,7 +42,7 @@ export const MonitoringDashboard: React.FC = () => {
 
   const { data: alerts, isLoading: alertsLoading } = useQuery<Alert[]>({
     queryKey: ['alerts'],
-    queryFn: () => fetch('/api/monitoring/alerts').then(res => res.json()),
+    queryFn: () => fetch('/api/monitoring/alerts').then((res) => res.json()),
     refetchInterval: 10000,
   });
 
@@ -61,9 +61,7 @@ export const MonitoringDashboard: React.FC = () => {
         </div>
         <div className="bg-white p-4 rounded shadow">
           <h3 className="font-semibold mb-2">Memory Usage</h3>
-          <div className="text-2xl">
-            {(metrics?.memory_usage / 1024 / 1024).toFixed(1)} MB
-          </div>
+          <div className="text-2xl">{(metrics?.memory_usage / 1024 / 1024).toFixed(1)} MB</div>
         </div>
       </div>
 

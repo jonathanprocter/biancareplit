@@ -9,13 +9,10 @@ export const DateDisplay: React.FC<DateDisplayProps> = ({
   fallback = 'Invalid date',
   showRelative = false,
 }) => {
-  const formattedDate = useMemo(
-    () => formatDate(date, options),
-    [date, options]
-  );
+  const formattedDate = useMemo(() => formatDate(date, options), [date, options]);
   const relativeTime = useMemo(
     () => (showRelative ? getRelativeTime(date) : null),
-    [date, showRelative]
+    [date, showRelative],
   );
   const isInvalid = formattedDate === 'Invalid date';
 

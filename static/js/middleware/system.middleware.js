@@ -96,23 +96,17 @@ class MiddlewareSystem {
           await Promise.race([
             this.executeMiddlewareChain(middlewareTypes.PRE_PROCESS, context),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Middleware timeout')), timeout)
+              setTimeout(() => reject(new Error('Middleware timeout')), timeout),
             ),
           ]);
         }
 
         // Execute main middleware
-        const result = await this.executeMiddlewareChain(
-          middlewareTypes.MAIN,
-          context
-        );
+        const result = await this.executeMiddlewareChain(middlewareTypes.MAIN, context);
 
         // Execute post-process middleware
         if (this.middlewares.has(middlewareTypes.POST_PROCESS)) {
-          await this.executeMiddlewareChain(
-            middlewareTypes.POST_PROCESS,
-            context
-          );
+          await this.executeMiddlewareChain(middlewareTypes.POST_PROCESS, context);
         }
 
         return result;
@@ -122,15 +116,9 @@ class MiddlewareSystem {
         if (this.middlewares.has(middlewareTypes.ERROR_HANDLER)) {
           try {
             context.error = error;
-            return await this.executeMiddlewareChain(
-              middlewareTypes.ERROR_HANDLER,
-              context
-            );
+            return await this.executeMiddlewareChain(middlewareTypes.ERROR_HANDLER, context);
           } catch (handlerError) {
-            console.error(
-              '[MiddlewareSystem] Error handler failed:',
-              handlerError
-            );
+            console.error('[MiddlewareSystem] Error handler failed:', handlerError);
             if (attempt >= maxRetries) {
               throw handlerError;
             }
@@ -139,7 +127,7 @@ class MiddlewareSystem {
           throw error;
         }
 
-        await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+        await new Promise((resolve) => setTimeout(resolve, retryDelay * attempt));
       }
     }
   }
@@ -184,19 +172,11 @@ export async function initializeMiddlewareSystem(config = {}) {
 
     // Initialize logging middleware
     const loggingMiddleware = new LoggingMiddleware(config.logging);
-    middlewareSystem.use(
-      'logging',
-      loggingMiddleware,
-      middlewareTypes.PRE_PROCESS
-    );
+    middlewareSystem.use('logging', loggingMiddleware, middlewareTypes.PRE_PROCESS);
 
     // Initialize analytics middleware
     const analyticsMiddleware = new AnalyticsMiddleware(config.analytics);
-    middlewareSystem.use(
-      'analytics',
-      analyticsMiddleware,
-      middlewareTypes.MAIN
-    );
+    middlewareSystem.use('analytics', analyticsMiddleware, middlewareTypes.MAIN);
 
     console.log('[MiddlewareSystem] Initialized successfully');
     return middlewareSystem;

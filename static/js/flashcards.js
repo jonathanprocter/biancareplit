@@ -63,7 +63,7 @@ class EnhancedFlashcardSystem {
   filterDueCards() {
     if (!this.reviewMode) return;
     const now = new Date();
-    this.flashcards = this.flashcards.filter(card => {
+    this.flashcards = this.flashcards.filter((card) => {
       return !card.nextReview || new Date(card.nextReview) <= now;
     });
 
@@ -77,14 +77,7 @@ class EnhancedFlashcardSystem {
     localStorage.setItem('flashcards', JSON.stringify(this.flashcards));
   }
 
-  async addWrongAnswer(
-    question,
-    userAnswer,
-    correctAnswer,
-    explanation,
-    category,
-    difficulty
-  ) {
+  async addWrongAnswer(question, userAnswer, correctAnswer, explanation, category, difficulty) {
     const wrongAnswer = {
       id: Date.now(),
       question,
@@ -151,10 +144,7 @@ class EnhancedFlashcardSystem {
     const repetitions = card.repetitions || 0;
 
     // Update easiness factor
-    easiness = Math.max(
-      1.3,
-      easiness + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
-    );
+    easiness = Math.max(1.3, easiness + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
 
     // Calculate interval
     let interval;
@@ -266,9 +256,7 @@ class EnhancedFlashcardSystem {
     const card = this.flashcards[this.currentCard];
     const nextReview = new Date(card.nextReview);
     const now = new Date();
-    const daysUntilReview = Math.ceil(
-      (nextReview - now) / (1000 * 60 * 60 * 24)
-    );
+    const daysUntilReview = Math.ceil((nextReview - now) / (1000 * 60 * 60 * 24));
 
     container.innerHTML = `
             <div class="flashcard">
@@ -302,9 +290,7 @@ class EnhancedFlashcardSystem {
                     <small class="text-muted">
                         ${
                           card.lastReviewed
-                            ? `Last reviewed: ${new Date(
-                                card.lastReviewed
-                              ).toLocaleDateString()}`
+                            ? `Last reviewed: ${new Date(card.lastReviewed).toLocaleDateString()}`
                             : 'Not reviewed yet'
                         }
                         ${
@@ -336,8 +322,7 @@ class EnhancedFlashcardSystem {
   }
 
   prevCard() {
-    this.currentCard =
-      (this.currentCard - 1 + this.flashcards.length) % this.flashcards.length;
+    this.currentCard = (this.currentCard - 1 + this.flashcards.length) % this.flashcards.length;
     this.render();
   }
 }

@@ -56,8 +56,7 @@ export function LearningStyleQuiz() {
       toast({
         variant: 'destructive',
         title: 'Failed to submit quiz',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     },
   });
@@ -94,9 +93,7 @@ export function LearningStyleQuiz() {
     };
 
     setResponses((prev) => {
-      const existing = prev.findIndex(
-        (r) => r.questionId === response.questionId
-      );
+      const existing = prev.findIndex((r) => r.questionId === response.questionId);
       if (existing !== -1) {
         const newResponses = [...prev];
         newResponses[existing] = response;
@@ -135,16 +132,11 @@ export function LearningStyleQuiz() {
             <p className="text-lg font-medium">{currentQ.question}</p>
             <RadioGroup
               onValueChange={handleResponse}
-              value={responses
-                .find((r) => r.questionId === currentQ.id)
-                ?.response?.toString()}
+              value={responses.find((r) => r.questionId === currentQ.id)?.response?.toString()}
             >
               {[1, 2, 3, 4, 5].map((value) => (
                 <div key={value} className="flex items-center space-x-2">
-                  <RadioGroupItem
-                    value={value.toString()}
-                    id={`rating-${value}`}
-                  />
+                  <RadioGroupItem value={value.toString()} id={`rating-${value}`} />
                   <Label htmlFor={`rating-${value}`}>
                     {value === 1
                       ? 'Strongly Disagree'
@@ -164,9 +156,7 @@ export function LearningStyleQuiz() {
           <div className="flex justify-between pt-4">
             <Button
               variant="outline"
-              onClick={() =>
-                setCurrentQuestion((prev) => Math.max(0, prev - 1))
-              }
+              onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
               disabled={currentQuestion === 0}
             >
               Previous

@@ -50,17 +50,14 @@ export type EnvironmentConfig = z.infer<typeof EnvironmentConfigSchema>;
 // Get environment-specific configuration
 import { CONFIG_VERSION } from './config';
 
-export const getEnvironmentConfig = (
-  env: EnvironmentType
-): EnvironmentConfig => {
+export const getEnvironmentConfig = (env: EnvironmentType): EnvironmentConfig => {
   const baseConfig = {
     version: CONFIG_VERSION,
     apiUrl: process.env.API_BASE_URL || '/api',
     environment: env,
     debug: env === Environment.Development,
     enableDebugLogging: env === Environment.Development,
-    cacheDuration:
-      env === Environment.Development ? 5 * 60 * 1000 : 60 * 60 * 1000,
+    cacheDuration: env === Environment.Development ? 5 * 60 * 1000 : 60 * 60 * 1000,
     features: {
       analytics: true,
       aiCoach: true,

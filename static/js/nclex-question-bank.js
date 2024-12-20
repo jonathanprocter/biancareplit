@@ -58,11 +58,8 @@ export class NCLEXQuestionBank {
       // Load pre-written questions for each category and difficulty
       for (const category of Object.values(NCLEX_CATEGORIES)) {
         for (const difficulty of Object.values(DIFFICULTY_LEVELS)) {
-          const baseQuestions = await this.loadBaseQuestions(
-            category,
-            difficulty
-          );
-          baseQuestions.forEach(q => this.addQuestion(new NCLEXQuestion(q)));
+          const baseQuestions = await this.loadBaseQuestions(category, difficulty);
+          baseQuestions.forEach((q) => this.addQuestion(new NCLEXQuestion(q)));
         }
       }
       console.log('Base questions initialized successfully');
@@ -74,15 +71,10 @@ export class NCLEXQuestionBank {
 
   async loadBaseQuestions(category, difficulty) {
     try {
-      const response = await fetch(
-        `/api/questions?category=${category}&difficulty=${difficulty}`
-      );
+      const response = await fetch(`/api/questions?category=${category}&difficulty=${difficulty}`);
       return await response.json();
     } catch (error) {
-      console.error(
-        `Error loading base questions for ${category} - ${difficulty}:`,
-        error
-      );
+      console.error(`Error loading base questions for ${category} - ${difficulty}:`, error);
       return [];
     }
   }
@@ -93,7 +85,7 @@ export class NCLEXQuestionBank {
 
   getQuestions(category, difficulty) {
     return Array.from(this.questions.values()).filter(
-      q => q.category === category && q.difficulty === difficulty
+      (q) => q.category === category && q.difficulty === difficulty,
     );
   }
 
@@ -116,10 +108,8 @@ export class NCLEXQuestionBank {
         temperature: 0.7,
       });
 
-      const newQuestions = this.parseAIResponse(
-        response.choices[0].message.content
-      );
-      newQuestions.forEach(q => {
+      const newQuestions = this.parseAIResponse(response.choices[0].message.content);
+      newQuestions.forEach((q) => {
         q.isAIGenerated = true;
         this.addQuestion(new NCLEXQuestion(q));
       });
@@ -156,9 +146,7 @@ export class NCLEXQuestionBank {
       totalQuestions: this.questions.size,
       questionsByCategory: this.getQuestionDistribution('category'),
       questionsByDifficulty: this.getQuestionDistribution('difficulty'),
-      aiGeneratedCount: Array.from(this.questions.values()).filter(
-        q => q.isAIGenerated
-      ).length,
+      aiGeneratedCount: Array.from(this.questions.values()).filter((q) => q.isAIGenerated).length,
     };
   }
 
@@ -194,7 +182,7 @@ export class QuestionGeneratorUI {
     // Create difficulty selection
     const difficultySelect = document.createElement('select');
     difficultySelect.className = 'difficulty-select';
-    Object.values(DIFFICULTY_LEVELS).forEach(level => {
+    Object.values(DIFFICULTY_LEVELS).forEach((level) => {
       const option = document.createElement('option');
       option.value = level;
       option.textContent = level.charAt(0).toUpperCase() + level.slice(1);
@@ -211,7 +199,7 @@ export class QuestionGeneratorUI {
         generateButton.textContent = 'Generating...';
         const newQuestions = await this.questionBank.generateNewQuestions(
           topicInput.value,
-          difficultySelect.value
+          difficultySelect.value,
         );
         this.displayNewQuestions(newQuestions);
       } catch (error) {
@@ -233,13 +221,13 @@ export class QuestionGeneratorUI {
     const questionsContainer = document.createElement('div');
     questionsContainer.className = 'new-questions-container';
 
-    questions.forEach(question => {
+    questions.forEach((question) => {
       const questionElement = document.createElement('div');
       questionElement.className = 'question-card';
       questionElement.innerHTML = `
                 <h3>${question.question}</h3>
                 <ul>
-                    ${question.options.map(opt => `<li>${opt}</li>`).join('')}
+                    ${question.options.map((opt) => `<li>${opt}</li>`).join('')}
                 </ul>
                 <p><strong>Category:</strong> ${question.category}</p>
                 <p><strong>Difficulty:</strong> ${question.difficulty}</p>
@@ -249,9 +237,7 @@ export class QuestionGeneratorUI {
     });
 
     // Remove previous questions container if it exists
-    const existingContainer = this.container.querySelector(
-      '.new-questions-container'
-    );
+    const existingContainer = this.container.querySelector('.new-questions-container');
     if (existingContainer) {
       existingContainer.remove();
     }

@@ -25,8 +25,7 @@ export function Register() {
       toast({
         variant: 'destructive',
         title: 'Registration failed',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     }
   };
@@ -35,9 +34,7 @@ export function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
-            Create Account
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,11 +67,7 @@ export function Register() {
                 minLength={6}
               />
             </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={register.isPending}
-            >
+            <Button type="submit" className="w-full" disabled={register.isPending}>
               {register.isPending ? 'Creating Account...' : 'Create Account'}
             </Button>
             <p className="text-sm text-center mt-4">

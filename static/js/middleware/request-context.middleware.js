@@ -50,9 +50,7 @@ class RequestContextMiddleware {
   trackRequest(requestId, duration) {
     const context = this.contextStore.get(requestId);
     if (context) {
-      console.log(
-        `[RequestContext] Request ${requestId} completed in ${duration}ms`
-      );
+      console.log(`[RequestContext] Request ${requestId} completed in ${duration}ms`);
       // Additional tracking logic can be added here
     }
   }

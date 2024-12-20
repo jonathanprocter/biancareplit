@@ -4,8 +4,7 @@ class MathContentHandler {
     this.currentTheorem = null;
     this.currentProblem = null;
     this.category = document.getElementById('categorySelect').value;
-    this.difficulty =
-      document.getElementById('difficultySelect')?.value || 'intermediate';
+    this.difficulty = document.getElementById('difficultySelect')?.value || 'intermediate';
 
     // Initialize event listeners
     this.initializeEventListeners();
@@ -13,18 +12,16 @@ class MathContentHandler {
 
   initializeEventListeners() {
     // Category selection change
-    document.getElementById('categorySelect')?.addEventListener('change', e => {
+    document.getElementById('categorySelect')?.addEventListener('change', (e) => {
       this.category = e.target.value;
       this.loadTheorems();
     });
 
     // Difficulty selection change
-    document
-      .getElementById('difficultySelect')
-      ?.addEventListener('change', e => {
-        this.difficulty = e.target.value;
-        this.loadPracticeProblems();
-      });
+    document.getElementById('difficultySelect')?.addEventListener('change', (e) => {
+      this.difficulty = e.target.value;
+      this.loadPracticeProblems();
+    });
   }
 
   async loadTheorems() {
@@ -32,8 +29,7 @@ class MathContentHandler {
       const response = await fetch(`/api/math/theorems/${this.category}`);
       const data = await response.json();
 
-      if (!response.ok)
-        throw new Error(data.error || 'Failed to load theorems');
+      if (!response.ok) throw new Error(data.error || 'Failed to load theorems');
 
       this.theorems = data;
       this.displayCurrentTheorem();
@@ -46,12 +42,11 @@ class MathContentHandler {
   async loadPracticeProblems() {
     try {
       const response = await fetch(
-        `/api/math/problems/${this.category}?difficulty=${this.difficulty}`
+        `/api/math/problems/${this.category}?difficulty=${this.difficulty}`,
       );
       const data = await response.json();
 
-      if (!response.ok)
-        throw new Error(data.error || 'Failed to load practice problems');
+      if (!response.ok) throw new Error(data.error || 'Failed to load practice problems');
 
       this.problems = data;
       this.displayCurrentProblem();
@@ -71,26 +66,18 @@ class MathContentHandler {
       theoremContent.innerHTML = `
                 <div class="theorem-statement">
                     <h3>${this.currentTheorem.title}</h3>
-                    <div class="latex-content">${
-                      this.currentTheorem.formula
-                    }</div>
+                    <div class="latex-content">${this.currentTheorem.formula}</div>
                 </div>
                 <div class="proof-steps">
                     <h4>Proof:</h4>
                     ${this.currentTheorem.proof_steps
-                      .map(
-                        step =>
-                          `<div class="proof-step latex-content">${step}</div>`
-                      )
+                      .map((step) => `<div class="proof-step latex-content">${step}</div>`)
                       .join('')}
                 </div>
                 <div class="examples">
                     <h4>Examples:</h4>
                     ${this.currentTheorem.worked_examples
-                      .map(
-                        example =>
-                          `<div class="example latex-content">${example}</div>`
-                      )
+                      .map((example) => `<div class="example latex-content">${example}</div>`)
                       .join('')}
                 </div>
             `;
@@ -116,7 +103,7 @@ class MathContentHandler {
             `;
 
       hints.innerHTML = this.currentProblem.hints
-        .map(hint => `<div class="hint latex-content">${hint}</div>`)
+        .map((hint) => `<div class="hint latex-content">${hint}</div>`)
         .join('');
 
       // Reset work area
