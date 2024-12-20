@@ -14,6 +14,7 @@ import { FileUploadWizard } from '@/components/FileUploadWizard';
 import { Achievements } from '@/components/Achievements';
 import { LearningHeatMap } from '@/components/LearningHeatMap';
 import { AITutorAvatar } from '@/components/AITutorAvatar';
+import { StudyTimer } from '@/components/StudyTimer';
 
 function App() {
   const [location] = useLocation();
@@ -31,7 +32,10 @@ function App() {
               <div className="space-y-8">
                 <DailyWelcomeCard />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <AITutorAvatar />
+                  <div className="space-y-8">
+                    <AITutorAvatar />
+                    <StudyTimer />
+                  </div>
                   <LearningHeatMap />
                 </div>
                 <Achievements />
