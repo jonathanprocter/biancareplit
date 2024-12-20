@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Input } from '../../components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from '../../components/ui/select';
+import { useToast } from '../../hooks/use-toast';
+import type { SystemIntegration } from '../types/js/SystemIntegration';
+import type { StudyMaterialHandler } from '../types/js/study-material-handler';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Search } from 'lucide-react';
+
+// Add debug logging utility
+const debug = (message: string, ...args: any[]) => {
+  console.log(`[FlashcardManager] ${message}`, ...args);
+};
 
 interface Flashcard {
   id: number;
@@ -33,8 +41,15 @@ interface FlashcardContextType {
 }
 
 interface QuestionBankContextType {
-  questionBank: any;
-  setQuestionBank: (bank: any) => void;
+  questionBank: {
+    initialized: boolean;
+    getMiddlewareSystem: () => Promise<void>;
+    studyMaterialHandler?: {
+      getQuestions: () => Promise<Array<any>>;
+      updateQuestion: (id: number, data: any) => Promise<void>;
+    };
+  } | null;
+  setQuestionBank: (bank: QuestionBankContextType['questionBank']) => void;
 }
 
 const FlashcardContext = React.createContext<FlashcardContextType | null>(null);
@@ -49,139 +64,97 @@ const FlashcardManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [questionBank, setQuestionBank] = useState<any>(null);
+  const toast = useToast();
 
   useEffect(() => {
-    const initializeFlashcardSystem = async () => {
-      try {
-        console.log('Initializing FlashcardManager...');
-
-        // Import and initialize system integration first
-        const systemModule = await import('../services/SystemIntegration');
-        const systemIntegration = systemModule.default;
-
-        if (!systemIntegration) {
-          throw new Error('System integration module not found');
-        }
-
-        // Initialize the entire system
-        console.log('Starting system initialization...');
-        const initResult = await systemIntegration.initialize().catch((error) => ({
-          success: false,
-          status: 'failed',
-          error: error.message || 'Unknown error',
-        }));
-
-        if (!initResult || !initResult.success) {
-          throw new Error(`System initialization failed: ${initResult?.error || 'Unknown error'}`);
-        }
-
-        // Get initialized flashcard system
-        const { flashcardSystem } = systemIntegration;
-        if (!flashcardSystem?.initialized) {
-          throw new Error('Flashcard system not properly initialized');
-        }
-
-        // Set up question bank
-        if (flashcardSystem.studyMaterialHandler) {
-          console.log('Setting question bank...');
-          setQuestionBank(flashcardSystem.studyMaterialHandler);
-          console.log('Question bank set successfully');
-        } else {
-          throw new Error('Study material handler not available');
-        }
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown initialization error';
-        console.error('Failed to initialize flashcard system:', errorMessage);
-        setError(`Failed to initialize question bank: ${errorMessage}`);
-        setLoading(false);
-      }
-    };
-
-    initializeFlashcardSystem();
-  }, []);
-
-  useEffect(() => {
-    const initializeFlashcards = async () => {
+    const initialize = async () => {
       try {
         setLoading(true);
-        console.log('Initializing flashcard system...');
+        debug('Starting initialization...');
 
-        // First check if we can access the flashcard system
-        const systemResponse = await fetch('/api/system/status');
-        if (!systemResponse.ok) {
-          const errorData = await systemResponse.json().catch(() => ({}));
-          console.error('System status check failed:', errorData);
-          throw new Error(errorData.message || 'Flashcard system is not available');
+        // Check system status
+        debug('Checking system status...');
+        const statusResponse = await fetch('/api/system/status');
+        if (!statusResponse.ok) {
+          throw new Error(`System status check failed: ${statusResponse.status}`);
         }
 
-        const systemData = await systemResponse.json();
-        console.log('System status:', systemData);
+        const statusData = await statusResponse.json();
+        debug('System status:', statusData);
 
-        if (!systemData.initialized) {
-          throw new Error('System not properly initialized');
+        if (!statusData.initialized) {
+          throw new Error('System is not initialized');
         }
 
-        // Then fetch flashcards with retry logic
-        const fetchWithRetry = async (retries = 3) => {
-          for (let i = 0; i < retries; i++) {
-            try {
-              const response = await fetch('/api/flashcards');
-              if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(
-                  errorData.message || `Failed to fetch flashcards: ${response.status}`
-                );
-              }
-              return await response.json();
-            } catch (error) {
-              if (i === retries - 1) throw error;
-              await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
-            }
-          }
-        };
+        // Load and initialize system integration
+        debug('Loading SystemIntegration module...');
+        const SystemIntegrationModule = await import('../services/SystemIntegration').catch(err => {
+          debug('Failed to import SystemIntegration:', err);
+          throw new Error('Failed to load system integration module');
+        });
 
-        const data = await fetchWithRetry();
-        console.log('Fetched flashcards:', data);
+        const systemIntegration = new SystemIntegrationModule.default();
+        debug('SystemIntegration instantiated');
 
-        if (!Array.isArray(data)) {
-          console.error('Invalid data structure received:', data);
+        const initResult = await systemIntegration.initialize();
+        debug('System initialization result:', initResult);
+
+        if (!initResult?.success) {
+          throw new Error(`System initialization failed: ${initResult?.error || 'unknown error'}`);
+        }
+
+        // Initialize flashcard system
+        const { flashcardSystem } = systemIntegration;
+        if (!flashcardSystem?.initialized) {
+          throw new Error('Flashcard system not initialized');
+        }
+
+        if (!flashcardSystem.studyMaterialHandler) {
+          throw new Error('Study material handler not available');
+        }
+
+        debug('Loading flashcards...');
+        const flashcardsResponse = await fetch('/api/flashcards');
+        if (!flashcardsResponse.ok) {
+          throw new Error(`Failed to fetch flashcards: ${flashcardsResponse.status}`);
+        }
+
+        const flashcardsData = await flashcardsResponse.json();
+        debug('Received flashcards:', flashcardsData);
+
+        if (!Array.isArray(flashcardsData)) {
           throw new Error('Invalid flashcard data received');
         }
 
-        setFlashcards(data);
-        setFlashcardCount(data.length);
+        setFlashcards(flashcardsData);
+        setFlashcardCount(flashcardsData.length);
 
-        // Initialize question bank after flashcards are loaded
-        try {
-          const { default: flashcardSystem } = await import('../flashcard-system');
-          console.log('Loaded flashcard system module:', flashcardSystem);
+        // Set up question bank
+        setQuestionBank({
+          initialized: true,
+          getMiddlewareSystem: flashcardSystem.getMiddlewareSystem,
+          studyMaterialHandler: flashcardSystem.studyMaterialHandler,
+        });
 
-          if (flashcardSystem && typeof flashcardSystem.getMiddlewareSystem === 'function') {
-            // Initialize middleware first
-            await flashcardSystem.getMiddlewareSystem();
-            setQuestionBank(flashcardSystem);
-            console.log('Question bank initialized successfully');
-          } else {
-            throw new Error('Flashcard system module is missing required exports');
-          }
-        } catch (err: unknown) {
-          const errorMessage =
-            err instanceof Error ? err.message : 'Failed to initialize question bank';
-          console.error('Question bank initialization failed:', errorMessage);
-          throw new Error(`Failed to initialize question bank: ${errorMessage}`);
-        }
-      } catch (err: unknown) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to initialize flashcard system';
-        console.error('Flashcard initialization error:', errorMessage);
+        debug('Initialization completed successfully');
+
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown initialization error';
+        debug('Initialization failed:', errorMessage);
         setError(errorMessage);
+        // Notify user of the error
+        toast({
+          variant: 'destructive',
+          title: 'Initialization Error',
+          description: errorMessage,
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    initializeFlashcards();
-  }, []);
+    initialize();
+  }, [toast]); // Add toast to dependencies
 
   const getFilteredFlashcards = () => {
     return flashcards.filter((card) => {
@@ -198,16 +171,20 @@ const FlashcardManager: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="flex flex-col items-center justify-center min-h-[200px] p-8 gap-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <p className="text-sm text-muted-foreground">Loading flashcards...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center p-8 text-red-500">
-        <p>{error}</p>
+      <div className="flex flex-col items-center justify-center min-h-[200px] p-8 gap-4">
+        <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
+          <p className="font-medium">Error loading flashcards</p>
+          <p className="text-sm mt-1">{error}</p>
+        </div>
       </div>
     );
   }

@@ -74,35 +74,91 @@ async function findRecommendedCourses(factors: RecommendationFactors) {
     where: sql`${courses.id} NOT IN (${factors.completedCourseIds.join(', ')})`,
   });
 
-  // Score and sort courses based on various factors
+  // Enhanced scoring system with additional factors
   const scoredCourses = availableCourses.map((course) => {
-    const topics = JSON.parse(course.topics);
-    const topicMatchScore = factors.preferredTopics.filter((topic) =>
-      topics.includes(topic)
-    ).length;
+    try {
+      const topics = Array.isArray(course.topics) ? course.topics : JSON.parse(course.topics || '[]');
+      
+      // Topic preference score (0-10)
+      const topicMatchScore = factors.preferredTopics.filter((topic) =>
+        topics.includes(topic)
+      ).length * 2;
 
-    // Calculate time fit score
-    const timeMatchScore = Math.abs(factors.availableTimeMinutes - course.estimatedHours * 60);
+      // Time fit score (0-10, lower is better)
+      const timeMatchScore = 10 - Math.min(10, Math.abs(factors.availableTimeMinutes - (course.estimatedHours || 1) * 60) / 30);
 
-    // Calculate difficulty match score
-    const difficultyMap = { beginner: 1, intermediate: 2, advanced: 3 };
-    const courseDifficultyScore = Math.abs(
-      difficultyMap[course.difficulty as keyof typeof difficultyMap] -
-        Math.ceil(factors.currentLevel / 2)
-    );
+      // Enhanced difficulty matching (0-10)
+      const difficultyMap = { beginner: 1, intermediate: 2, advanced: 3 };
+      const userDifficultyLevel = Math.ceil(factors.currentLevel / 2);
+      const courseDifficultyLevel = difficultyMap[course.difficulty as keyof typeof difficultyMap] || 2;
+      
+      // Adaptive difficulty - slightly challenge the user
+      const preferredDifficulty = Math.min(3, userDifficultyLevel + 0.5);
+      const difficultyScore = 10 - Math.abs(preferredDifficulty - courseDifficultyLevel) * 3;
 
-    // Combine scores (lower is better for time and difficulty)
-    const totalScore = topicMatchScore * 2 - timeMatchScore / 100 - courseDifficultyScore * 1.5;
+      // Learning pace adjustment
+      const learningPaceScore = factors.completedCourseIds.length > 0 ? 
+        Math.min(10, (factors.completedCourseIds.length / 5) * 10) : 5;
 
-    return {
-      ...course,
-      score: totalScore,
-    };
+      // Progressive learning score - favor courses that build on completed ones
+      const prerequisites = Array.isArray(course.prerequisites) ? 
+        course.prerequisites : 
+        JSON.parse(course.prerequisites || '[]');
+      const progressiveScore = prerequisites.some(p => factors.completedCourseIds.includes(p)) ? 10 : 0;
+
+      // Weighted scoring (total max: 100)
+      const totalScore = 
+        topicMatchScore * 2 +        // Max 20: Topic relevance
+        timeMatchScore * 1.5 +       // Max 15: Time fit
+        difficultyScore * 2.5 +      // Max 25: Adaptive difficulty
+        learningPaceScore * 1 +      // Max 10: Learning pace
+        progressiveScore * 3;        // Max 30: Progressive learning
+
+      return {
+        ...course,
+        score: totalScore,
+        matchDetails: {
+          topicMatch: Math.round(topicMatchScore / 2),  // Normalize to 0-10
+          timeMatch: Math.round(timeMatchScore),
+          difficultyMatch: Math.round(difficultyScore),
+          learningPace: Math.round(learningPaceScore),
+          progressive: Math.round(progressiveScore / 3), // Normalize to 0-10
+        },
+      };
+    } catch (error) {
+      console.error(`Error scoring course ${course.id}:`, error);
+      return {
+        ...course,
+        score: 0,
+        matchDetails: {
+          topicMatch: 0,
+          timeMatch: 0,
+          difficultyMatch: 0,
+          learningPace: 0,
+          progressive: 0,
+        },
+      };
+    }
   });
 
-  // Sort by score and return top recommendations
-  return scoredCourses
+  // Sort by score and return top recommendations with scoring details
+  const recommendedCourses = scoredCourses
     .sort((a, b) => b.score - a.score)
     .slice(0, 5) // Recommend top 5 courses
-    .map(({ score, ...course }) => course);
+    .map(({ score, matchDetails, ...course }) => ({
+      ...course,
+      recommendationScore: score,
+      matchDetails,
+      difficultyLevel: course.difficulty,
+      estimatedTimeToComplete: course.estimatedHours * 60, // in minutes
+    }));
+
+  console.log('Generated recommendations:', {
+    userId: factors.userId,
+    totalCandidates: availableCourses.length,
+    recommendationsCount: recommendedCourses.length,
+    topScore: recommendedCourses[0]?.recommendationScore,
+  });
+
+  return recommendedCourses;
 }

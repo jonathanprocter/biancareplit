@@ -5,6 +5,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { Course } from '@/pages/Courses';
 import { UserProgress } from '@/pages/Progress';
 import { LearningStyleQuiz } from '@/pages/LearningStyleQuiz';
+import { LearningPathRecommendations } from '@/components/LearningPathRecommendations';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
@@ -20,6 +21,7 @@ function App() {
         <Route path="/courses/:id" component={Course} />
         <Route path="/progress" component={UserProgress} />
         <Route path="/learning-style-quiz" component={LearningStyleQuiz} />
+        <Route path="/learning-paths" component={LearningPathRecommendations} />
         <Route component={NotFound} />
       </Switch>
     </>

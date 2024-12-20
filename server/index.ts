@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from 'express';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic, log } from './vite';
-import { initializeDatabase } from '@db';
+import { initializeDatabase } from '../db';
 
 const app = express();
 app.use(express.json());
@@ -69,15 +69,23 @@ async function startServer() {
     }
 
     // Start the server
-    const PORT = 5000;
+    const PORT = process.env.PORT || 3001;
     server.listen(PORT, '0.0.0.0', () => {
-      log(`Server started successfully on port ${PORT}`);
+      log(`Server started successfully on http://0.0.0.0:${PORT}`);
     });
 
     // Handle server errors
-    server.on('error', (error: Error) => {
-      console.error('Server error:', error);
-      process.exit(1);
+    server.on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        const newPort = PORT + 1;
+        log(`Port ${PORT} is in use, attempting to use port ${newPort}`);
+        server.listen(newPort, '0.0.0.0', () => {
+          log(`Server started successfully on http://0.0.0.0:${newPort}`);
+        });
+      } else {
+        console.error('Server error:', error);
+        process.exit(1);
+      }
     });
   } catch (error) {
     console.error('Failed to start server:', error);

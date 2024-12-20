@@ -1,16 +1,32 @@
+
 import { Request, Response, NextFunction } from 'express';
 
-export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
-  console.error('Error:', err);
+export class AppError extends Error {
+  constructor(
+    public message: string,
+    public status: number = 500,
+    public code?: string
+  ) {
+    super(message);
+    this.name = 'AppError';
+  }
+}
 
-  if (err.type === 'entity.parse.failed') {
-    return res.status(400).json({
-      message: 'Invalid JSON payload',
-    });
+export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('Application error:', err);
+
+  if (res.headersSent) {
+    return next(err);
   }
 
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err : undefined,
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+
+  res.status(status).json({
+    error: {
+      message,
+      status,
+      timestamp: new Date().toISOString()
+    }
   });
-}
+};

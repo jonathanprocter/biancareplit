@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from 'express';
 import { createServer, type Server } from 'http';
-import { db } from '@db';
+import { db } from '../db/index.js';
 import {
   users,
   courses,
@@ -12,7 +12,7 @@ import {
   learningPaths,
   learningPathCourses,
   learningStyleQuestions,
-} from '@db/schema';
+} from '../db/schema.js';
 import { submitQuizResponses } from './services/learning-style-assessment';
 import { eq, and, lte, sql, desc } from 'drizzle-orm';
 import { generatePersonalizedPath } from './services/recommendations';
@@ -309,27 +309,45 @@ export function registerRoutes(app: Express): Server {
     try {
       const userId = parseInt(req.params.userId);
 
-      if (userId !== req.session.userId) {
+      if (isNaN(userId) || userId !== req.session.userId) {
         return res.status(403).json({ message: 'Unauthorized' });
       }
 
+      console.log('[API] Generating learning path for user:', userId);
+      
       const learningPath = await generatePersonalizedPath(userId);
+      
+      if (!learningPath) {
+        throw new Error('Failed to generate learning path');
+      }
 
       const pathWithCourses = await db.query.learningPaths.findFirst({
         where: eq(learningPaths.id, learningPath.id),
         with: {
           courses: {
             with: {
-              course: true,
+              course: {
+                with: {
+                  instructor: true,
+                },
+              },
             },
           },
         },
       });
 
+      if (!pathWithCourses) {
+        throw new Error('Failed to fetch generated learning path');
+      }
+
+      console.log('[API] Successfully generated learning path:', pathWithCourses.id);
       res.json(pathWithCourses);
     } catch (error) {
       console.error('[API] Failed to generate learning path:', error);
-      res.status(500).json({ message: 'Failed to generate learning path' });
+      res.status(500).json({ 
+        message: 'Failed to generate learning path',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -337,26 +355,37 @@ export function registerRoutes(app: Express): Server {
     try {
       const userId = parseInt(req.params.userId);
 
-      if (userId !== req.session.userId) {
+      if (isNaN(userId) || userId !== req.session.userId) {
         return res.status(403).json({ message: 'Unauthorized' });
       }
+
+      console.log('[API] Fetching learning paths for user:', userId);
 
       const paths = await db.query.learningPaths.findMany({
         where: eq(learningPaths.userId, userId),
         with: {
           courses: {
             with: {
-              course: true,
+              course: {
+                with: {
+                  instructor: true,
+                },
+              },
             },
+            orderBy: [{ order: 'asc' }],
           },
         },
-        orderBy: desc(learningPaths.createdAt),
+        orderBy: [{ createdAt: 'desc' }],
       });
 
+      console.log('[API] Found learning paths:', paths.length);
       res.json(paths);
     } catch (error) {
       console.error('[API] Failed to fetch learning paths:', error);
-      res.status(500).json({ message: 'Failed to fetch learning paths' });
+      res.status(500).json({ 
+        message: 'Failed to fetch learning paths',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
