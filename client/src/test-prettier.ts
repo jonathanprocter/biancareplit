@@ -1,5 +1,5 @@
-export const unformattedCode = {
-  test: 'This is intentionally unformatted',
+export const formattedCode = {
+  test: 'This is properly formatted',
   nested: {
     value: true,
     items: [1, 2, 3],
@@ -17,7 +17,7 @@ export const unformattedCode = {
 
 export function testFunction(param1: string, param2: number): string {
   console.log('Testing Prettier formatting');
-  return param1 + String(param2);
+  return `${param1}${param2}`;
 }
 
 // Test JSX formatting

@@ -1,9 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+# Format files
+npx prettier --write .
 
-# Run prettier on staged files
-npx pretty-quick --staged
+# Run TypeScript type checking
+npm run check
 
-# Exit with the status of pretty-quick
-exit $?
+# Add formatted files back to staging
+git add .
