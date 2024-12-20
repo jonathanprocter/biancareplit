@@ -19,7 +19,8 @@ import { generatePersonalizedPath } from './services/recommendations';
 import { hash, compare } from 'bcrypt';
 import session from 'express-session';
 import MemoryStore from 'memorystore';
-
+import path from 'path';
+import fs from 'fs';
 // Extend express-session types
 declare module 'express-session' {
   interface SessionData {
@@ -28,6 +29,11 @@ declare module 'express-session' {
 }
 
 export function registerRoutes(app: Express): Server {
+  // Create HTTP server
+  const httpServer = createServer(app);
+
+  // Register routes below
+  // prefix all routes with /api
   const memoryStore = MemoryStore(session);
 
   app.use(
@@ -450,13 +456,13 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/daily-progress', requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId;
-      
+
       if (!userId) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
       console.log('[API] Fetching daily progress for user:', userId);
-      
+
       // Get recent quiz attempts and study sessions
       const recentQuizzes = await db.query.enrollments.findMany({
         where: eq(enrollments.userId, Number(userId)),
@@ -550,8 +556,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
   // Content Upload and Processing Routes
   app.post('/api/content/upload', requireAuth, async (req, res) => {
     try {
@@ -561,7 +565,7 @@ export function registerRoutes(app: Express): Server {
 
       const file = req.files.file;
       const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-      
+
       if (!allowedTypes.includes(file.mimetype)) {
         return res.status(400).json({ message: 'Invalid file type. Only PDF, DOCX, and TXT files are allowed.' });
       }
@@ -595,4 +599,6 @@ export function registerRoutes(app: Express): Server {
       });
     }
   });
+
+  return httpServer;
 }
