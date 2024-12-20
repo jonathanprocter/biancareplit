@@ -1,11 +1,11 @@
-//                  Intentionally poorly formatted code              to test Prettier
+// A simple test object with proper types
 const test: {
   name: string;
-  value: number;
+  value: string;
   description: string;
 } = {
   name: 'test',
-  value: 123,
+  value: '123',
   description: 'A test object',
 };
 
