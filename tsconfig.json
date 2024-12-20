@@ -17,7 +17,7 @@
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": ".",
-    "types": ["node", "prettier"],
+    "types": ["node"],
     "paths": {
       "@/*": ["./client/src/*"],
       "@db": ["./db/index.ts"],
