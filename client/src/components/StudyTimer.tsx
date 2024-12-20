@@ -139,7 +139,10 @@ export const StudyTimer = () => {
         seconds: 0,
         isActive: false,
         isBreak: true,
-        completedSessions: newCompletedSessions
+        completedSessions: newCompletedSessions,
+        focusScore: timer.focusScore,
+        optimalDuration: timer.optimalDuration,
+        sessionHistory: newSessionHistory
       });
       toast({
         title: "Session Complete!",
@@ -164,7 +167,10 @@ export const StudyTimer = () => {
       seconds: 0,
       isActive: false,
       isBreak: false,
-      completedSessions: 0
+      completedSessions: 0,
+      focusScore: 0,
+      optimalDuration: 25,
+      sessionHistory: []
     });
     setMotivation('');
   };
