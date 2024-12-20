@@ -9,6 +9,7 @@ import {
 import { eq, and, sql, desc } from 'drizzle-orm';
 
 interface RecommendationFactors {
+  userId: number;
   learningStyle: string;
   preferredTopics: string[];
   availableTimeMinutes: number;
@@ -36,10 +37,13 @@ export async function generatePersonalizedPath(
   const completedCourseIds = completedEnrollments.map(e => e.courseId);
 
   const factors: RecommendationFactors = {
-    learningStyle: user.learningStyle,
-    preferredTopics: JSON.parse(user.preferredTopics),
-    availableTimeMinutes: user.preferredStudyTime,
-    currentLevel: user.level,
+    userId: user.id,
+    learningStyle: user.learningStyle ?? 'visual',
+    preferredTopics: user.preferredTopics
+      ? JSON.parse(user.preferredTopics)
+      : [],
+    availableTimeMinutes: user.preferredStudyTime ?? 60,
+    currentLevel: user.level ?? 1,
     completedCourseIds,
   };
 
@@ -55,9 +59,9 @@ export async function generatePersonalizedPath(
       description:
         'Automatically generated based on your progress and preferences',
       difficulty:
-        user.level <= 2
+        (user.level ?? 1) <= 2
           ? 'beginner'
-          : user.level <= 4
+          : (user.level ?? 1) <= 4
           ? 'intermediate'
           : 'advanced',
       estimatedCompletionTime: recommendedCourses.reduce(
@@ -129,7 +133,7 @@ async function findRecommendedCourses(factors: RecommendationFactors) {
       const prerequisites = Array.isArray(course.prerequisites)
         ? course.prerequisites
         : JSON.parse(course.prerequisites || '[]');
-      const progressiveScore = prerequisites.some(p =>
+      const progressiveScore = prerequisites.some((p: number) =>
         factors.completedCourseIds.includes(p)
       )
         ? 10

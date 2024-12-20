@@ -68,24 +68,11 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start the server
-    const PORT = process.env.PORT || 3001;
-    server.listen(PORT, '0.0.0.0', () => {
-      log(`Server started successfully on http://0.0.0.0:${PORT}`);
-    });
-
-    // Handle server errors
-    server.on('error', (error: any) => {
-      if (error.code === 'EADDRINUSE') {
-        const newPort = PORT + 1;
-        log(`Port ${PORT} is in use, attempting to use port ${newPort}`);
-        server.listen(newPort, '0.0.0.0', () => {
-          log(`Server started successfully on http://0.0.0.0:${newPort}`);
-        });
-      } else {
-        console.error('Server error:', error);
-        process.exit(1);
-      }
+    // ALWAYS serve the app on port 5000
+    // this serves both the API and the client
+    const PORT = 5000;
+    server.listen(PORT, "0.0.0.0", () => {
+      log(`serving on port ${PORT}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

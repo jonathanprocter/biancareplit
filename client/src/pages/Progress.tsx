@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SkillTreeVisualization } from '@/components/SkillTreeVisualization';
+import { Course, CourseWithProgress } from '@/types/course';
 
 export function UserProgress() {
   const userId = parseInt(localStorage.getItem('userId') || '1');
@@ -22,8 +23,8 @@ export function UserProgress() {
         (enrollment.correctAnswers / enrollment.totalAttempts) * 3
       ),
       mastered: enrollment.correctAnswers / enrollment.totalAttempts > 0.8,
-      prerequisites: enrollment.course.prerequisites || [],
-      category: enrollment.course.category,
+      prerequisites: [], // Default to empty array if no prerequisites
+      category: enrollment.course.category || 'General', // Default category
       description: enrollment.course.description,
     }));
   }, [progress]);

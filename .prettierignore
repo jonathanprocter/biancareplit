@@ -23,6 +23,8 @@ venv
 *.d.ts
 .cache
 .local
+.drizzle
+migrations
 
 # IDE and system files
 .vscode
@@ -34,3 +36,8 @@ venv
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Project specific
+.husky/_
+.git
+.env*

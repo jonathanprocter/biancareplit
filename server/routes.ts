@@ -14,7 +14,7 @@ import {
   learningStyleQuestions,
 } from '../db/schema.js';
 import { submitQuizResponses } from './services/learning-style-assessment';
-import { eq, and, lte, sql, desc } from 'drizzle-orm';
+import { eq, and, lte, sql, desc, asc } from 'drizzle-orm';
 import { generatePersonalizedPath } from './services/recommendations';
 import { hash, compare } from 'bcrypt';
 import session from 'express-session';
@@ -396,10 +396,10 @@ export function registerRoutes(app: Express): Server {
                   },
                 },
               },
-              orderBy: [{ order: 'asc' }],
+              orderBy: asc(learningPathCourses.order),
             },
           },
-          orderBy: [{ createdAt: 'desc' }],
+          orderBy: desc(learningPaths.createdAt),
         });
 
         console.log('[API] Found learning paths:', paths.length);
@@ -476,7 +476,9 @@ export function registerRoutes(app: Express): Server {
       await db.execute(sql`SELECT 1`);
       res.json({ status: 'healthy', timestamp: new Date().toISOString() });
     } catch (error) {
-      res.status(500).json({ status: 'unhealthy', error: error.message });
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ status: 'unhealthy', error: errorMessage });
     }
   });
 

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Brain, BookOpen, Target, TrendingUp, Clock } from 'lucide-react';
 import { useGenerateLearningPath, useLearningPaths } from '@/lib/api';
+import { Course } from '@/types/course';
 
 export function LearningPathRecommendations() {
   const { toast } = useToast();
@@ -127,7 +128,7 @@ export function LearningPathRecommendations() {
                       )}
                     </div>
 
-                    {course.matchDetails && (
+                    {course.matchDetails ? (
                       <div className="mt-4 space-y-2">
                         <h4 className="text-sm font-medium text-gray-700">
                           Match Details:
@@ -138,7 +139,9 @@ export function LearningPathRecommendations() {
                               Topic Match
                             </div>
                             <Progress
-                              value={course.matchDetails.topicMatch * 10}
+                              value={
+                                (course.matchDetails?.topicMatch || 0) * 10
+                              }
                               className="h-2"
                             />
                           </div>
@@ -147,7 +150,7 @@ export function LearningPathRecommendations() {
                               Time Fit
                             </div>
                             <Progress
-                              value={course.matchDetails.timeMatch * 10}
+                              value={(course.matchDetails?.timeMatch || 0) * 10}
                               className="h-2"
                             />
                           </div>
@@ -156,7 +159,9 @@ export function LearningPathRecommendations() {
                               Difficulty Match
                             </div>
                             <Progress
-                              value={course.matchDetails.difficultyMatch * 10}
+                              value={
+                                (course.matchDetails?.difficultyMatch || 0) * 10
+                              }
                               className="h-2"
                             />
                           </div>
@@ -165,13 +170,15 @@ export function LearningPathRecommendations() {
                               Learning Pace
                             </div>
                             <Progress
-                              value={course.matchDetails.learningPace * 10}
+                              value={
+                                (course.matchDetails?.learningPace || 0) * 10
+                              }
                               className="h-2"
                             />
                           </div>
                         </div>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 ))}
               </div>
