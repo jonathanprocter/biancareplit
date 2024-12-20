@@ -41,8 +41,24 @@ venv/
 .vercel
 .turbo
 
+# Generated files
+*.generated.*
+*.min.*
+*.bundle.*
+
 # Project specific
 .husky/_
 migrations/
 .replit/
 replit.nix
+.git
+.gitignore
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build artifacts
+*.map
+coverage/

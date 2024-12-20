@@ -45,10 +45,10 @@ export function LearningStyleQuiz() {
 
       return res.json();
     },
-    onSuccess: data => {
+    onSuccess: ({ learningStyle }) => {
       toast({
         title: 'Quiz Completed!',
-        description: 'Your learning style has been analyzed.',
+        description: `Your primary learning style is: ${learningStyle}`,
       });
       setLocation('/dashboard');
     },
