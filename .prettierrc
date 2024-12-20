@@ -5,14 +5,9 @@
   "singleQuote": true,
   "trailingComma": "es5",
   "bracketSpacing": true,
+  "bracketSameLine": false,
   "arrowParens": "always",
   "endOfLine": "lf",
-  "jsxSingleQuote": false,
-  "bracketSameLine": false,
-  "useTabs": false,
-  "proseWrap": "preserve",
-  "quoteProps": "as-needed",
-  "htmlWhitespaceSensitivity": "css",
-  "embeddedLanguageFormatting": "auto",
-  "plugins": ["prettier-plugin-tailwindcss"]
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tailwindConfig": "./tailwind.config.ts"
 }

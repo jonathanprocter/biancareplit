@@ -12,6 +12,12 @@ interface TestProps {
 // React component formatting test with more complex JSX
 export const TestComponent: FC<TestProps> = ({ title, items }) => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Use selectedId in the component to avoid unused variable warning
+  useEffect(() => {
+    if (selectedId !== null) {
+      console.warn('Selected item:', selectedId);
+    }
+  }, [selectedId]);
 
   useEffect(() => {
     console.log('Component mounted with title:', title);

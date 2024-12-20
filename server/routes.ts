@@ -442,7 +442,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Daily Progress API
-  app.get('/api/users/progress/daily', requireAuth, async (req, res) => {
+  app.get('/api/progress/daily', requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId;
 
