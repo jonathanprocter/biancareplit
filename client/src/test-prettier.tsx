@@ -2,13 +2,17 @@ import { type FC, useState, useEffect } from 'react';
 
 interface TestProps {
   title: string;
-  items: Array<{ id: number; name: string; description: string }>;
+  items: Array<{
+    id: number;
+    name: string;
+    description: string;
+  }>;
 }
 
 // React component formatting test with more complex JSX
 export const TestComponent: FC<TestProps> = ({ title, items }) => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  // Use selectedId in the component to avoid unused variable warning
+
   useEffect(() => {
     if (selectedId !== null) {
       console.warn('Selected item:', selectedId);
