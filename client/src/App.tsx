@@ -11,6 +11,7 @@ import { AlertCircle } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { DailyWelcomeCard } from '@/components/DailyWelcomeCard';
 import { FileUploadWizard } from '@/components/FileUploadWizard';
+import { Achievements } from '@/components/Achievements';
 
 function App() {
   const [location] = useLocation();
@@ -27,6 +28,7 @@ function App() {
             {() => (
               <div className="space-y-8">
                 <DailyWelcomeCard />
+                <Achievements />
                 <FileUploadWizard />
               </div>
             )}
