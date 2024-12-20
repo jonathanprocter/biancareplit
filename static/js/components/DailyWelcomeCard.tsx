@@ -2,6 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowUpIcon, ArrowDownIcon, BookOpenIcon } from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ReferenceLine,
+} from 'recharts';
 
 interface ProgressData {
   questionsAttempted: number;
@@ -147,7 +155,36 @@ export const DailyWelcomeCard = () => {
               </div>
               <div className="mt-4">
                 <div className="h-24 w-full">
-                  {/* Add performance trend chart here using recharts */}
+                  <LineChart
+                    width={500}
+                    height={96}
+                    data={progress.trends.dates.map((date, i) => ({
+                      date,
+                      past: progress.trends.pastPerformance[i],
+                      predicted: progress.trends.predictedPerformance[i],
+                    }))}
+                    margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                  >
+                    <XAxis dataKey="date" tick={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="past"
+                      stroke="#2563eb"
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="predicted"
+                      stroke="#9333ea"
+                      strokeDasharray="5 5"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <ReferenceLine y={progress.trends.targetPerformance} stroke="#dc2626" strokeDasharray="3 3" />
+                  </LineChart>
                 </div>
               </div>
             </div>

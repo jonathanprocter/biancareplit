@@ -446,6 +446,94 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Daily Progress API
+  app.get('/api/daily-progress', requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      
+      // Get recent quiz attempts and study sessions
+      const recentQuizzes = await db.query.enrollments.findMany({
+        where: eq(enrollments.userId, Number(userId)),
+        orderBy: desc(enrollments.updatedAt),
+        limit: 10,
+      });
+
+      // Calculate performance metrics
+      const pastPerformance = recentQuizzes.map(quiz => ({
+        accuracy: quiz.correctAnswers / Math.max(quiz.totalAttempts, 1) * 100,
+        date: quiz.updatedAt,
+      }));
+
+      // Calculate target performance (aim for 85% or 10% improvement)
+      const currentPerformance = pastPerformance[0]?.accuracy || 0;
+      const targetPerformance = Math.min(85, currentPerformance * 1.1);
+
+      // Predict future performance using simple linear regression
+      const predictedPerformance = pastPerformance.map((perf, index) => ({
+        accuracy: currentPerformance + (index + 1) * ((targetPerformance - currentPerformance) / 10),
+        date: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000),
+      }));
+
+      // Get strength and weak areas based on recent performance
+      const [strengthAreas, weakAreas] = await Promise.all([
+        db.query.enrollments.findMany({
+          where: and(
+            eq(enrollments.userId, Number(userId)),
+            gte(sql`correctAnswers::float / NULLIF(totalAttempts, 0)`, 0.8),
+          ),
+          with: { course: true },
+          limit: 3,
+        }),
+        db.query.enrollments.findMany({
+          where: and(
+            eq(enrollments.userId, Number(userId)),
+            lt(sql`correctAnswers::float / NULLIF(totalAttempts, 0)`, 0.6),
+          ),
+          with: { course: true },
+          limit: 3,
+        }),
+      ]);
+
+      // Get current learning path
+      const learningPath = await db.query.learningPaths.findFirst({
+        where: eq(learningPaths.userId, Number(userId)),
+        orderBy: desc(learningPaths.createdAt),
+        with: {
+          courses: {
+            with: { course: true },
+            orderBy: asc(learningPathCourses.order),
+          },
+        },
+      });
+
+      const response = {
+        questionsAttempted: recentQuizzes.reduce((sum, q) => sum + q.totalAttempts, 0),
+        correctAnswers: recentQuizzes.reduce((sum, q) => sum + q.correctAnswers, 0),
+        flashcardsReviewed: recentQuizzes.length,
+        timeSpent: recentQuizzes.reduce((sum, q) => sum + (q.timeSpent || 0), 0),
+        strengthAreas: strengthAreas.map(e => e.course.name),
+        weakAreas: weakAreas.map(e => e.course.name),
+        trends: {
+          pastPerformance: pastPerformance.map(p => p.accuracy),
+          predictedPerformance: predictedPerformance.map(p => p.accuracy),
+          targetPerformance,
+          dates: [...pastPerformance.map(p => p.date), ...predictedPerformance.map(p => p.date)],
+        },
+        learningPath: learningPath ? {
+          currentTopic: learningPath.courses[0]?.course.name || '',
+          nextTopics: learningPath.courses.slice(1, 4).map(c => c.course.name),
+          completionRate: (learningPath.completedCourses / learningPath.totalCourses) * 100,
+          estimatedTimeToTarget: Math.ceil((targetPerformance - currentPerformance) / 2), // Assuming 2% improvement per day
+        } : null,
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('[API] Error fetching daily progress:', error);
+      res.status(500).json({ message: 'Failed to fetch daily progress' });
+    }
+  });
+
   app.get('/health', async (req, res) => {
     try {
       await db.execute(sql`SELECT 1`);
