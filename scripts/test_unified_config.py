@@ -1,35 +1,23 @@
+#!/usr/bin/env python3
 """Test unified configuration and middleware system."""
 
-import os
-import sys
-import json
-import time
 import logging
+import sys
+import time
 import requests
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, Optional
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+logger = logging.getLogger(__name__)
 
 # Add project root to Python path
 project_root = str(Path(__file__).parent.parent.absolute())
 sys.path.insert(0, project_root)
-
-from backend.middleware.config import middleware_registry
-from backend.middleware.base import (
-    BaseMiddleware,
-    MiddlewareConfig as BaseMiddlewareConfig,
-)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 
 class SystemTester:
@@ -43,21 +31,29 @@ class SystemTester:
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def _request_with_retry(
-        self, method: str, endpoint: str, **kwargs
+        self,
+        method: str,
+        endpoint: str,
+        **kwargs
     ) -> requests.Response:
         """Make HTTP request with retry mechanism."""
         for attempt in range(self.max_retries):
             try:
                 response = self.session.request(
-                    method, f"{self.base_url}{endpoint}", **kwargs
+                    method,
+                    f"{self.base_url}{endpoint}",
+                    **kwargs
                 )
                 response.raise_for_status()
                 return response
             except requests.RequestException as e:
                 if attempt == self.max_retries - 1:
                     raise
-                logger.warning(
-                    f"Request failed (attempt {attempt + 1}/{self.max_retries}): {str(e)}"
+                self.logger.warning(
+                    "Request failed (attempt %d/%d): %s",
+                    attempt + 1,
+                    self.max_retries,
+                    str(e)
                 )
                 time.sleep(self.retry_delay)
 
@@ -69,24 +65,35 @@ class SystemTester:
 
             # Verify CSRF token
             csrf_token = response.headers.get("X-CSRF-Token")
-            self.logger.info(f"CSRF token present: {bool(csrf_token)}")
+            self.logger.info("CSRF token present: %s", bool(csrf_token))
 
             # Verify security headers with expected values
             security_headers = {
                 "X-Content-Type-Options": "nosniff",
                 "X-Frame-Options": "SAMEORIGIN",
                 "X-XSS-Protection": "1; mode=block",
-                "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-                "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval';",
+                "Strict-Transport-Security": (
+                    "max-age=31536000; includeSubDomains"
+                ),
+                "Content-Security-Policy": (
+                    "default-src 'self'; "
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval';"
+                ),
             }
 
             headers_status = []
             for header, expected_value in security_headers.items():
                 actual_value = response.headers.get(header)
-                match = actual_value == expected_value if actual_value else False
+                match = (
+                    actual_value == expected_value if actual_value else False
+                )
                 headers_status.append(match)
                 self.logger.info(
-                    f"{header}: Expected={expected_value}, Actual={actual_value}, Match={match}"
+                    "%s: Expected=%s, Actual=%s, Match=%s",
+                    header,
+                    expected_value,
+                    actual_value,
+                    match
                 )
 
             # Test CSRF protection with POST request
@@ -97,25 +104,32 @@ class SystemTester:
                     headers={"X-CSRF-Token": csrf_token} if csrf_token else {},
                 )
                 csrf_working = post_response.status_code != 403
-                self.logger.info(f"CSRF protection working: {csrf_working}")
+                self.logger.info("CSRF protection working: %s", csrf_working)
             except requests.exceptions.RequestException as e:
-                self.logger.info(f"CSRF test failed as expected: {str(e)}")
+                self.logger.info(
+                    "Request failed as expected: %s",
+                    str(e)
+                )
                 csrf_working = True
 
             all_headers_present = all(headers_status)
             self.logger.info(
-                f"All security headers present and correct: {all_headers_present}"
+                "All security headers present and correct: %s",
+                all_headers_present
             )
 
             return bool(csrf_token) and all_headers_present and csrf_working
         except Exception as e:
-            logger.error(f"Security middleware test failed: {str(e)}")
+            self.logger.error("Security middleware test failed: %s", str(e))
             return False
 
     def test_metrics_middleware(self) -> bool:
         """Test metrics endpoint and collection."""
         try:
-            response = self._request_with_retry("GET", "/metrics")
+            response = self._request_with_retry(
+                "GET",
+                "/metrics"
+            )
             metrics_data = response.text
 
             required_metrics = [
@@ -131,16 +145,19 @@ class SystemTester:
                     missing_metrics.append(metric)
 
             metrics_present = len(missing_metrics) == 0
-            logger.info(f"Required metrics present: {metrics_present}")
+            self.logger.info("Required metrics present: %s", metrics_present)
 
             if not metrics_present:
-                logger.warning(f"Missing metrics: {', '.join(missing_metrics)}")
+                self.logger.warning(
+                    "Missing metrics: %s",
+                    ", ".join(missing_metrics)
+                )
             else:
-                logger.info("All required metrics are present")
+                self.logger.info("All required metrics are present")
 
             return metrics_present and response.status_code == 200
         except Exception as e:
-            logger.error(f"Metrics middleware test failed: {str(e)}")
+            self.logger.error("Metrics middleware test failed: %s", str(e))
             return False
 
     def test_cache_middleware(self) -> bool:
@@ -148,9 +165,11 @@ class SystemTester:
         try:
             # Test endpoint that should be cached
             cache_test_results = []
+            first_duration = None
+            first_response = None
 
             # Test 1: Basic caching
-            for i in range(3):  # Make multiple requests to verify consistent caching
+            for i in range(3):  # Multiple requests to verify caching
                 start_time = datetime.now()
                 response = self._request_with_retry("GET", "/health")
                 duration = (datetime.now() - start_time).total_seconds()
@@ -159,47 +178,57 @@ class SystemTester:
                 cache_control = response.headers.get("Cache-Control", "")
                 etag = response.headers.get("ETag", "")
 
-                self.logger.info(f"Request {i+1}:")
-                self.logger.info(f"Duration: {duration:.3f}s")
-                self.logger.info(f"Cache-Control: {cache_control}")
-                self.logger.info(f"ETag: {etag}")
-
-                if i > 0:  # Compare with first request
-                    cache_test_results.append(
-                        duration <= first_duration * 1.5
-                    )  # Allow some variance
+                self.logger.info("Request %d:", i + 1)
+                self.logger.info("Duration: %.3fs", duration)
+                self.logger.info("Cache-Control: %s", cache_control)
+                self.logger.info("ETag: %s", etag)
 
                 if i == 0:
                     first_duration = duration
                     first_response = response.text
                 else:
+                    # Compare with first request
+                    cache_test_results.append(
+                        duration <= first_duration * 1.5  # Allow variance
+                    )
                     # Verify response content is identical
-                    cache_test_results.append(response.text == first_response)
+                    cache_test_results.append(
+                        response.text == first_response
+                    )
 
             # Test 2: Cache invalidation
             headers = {"Cache-Control": "no-cache"}
             invalidation_response = self._request_with_retry(
-                "GET", "/health", headers=headers
+                "GET",
+                "/health",
+                headers=headers
             )
             cache_test_results.append(
                 invalidation_response.headers.get("Cache-Control") != ""
             )
 
             cache_working = all(cache_test_results)
-            self.logger.info(f"Cache middleware tests passed: {cache_working}")
+            self.logger.info("Cache middleware tests passed: %s", cache_working)
 
             return cache_working
         except Exception as e:
-            logger.error(f"Cache middleware test failed: {str(e)}")
+            self.logger.error("Cache middleware test failed: %s", str(e))
             return False
 
     def test_health_endpoint(self) -> bool:
         """Test system health endpoint."""
         try:
             # Test both GET and POST methods
-            get_response = self._request_with_retry("GET", "/health")
+            get_response = self._request_with_retry(
+                "GET",
+                "/health"
+            )
             post_data = {"test": "data"}
-            post_response = self._request_with_retry("POST", "/health", json=post_data)
+            post_response = self._request_with_retry(
+                "POST",
+                "/health",
+                json=post_data
+            )
 
             for response in [get_response, post_response]:
                 data = response.json()
@@ -213,60 +242,81 @@ class SystemTester:
                     "method",
                 ]
                 missing_fields = [
-                    field for field in required_fields if field not in data
+                    field for field in required_fields
+                    if field not in data
                 ]
                 if missing_fields:
-                    logger.error(
-                        f"Missing required fields in health response: {missing_fields}"
+                    self.logger.error(
+                        "Missing required fields in response: %s",
+                        missing_fields
                     )
                     return False
 
                 # Verify method-specific fields
                 if data["method"] == "POST" and "request_data" not in data:
-                    logger.error("POST response missing request_data field")
+                    self.logger.error("POST response missing request_data field")
                     return False
-                elif data["method"] == "POST" and data["request_data"] != post_data:
-                    logger.error("POST request data mismatch")
+                elif (
+                    data["method"] == "POST"
+                    and data["request_data"] != post_data
+                ):
+                    self.logger.error("POST request data mismatch")
                     return False
 
                 # Verify all middleware components
-                middleware_status = data.get("middleware", {})
-                system_metrics = data.get("system_metrics", {})
+                middleware_status = data.get(
+                    "middleware",
+                    {}
+                )
+                system_metrics = data.get(
+                    "system_metrics",
+                    {}
+                )
 
-                logger.info(f"\nHealth Check Results ({data['method']}):")
-                logger.info("-" * 50)
-                logger.info(f"Status: {data['status']}")
-                logger.info(f"Timestamp: {data['timestamp']}")
+                self.logger.info(
+                    "\nHealth Check Results (%s):",
+                    data.get("method", "unknown")
+                )
+                self.logger.info("-" * 50)
+                self.logger.info("Status: %s", data["status"])
+                self.logger.info("Timestamp: %s", data["timestamp"])
 
-                logger.info("\nMiddleware Component Status:")
+                self.logger.info("\nMiddleware Component Status:")
                 for component, status in middleware_status.items():
-                    logger.info(f"{component:15}: {'✓' if status else '✗'}")
+                    self.logger.info(
+                        "%15s: %s",
+                        component,
+                        "✓" if status else "✗"
+                    )
 
-                logger.info("\nSystem Metrics:")
+                self.logger.info("\nSystem Metrics:")
                 for metric, value in system_metrics.items():
-                    logger.info(f"{metric:15}: {value}")
-                logger.info("-" * 50)
+                    self.logger.info("%15s: %s", metric, value)
+                self.logger.info("-" * 50)
 
                 if data["status"] not in ["healthy", "degraded"]:
-                    logger.error(f"Unexpected health status: {data['status']}")
+                    self.logger.error(
+                        "Unexpected health status: %s",
+                        data["status"]
+                    )
                     return False
 
                 # Verify system metrics values are reasonable
                 if not (0 <= system_metrics.get("cpu_usage", -1) <= 100):
-                    logger.error("Invalid CPU usage value")
+                    self.logger.error("Invalid CPU usage value")
                     return False
                 if not (0 <= system_metrics.get("memory_usage", -1) <= 100):
-                    logger.error("Invalid memory usage value")
+                    self.logger.error("Invalid memory usage value")
                     return False
                 if not system_metrics.get("uptime", 0) > 0:
-                    logger.error("Invalid uptime value")
+                    self.logger.error("Invalid uptime value")
                     return False
 
             return True
 
         except Exception as e:
-            logger.error(f"Health check failed: {str(e)}")
-            logger.error("Stack trace:", exc_info=True)
+            self.logger.error("Health check failed: %s", str(e))
+            self.logger.error("Stack trace:", exc_info=True)
             return False
 
     def run_all_tests(self) -> dict:
@@ -278,9 +328,13 @@ class SystemTester:
             "health": self.test_health_endpoint(),
         }
 
-        logger.info("\nTest Results:")
+        self.logger.info("\nTest Results:")
         for component, status in results.items():
-            logger.info(f"{component}: {'✓' if status else '✗'}")
+            self.logger.info(
+                "%s: %s",
+                component,
+                "✓" if status else "✗"
+            )
 
         return results
 
@@ -308,7 +362,7 @@ def main():
         logger.info("-" * 50)
         for component, status in results.items():
             status_symbol = "✓" if status else "✗"
-            logger.info(f"{component:20} [{status_symbol}]")
+            logger.info("%20s [%s]", component, status_symbol)
         logger.info("-" * 50)
 
         if success:
@@ -316,15 +370,18 @@ def main():
             sys.exit(0)
         else:
             logger.error(
-                "\nSome system tests failed. Please check the logs above for details."
+                "\nSome system tests failed. "
+                "Please check the logs above for details."
             )
             sys.exit(1)
 
     except Exception as e:
-        logger.error(f"System testing failed: {str(e)}")
+        logger.error("System testing failed: %s", str(e))
         logger.error("Stack trace:", exc_info=True)
         sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
+
+
