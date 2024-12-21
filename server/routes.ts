@@ -1,10 +1,9 @@
-import type { Express, Request, Response } from 'express';
+import type { Express, Request, Response, NextFunction } from 'express';
 import { createServer, type Server } from 'http';
 import { db } from '../db/index.js';
 import {
   users,
   courses,
-  modules,
   enrollments,
   badges,
   userBadges,
@@ -13,15 +12,27 @@ import {
   learningPathCourses,
   learningStyleQuestions,
 } from '../db/schema.js';
+import { lt } from 'drizzle-orm';
 import { submitQuizResponses } from './services/learning-style-assessment';
-import { eq, and, lte, sql, desc, asc, gte } from 'drizzle-orm';
+import { eq, and, sql, desc, asc, gte } from 'drizzle-orm';
 import { generatePersonalizedPath } from './services/recommendations';
 import { hash, compare } from 'bcrypt';
-import session from 'express-session';
-import MemoryStore from 'memorystore';
-import path from 'path';
-import fs from 'fs';
 import { AIService } from "./services/AIService";
+
+interface ErrorResponse {
+  message: string;
+  details?: unknown;
+  stack?: string;
+  error?: string;
+}
+
+interface RequestError extends Error {
+  status?: number;
+  statusCode?: number;
+  details?: unknown;
+  code?: string;
+}
+
 // Extend express-session types
 declare module 'express-session' {
   interface SessionData {
@@ -38,7 +49,7 @@ export function registerRoutes(app: Express): Server {
   // Session is configured in index.ts
 
   // Authentication middleware
-  const requireAuth = (req: Request, res: Response, next: (error?: any) => void) => {
+  const requireAuth = (req: Request, res: Response, next: NextFunction) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -46,14 +57,14 @@ export function registerRoutes(app: Express): Server {
   };
 
   // Error handling middleware
-  const handleError = (err: any, res: Response) => {
+  const handleError = (err: RequestError, res: Response) => {
     console.error('[API] Error:', err);
     const status = err.status || err.statusCode || 500;
     const message = err.message || 'Internal Server Error';
-    const errorResponse = {
-      success: false,
+    const errorResponse: ErrorResponse = {
       message,
-      error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      ...(err.details && { details: err.details }),
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     };
     console.error('[API] Sending error response:', errorResponse);
     res.status(status).json(errorResponse);
@@ -138,9 +149,9 @@ export function registerRoutes(app: Express): Server {
       req.session.userId = user.id;
       console.log('[API] Registration successful:', user.username);
       res.status(201).json(user);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[API] Registration error:', error);
-      if (error?.name === 'ZodError') {
+      if (error instanceof Error && error.name === 'ZodError') {
         return res.status(400).json({ message: error.errors[0].message });
       }
       res.status(500).json({ message: 'Failed to create account' });
@@ -190,7 +201,9 @@ export function registerRoutes(app: Express): Server {
       });
       res.json(allCourses);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to fetch courses' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[API] Error fetching courses:', errorMessage);
+      res.status(500).json({ message: 'Failed to fetch courses', error: errorMessage });
     }
   });
 
@@ -210,7 +223,12 @@ export function registerRoutes(app: Express): Server {
 
       res.json(course);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to fetch course' });
+      console.error('[API] Error fetching course:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        message: 'Failed to fetch course',
+        error: errorMessage
+      });
     }
   });
 
@@ -249,7 +267,9 @@ export function registerRoutes(app: Express): Server {
 
       res.json(enrollment);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to enroll' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[API] Error enrolling in course:', errorMessage);
+      res.status(500).json({ message: 'Failed to enroll', error: errorMessage });
     }
   });
 
@@ -447,10 +467,11 @@ export function registerRoutes(app: Express): Server {
       console.log('[API] Successfully generated learning path:', pathWithCourses.id);
       res.json(pathWithCourses);
     } catch (error) {
-      console.error('[API] Failed to generate learning path:', error);
-      res.status(500).json({
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[API] Failed to generate learning path:', errorMessage);
+      res.status(500).json({ 
         message: 'Failed to generate learning path',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage 
       });
     }
   });
@@ -484,11 +505,12 @@ export function registerRoutes(app: Express): Server {
 
       console.log('[API] Found learning paths:', paths.length);
       res.json(paths);
-    } catch (error) {
-      console.error('[API] Failed to fetch learning paths:', error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[API] Error fetching learning paths:', err);
       res.status(500).json({
         message: 'Failed to fetch learning paths',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
       });
     }
   });
@@ -528,8 +550,9 @@ export function registerRoutes(app: Express): Server {
       });
       res.json(questions);
     } catch (error) {
-      console.error('[API] Failed to fetch learning style questions:', error);
-      res.status(500).json({ message: 'Failed to fetch questions' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[API] Failed to fetch learning style questions:', errorMessage);
+      res.status(500).json({ message: 'Failed to fetch questions', error: errorMessage });
     }
   });
 
@@ -646,11 +669,30 @@ export function registerRoutes(app: Express): Server {
 
   app.get('/health', async (req, res) => {
     try {
+      // Check database connection
       await db.execute(sql`SELECT 1`);
-      res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+      
+      // Get memory usage
+      const memoryUsage = process.memoryUsage();
+      
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memoryUsage: {
+          heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + 'MB',
+          heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + 'MB'
+        },
+        environment: process.env.NODE_ENV || 'development'
+      });
     } catch (error) {
+      console.error('Health check failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ status: 'unhealthy', error: errorMessage });
+      res.status(503).json({
+        status: 'unhealthy',
+        error: errorMessage,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 

@@ -18,6 +18,12 @@
       "options": {
         "parser": "typescript"
       }
+    },
+    {
+      "files": "*.{json,md,yml,yaml}",
+      "options": {
+        "tabWidth": 2
+      }
     }
   ]
 }

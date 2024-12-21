@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
   const [location] = useLocation();
+  const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const publicRoutes = ['/', '/register'];
 
   if (publicRoutes.includes(location)) {
@@ -14,10 +18,22 @@ export function Navigation() {
       location === path ? 'text-primary' : 'text-foreground hover:text-primary'
     }`;
 
-  const handleLogout = () => {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('username');
-    window.location.href = '/';
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to log out. Please try again.',
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -33,8 +49,12 @@ export function Navigation() {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={handleLogout}>
-              Logout
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
             </Button>
           </div>
         </div>
