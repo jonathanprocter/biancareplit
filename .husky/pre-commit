@@ -1,19 +1,21 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run prettier and linting checks
-echo "Running pre-commit checks..."
-npx lint-staged || {
-  echo "❌ Prettier/ESLint checks failed"
+echo "🔍 Running pre-commit checks..."
+
+# Run TypeScript type checking first
+echo "📝 Running type checking..."
+npm run check || {
+  echo "❌ Type checking failed. Please fix the TypeScript errors before committing."
   exit 1
 }
 
-# Type checking
-echo "Running type checking..."
-npm run check || {
-  echo "❌ Type checking failed"
+# Run prettier, eslint, and tests through lint-staged
+echo "🎨 Running formatting and linting..."
+npx lint-staged || {
+  echo "❌ Code style checks failed. Please fix the errors and try committing again."
   exit 1
 }
 
 # Success message
-echo "✅ All pre-commit checks passed"
+echo "✅ All pre-commit checks passed!"
