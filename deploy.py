@@ -1,8 +1,11 @@
+
 import subprocess
 import sys
 import logging
 from scripts.reset_migrations import reset_database
 from scripts.init_db import initialize_database
+from backend.monitoring.deployment_monitor import DeploymentMonitor
+from backend.config.system_verifier import SystemVerification
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -10,19 +13,28 @@ logger = logging.getLogger(__name__)
 def deploy():
     """Deploy the application"""
     try:
-        # Step 1: Reset database and migrations
+        # Initialize monitoring
+        monitor = DeploymentMonitor()
+        
+        # Step 1: Verify system
+        logger.info("Verifying system configuration...")
+        verifier = SystemVerification(context_manager)
+        if not verifier.verify_system():
+            raise Exception("System verification failed")
+
+        # Step 2: Reset database and migrations
         logger.info("Resetting database and migrations...")
         if not reset_database():
             raise Exception("Database reset failed")
 
-        # Step 2: Initialize fresh database
+        # Step 3: Initialize fresh database
         logger.info("Initializing fresh database...")
         if not initialize_database():
             raise Exception("Database initialization failed")
 
-        # Step 3: Start application
+        # Step 4: Start application with monitoring
         logger.info("Starting application...")
-        subprocess.run(["flask", "run", "--host", "0.0.0.0", "--port", "81"], check=True)
+        subprocess.run(["gunicorn", "--config", "gunicorn.conf.py", "wsgi:app"], check=True)
 
         logger.info("Deployment successful!")
         return True

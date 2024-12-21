@@ -1,18 +1,14 @@
-environment: production
-server:
-  host: '0.0.0.0'
-  port: 8080
-  workers: 4
-  threads: 2
-  timeout: 120
-  keep_alive: 5
-  forwarded_allow_ips: '*'
 
-gunicorn:
-  bind: '0.0.0.0:8080'
-  worker_class: 'gthread'
-  workers: 4
-  threads: 2
-  timeout: 120
-  max_requests: 1000
-  max_requests_jitter: 50
+environment: production
+port: 5000
+host: '0.0.0.0'
+autoscale:
+  enabled: true
+  min_instances: 1
+  max_instances: 3
+monitoring:
+  enabled: true
+  log_level: info
+health_check:
+  path: '/health'
+  interval: 30
