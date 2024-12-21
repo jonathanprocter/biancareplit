@@ -23,11 +23,18 @@
   ],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
+  "quoteProps": "as-needed",
   "overrides": [
     {
       "files": "*.{ts,tsx}",
       "options": {
         "parser": "typescript"
+      }
+    },
+    {
+      "files": "*.json",
+      "options": {
+        "parser": "json"
       }
     }
   ]

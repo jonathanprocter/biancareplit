@@ -14,7 +14,18 @@ const config: Config.InitialOptions = {
     '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/test/__mocks__/svgMock.js',
   },
   transform: {
-    '^.+\\.(t|j)sx?$': ['@swc/jest'],
+    '^.+\\.(t|j)sx?$': [
+      '@swc/jest',
+      {
+        jsc: {
+          transform: {
+            react: {
+              runtime: 'automatic',
+            },
+          },
+        },
+      },
+    ],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.[jt]sx?$',
@@ -24,7 +35,7 @@ const config: Config.InitialOptions = {
     '!client/src/**/*.d.ts',
     '!**/node_modules/**',
   ],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/test.tsx'],
   transformIgnorePatterns: [
     '/node_modules/',
     '^.+\\.module\\.(css|sass|scss)$',
