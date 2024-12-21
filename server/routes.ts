@@ -40,10 +40,7 @@ declare module 'express-session' {
   }
 }
 
-export function registerRoutes(app: Express): Server {
-  // Create HTTP server
-  const httpServer = createServer(app);
-
+export function registerRoutes(app: Express): void {
   // Register routes below
   // prefix all routes with /api
   // Session is configured in index.ts
@@ -781,5 +778,5 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  return httpServer;
+  // No return needed as we're just registering routes
 }

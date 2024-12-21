@@ -209,7 +209,8 @@ const errorHandler = (err: AppError, req: Request, res: Response, _next: NextFun
 
 // Initialize and start server with proper error handling
 async function startServer(): Promise<void> {
-  let server: Server | undefined;
+  let server: Server;
+  let wss: WebSocketServer;
   
   try {
     log('Starting server initialization...');
@@ -230,31 +231,34 @@ async function startServer(): Promise<void> {
       throw new Error('Database initialization failed');
     }
 
-    // Step 2: Configure Express middleware and routes
-    log('Step 2: Configuring express middleware and routes');
-    server = http.createServer(app); //original line
-
-    const wss = new WebSocketServer({ 
+    // Step 2: Create HTTP server and configure WebSocket
+    log('Step 2: Creating HTTP server');
+    server = http.createServer(app);
+    
+    // Initialize WebSocket server
+    wss = new WebSocketServer({ 
       server,
       path: '/ws'
     });
 
     wss.on('connection', (ws) => {
-      console.log('Client connected');
+      log('WebSocket client connected');
       ws.on('message', (message) => {
-        console.log('received: %s', message);
+        log('WebSocket message received: %s', message);
       });
       ws.on('error', (error) => {
         console.error('WebSocket error:', error);
       });
     });
 
-    server = registerRoutes(app);
+    // Step 3: Configure Express middleware and routes
+    log('Step 3: Configuring express middleware and routes');
+    registerRoutes(app);
     app.use(errorHandler);
     log('API routes and error handling configured');
 
-    // Step 3: Setup frontend serving
-    log('Step 3: Configuring frontend serving');
+    // Step 4: Setup frontend serving
+    log('Step 4: Configuring frontend serving');
     if (app.get('env') === 'development') {
       await setupVite(app, server);
       log('Vite middleware configured for development');
@@ -263,15 +267,13 @@ async function startServer(): Promise<void> {
       log('Static file serving configured for production');
     }
 
-    // Step 4: Start server
-    const PORT = process.env.PORT || 3000;
+    // Step 5: Start server
+    const PORT = 5000; // Fixed port for Replit
     await new Promise<void>((resolve, reject) => {
-      server?.listen(PORT, '0.0.0.0')
+      server.listen(PORT, '0.0.0.0')
         .once('listening', () => {
-          if (server) {
-            server.keepAliveTimeout = 65000;
-            server.headersTimeout = 66000;
-          }
+          server.keepAliveTimeout = 65000;
+          server.headersTimeout = 66000;
           log('=================================');
           log(`Server started successfully on port ${PORT}`);
           log(`Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -289,25 +291,27 @@ async function startServer(): Promise<void> {
     const cleanup = async (signal: string) => {
       log(`Received ${signal} signal, initiating cleanup...`);
       try {
+        // Close database connections first
         await closeDatabase();
         log('Database connections closed');
         
-        if (wss) {
-          await new Promise<void>((resolve) => {
-            wss.close(() => {
-              log('WebSocket server closed');
-              resolve();
-            });
+        // Close WebSocket server
+        await new Promise<void>((resolve) => {
+          wss.close(() => {
+            log('WebSocket server closed');
+            resolve();
           });
-        }
-        if (server) {
-          await new Promise<void>((resolve) => {
-            server!.close(() => {
-              log('HTTP server closed');
-              resolve();
-            });
+        });
+
+        // Finally close HTTP server
+        await new Promise<void>((resolve) => {
+          server.close(() => {
+            log('HTTP server closed');
+            resolve();
           });
-        }
+        });
+
+        log('Cleanup completed successfully');
         process.exit(0);
       } catch (error) {
         console.error('Error during cleanup:', error);
@@ -315,6 +319,7 @@ async function startServer(): Promise<void> {
       }
     };
 
+    // Register cleanup handlers
     process.on('SIGTERM', () => cleanup('SIGTERM'));
     process.on('SIGINT', () => cleanup('SIGINT'));
 
