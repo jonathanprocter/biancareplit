@@ -1,12 +1,13 @@
-"""Analytics routes for the NCLEX coaching platform."""
-
-from flask import Blueprint, request, jsonify, current_app
-from datetime import datetime, timedelta
+"""Analytics routes for the medical education platform."""
 import logging
 import time
+from datetime import datetime
 from typing import Dict, Any, Optional
+
+from flask import Blueprint, request, jsonify
+from prometheus_client import generate_latest, CollectorRegistry
 from sqlalchemy import text
-from prometheus_client import generate_latest
+
 from backend.config.secure_config import config_manager
 from backend.monitoring.metrics import (
     REGISTRY,
@@ -28,7 +29,7 @@ analytics_bp = Blueprint("analytics", __name__)
 # Define constants
 PROMETHEUS_AVAILABLE = True
 try:
-    from prometheus_client import CollectorRegistry
+    from prometheus_client import CollectorRegistry  # noqa: F811
 except ImportError:
     PROMETHEUS_AVAILABLE = False
     logger.warning("Prometheus client not available. Metrics collection disabled.")
@@ -82,9 +83,7 @@ def record_study_session():
 def get_performance_metrics():
     """Get user performance metrics."""
     try:
-        user_id = request.args.get(
-            "userId", "default_user"
-        )  # Provide default user for development
+        user_id = request.args.get("userId", "default_user")
         if not user_id:
             logger.warning("No userId provided, using default user")
         logger.info(f"Processing analytics request for user: {user_id}")
@@ -129,14 +128,12 @@ def get_performance_metrics():
 def generate_analytics_report():
     """Generate an analytics report with actual data from database."""
     try:
-        user_id = request.args.get(
-            "userId", "default_user"
-        )  # Provide default user for development
+        user_id = request.args.get("userId", "default_user")
         if not user_id:
             logger.warning("No userId provided, using default user")
         logger.info(f"Processing analytics request for user: {user_id}")
         report_type = request.args.get("type", "summary")
-        period = request.args.get("period", "30")  # Default to last 30 days
+        period = request.args.get("period", "30")
 
         try:
             period_days = int(period)
@@ -250,24 +247,16 @@ def generate_analytics_report():
 def get_analytics_dashboard():
     """Get analytics dashboard data with actual metrics."""
     try:
-        user_id = request.args.get(
-            "userId", "default_user"
-        )  # Provide default user for development
+        user_id = request.args.get("userId", "default_user")
         if not user_id:
             logger.warning("No userId provided, using default user")
         logger.info(f"Processing analytics request for user: {user_id}")
-        # Start timing the dashboard retrieval
         start_time = time.time()
 
         try:
-            # Get study sessions from the last 30 days
             thirty_days_ago = datetime.now() - timedelta(days=30)
 
             with db.session.begin():
-                # Get total study time
-                from sqlalchemy import text
-                from sqlalchemy import text
-
                 study_time_result = db.session.execute(
                     text(
                         """
@@ -280,7 +269,6 @@ def get_analytics_dashboard():
                     {"user_id": user_id, "start_date": thirty_days_ago},
                 ).first()
 
-                # Get question statistics
                 question_stats = db.session.execute(
                     text(
                         """
@@ -295,7 +283,6 @@ def get_analytics_dashboard():
                     {"user_id": user_id, "start_date": thirty_days_ago},
                 ).first()
 
-                # Get category performance
                 category_performance = db.session.execute(
                     text(
                         """
@@ -313,7 +300,6 @@ def get_analytics_dashboard():
                     {"user_id": user_id, "start_date": thirty_days_ago},
                 ).fetchall()
 
-                # Calculate daily progress for the last 7 days
                 daily_progress = db.session.execute(
                     text(
                         """
@@ -341,7 +327,6 @@ def get_analytics_dashboard():
                 ANALYTICS_ERRORS.labels(error_type="database_error").inc()
             raise
 
-        # Process the results
         total_study_time = study_time_result[0] if study_time_result else 0
         total_questions = question_stats[0] if question_stats else 0
         correct_answers = question_stats[1] if question_stats else 0
@@ -349,7 +334,6 @@ def get_analytics_dashboard():
             (correct_answers / total_questions * 100) if total_questions > 0 else 0
         )
 
-        # Organize category performance
         strengths = (
             [
                 {"category": cat, "success_rate": rate}
@@ -373,9 +357,7 @@ def get_analytics_dashboard():
                 "totalStudyTime": total_study_time,
                 "questionsAnswered": total_questions,
                 "averageScore": round(average_score, 2),
-                "mastery": round(
-                    average_score / 20, 2
-                ),  # Simplified mastery calculation
+                "mastery": round(average_score / 20, 2),
             },
             "progress": {
                 "daily": [
@@ -386,17 +368,16 @@ def get_analytics_dashboard():
                     }
                     for row in daily_progress
                 ],
-                "weekly": [],  # Implemented in separate endpoint
-                "monthly": [],  # Implemented in separate endpoint
+                "weekly": [],
+                "monthly": [],
             },
             "categories": {
                 "strengths": strengths,
                 "weaknesses": weaknesses,
-                "improvement": [],  # Calculated in separate endpoint
+                "improvement": [],
             },
         }
 
-        # Record metrics
         if PROMETHEUS_AVAILABLE:
             REQUEST_COUNT.labels(
                 method="GET", endpoint="/analytics/dashboard", status=200
@@ -428,9 +409,7 @@ def get_analytics_dashboard():
 def get_daily_summary():
     """Get daily study summary with actual metrics."""
     try:
-        user_id = request.args.get(
-            "userId", "default_user"
-        )  # Provide default user for development
+        user_id = request.args.get("userId", "default_user")
         if not user_id:
             logger.warning("No userId provided, using default user")
         logger.info(f"Processing analytics request for user: {user_id}")
@@ -454,7 +433,6 @@ def get_daily_summary():
 
         try:
             with db.session.begin():
-                # Get study time for the day
                 study_time_result = db.session.execute(
                     text(
                         """
@@ -472,7 +450,6 @@ def get_daily_summary():
                     },
                 ).first()
 
-                # Get question attempts and performance
                 question_stats = db.session.execute(
                     text(
                         """
@@ -494,7 +471,6 @@ def get_daily_summary():
                     },
                 ).fetchall()
 
-                # Get performance trends
                 performance_trend = db.session.execute(
                     text(
                         """
@@ -524,7 +500,6 @@ def get_daily_summary():
                 ANALYTICS_ERRORS.labels(error_type="database_error").inc()
             raise
 
-        # Process results
         total_study_time = study_time_result[0] if study_time_result else 0
 
         categories = {}
@@ -540,15 +515,14 @@ def get_daily_summary():
             total_attempts += attempts
             total_correct += correct
 
-        # Generate recommendations based on performance
         recommendations = []
         if performance_trend:
             weak_categories = sorted(
-                performance_trend, key=lambda x: x[1]  # Sort by avg_score
+                performance_trend, key=lambda x: x[1]
             )[:2]
 
             for category, avg_score, attempts in weak_categories:
-                if avg_score < 0.7:  # Less than 70% accuracy
+                if avg_score < 0.7:
                     recommendations.append(
                         {
                             "category": category,
@@ -569,7 +543,6 @@ def get_daily_summary():
             "recommendations": recommendations,
         }
 
-        # Record metrics
         if PROMETHEUS_AVAILABLE:
             REQUEST_COUNT.labels(
                 method="GET", endpoint="/analytics/daily-summary", status=200
@@ -634,20 +607,3 @@ def metrics():
             ),
             500,
         )
-
-
-from flask import Blueprint, jsonify, request
-from datetime import datetime
-
-analytics_bp = Blueprint("analytics", __name__)
-
-
-@analytics_bp.route("/metrics", methods=["GET"])
-def get_metrics():
-    return jsonify(
-        {
-            "status": "success",
-            "timestamp": datetime.utcnow().isoformat(),
-            "metrics": {"active_users": 0, "total_questions": 0, "success_rate": 0},
-        }
-    )

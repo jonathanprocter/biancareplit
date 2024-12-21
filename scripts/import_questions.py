@@ -154,8 +154,7 @@ def import_questions():
 
                         if (
                             not question_data["question"]
-                            or not question_data["options"]
-                        ):
+                            or not question_data["options"]):
                             logger.warning(
                                 "Skipping question with missing required fields"
                             )

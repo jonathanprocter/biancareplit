@@ -30,3 +30,4 @@ requests
 flake8
 black
 flake8
+black

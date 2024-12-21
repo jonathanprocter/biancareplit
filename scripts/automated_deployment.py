@@ -1,4 +1,3 @@
-import os
 import logging
 from backend.monitoring.deployment_monitor import DeploymentMonitor
 from backend.config.system_verifier import SystemVerification
