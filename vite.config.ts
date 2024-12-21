@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -13,13 +12,18 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://0.0.0.0:3000',
+        changeOrigin: true,
+        secure: false
+      }
+    },
     hmr: {
-      protocol: 'wss',
+      protocol: 'ws',
       host: '0.0.0.0',
-      port: 443,
-      path: '/hmr/',
-      clientPort: 443,
-      timeout: 30000
+      port: 5173,
+      clientPort: 5173
     },
     watch: {
       usePolling: true
