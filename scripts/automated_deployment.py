@@ -1,7 +1,6 @@
 
 import os
 import logging
-import asyncio
 from backend.monitoring.deployment_monitor import DeploymentMonitor
 from backend.config.system_verifier import SystemVerification
 from backend.core.context import context_manager
@@ -9,13 +8,13 @@ from backend.core.context import context_manager
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def run_deployment():
+def run_deployment():
     try:
         logger.info("Starting automated deployment process...")
         
         # Initialize monitoring
         monitor = DeploymentMonitor()
-        await monitor.start()
+        monitor.start()
         
         # Verify system
         verifier = SystemVerification(context_manager)
@@ -26,7 +25,7 @@ async def run_deployment():
         
         # Initialize application
         from backend.deployment_manager import deploy_application
-        await deploy_application()
+        deploy_application()
         
         logger.info("Deployment completed successfully!")
         return True
@@ -36,4 +35,5 @@ async def run_deployment():
         return False
 
 if __name__ == "__main__":
-    asyncio.run(run_deployment())
+    success = run_deployment()
+    exit(0 if success else 1)
