@@ -43,7 +43,6 @@ const initializeOpenAI = async (retries = 3): Promise<OpenAI> => {
           model: "gpt-4",
           messages: [{ role: "system", content: "API key verification test" }],
           max_tokens: 5,
-          response_format: { type: "json_object" }
         });
 
         if (!response?.choices?.[0]?.message?.content) {
@@ -137,7 +136,7 @@ export async function getMentorResponse(
         context?.learningStyle
           ? `They prefer ${context?.learningStyle} learning style.`
           : ''
-      } Provide clear, concise guidance and explanations.`
+      } Provide clear, concise guidance and explanations. Format your response as JSON with a 'content' field.`
     };
 
     const response = await openai.chat.completions.create({
@@ -147,8 +146,7 @@ export async function getMentorResponse(
         ...messages
       ],
       temperature: 0.7,
-      max_tokens: 500,
-      response_format: { type: "json_object" }
+      max_tokens: 500
     });
 
     const content = response.choices[0].message.content;
@@ -201,12 +199,14 @@ export async function generateLearningPath(
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        systemMessage,
+        {
+          ...systemMessage,
+          content: `${systemMessage.content} Format your response as a valid JSON object with 'milestones' and 'categoryProgress' arrays.`
+        },
         userMessage
       ],
       temperature: 0.7,
-      max_tokens: 1000,
-      response_format: { type: "json_object" }
+      max_tokens: 1000
     });
 
     console.log('Received response from OpenAI');
