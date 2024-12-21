@@ -65,7 +65,9 @@ export const useLogin = () => {
       });
 
       if (!res.ok) {
-        throw new Error(await res.text());
+        const errorText = await res.text();
+        console.error(`API Error (${res.status}):`, errorText);
+        throw new Error(`Request failed: ${errorText}`);
       }
 
       const userData = await res.json();
@@ -87,7 +89,9 @@ export const useRegister = () => {
       });
 
       if (!res.ok) {
-        throw new Error(await res.text());
+        const errorText = await res.text();
+        console.error(`API Error (${res.status}):`, errorText);
+        throw new Error(`Request failed: ${errorText}`);
       }
 
       return res.json();
@@ -119,7 +123,9 @@ export const useEnroll = () => {
       });
 
       if (!res.ok) {
-        throw new Error(await res.text());
+        const errorText = await res.text();
+        console.error(`API Error (${res.status}):`, errorText);
+        throw new Error(`Request failed: ${errorText}`);
       }
 
       return res.json();
@@ -157,7 +163,9 @@ export const useUpdateProgress = () => {
       });
 
       if (!res.ok) {
-        throw new Error(await res.text());
+        const errorText = await res.text();
+        console.error(`API Error (${res.status}):`, errorText);
+        throw new Error(`Request failed: ${errorText}`);
       }
 
       return res.json();
@@ -203,7 +211,9 @@ export const useGenerateLearningPath = () => {
       });
 
       if (!res.ok) {
-        throw new Error(await res.text());
+        const errorText = await res.text();
+        console.error(`API Error (${res.status}):`, errorText);
+        throw new Error(`Request failed: ${errorText}`);
       }
 
       return res.json();
@@ -234,7 +244,9 @@ export const useUpdatePreferences = () => {
       });
 
       if (!res.ok) {
-        throw new Error(await res.text());
+        const errorText = await res.text();
+        console.error(`API Error (${res.status}):`, errorText);
+        throw new Error(`Request failed: ${errorText}`);
       }
 
       return res.json();

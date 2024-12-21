@@ -71,7 +71,18 @@ class WebSocketManager:
             logger.info(f"WebSocket connection closed: {client_id}")
             self._broadcast_status()
             
-    def _handle_message(self, client_id: str, message: str) -> None:
+    def _handle_connection_error(self, client_id: str, error: Exception) -> None:
+    """Handle connection errors with retry logic."""
+    logger.error(f"WebSocket error for client {client_id}: {str(error)}")
+    if client_id in self._connections:
+        self._connections[client_id].reconnect_attempts += 1
+        if self._connections[client_id].reconnect_attempts < 3:
+            self._connections[client_id].ws.send(json.dumps({
+                'type': 'reconnecting',
+                'attempt': self._connections[client_id].reconnect_attempts
+            }))
+
+def _handle_message(self, client_id: str, message: str) -> None:
         """Handle incoming WebSocket message."""
         try:
             data = json.loads(message)
