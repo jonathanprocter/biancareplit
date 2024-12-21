@@ -176,7 +176,7 @@ def generate_analytics_report():
                         WITH weekly_stats AS (
                             SELECT
                                 date_trunc('week', created_at) as week,
-                                AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100 
+                                AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100
                                 as weekly_accuracy
                             FROM question_attempts
                             WHERE user_id = :user_id
@@ -268,8 +268,8 @@ def get_daily_summary():
                     text(
                         """
                         SELECT COALESCE(SUM(duration), 0) as total_time
-                        FROM study_sessions 
-                        WHERE user_id = :user_id 
+                        FROM study_sessions
+                        WHERE user_id = :user_id
                         AND created_at >= :start_date
                         AND created_at < :end_date
                         """
@@ -284,12 +284,15 @@ def get_daily_summary():
                 question_stats = db.session.execute(
                     text(
                         """
-                        SELECT 
+                        SELECT
                             category,
                             COUNT(*) as attempts,
-                            SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
+                            SUM(CASE
+                                WHEN is_correct THEN 1
+                                ELSE 0
+                            END) as correct_answers
                         FROM question_attempts
-                        WHERE user_id = :user_id 
+                        WHERE user_id = :user_id
                         AND created_at >= :start_date
                         AND created_at < :end_date
                         GROUP BY category
@@ -305,12 +308,15 @@ def get_daily_summary():
                 performance_trend = db.session.execute(
                     text(
                         """
-                        SELECT 
+                        SELECT
                             category,
-                            AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) as avg_score,
+                            AVG(CASE
+                                WHEN is_correct THEN 1
+                                ELSE 0
+                            END) as avg_score,
                             COUNT(*) as total_attempts
                         FROM question_attempts
-                        WHERE user_id = :user_id 
+                        WHERE user_id = :user_id
                         AND created_at >= :start_date - INTERVAL '7 days'
                         AND created_at < :end_date
                         GROUP BY category
@@ -471,7 +477,10 @@ def get_analytics_dashboard():
                         """
                         SELECT
                             COUNT(*) as total_questions,
-                            SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
+                            SUM(CASE
+                                WHEN is_correct THEN 1
+                                ELSE 0
+                            END) as correct_answers
                         FROM question_attempts
                         WHERE user_id = :user_id
                         AND created_at >= :start_date
