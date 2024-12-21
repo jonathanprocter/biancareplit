@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import type { CorsOptions } from 'cors'; // Added cors package import
 import http from 'http'; // Added http import
-import WebSocket from 'ws'; // Added ws import
+import { WebSocketServer } from 'ws'; // Added ws import with correct named import
 
 // Import types
 import type { Server } from 'http';
@@ -234,10 +234,9 @@ async function startServer(): Promise<void> {
     log('Step 2: Configuring express middleware and routes');
     server = http.createServer(app); //original line
 
-    const wss = new WebSocket.Server({ 
+    const wss = new WebSocketServer({ 
       server,
-      port: 8082,
-      host: '0.0.0.0'
+      path: '/ws'
     });
 
     wss.on('connection', (ws) => {
@@ -269,8 +268,10 @@ async function startServer(): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       server?.listen(PORT, '0.0.0.0')
         .once('listening', () => {
-          server?.keepAliveTimeout = 65000;
-          server?.headersTimeout = 66000;
+          if (server) {
+            server.keepAliveTimeout = 65000;
+            server.headersTimeout = 66000;
+          }
           log('=================================');
           log(`Server started successfully on port ${PORT}`);
           log(`Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -291,6 +292,14 @@ async function startServer(): Promise<void> {
         await closeDatabase();
         log('Database connections closed');
         
+        if (wss) {
+          await new Promise<void>((resolve) => {
+            wss.close(() => {
+              log('WebSocket server closed');
+              resolve();
+            });
+          });
+        }
         if (server) {
           await new Promise<void>((resolve) => {
             server!.close(() => {
@@ -298,10 +307,6 @@ async function startServer(): Promise<void> {
               resolve();
             });
           });
-        }
-        if (wss) {
-          wss.close();
-          log('WebSocket server closed')
         }
         process.exit(0);
       } catch (error) {
