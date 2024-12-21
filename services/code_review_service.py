@@ -1,9 +1,10 @@
 import os
 import logging
 import json
+import sys
 from typing import Dict, Optional, List
 from pathlib import Path
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, OpenAI
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +20,7 @@ class CodeReviewService:
         try:
             # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
             # do not change this unless explicitly requested by the user
-            self.client = AsyncOpenAI(api_key=self.api_key)
+            self.client = OpenAI(api_key=self.api_key)
             logger.info("OpenAI client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
@@ -36,7 +37,7 @@ class CodeReviewService:
             ".html": "HTML"
         }
 
-    async def review_file(self, file_path: Path) -> Dict:
+    def review_file(self, file_path: Path) -> Dict:
         """Review a single file and return suggestions"""
         try:
             if not file_path.exists():
@@ -71,7 +72,7 @@ class CodeReviewService:
             {code}
             """
 
-            response = await self.client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{
                     "role": "system",
@@ -91,7 +92,7 @@ class CodeReviewService:
             logger.error(f"Error reviewing file {file_path}: {str(e)}")
             return {"error": str(e)}
 
-    async def apply_fixes(self, file_path: Path, improved_code: str) -> bool:
+    def apply_fixes(self, file_path: Path, improved_code: str) -> bool:
         """Apply the suggested fixes to the file"""
         try:
             with open(file_path, 'w', encoding='utf-8') as file:
@@ -102,7 +103,7 @@ class CodeReviewService:
             logger.error(f"Error applying fixes to {file_path}: {str(e)}")
             return False
 
-    async def review_directory(self, directory: str) -> Dict[str, Dict]:
+    def review_directory(self, directory: str) -> Dict[str, Dict]:
         """Review all supported files in a directory recursively"""
         results = {}
         try:
@@ -114,9 +115,9 @@ class CodeReviewService:
                 if file_path.is_file() and file_path.suffix in self.supported_languages:
                     if not any(exclude in str(file_path) for exclude in ['node_modules', '__pycache__', 'venv', '.git']):
                         logger.info(f"Reviewing {file_path}")
-                        result = await self.review_file(file_path)
+                        result = self.review_file(file_path)
                         if result and 'improved_code' in result:
-                            await self.apply_fixes(file_path, result['improved_code'])
+                            self.apply_fixes(file_path, result['improved_code'])
                         results[str(file_path)] = result
             
             logger.info(f"Completed review of directory: {directory}")
@@ -126,5 +127,20 @@ class CodeReviewService:
             logger.error(error_msg)
             return {"error": error_msg}
 
-# Create singleton instance
-code_review_service = CodeReviewService()
+def main():
+    """Main function to handle command line execution"""
+    try:
+        if len(sys.argv) < 2:
+            print(json.dumps({"error": "Please provide a directory path"}))
+            sys.exit(1)
+
+        directory = sys.argv[1]
+        service = CodeReviewService()
+        results = service.review_directory(directory)
+        print(json.dumps(results))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
