@@ -4,9 +4,14 @@ import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
 
-import { ROUTES } from './constants/routes';
+import { TestPrettier } from '@/components/TestPrettier';
 
 function App() {
+  const testItems = [
+    { id: 1, name: 'Item 1' },
+    { id: 2, name: 'Item 2' },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
@@ -19,7 +24,9 @@ function App() {
       </Helmet>
       <main className="container mx-auto px-4 py-8">
         <Switch>
-          {/* Add your routes here once components are ready */}
+          <Route path="/">
+            <TestPrettier title="Test Component" items={testItems} />
+          </Route>
           <Route component={NotFound} />
         </Switch>
       </main>
