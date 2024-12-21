@@ -10,28 +10,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def deploy():
-    """Deploy the application"""
     try:
+        logger.info("Starting deployment process...")
+        
         # Initialize monitoring
         monitor = DeploymentMonitor()
         monitor.start()
-        
-        logger.info("Starting deployment process...")
         
         # Verify system configuration
         verifier = SystemVerification(context_manager)
         if not verifier.verify_system():
             raise Exception("System verification failed")
-
-        # Initialize application
+            
+        # Deploy application
         deploy_application()
         
         logger.info("Deployment successful!")
         return True
-
+        
     except Exception as e:
         logger.error(f"Deployment failed: {str(e)}")
         return False
 
 if __name__ == "__main__":
-    deploy()
+    success = deploy()
+    exit(0 if success else 1)

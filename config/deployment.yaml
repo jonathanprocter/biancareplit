@@ -14,3 +14,4 @@ health_check:
   path: '/health'
   interval: 30
   timeout: 5
+  retries: 3
