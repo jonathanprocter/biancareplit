@@ -1,8 +1,7 @@
 import OpenAI from 'openai';
 
-// Singleton instance and initialization state
-let openaiInstance: OpenAI | null = null;
-let initializationPromise: Promise<OpenAI> | null = null;
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+// do not change this unless explicitly requested by the user
 
 class OpenAIServiceError extends Error {
   constructor(message: string) {
@@ -10,6 +9,10 @@ class OpenAIServiceError extends Error {
     this.name = 'OpenAIServiceError';
   }
 }
+
+// Singleton instance and initialization state
+let openaiInstance: OpenAI | null = null;
+let initializationPromise: Promise<OpenAI> | null = null;
 
 // Initialize OpenAI client with error handling and retry logic
 const initializeOpenAI = async (retries = 3): Promise<OpenAI> => {
@@ -40,9 +43,10 @@ const initializeOpenAI = async (retries = 3): Promise<OpenAI> => {
 
         // Verify the API key works with a minimal request
         const response = await instance.chat.completions.create({
-          model: "gpt-4",
+          model: "gpt-4o",
           messages: [{ role: "system", content: "API key verification test" }],
           max_tokens: 5,
+          response_format: { type: "json_object" }
         });
 
         if (!response?.choices?.[0]?.message?.content) {
@@ -91,23 +95,6 @@ interface AIResponse {
   error?: string;
 }
 
-interface LearningPathResponse {
-  milestones: Array<{
-    title: string;
-    description: string;
-    category: string;
-    difficulty: 'beginner' | 'intermediate' | 'advanced';
-    xpPoints: number;
-    aiRecommended: boolean;
-  }>;
-  categoryProgress: Array<{
-    category: string;
-    progress: number;
-    totalQuestions: number;
-    correctAnswers: number;
-  }>;
-}
-
 export async function getMentorResponse(
   messages: { role: 'user' | 'assistant' | 'system'; content: string }[],
   context?: {
@@ -136,17 +123,18 @@ export async function getMentorResponse(
         context?.learningStyle
           ? `They prefer ${context?.learningStyle} learning style.`
           : ''
-      } Provide clear, concise guidance and explanations. Format your response as JSON with a 'content' field.`
+      } Provide clear, concise guidance and explanations.`
     };
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o",
       messages: [
         systemMessage,
         ...messages
       ],
       temperature: 0.7,
-      max_tokens: 500
+      max_tokens: 500,
+      response_format: { type: "json_object" }
     });
 
     const content = response.choices[0].message.content;
@@ -167,6 +155,23 @@ export async function getMentorResponse(
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
+}
+
+interface LearningPathResponse {
+  milestones: Array<{
+    title: string;
+    description: string;
+    category: string;
+    difficulty: 'beginner' | 'intermediate' | 'advanced';
+    xpPoints: number;
+    aiRecommended: boolean;
+  }>;
+  categoryProgress: Array<{
+    category: string;
+    progress: number;
+    totalQuestions: number;
+    correctAnswers: number;
+  }>;
 }
 
 export async function generateLearningPath(
@@ -197,19 +202,15 @@ export async function generateLearningPath(
     console.log('Generating learning path with context:', context);
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o",
       messages: [
-        {
-          ...systemMessage,
-          content: `${systemMessage.content} Format your response as a valid JSON object with 'milestones' and 'categoryProgress' arrays.`
-        },
+        systemMessage,
         userMessage
       ],
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 1000,
+      response_format: { type: "json_object" }
     });
-
-    console.log('Received response from OpenAI');
 
     const content = response.choices?.[0]?.message?.content;
     if (!content) {
@@ -221,7 +222,7 @@ export async function generateLearningPath(
       if (!result.milestones || !result.categoryProgress) {
         throw new OpenAIServiceError('Invalid response format: missing required fields');
       }
-      console.log('Parsed learning path:', result);
+      console.log('Successfully generated learning path');
       return result as LearningPathResponse;
     } catch (parseError) {
       console.error('Failed to parse OpenAI response:', parseError);

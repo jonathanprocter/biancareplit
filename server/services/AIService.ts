@@ -1,11 +1,16 @@
 import { OpenAI } from 'openai';
 import { config } from '../config';
 
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+// do not change this unless explicitly requested by the user
+
 interface Question {
   question: string;
   options: string[];
   correct_answer: number;
   explanation: string;
+  topic: string;
+  difficulty: string;
 }
 
 interface Flashcard {
@@ -48,14 +53,6 @@ export class AIService {
     }
   }
 
-  private async ensureInitialized() {
-    if (!this.initialized) {
-      console.warn('AIService: Not initialized. Some features requiring AI capabilities may be limited.');
-      return false;
-    }
-    return true;
-  }
-
   static getInstance(): AIService {
     if (!AIService.instance) {
       AIService.instance = new AIService();
@@ -63,15 +60,16 @@ export class AIService {
     return AIService.instance;
   }
 
-  private async validateConnection() {
+  private async validateConnection(): Promise<void> {
     if (this.initialized) return;
 
     try {
       console.log('AIService: Validating OpenAI connection...');
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [{ role: "system", content: "Connection test" }],
-        max_tokens: 5
+        max_tokens: 5,
+        response_format: { type: "json_object" }
       });
 
       if (response.choices && response.choices.length > 0) {
@@ -85,18 +83,17 @@ export class AIService {
   }
 
   async generate_questions(topic: string, difficulty: string = 'intermediate', count: number = 5): Promise<Question[]> {
-    if (!await this.ensureInitialized()) {
-      console.warn('AIService: Cannot generate questions - service not initialized');
-      return [];
+    if (!this.initialized) {
+      await this.validateConnection();
     }
 
     try {
       console.log(`Generating ${count} questions about ${topic} at ${difficulty} difficulty`);
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [{
           role: "system",
-          content: `Generate ${count} ${difficulty}-level NCLEX-style questions about ${topic}. Format as JSON array with objects containing: question, options (array of 4 strings), correct_answer (0-3 index), explanation.`
+          content: `Generate ${count} ${difficulty}-level NCLEX-style questions about ${topic}. Format as JSON array with objects containing: question, options (array of 4 strings), correct_answer (0-3 index), explanation, topic, difficulty.`
         }],
         response_format: { type: "json_object" }
       });
@@ -105,21 +102,20 @@ export class AIService {
       console.log(`Successfully generated ${result.questions?.length || 0} questions`);
       return result.questions || [];
     } catch (error) {
-      console.warn('Error generating questions:', error);
+      console.error('Error generating questions:', error);
       return [];
     }
   }
 
   async generate_flashcards(topic: string, count: number = 5): Promise<Flashcard[]> {
-    if (!await this.ensureInitialized()) {
-      console.warn('AIService: Cannot generate flashcards - service not initialized');
-      return [];
+    if (!this.initialized) {
+      await this.validateConnection();
     }
 
     try {
       console.log(`Generating ${count} flashcards about ${topic}`);
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [{
           role: "system",
           content: `Create ${count} flashcards for studying ${topic}. Format as JSON array with objects containing: front (question/term), back (answer/definition), topic, category.`
@@ -131,26 +127,20 @@ export class AIService {
       console.log(`Successfully generated ${result.flashcards?.length || 0} flashcards`);
       return result.flashcards || [];
     } catch (error) {
-      console.warn('Error generating flashcards:', error);
+      console.error('Error generating flashcards:', error);
       return [];
     }
   }
 
   async analyze_study_progress(userData: any): Promise<StudyProgress> {
-    if (!await this.ensureInitialized()) {
-      console.warn('AIService: Cannot analyze study progress - service not initialized');
-      return {
-        strengths: [],
-        weaknesses: [],
-        recommendations: ['AI service not available. Please try again later.'],
-        estimated_proficiency: 0
-      };
+    if (!this.initialized) {
+      await this.validateConnection();
     }
 
     try {
       console.log('Analyzing study progress data');
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [{
           role: "system",
           content: `Analyze this study progress data and provide insights. Format response as JSON with: strengths (array), weaknesses (array), recommendations (array), estimated_proficiency (0-100).
@@ -164,7 +154,7 @@ export class AIService {
       console.log('Successfully analyzed study progress');
       return result;
     } catch (error) {
-      console.warn('Error analyzing study progress:', error);
+      console.error('Error analyzing study progress:', error);
       return {
         strengths: [],
         weaknesses: [],

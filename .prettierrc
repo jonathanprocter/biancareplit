@@ -11,5 +11,8 @@
   "jsxSingleQuote": false,
   "useTabs": false,
   "plugins": ["prettier-plugin-tailwindcss"],
-  "tailwindConfig": "./tailwind.config.ts"
+  "tailwindConfig": "./tailwind.config.ts",
+  "importOrder": ["^@/(.*)$", "^[./]"],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
 }
