@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Initialize database and migrations."""
-import os
 import sys
 from pathlib import Path
 import logging
@@ -27,13 +26,13 @@ def create_app():
     db_config = DatabaseConfig()
     db_config.init_app(app)
 
-    return app
+    return app, db
 
 
 def initialize_database():
     """Initialize fresh database and migrations"""
     try:
-        app = create_app()
+        app, db = create_app()
 
         with app.app_context():
             # Initialize migrations directory if it doesn't exist
@@ -47,7 +46,7 @@ def initialize_database():
             logger.info("Created initial migration")
 
             # Apply migration
-            upgrade()
+            apply_migration()
             logger.info("Applied initial migration")
 
             # Create all tables

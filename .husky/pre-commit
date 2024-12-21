@@ -14,6 +14,19 @@ step_status() {
   fi
 }
 
+# Run Python code formatting checks
+echo "🐍 Checking Python files..."
+git diff --cached --name-only | grep -E '\.py$' | while read file; do
+  if [ -f "$file" ]; then
+    echo "Checking $file"
+    black --check "$file"
+    step_status "Black formatting" "Run 'black $file' to fix formatting issues"
+    
+    flake8 "$file"
+    step_status "Flake8 linting" "Fix the style issues reported by flake8"
+  fi
+done
+
 # Run prettier, eslint, and tests through lint-staged
 echo "🎨 Running code quality checks..."
 npx lint-staged

@@ -6,9 +6,24 @@ import time
 from typing import Dict, Optional
 
 # Supported file extensions and their corresponding formatters
-# For now, focus only on Python files to avoid timeout issues
 SUPPORTED_LANGUAGES = {
-    ".py": {"name": "Python", "formatters": ["black", "flake8"], "priority": 1}
+    ".py": {
+        "name": "Python",
+        "formatters": [
+            {
+                "name": "black",
+                "args": ["-q"],
+                "fix_args": ["--fast"],
+                "error_pattern": r"error:|failed",
+            },
+            {
+                "name": "flake8",
+                "args": ["--ignore=E402"],
+                "error_pattern": r"[A-Z]\d{3}",
+            }
+        ],
+        "priority": 1,
+    }
 }
 
 
@@ -29,30 +44,50 @@ def apply_formatters(file_path: str, language_config: Dict) -> None:
 
     for formatter in language_config["formatters"]:
         try:
-            if formatter == "black":
-                subprocess.run(["black", "-q", file_path], check=True)
-            elif formatter == "flake8":
-                result = subprocess.run(
-                    ["flake8", file_path], capture_output=True, text=True
-                )
-                if result.returncode != 0:
-                    print(f"\n⚠ Flake8 issues in {file_name}:")
-                    print(result.stdout.strip())
-            elif formatter == "prettier":
-                subprocess.run(
-                    ["npx", "prettier", "--loglevel=error", "--write", file_path],
-                    check=True,
-                )
-            elif formatter == "eslint":
-                subprocess.run(
-                    ["npx", "eslint", "--quiet", "--fix", file_path], check=True
-                )
-        except subprocess.CalledProcessError as e:
-            print(f"\n⚠ {formatter} failed on {file_name}")
-            if e.stderr:
-                print(e.stderr.decode().strip())
+            formatter_name = formatter["name"]
+            cmd = [formatter_name] + formatter["args"] + [file_path]
+            
+            # Run the formatter
+            result = subprocess.run(
+                cmd, 
+                capture_output=True, 
+                text=True,
+                check=False
+            )
 
-    print("✓")
+            # Handle formatter output
+            if result.returncode != 0:
+                # Try to fix if supported
+                if "fix_args" in formatter and formatter_name == "black":
+                    fix_cmd = [formatter_name] + formatter["fix_args"] + [file_path]
+                    fix_result = subprocess.run(
+                        fix_cmd,
+                        capture_output=True,
+                        text=True,
+                        check=False
+                    )
+                    if fix_result.returncode == 0:
+                        print(f"✓ (auto-fixed {formatter_name})")
+                        continue
+
+                # Show detailed error information
+                print(f"\n⚠ {formatter_name} issues in {file_name}:")
+                if result.stdout:
+                    print(result.stdout.strip())
+                if result.stderr:
+                    print(result.stderr.strip())
+                continue
+
+            print(f"✓ ({formatter_name})", end=" ", flush=True)
+
+        except subprocess.CalledProcessError as e:
+            print(f"\n⚠ {formatter['name']} failed on {file_name}")
+            if e.stderr:
+                print(e.stderr.strip())
+        except Exception as e:
+            print(f"\n⚠ Unexpected error with {formatter['name']}: {str(e)}")
+
+    print()
 
 
 def should_process_file(file_path: str) -> bool:

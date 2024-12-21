@@ -1,22 +1,9 @@
+"""Import questions from text files."""
 import logging
 import os
 import re
 import sys
 from pathlib import Path
-
-# Configure project root path
-project_root = Path(__file__).resolve().parent.parent
-sys.path.append(str(project_root))
-
-# Application imports
-from app import create_app
-from models import (
-    Content,
-    ContentType,
-    DifficultyLevel,
-    SubjectCategory,
-    db,
-)
 
 # Configure logging
 logging.basicConfig(
@@ -24,6 +11,20 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+# Configure project root path
+project_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(project_root))
+
+# Application imports
+from app import create_app  # noqa: E402
+from models import (  # noqa: E402
+    Content,
+    ContentType,
+    DifficultyLevel,
+    SubjectCategory,
+    db,
+)
 
 
 def clean_text(text):

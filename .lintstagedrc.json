@@ -5,6 +5,10 @@
     "jest --bail --findRelatedTests --passWithNoTests --verbose",
     "tsc --noEmit --pretty"
   ],
+  "*.py": [
+    "black",
+    "flake8"
+  ],
   "*.{css,scss}": ["prettier --write", "stylelint --fix"],
   "*.{json,md,yml,yaml,html}": ["prettier --write"],
   "*.test.{ts,tsx}": [

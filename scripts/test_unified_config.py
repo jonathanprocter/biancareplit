@@ -9,8 +9,7 @@ from backend.middleware.validation import MiddlewareValidator
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -24,11 +23,7 @@ class SystemTester:
         self.validator = MiddlewareValidator()
 
     def _request_with_retry(
-        self,
-        method: str,
-        endpoint: str,
-        retries: int = 3,
-        **kwargs
+        self, method: str, endpoint: str, retries: int = 3, **kwargs
     ) -> requests.Response:
         """Make HTTP request with retries."""
         last_error = None
@@ -36,21 +31,17 @@ class SystemTester:
         for attempt in range(retries):
             try:
                 response = requests.request(
-                    method,
-                    f"{self.base_url}{endpoint}",
-                    **kwargs
+                    method, f"{self.base_url}{endpoint}", **kwargs
                 )
                 response.raise_for_status()
                 return response
             except requests.RequestException as e:
                 last_error = e
                 self.logger.warning(
-                    "Request attempt %d failed: %s",
-                    attempt + 1,
-                    str(e)
+                    "Request attempt %d failed: %s", attempt + 1, str(e)
                 )
                 if attempt < retries - 1:
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                    time.sleep(2**attempt)  # Exponential backoff
                 continue
 
         if last_error:
@@ -61,9 +52,7 @@ class SystemTester:
         try:
             # Test CORS configuration
             response = self._request_with_retry(
-                "OPTIONS",
-                "/api/test",
-                headers={"Origin": "http://localhost:3000"}
+                "OPTIONS", "/api/test", headers={"Origin": "http://localhost:3000"}
             )
 
             # Verify CORS headers
@@ -71,7 +60,7 @@ class SystemTester:
             required_headers = [
                 "Access-Control-Allow-Origin",
                 "Access-Control-Allow-Methods",
-                "Access-Control-Allow-Headers"
+                "Access-Control-Allow-Headers",
             ]
 
             for header in required_headers:
@@ -83,16 +72,13 @@ class SystemTester:
             security_headers = [
                 "X-Content-Type-Options",
                 "X-Frame-Options",
-                "X-XSS-Protection"
+                "X-XSS-Protection",
             ]
 
             response = self._request_with_retry("GET", "/")
             for header in security_headers:
                 if header not in response.headers:
-                    self.logger.error(
-                        "Missing security header: %s",
-                        header
-                    )
+                    self.logger.error("Missing security header: %s", header)
                     return False
 
             return True
@@ -117,13 +103,10 @@ class SystemTester:
             required_metrics = [
                 "http_requests_total",
                 "http_request_duration_seconds",
-                "http_request_size_bytes"
+                "http_request_size_bytes",
             ]
 
-            metrics_present = all(
-                metric in metrics_data
-                for metric in required_metrics
-            )
+            metrics_present = all(metric in metrics_data for metric in required_metrics)
 
             if not metrics_present:
                 self.logger.error("Missing required metrics")
@@ -140,10 +123,7 @@ class SystemTester:
         try:
             # Test endpoints that should be cached
             cache_test_results = []
-            test_endpoints = [
-                "/api/cached-data",
-                "/api/static-content"
-            ]
+            test_endpoints = ["/api/cached-data", "/api/static-content"]
 
             for endpoint in test_endpoints:
                 # First request
@@ -162,10 +142,7 @@ class SystemTester:
                     )
 
             cache_working = all(cache_test_results)
-            self.logger.info(
-                "Cache middleware tests passed: %s",
-                cache_working
-            )
+            self.logger.info("Cache middleware tests passed: %s", cache_working)
 
             return cache_working
         except Exception as e:
@@ -176,16 +153,9 @@ class SystemTester:
         """Test system health endpoint."""
         try:
             # Test both GET and POST methods
-            get_response = self._request_with_retry(
-                "GET",
-                "/health"
-            )
+            get_response = self._request_with_retry("GET", "/health")
             post_data = {"test": "data"}
-            post_response = self._request_with_retry(
-                "POST",
-                "/health",
-                json=post_data
-            )
+            post_response = self._request_with_retry("POST", "/health", json=post_data)
 
             for response in [get_response, post_response]:
                 data = response.json()
@@ -199,26 +169,19 @@ class SystemTester:
                     "method",
                 ]
                 missing_fields = [
-                    field for field in required_fields
-                    if field not in data
+                    field for field in required_fields if field not in data
                 ]
                 if missing_fields:
                     self.logger.error(
-                        "Missing required fields in response: %s",
-                        missing_fields
+                        "Missing required fields in response: %s", missing_fields
                     )
                     return False
 
                 # Verify method-specific fields
                 if data["method"] == "POST" and "request_data" not in data:
-                    self.logger.error(
-                        "POST response missing request_data field"
-                    )
+                    self.logger.error("POST response missing request_data field")
                     return False
-                elif (
-                    data["method"] == "POST"
-                    and data["request_data"] != post_data
-                ):
+                elif data["method"] == "POST" and data["request_data"] != post_data:
                     self.logger.error("POST request data mismatch")
                     return False
 
@@ -239,11 +202,7 @@ class SystemTester:
 
         self.logger.info("\nTest Results:")
         for component, status in test_results.items():
-            self.logger.info(
-                "%s: %s",
-                component,
-                "✓" if status else "✗"
-            )
+            self.logger.info("%s: %s", component, "✓" if status else "✗")
 
         return all(test_results.values())
 
@@ -270,7 +229,7 @@ def main():
             "security": tester.test_security_middleware(),
             "metrics": tester.test_metrics_middleware(),
             "cache": tester.test_cache_middleware(),
-            "health": tester.test_health_endpoint()
+            "health": tester.test_health_endpoint(),
         }
         for component, status in test_results.items():
             status_symbol = "✓" if status else "✗"
