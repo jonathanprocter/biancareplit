@@ -2,9 +2,10 @@
 
 import logging
 import time
-from functools import wraps
-from flask import g, request, current_app
 from datetime import datetime
+from functools import wraps
+
+from flask import current_app, g, request
 
 logger = logging.getLogger(__name__)
 

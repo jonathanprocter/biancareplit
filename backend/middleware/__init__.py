@@ -1,6 +1,7 @@
 """Middleware initialization module."""
 
 import logging
+from typing import Optional
 from flask import Flask
 from .error_middleware import ErrorMiddleware
 from .metrics_middleware import MetricsMiddleware
