@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run formatting and linting checks
-npm run format
-npm run lint
+# Run lint-staged
+npx lint-staged

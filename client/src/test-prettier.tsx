@@ -38,7 +38,7 @@ export const TestComponent: FC<TestProps> = ({ title, items }) => {
     <div className="container mx-auto p-4">
       <h1 className="mb-4 text-2xl font-bold">{title}</h1>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {items.map(item => (
+        {items.map((item) => (
           <button
             key={item.id}
             className="rounded border p-4 transition-shadow hover:shadow-lg"
