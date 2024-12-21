@@ -40,7 +40,7 @@ declare module 'express-session' {
   }
 }
 
-export function registerRoutes(app: Express): void {
+export function registerRoutes(app: Express): Server {
   // Register routes below
   // prefix all routes with /api
   // Session is configured in index.ts
@@ -344,7 +344,7 @@ export function registerRoutes(app: Express): void {
         const earned = earnedBadges.find(eb => eb.badge.id === badge.id);
         const progress = earned ? 100 : 
           Math.min(100, Math.round((user.totalPoints / badge.requiredPoints) * 100));
-        
+
         return {
           ...badge,
           earnedAt: earned?.earnedAt || null,
@@ -668,10 +668,10 @@ export function registerRoutes(app: Express): void {
     try {
       // Check database connection
       await db.execute(sql`SELECT 1`);
-      
+
       // Get memory usage
       const memoryUsage = process.memoryUsage();
-      
+
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -722,7 +722,7 @@ export function registerRoutes(app: Express): void {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'text/plain'
       ];
-      
+
       console.log('[API] Uploaded file:', uploadedFile.name, 'Type:', uploadedFile.mimetype);
 
       if (!allowedTypes.includes(uploadedFile.mimetype)) {
@@ -778,7 +778,6 @@ export function registerRoutes(app: Express): void {
     }
   });
 
-  // No return needed as we're just registering routes
   // Code Review API Route
   app.post('/api/code-review', async (req, res) => {
     try {
@@ -792,39 +791,46 @@ export function registerRoutes(app: Express): void {
         });
       }
 
-      // Initialize Python code review service
-      const { PythonShell } = require('python-shell');
-      const options = {
-        mode: 'json',
-        pythonPath: 'python3',
-        pythonOptions: ['-u'], // unbuffered output
-        scriptPath: './services/',
-        args: [directory]
-      };
+      try {
+        // Initialize Python code review service
+        const { PythonShell } = await import('python-shell');
+        const options = {
+          mode: 'json',
+          pythonPath: 'python3',
+          pythonOptions: ['-u'], // unbuffered output
+          scriptPath: './services/',
+          args: [directory]
+        };
 
-      PythonShell.run('code_review_service.py', options, function (err, results) {
-        if (err) {
-          console.error('[API] Code review error:', err);
-          return res.status(500).json({
-            success: false,
-            message: 'Failed to complete code review',
-            error: err.message
+        const results = await new Promise((resolve, reject) => {
+          PythonShell.run('code_review_service.py', options, (err, results) => {
+            if (err) {
+              console.error('[API] Code review error:', err);
+              reject(err);
+            } else {
+              console.log('[API] Code review completed successfully');
+              resolve(results);
+            }
           });
-        }
+        });
 
-        console.log('[API] Code review completed successfully');
         res.json({
           success: true,
           results: results[0] // Python script returns results as JSON
         });
-      });
-    } catch (error) {
-      console.error('[API] Code review handler error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to process code review',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      } catch (error) {
+        console.error('[API] Code review handler error:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to process code review',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    } finally {
+      console.log('[API] Code review request completed');
     }
   });
+
+  const httpServer = createServer(app);
+  return httpServer;
 }
