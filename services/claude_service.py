@@ -14,8 +14,16 @@ class ClaudeService:
             
         self.api_url = "https://api.anthropic.com/v1/messages"
         
-    def interact_with_claude(self, prompt, max_tokens=1000):
-        """Interacts with Claude to process a prompt and return its response."""
+    def fix_code(self, code_snippet, max_tokens=2000):
+        """Sends code to Claude and requests a fixed version."""
+        prompt = f"""You are an expert programmer. Please review the following code, fix any issues, and improve its quality:
+
+```python
+{code_snippet}
+```
+
+Return only the fixed and improved code without any explanation."""
+
         headers = {
             "anthropic-version": "2023-06-01",
             "x-api-key": self.api_key,
@@ -23,7 +31,7 @@ class ClaudeService:
         }
         
         data = {
-            "model": "claude-3-5-sonnet-20241022",
+            "model": "claude-3-sonnet-20240229",
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens
         }
@@ -35,8 +43,26 @@ class ClaudeService:
         except requests.exceptions.RequestException as e:
             logger.error(f"Claude API request failed: {str(e)}")
             raise
-            
-    def review_code(self, code):
-        """Specialized method for code review"""
-        prompt = f"You are an expert Python developer. Fix the issues in the code below and explain the changes:\n\n{code}"
-        return self.interact_with_claude(prompt, max_tokens=2000)
+
+if __name__ == "__main__":
+    claude = ClaudeService()
+    
+    print("Enter the code snippet to be fixed (end input with Ctrl+D):")
+    try:
+        code_snippet = ""
+        while True:
+            line = input()
+            code_snippet += line + "\n"
+    except EOFError:
+        pass
+
+    try:
+        fixed_code = claude.fix_code(code_snippet)
+        print("\nFixed Code:\n")
+        print(fixed_code)
+
+        with open("fixed_code.py", "w") as file:
+            file.write(fixed_code)
+        print("\nThe fixed code has been saved to 'fixed_code.py'.")
+    except Exception as e:
+        print(f"Error: {str(e)}")
