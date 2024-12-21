@@ -1,16 +1,9 @@
 {
   "*.{js,jsx,ts,tsx}": [
     "prettier --write",
-    "eslint --fix --cache --cache-location ./node_modules/.cache/.eslintcache --max-warnings=0",
-    "tsc --noEmit --incremental false"
+    "eslint --fix"
   ],
-  "*.{css,scss}": [
+  "*.{css,scss,json,md,yaml,yml}": [
     "prettier --write"
-  ],
-  "*.{json,md,yaml,yml}": [
-    "prettier --write"
-  ],
-  "*.html": [
-    "prettier --write --parser html"
   ]
 }

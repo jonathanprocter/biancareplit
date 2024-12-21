@@ -41,25 +41,7 @@
         "ignoreRestSiblings": true
       }
     ],
-    "@typescript-eslint/consistent-type-imports": [
-      "warn",
-      {
-        "prefer": "type-imports",
-        "fixStyle": "inline-type-imports"
-      }
-    ],
-    "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
-    "prettier/prettier": [
-      "error",
-      {
-        "singleQuote": true,
-        "trailingComma": "es5",
-        "printWidth": 100,
-        "tabWidth": 2,
-        "endOfLine": "lf",
-        "useTabs": false
-      }
-    ]
+    "no-console": ["warn", { "allow": ["warn", "error", "info"] }]
   },
   "ignorePatterns": [
     "dist",

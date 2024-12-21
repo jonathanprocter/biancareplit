@@ -8,17 +8,6 @@
   "bracketSameLine": false,
   "arrowParens": "always",
   "endOfLine": "lf",
-  "jsxSingleQuote": false,
-  "quoteProps": "as-needed",
-  "useTabs": false,
   "plugins": ["prettier-plugin-tailwindcss"],
-  "tailwindConfig": "./tailwind.config.ts",
-  "overrides": [
-    {
-      "files": ["*.ts", "*.tsx"],
-      "options": {
-        "parser": "typescript"
-      }
-    }
-  ]
+  "tailwindConfig": "./tailwind.config.ts"
 }
