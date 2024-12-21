@@ -1,9 +1,5 @@
 from flask import Blueprint, jsonify, request
 from models.nclex_analytics import NCLEXAnalytics
-from models.nclex_performance import NCLEXPerformance
-import os
-from datetime import datetime, timedelta
-from sqlalchemy import func
 from nclex_analytics import NCLEXAnalytics as Analytics
 
 analytics_routes = Blueprint("analytics_routes", __name__)

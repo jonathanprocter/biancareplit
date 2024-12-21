@@ -495,8 +495,8 @@ def get_analytics_dashboard():
                         SELECT
                             category,
                             COUNT(*) as attempts,
-                            SUM(CASE WHEN is_correct THEN 1 ELSE 0 END)::float /
-                            COUNT(*) as success_rate
+                            (SUM(CASE WHEN is_correct THEN 1 ELSE 0 END)::float /
+                             COUNT(*)) as success_rate
                         FROM question_attempts
                         WHERE user_id = :user_id
                         AND created_at >= :start_date
@@ -513,7 +513,10 @@ def get_analytics_dashboard():
                         SELECT
                             DATE(created_at) as study_date,
                             COUNT(*) as questions_attempted,
-                            SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
+                            SUM(CASE
+                                WHEN is_correct THEN 1
+                                ELSE 0
+                            END) as correct_answers
                         FROM question_attempts
                         WHERE user_id = :user_id
                         AND created_at >= :start_date
@@ -610,3 +613,4 @@ def get_analytics_dashboard():
             ),
             500,
         )
+
