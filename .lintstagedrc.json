@@ -1,10 +1,16 @@
 {
   "*.{js,jsx,ts,tsx}": [
     "prettier --write",
-    "eslint --fix --cache --cache-location ./node_modules/.cache/.eslintcache",
+    "eslint --fix --cache --cache-location ./node_modules/.cache/.eslintcache --max-warnings=0",
     "tsc --noEmit --incremental false"
   ],
-  "*.{css,scss}": ["prettier --write"],
-  "*.{json,md,yaml,yml}": ["prettier --write"],
-  "*.html": ["prettier --write --parser html"]
+  "*.{css,scss}": [
+    "prettier --write"
+  ],
+  "*.{json,md,yaml,yml}": [
+    "prettier --write"
+  ],
+  "*.html": [
+    "prettier --write --parser html"
+  ]
 }

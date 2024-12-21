@@ -48,8 +48,17 @@
       "trailingComma": "es5",
       "printWidth": 100,
       "tabWidth": 2,
-      "endOfLine": "lf"
+      "endOfLine": "lf",
+      "useTabs": false
     }]
   },
-  "ignorePatterns": ["dist", "node_modules", "*.config.js", "vite.config.ts", "postcss.config.js", "tailwind.config.ts"]
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "*.config.js",
+    "vite.config.ts",
+    "postcss.config.js",
+    "tailwind.config.ts",
+    "coverage"
+  ]
 }
