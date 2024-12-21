@@ -35,10 +35,10 @@ class WebSocketManager:
             
             @self._sock.route('/ws')
             def ws_handler(ws):
-                client_id = str(id(ws))
-                self._add_connection(client_id, ws)
-                
                 try:
+                    client_id = str(id(ws))
+                    self._add_connection(client_id, ws)
+                    ws.send(json.dumps({'type': 'connection_status', 'connected': True}))
                     while True:
                         message = ws.receive()
                         self._handle_message(client_id, message)
@@ -82,7 +82,7 @@ class WebSocketManager:
                 'attempt': self._connections[client_id].reconnect_attempts
             }))
 
-def _handle_message(self, client_id: str, message: str) -> None:
+    def _handle_message(self, client_id: str, message: str) -> None:
         """Handle incoming WebSocket message."""
         try:
             data = json.loads(message)

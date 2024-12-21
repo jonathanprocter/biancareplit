@@ -11,6 +11,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import type { CorsOptions } from 'cors'; // Added cors package import
+import http from 'http'; // Added http import
+import WebSocket from 'ws'; // Added ws import
 
 // Import types
 import type { Server } from 'http';
@@ -230,6 +232,24 @@ async function startServer(): Promise<void> {
 
     // Step 2: Configure Express middleware and routes
     log('Step 2: Configuring express middleware and routes');
+    server = http.createServer(app); //original line
+
+    const wss = new WebSocket.Server({ 
+      server,
+      port: 8082,
+      host: '0.0.0.0'
+    });
+
+    wss.on('connection', (ws) => {
+      console.log('Client connected');
+      ws.on('message', (message) => {
+        console.log('received: %s', message);
+      });
+      ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+      });
+    });
+
     server = registerRoutes(app);
     app.use(errorHandler);
     log('API routes and error handling configured');
@@ -278,6 +298,10 @@ async function startServer(): Promise<void> {
               resolve();
             });
           });
+        }
+        if (wss) {
+          wss.close();
+          log('WebSocket server closed')
         }
         process.exit(0);
       } catch (error) {

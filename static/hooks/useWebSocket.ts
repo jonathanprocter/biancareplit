@@ -13,7 +13,11 @@ export const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
   const { reconnectAttempts = 5, reconnectInterval = 3000, onMessage } = options;
 
   const connect = useCallback(() => {
-    const socket = new WebSocket(url);
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const wsHost = window.location.hostname;
+const wsPort = '8082';
+const wsUrl = `${wsProtocol}//${wsHost}:${wsPort}/ws`;
+const socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
       setIsConnected(true);
