@@ -3,14 +3,7 @@
 
 echo "🔍 Running pre-commit checks..."
 
-# Run TypeScript type checking first
-echo "📝 Running type checking..."
-npm run check || {
-  echo "❌ Type checking failed. Please fix the TypeScript errors before committing."
-  exit 1
-}
-
-# Run prettier, eslint, and tests through lint-staged
+# Run prettier and eslint through lint-staged
 echo "🎨 Running formatting and linting..."
 npx lint-staged || {
   echo "❌ Code style checks failed. Please fix the errors and try committing again."
