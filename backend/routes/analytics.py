@@ -1,23 +1,20 @@
 """Analytics routes for the medical education platform."""
+
 import logging
 import time
-from datetime import datetime
-from typing import Dict, Any, Optional
-
-from flask import Blueprint, request, jsonify
-from prometheus_client import generate_latest, CollectorRegistry
+from datetime import datetime, timedelta
+from flask import Blueprint, request, jsonify, current_app
+from prometheus_client import generate_latest
 from sqlalchemy import text
 
-from backend.config.secure_config import config_manager
 from backend.monitoring.metrics import (
     REGISTRY,
     REQUEST_COUNT,
     REQUEST_LATENCY,
     STUDY_SESSION_DURATION,
-    QUESTION_ATTEMPTS,
     ANALYTICS_ERRORS,
 )
-from backend.models.analytics import db, StudySession, QuestionAttempt, UserProgress
+from backend.models.analytics import db
 
 # Configure route-specific logging
 logger = logging.getLogger(__name__)
@@ -29,7 +26,7 @@ analytics_bp = Blueprint("analytics", __name__)
 # Define constants
 PROMETHEUS_AVAILABLE = True
 try:
-    from prometheus_client import CollectorRegistry  # noqa: F811
+    from prometheus_client import generate_latest  # noqa: F811
 except ImportError:
     PROMETHEUS_AVAILABLE = False
     logger.warning("Prometheus client not available. Metrics collection disabled.")
@@ -100,7 +97,6 @@ def get_performance_metrics():
         except ValueError:
             return jsonify({"status": "error", "message": "Invalid date format"}), 400
 
-        # Mock performance data (replace with actual database queries)
         performance_data = {
             "totalStudyTime": 0,
             "questionsAttempted": 0,
@@ -143,61 +139,58 @@ def generate_analytics_report():
         start_date = datetime.now() - timedelta(days=period_days)
 
         with db.session.begin():
-            # Get study statistics
             study_stats = db.session.execute(
                 text(
                     """
-                SELECT 
-                    COALESCE(SUM(duration) / 3600.0, 0) as total_hours,
-                    COUNT(DISTINCT DATE(created_at)) as study_days
-                FROM study_sessions 
-                WHERE user_id = :user_id 
-                AND created_at >= :start_date
-            """
+                    SELECT
+                        COALESCE(SUM(duration) / 3600.0, 0) as total_hours,
+                        COUNT(DISTINCT DATE(created_at)) as study_days
+                    FROM study_sessions
+                    WHERE user_id = :user_id
+                    AND created_at >= :start_date
+                """
                 ),
                 {"user_id": user_id, "start_date": start_date},
             ).first()
 
-            # Get question statistics
             question_stats = db.session.execute(
                 text(
                     """
-                SELECT 
-                    COUNT(*) as total_questions,
-                    SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers,
-                    AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100 as accuracy,
-                    COUNT(DISTINCT category) as categories_studied
-                FROM question_attempts
-                WHERE user_id = :user_id 
-                AND created_at >= :start_date
-            """
+                    SELECT
+                        COUNT(*) as total_questions,
+                        SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers,
+                        AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100 as accuracy,
+                        COUNT(DISTINCT category) as categories_studied
+                    FROM question_attempts
+                    WHERE user_id = :user_id
+                    AND created_at >= :start_date
+                """
                 ),
                 {"user_id": user_id, "start_date": start_date},
             ).first()
 
-            # Calculate improvement trend
             improvement = (
                 db.session.execute(
                     text(
                         """
-                WITH weekly_stats AS (
-                    SELECT 
-                        date_trunc('week', created_at) as week,
-                        AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100 as weekly_accuracy
-                    FROM question_attempts
-                    WHERE user_id = :user_id 
-                    AND created_at >= :start_date
-                    GROUP BY date_trunc('week', created_at)
-                    ORDER BY week
-                )
-                SELECT 
-                    COALESCE(
-                        (LAST_VALUE(weekly_accuracy) OVER (ORDER BY week) - 
-                         FIRST_VALUE(weekly_accuracy) OVER (ORDER BY week)),
-                        0
-                    ) as improvement
-                FROM weekly_stats
-            """
+                        WITH weekly_stats AS (
+                            SELECT
+                                date_trunc('week', created_at) as week,
+                                AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100 
+                                as weekly_accuracy
+                            FROM question_attempts
+                            WHERE user_id = :user_id
+                            AND created_at >= :start_date
+                            GROUP BY date_trunc('week', created_at)
+                            ORDER BY week
+                        )
+                        SELECT COALESCE(
+                            (LAST_VALUE(weekly_accuracy) OVER (ORDER BY week) -
+                            FIRST_VALUE(weekly_accuracy) OVER (ORDER BY week)),
+                            0
+                        ) as improvement
+                        FROM weekly_stats
+                    """
                     ),
                     {"user_id": user_id, "start_date": start_date},
                 ).scalar()
@@ -243,6 +236,210 @@ def generate_analytics_report():
         )
 
 
+@analytics_bp.route("/daily-summary", methods=["GET"])
+def get_daily_summary():
+    """Get daily study summary with actual metrics."""
+    try:
+        user_id = request.args.get("userId", "default_user")
+        if not user_id:
+            logger.warning("No userId provided, using default user")
+        logger.info(f"Processing analytics request for user: {user_id}")
+        date_str = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
+
+        try:
+            query_date = datetime.strptime(date_str, "%Y-%m-%d")
+            next_date = query_date + timedelta(days=1)
+        except ValueError:
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "Invalid date format. Use YYYY-MM-DD",
+                    }
+                ),
+                400,
+            )
+
+        start_time = time.time()
+
+        try:
+            with db.session.begin():
+                study_time_result = db.session.execute(
+                    text(
+                        """
+                        SELECT COALESCE(SUM(duration), 0) as total_time
+                        FROM study_sessions 
+                        WHERE user_id = :user_id 
+                        AND created_at >= :start_date
+                        AND created_at < :end_date
+                        """
+                    ),
+                    {
+                        "user_id": user_id,
+                        "start_date": query_date,
+                        "end_date": next_date,
+                    },
+                ).first()
+
+                question_stats = db.session.execute(
+                    text(
+                        """
+                        SELECT 
+                            category,
+                            COUNT(*) as attempts,
+                            SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
+                        FROM question_attempts
+                        WHERE user_id = :user_id 
+                        AND created_at >= :start_date
+                        AND created_at < :end_date
+                        GROUP BY category
+                        """
+                    ),
+                    {
+                        "user_id": user_id,
+                        "start_date": query_date,
+                        "end_date": next_date,
+                    },
+                ).fetchall()
+
+                performance_trend = db.session.execute(
+                    text(
+                        """
+                        SELECT 
+                            category,
+                            AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) as avg_score,
+                            COUNT(*) as total_attempts
+                        FROM question_attempts
+                        WHERE user_id = :user_id 
+                        AND created_at >= :start_date - INTERVAL '7 days'
+                        AND created_at < :end_date
+                        GROUP BY category
+                        HAVING COUNT(*) >= 5
+                        ORDER BY avg_score DESC
+                        """
+                    ),
+                    {
+                        "user_id": user_id,
+                        "start_date": query_date,
+                        "end_date": next_date,
+                    },
+                ).fetchall()
+
+        except Exception as db_error:
+            logger.error(f"Database error in daily summary: {str(db_error)}")
+            if PROMETHEUS_AVAILABLE:
+                ANALYTICS_ERRORS.labels(error_type="database_error").inc()
+            raise
+
+        total_study_time = study_time_result[0] if study_time_result else 0
+
+        categories = {}
+        total_attempts = 0
+        total_correct = 0
+
+        for category, attempts, correct in question_stats:
+            categories[category] = {
+                "attempts": attempts,
+                "correctAnswers": correct,
+                "accuracy": (correct / attempts * 100) if attempts > 0 else 0,
+            }
+            total_attempts += attempts
+            total_correct += correct
+
+        recommendations = []
+        if performance_trend:
+            weak_categories = sorted(performance_trend, key=lambda x: x[1])[:2]
+
+            for category, avg_score, attempts in weak_categories:
+                if avg_score < 0.7:
+                    recommendations.append(
+                        {
+                            "category": category,
+                            "message": (
+                                f"Focus on {category} - current accuracy is "
+                                f"{avg_score*100:.1f}%"
+                            ),
+                            "priority": "high" if avg_score < 0.5 else "medium",
+                        }
+                    )
+
+        summary_data = {
+            "date": date_str,
+            "studyTime": total_study_time,
+            "questionsAttempted": total_attempts,
+            "correctAnswers": total_correct,
+            "accuracy": (
+                (total_correct / total_attempts * 100) if total_attempts > 0 else 0
+            ),
+            "categories": categories,
+            "recommendations": recommendations,
+        }
+
+        if PROMETHEUS_AVAILABLE:
+            REQUEST_COUNT.labels(
+                method="GET", endpoint="/analytics/daily-summary", status=200
+            ).inc()
+            REQUEST_LATENCY.labels(endpoint="/analytics/daily-summary").observe(
+                time.time() - start_time
+            )
+
+        return jsonify({"status": "success", "data": summary_data}), 200
+
+    except Exception as e:
+        logger.error(f"Error retrieving daily summary: {str(e)}")
+        if PROMETHEUS_AVAILABLE:
+            ANALYTICS_ERRORS.labels(error_type="daily_summary_retrieval").inc()
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "Failed to retrieve daily summary",
+                    "error": str(e) if current_app.debug else None,
+                }
+            ),
+            500,
+        )
+
+
+@analytics_bp.route("/metrics", methods=["GET"])
+def metrics():
+    """Expose Prometheus metrics."""
+    if not PROMETHEUS_AVAILABLE:
+        logger.warning("Metrics endpoint called but Prometheus is not available")
+        return (
+            jsonify(
+                {"status": "error", "message": "Metrics collection is not available"}
+            ),
+            503,
+        )
+
+    try:
+        metrics_data = generate_latest(REGISTRY)
+        logger.info("Metrics generated successfully")
+        return (
+            metrics_data,
+            200,
+            {
+                "Content-Type": "text/plain; version=0.0.4",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error generating metrics: {str(e)}")
+        if PROMETHEUS_AVAILABLE:
+            ANALYTICS_ERRORS.labels(error_type="metrics_generation").inc()
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "Failed to generate metrics",
+                    "error": str(e),
+                }
+            ),
+            500,
+        )
+
+
 @analytics_bp.route("/dashboard", methods=["GET"])
 def get_analytics_dashboard():
     """Get analytics dashboard data with actual metrics."""
@@ -260,10 +457,10 @@ def get_analytics_dashboard():
                 study_time_result = db.session.execute(
                     text(
                         """
-                    SELECT COALESCE(SUM(duration), 0) as total_time
-                    FROM study_sessions 
-                    WHERE user_id = :user_id 
-                    AND created_at >= :start_date
+                        SELECT COALESCE(SUM(duration), 0) as total_time
+                        FROM study_sessions
+                        WHERE user_id = :user_id
+                        AND created_at >= :start_date
                     """
                     ),
                     {"user_id": user_id, "start_date": thirty_days_ago},
@@ -272,12 +469,12 @@ def get_analytics_dashboard():
                 question_stats = db.session.execute(
                     text(
                         """
-                    SELECT 
-                        COUNT(*) as total_questions,
-                        SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
-                    FROM question_attempts 
-                    WHERE user_id = :user_id 
-                    AND created_at >= :start_date
+                        SELECT
+                            COUNT(*) as total_questions,
+                            SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
+                        FROM question_attempts
+                        WHERE user_id = :user_id
+                        AND created_at >= :start_date
                     """
                     ),
                     {"user_id": user_id, "start_date": thirty_days_ago},
@@ -286,15 +483,16 @@ def get_analytics_dashboard():
                 category_performance = db.session.execute(
                     text(
                         """
-                    SELECT 
-                        category,
-                        COUNT(*) as attempts,
-                        SUM(CASE WHEN is_correct THEN 1 ELSE 0 END)::float / COUNT(*) as success_rate
-                    FROM question_attempts
-                    WHERE user_id = :user_id 
-                    AND created_at >= :start_date
-                    GROUP BY category
-                    ORDER BY success_rate DESC
+                        SELECT
+                            category,
+                            COUNT(*) as attempts,
+                            SUM(CASE WHEN is_correct THEN 1 ELSE 0 END)::float /
+                            COUNT(*) as success_rate
+                        FROM question_attempts
+                        WHERE user_id = :user_id
+                        AND created_at >= :start_date
+                        GROUP BY category
+                        ORDER BY success_rate DESC
                     """
                     ),
                     {"user_id": user_id, "start_date": thirty_days_ago},
@@ -303,16 +501,16 @@ def get_analytics_dashboard():
                 daily_progress = db.session.execute(
                     text(
                         """
-                    SELECT 
-                        DATE(created_at) as study_date,
-                        COUNT(*) as questions_attempted,
-                        SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
-                    FROM question_attempts
-                    WHERE user_id = :user_id 
-                    AND created_at >= :start_date
-                    GROUP BY DATE(created_at)
-                    ORDER BY study_date DESC
-                    LIMIT 7
+                        SELECT
+                            DATE(created_at) as study_date,
+                            COUNT(*) as questions_attempted,
+                            SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
+                        FROM question_attempts
+                        WHERE user_id = :user_id
+                        AND created_at >= :start_date
+                        GROUP BY DATE(created_at)
+                        ORDER BY study_date DESC
+                        LIMIT 7
                     """
                     ),
                     {
@@ -399,210 +597,6 @@ def get_analytics_dashboard():
                     "status": "error",
                     "message": "Failed to retrieve dashboard data",
                     "error": str(e) if current_app.debug else None,
-                }
-            ),
-            500,
-        )
-
-
-@analytics_bp.route("/daily-summary", methods=["GET"])
-def get_daily_summary():
-    """Get daily study summary with actual metrics."""
-    try:
-        user_id = request.args.get("userId", "default_user")
-        if not user_id:
-            logger.warning("No userId provided, using default user")
-        logger.info(f"Processing analytics request for user: {user_id}")
-        date_str = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
-
-        try:
-            query_date = datetime.strptime(date_str, "%Y-%m-%d")
-            next_date = query_date + timedelta(days=1)
-        except ValueError:
-            return (
-                jsonify(
-                    {
-                        "status": "error",
-                        "message": "Invalid date format. Use YYYY-MM-DD",
-                    }
-                ),
-                400,
-            )
-
-        start_time = time.time()
-
-        try:
-            with db.session.begin():
-                study_time_result = db.session.execute(
-                    text(
-                        """
-                    SELECT COALESCE(SUM(duration), 0) as total_time
-                    FROM study_sessions 
-                    WHERE user_id = :user_id 
-                    AND created_at >= :start_date
-                    AND created_at < :end_date
-                    """
-                    ),
-                    {
-                        "user_id": user_id,
-                        "start_date": query_date,
-                        "end_date": next_date,
-                    },
-                ).first()
-
-                question_stats = db.session.execute(
-                    text(
-                        """
-                    SELECT 
-                        category,
-                        COUNT(*) as attempts,
-                        SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers
-                    FROM question_attempts
-                    WHERE user_id = :user_id 
-                    AND created_at >= :start_date
-                    AND created_at < :end_date
-                    GROUP BY category
-                    """
-                    ),
-                    {
-                        "user_id": user_id,
-                        "start_date": query_date,
-                        "end_date": next_date,
-                    },
-                ).fetchall()
-
-                performance_trend = db.session.execute(
-                    text(
-                        """
-                    SELECT 
-                        category,
-                        AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) as avg_score,
-                        COUNT(*) as total_attempts
-                    FROM question_attempts
-                    WHERE user_id = :user_id 
-                    AND created_at >= :start_date - INTERVAL '7 days'
-                    AND created_at < :end_date
-                    GROUP BY category
-                    HAVING COUNT(*) >= 5
-                    ORDER BY avg_score DESC
-                    """
-                    ),
-                    {
-                        "user_id": user_id,
-                        "start_date": query_date,
-                        "end_date": next_date,
-                    },
-                ).fetchall()
-
-        except Exception as db_error:
-            logger.error(f"Database error in daily summary: {str(db_error)}")
-            if PROMETHEUS_AVAILABLE:
-                ANALYTICS_ERRORS.labels(error_type="database_error").inc()
-            raise
-
-        total_study_time = study_time_result[0] if study_time_result else 0
-
-        categories = {}
-        total_attempts = 0
-        total_correct = 0
-
-        for category, attempts, correct in question_stats:
-            categories[category] = {
-                "attempts": attempts,
-                "correctAnswers": correct,
-                "accuracy": (correct / attempts * 100) if attempts > 0 else 0,
-            }
-            total_attempts += attempts
-            total_correct += correct
-
-        recommendations = []
-        if performance_trend:
-            weak_categories = sorted(
-                performance_trend, key=lambda x: x[1]
-            )[:2]
-
-            for category, avg_score, attempts in weak_categories:
-                if avg_score < 0.7:
-                    recommendations.append(
-                        {
-                            "category": category,
-                            "message": f"Focus on {category} - current accuracy is {avg_score*100:.1f}%",
-                            "priority": "high" if avg_score < 0.5 else "medium",
-                        }
-                    )
-
-        summary_data = {
-            "date": date_str,
-            "studyTime": total_study_time,
-            "questionsAttempted": total_attempts,
-            "correctAnswers": total_correct,
-            "accuracy": (
-                (total_correct / total_attempts * 100) if total_attempts > 0 else 0
-            ),
-            "categories": categories,
-            "recommendations": recommendations,
-        }
-
-        if PROMETHEUS_AVAILABLE:
-            REQUEST_COUNT.labels(
-                method="GET", endpoint="/analytics/daily-summary", status=200
-            ).inc()
-
-            REQUEST_LATENCY.labels(endpoint="/analytics/daily-summary").observe(
-                time.time() - start_time
-            )
-
-        return jsonify({"status": "success", "data": summary_data}), 200
-
-    except Exception as e:
-        logger.error(f"Error retrieving daily summary: {str(e)}")
-        if PROMETHEUS_AVAILABLE:
-            ANALYTICS_ERRORS.labels(error_type="daily_summary_retrieval").inc()
-        return (
-            jsonify(
-                {
-                    "status": "error",
-                    "message": "Failed to retrieve daily summary",
-                    "error": str(e) if current_app.debug else None,
-                }
-            ),
-            500,
-        )
-
-
-@analytics_bp.route("/metrics", methods=["GET"])
-def metrics():
-    """Expose Prometheus metrics."""
-    if not PROMETHEUS_AVAILABLE:
-        logger.warning("Metrics endpoint called but Prometheus is not available")
-        return (
-            jsonify(
-                {"status": "error", "message": "Metrics collection is not available"}
-            ),
-            503,
-        )
-
-    try:
-        metrics_data = generate_latest(REGISTRY)
-        logger.info("Metrics generated successfully")
-        return (
-            metrics_data,
-            200,
-            {
-                "Content-Type": "text/plain; version=0.0.4",
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-            },
-        )
-    except Exception as e:
-        logger.error(f"Error generating metrics: {str(e)}")
-        if PROMETHEUS_AVAILABLE:
-            ANALYTICS_ERRORS.labels(error_type="metrics_generation").inc()
-        return (
-            jsonify(
-                {
-                    "status": "error",
-                    "message": "Failed to generate metrics",
-                    "error": str(e),
                 }
             ),
             500,
