@@ -779,4 +779,52 @@ export function registerRoutes(app: Express): void {
   });
 
   // No return needed as we're just registering routes
+  // Code Review API Route
+  app.post('/api/code-review', requireAuth, async (req, res) => {
+    try {
+      console.log('[API] Code review request received');
+      const { directory } = req.body;
+
+      if (!directory) {
+        return res.status(400).json({
+          success: false,
+          message: 'Directory path is required'
+        });
+      }
+
+      // Initialize Python code review service
+      const { PythonShell } = require('python-shell');
+      const options = {
+        mode: 'json',
+        pythonPath: 'python3',
+        pythonOptions: ['-u'], // unbuffered output
+        scriptPath: './services/',
+        args: [directory]
+      };
+
+      PythonShell.run('code_review_service.py', options, function (err, results) {
+        if (err) {
+          console.error('[API] Code review error:', err);
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to complete code review',
+            error: err.message
+          });
+        }
+
+        console.log('[API] Code review completed successfully');
+        res.json({
+          success: true,
+          results: results[0] // Python script returns results as JSON
+        });
+      });
+    } catch (error) {
+      console.error('[API] Code review handler error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process code review',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 }
