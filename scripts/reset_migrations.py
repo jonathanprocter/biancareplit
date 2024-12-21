@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Reset database and migrations."""
-import os
 import shutil
 import sys
 from pathlib import Path
 import logging
 from datetime import datetime
-import importlib
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - "
+           "%(name)s - "
+           "%(levelname)s - "
+           "%(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -28,7 +30,11 @@ class MigrationResetter:
 
         if self.migrations_dir.exists():
             self.backup_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copytree(self.migrations_dir, backup_path, dirs_exist_ok=True)
+            shutil.copytree(
+                self.migrations_dir,
+                backup_path,
+                dirs_exist_ok=True
+            )
             logger.info(f"Created backup at: {backup_path}")
 
         return backup_path

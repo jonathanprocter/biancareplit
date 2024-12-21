@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
 """Verify database configuration and connectivity."""
+import logging
 import os
 import sys
 from pathlib import Path
-import logging
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-# Add project root to Python path
-project_root = str(Path(__file__).parent.parent.absolute())
-sys.path.insert(0, project_root)
 
 from flask import Flask
 from backend.config.app_context import context_manager
 from backend.config.system_verifier import SystemVerification
 from backend.config.unified_config import config_manager
 from backend.database.db_config import db
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - "
+           "%(name)s - "
+           "%(levelname)s - "
+           "%(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Add project root to Python path
+project_root = str(Path(__file__).parent.parent.absolute())
+sys.path.insert(0, project_root)
 
 
 def create_app():
@@ -64,7 +68,10 @@ def verify_system():
             logger.info("All system checks passed successfully!")
             return True
         else:
-            logger.warning("Some system checks failed. Check logs for details.")
+            logger.warning(
+                "Some system checks failed. "
+                "Check logs for details."
+            )
             return False
 
     except Exception as e:

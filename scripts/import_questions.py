@@ -20,7 +20,8 @@ from models import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,8 @@ def parse_question_block(text):
         if line.startswith("Question"):
             # Extract difficulty and category from question header
             pattern = (
-                r"Question\s+\d+\s*\((\w+)[^)]*;" r"\s*NCLEX\s+Category:\s*([\w\s-]+)"
+                r"Question\s+\d+\s*\((\w+)[^)]*;\s*"
+                r"NCLEX\s+Category:\s*([\w\s-]+)"
             )
             match = re.search(pattern, line, re.IGNORECASE)
             if match:
@@ -71,7 +73,9 @@ def parse_question_block(text):
                     "INTERMEDIATE": "INTERMEDIATE",
                     "ADVANCED": "ADVANCED",
                 }
-                result["difficulty"] = difficulty_map.get(difficulty, "INTERMEDIATE")
+                result["difficulty"] = (
+                    difficulty_map.get(difficulty, "INTERMEDIATE")
+                )
 
                 # Map categories
                 category_map = {
@@ -88,7 +92,9 @@ def parse_question_block(text):
                     "EMERGENCY": "EMERGENCY",
                 }
 
-                result["category"] = category_map.get(category, "PHARMACOLOGY")
+                result["category"] = (
+                    category_map.get(category, "PHARMACOLOGY")
+                )
             continue
 
         if re.match(r"^[A-D][.)]", line):
@@ -141,11 +147,14 @@ def import_questions():
                     content = f.read()
 
                 # Split content into question blocks
-                question_blocks = re.split(r"\n\s*\n(?=Question\s+\d+)", content)
+                question_blocks = re.split(
+                    r"\n\s*\n(?=Question\s+\d+)",
+                    content
+                )
 
                 for block in question_blocks:
-                    if not block.strip() or block.startswith("["):  # Skip headers
-                        continue
+                    if not block.strip() or block.startswith("["):
+                        continue  # Skip headers
 
                     try:
                         question_data = parse_question_block(block)
@@ -160,7 +169,8 @@ def import_questions():
                             continue
 
                         logger.info(
-                            "Importing question: Category=%s, Difficulty=%s",
+                            "Importing question: "
+                            "Category=%s, Difficulty=%s",
                             question_data["category"],
                             question_data["difficulty"],
                         )
@@ -168,7 +178,9 @@ def import_questions():
                         # Create content entry
                         content = Content(
                             type=ContentType.QUIZ,
-                            category=SubjectCategory[question_data["category"]],
+                            category=SubjectCategory[
+                                question_data["category"]
+                            ],
                             difficulty=DifficultyLevel[
                                 question_data["difficulty"].upper()
                             ],
@@ -185,11 +197,15 @@ def import_questions():
                         total_imported += 1
 
                     except Exception as e:
-                        logger.error(f"Error processing question block: {str(e)}")
+                        logger.error(
+                            f"Error processing question block: {str(e)}"
+                        )
                         continue
 
                 db.session.commit()
-                logger.info(f"Successfully imported {total_imported} questions")
+                logger.info(
+                    f"Successfully imported {total_imported} questions"
+                )
 
             except Exception as e:
                 logger.error(f"Error processing file {file_path}: {str(e)}")
@@ -203,5 +219,5 @@ if __name__ == "__main__":
         import_questions()
         logging.info("Question import completed successfully")
     except Exception as e:
-        logging.error(f"Failed to import questions: {str(e)}")
+        logger.error(f"Failed to import questions: {str(e)}")
         sys.exit(1)

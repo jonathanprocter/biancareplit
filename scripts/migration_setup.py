@@ -10,7 +10,11 @@ from flask_migrate import Migrate
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - "
+           "%(name)s - "
+           "%(levelname)s - "
+           "%(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -35,9 +39,11 @@ def init_migrations():
         db = SQLAlchemy(app)
         migrate = Migrate(app, db)
 
-        # Initialize migrations
-        os.system("flask db init")
-        logger.info("Initialized new migrations directory")
+        # Initialize migrations with migrate instance
+        with app.app_context():
+            migrate.init_app(app, db)
+            os.system("flask db init")
+            logger.info("Initialized new migrations directory")
 
         return True
     except Exception as e:
