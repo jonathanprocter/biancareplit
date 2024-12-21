@@ -9,7 +9,7 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
-    "prettier"
+    "plugin:prettier/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -30,7 +30,7 @@
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
-    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/no-unused-vars": ["warn", { 
       "argsIgnorePattern": "^_",
@@ -43,12 +43,13 @@
       "fixStyle": "inline-type-imports"
     }],
     "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
-    "prettier/prettier": ["warn", {
+    "prettier/prettier": ["error", {
       "singleQuote": true,
       "trailingComma": "es5",
       "printWidth": 100,
-      "tabWidth": 2
+      "tabWidth": 2,
+      "endOfLine": "lf"
     }]
   },
-  "ignorePatterns": ["dist", "node_modules", "*.config.ts", "*.config.js"]
+  "ignorePatterns": ["dist", "node_modules", "*.config.js", "vite.config.ts", "postcss.config.js", "tailwind.config.ts"]
 }
