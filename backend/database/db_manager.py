@@ -1,5 +1,5 @@
-
 """Database manager module."""
+
 import logging
 from contextlib import contextmanager
 from typing import Generator
@@ -20,8 +20,10 @@ db = SQLAlchemy()
 migrate = Migrate()
 Base = declarative_base()
 
+
 class DatabaseManager:
     """Manages database connections and sessions."""
+
     _instance = None
     _initialized = False
 
@@ -32,7 +34,7 @@ class DatabaseManager:
 
     def __init__(self):
         if not self._initialized:
-            self.logger = logging.getLogger('DatabaseManager')
+            self.logger = logging.getLogger("DatabaseManager")
             self._engine = None
             self._session_factory = None
             self._scoped_session = None
@@ -41,14 +43,14 @@ class DatabaseManager:
     def init_app(self, app: Flask) -> None:
         """Initialize database with Flask application."""
         try:
-            if 'sqlalchemy' not in app.extensions:
+            if "sqlalchemy" not in app.extensions:
                 # Initialize SQLAlchemy with app
                 db.init_app(app)
                 migrate.init_app(app, db)
 
                 # Create engine with configuration
-                database_url = app.config['SQLALCHEMY_DATABASE_URI']
-                engine_options = app.config.get('SQLALCHEMY_ENGINE_OPTIONS', {})
+                database_url = app.config["SQLALCHEMY_DATABASE_URI"]
+                engine_options = app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {})
                 self._engine = create_engine(database_url, **engine_options)
 
                 # Create session factory
@@ -58,9 +60,13 @@ class DatabaseManager:
                 # Create all tables
                 with app.app_context():
                     Base.metadata.create_all(self._engine)
-                    
-                self.logger.info("Database initialized successfully with connection pooling")
-                self.logger.info("Database and migrations initialized successfully with Flask application")
+
+                self.logger.info(
+                    "Database initialized successfully with connection pooling"
+                )
+                self.logger.info(
+                    "Database and migrations initialized successfully with Flask application"
+                )
             else:
                 self.logger.info("Using existing SQLAlchemy instance")
 
@@ -73,7 +79,7 @@ class DatabaseManager:
         """Get database session with context management."""
         if not self._scoped_session:
             raise RuntimeError("Database not initialized. Call init_app first.")
-            
+
         session = self._scoped_session()
         try:
             yield session
@@ -88,7 +94,7 @@ class DatabaseManager:
         """Verify database connection."""
         try:
             with app.app_context():
-                self._scoped_session.execute(text('SELECT 1'))
+                self._scoped_session.execute(text("SELECT 1"))
                 return True
         except Exception as e:
             self.logger.error(f"Database connection failed: {str(e)}")
@@ -100,6 +106,7 @@ class DatabaseManager:
             self._scoped_session.remove()
         if self._engine:
             self._engine.dispose()
+
 
 # Create singleton instance
 db_manager = DatabaseManager()

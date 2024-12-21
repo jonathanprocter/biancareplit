@@ -1,4 +1,3 @@
-
 import logging
 from typing import Dict, Any, List
 from pathlib import Path
@@ -7,10 +6,11 @@ import inspect
 
 logger = logging.getLogger(__name__)
 
+
 class SystemVerifier:
     def __init__(self, middleware_path: str = "backend.middleware"):
         self.middleware_path = middleware_path
-        self.required_methods = ['process_request', 'process_response']
+        self.required_methods = ["process_request", "process_response"]
 
     def verify_middleware(self, middleware_names: List[str]) -> bool:
         """Verify middleware implementations"""
@@ -27,7 +27,7 @@ class SystemVerifier:
                 middleware_class = None
                 for item in dir(module):
                     obj = getattr(module, item)
-                    if inspect.isclass(obj) and item.endswith('Middleware'):
+                    if inspect.isclass(obj) and item.endswith("Middleware"):
                         middleware_class = obj
                         break
 
@@ -43,7 +43,7 @@ class SystemVerifier:
 
             logger.info("All middleware verified successfully")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error during middleware verification: {str(e)}")
             return False
@@ -53,7 +53,7 @@ class SystemVerifier:
         try:
             dependency_graph = {}
             for name, settings in config.items():
-                dependencies = settings.get('dependencies', [])
+                dependencies = settings.get("dependencies", [])
                 dependency_graph[name] = dependencies
 
             # Check for circular dependencies

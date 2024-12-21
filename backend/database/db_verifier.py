@@ -1,8 +1,8 @@
-
 import logging
 from typing import Dict
 from sqlalchemy import text
 from .extensions import db
+
 
 class DatabaseVerifier:
     def __init__(self):
@@ -11,7 +11,7 @@ class DatabaseVerifier:
     def verify_connection(self) -> bool:
         try:
             with db.engine.connect() as conn:
-                conn.execute(text('SELECT 1'))
+                conn.execute(text("SELECT 1"))
                 self.logger.info("Database connection verified successfully")
                 return True
         except Exception as e:
@@ -29,9 +29,7 @@ class DatabaseVerifier:
             return False
 
     def run_health_check(self) -> Dict[str, bool]:
-        return {
-            'connection': self.verify_connection(),
-            'tables': self.verify_tables()
-        }
+        return {"connection": self.verify_connection(), "tables": self.verify_tables()}
+
 
 db_verifier = DatabaseVerifier()

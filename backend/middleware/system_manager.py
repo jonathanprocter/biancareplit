@@ -1,4 +1,3 @@
-
 import logging
 from typing import Dict, List, Any, Optional
 from .validation import MiddlewareValidator
@@ -6,20 +5,21 @@ from .error_handler import ErrorHandler, handle_middleware_errors
 
 logger = logging.getLogger(__name__)
 
+
 class MiddlewareSystemManager:
     def __init__(self):
         self.middlewares: Dict[str, Any] = {}
         self.validator = MiddlewareValidator()
         self.error_handler = ErrorHandler()
         self.middleware_order: List[str] = []
-        
+
         # Register core middleware
         from .security_middleware import SecurityMiddleware
         from .request_validation import RequestValidationMiddleware
-        
-        self.register_middleware('security', SecurityMiddleware())
-        self.register_middleware('validation', RequestValidationMiddleware())
-        self.register_middleware('cache', CacheMiddleware())
+
+        self.register_middleware("security", SecurityMiddleware())
+        self.register_middleware("validation", RequestValidationMiddleware())
+        self.register_middleware("cache", CacheMiddleware())
 
     @handle_middleware_errors
     def register_middleware(self, name: str, middleware_class: Any) -> bool:
@@ -40,7 +40,7 @@ class MiddlewareSystemManager:
         """Update middleware execution order based on priority"""
         self.middleware_order = sorted(
             self.middlewares.keys(),
-            key=lambda x: getattr(self.middlewares[x], 'priority', 0)
+            key=lambda x: getattr(self.middlewares[x], "priority", 0),
         )
 
     @handle_middleware_errors

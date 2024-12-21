@@ -1,4 +1,3 @@
-
 import os
 from pathlib import Path
 import yaml
@@ -6,6 +5,7 @@ import logging
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
+
 
 class ConfigManager:
     def __init__(self):
@@ -19,12 +19,12 @@ class ConfigManager:
         try:
             # Load base config
             self.config.update(self._load_yaml_file("config.yaml"))
-            
+
             # Load environment specific config
             env_config = f"{self.env}.yaml"
             if (self.config_dir / env_config).exists():
                 self.config.update(self._load_yaml_file(env_config))
-                
+
             logger.info(f"Configuration loaded for environment: {self.env}")
         except Exception as e:
             logger.error(f"Failed to load configuration: {e}")
@@ -36,7 +36,7 @@ class ConfigManager:
         if not file_path.exists():
             logger.warning(f"Config file not found: {filename}")
             return {}
-        
+
         with open(file_path) as f:
             return yaml.safe_load(f) or {}
 
@@ -44,7 +44,7 @@ class ConfigManager:
         """Get configuration value using dot notation"""
         try:
             value = self.config
-            for k in key.split('.'):
+            for k in key.split("."):
                 value = value[k]
             return value
         except (KeyError, TypeError):
@@ -58,5 +58,6 @@ class ConfigManager:
                     app.config[f"{key.upper()}_{sub_key.upper()}"] = sub_value
             else:
                 app.config[key.upper()] = value
+
 
 config_manager = ConfigManager()

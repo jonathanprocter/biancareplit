@@ -12,14 +12,11 @@ APP_CONFIG_SCHEMA = {
                 "host": {"type": "string"},
                 "port": {"type": "integer"},
                 "secret_key": {"type": "string"},
-                "allowed_origins": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                }
+                "allowed_origins": {"type": "array", "items": {"type": "string"}},
             },
-            "required": ["name", "environment", "secret_key"]
+            "required": ["name", "environment", "secret_key"],
         }
-    }
+    },
 }
 
 DATABASE_CONFIG_SCHEMA = {
@@ -35,11 +32,11 @@ DATABASE_CONFIG_SCHEMA = {
                 "user": {"type": "string"},
                 "password": {"type": "string"},
                 "pool_size": {"type": "integer"},
-                "ssl_mode": {"type": "string"}
+                "ssl_mode": {"type": "string"},
             },
-            "required": ["driver", "host", "port", "name", "user", "password"]
+            "required": ["driver", "host", "port", "name", "user", "password"],
         }
-    }
+    },
 }
 
 METRICS_CONFIG_SCHEMA = {
@@ -56,14 +53,14 @@ METRICS_CONFIG_SCHEMA = {
                     "properties": {
                         "latency": {"type": "integer", "minimum": 0},
                         "error_rate": {"type": "number", "minimum": 0},
-                        "uptime_min": {"type": "number", "minimum": 0, "maximum": 100}
+                        "uptime_min": {"type": "number", "minimum": 0, "maximum": 100},
                     },
-                    "required": ["latency", "error_rate", "uptime_min"]
-                }
+                    "required": ["latency", "error_rate", "uptime_min"],
+                },
             },
-            "required": ["enabled", "collect_interval", "thresholds"]
+            "required": ["enabled", "collect_interval", "thresholds"],
         }
-    }
+    },
 }
 
 MIDDLEWARE_CONFIG_SCHEMA = {
@@ -73,26 +70,23 @@ MIDDLEWARE_CONFIG_SCHEMA = {
             "type": "object",
             "properties": {
                 "enabled": {"type": "boolean"},
-                "order": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
+                "order": {"type": "array", "items": {"type": "string"}},
                 "security": {
                     "type": "object",
                     "properties": {
                         "enabled": {"type": "boolean"},
-                        "force_https": {"type": "boolean"}
-                    }
+                        "force_https": {"type": "boolean"},
+                    },
                 },
                 "logging": {
                     "type": "object",
                     "properties": {
                         "enabled": {"type": "boolean"},
-                        "level": {"type": "string"}
-                    }
-                }
+                        "level": {"type": "string"},
+                    },
+                },
             },
-            "required": ["enabled", "order"]
+            "required": ["enabled", "order"],
         }
-    }
+    },
 }

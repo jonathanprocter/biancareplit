@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 import requests
 import sys
@@ -7,10 +6,10 @@ import time
 from typing import Dict, Any
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class DeploymentVerifier:
     def __init__(self, base_url: str = "http://0.0.0.0:8080", max_retries: int = 5):
@@ -26,7 +25,9 @@ class DeploymentVerifier:
             if response.status_code == 200:
                 logger.info(f"✅ Endpoint {endpoint} is healthy")
                 return True
-            logger.error(f"❌ Endpoint {endpoint} returned status {response.status_code}")
+            logger.error(
+                f"❌ Endpoint {endpoint} returned status {response.status_code}"
+            )
             return False
         except requests.RequestException as e:
             logger.error(f"❌ Failed to connect to {endpoint}: {str(e)}")
@@ -34,11 +35,13 @@ class DeploymentVerifier:
 
     def verify_deployment(self) -> bool:
         logger.info("Starting deployment verification...")
-        
+
         for attempt in range(self.max_retries):
             if attempt > 0:
                 wait_time = min(5 * attempt, 30)
-                logger.info(f"Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{self.max_retries})")
+                logger.info(
+                    f"Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{self.max_retries})"
+                )
                 time.sleep(wait_time)
 
             success = all(self.check_endpoint(endpoint) for endpoint in self.endpoints)
@@ -46,8 +49,11 @@ class DeploymentVerifier:
                 logger.info("✅ Deployment verification successful!")
                 return True
 
-        logger.error(f"❌ Deployment verification failed after {self.max_retries} attempts")
+        logger.error(
+            f"❌ Deployment verification failed after {self.max_retries} attempts"
+        )
         return False
+
 
 if __name__ == "__main__":
     verifier = DeploymentVerifier()

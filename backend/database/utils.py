@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @contextmanager
 def transaction():
     """Transaction context manager"""
@@ -17,14 +18,17 @@ def transaction():
     finally:
         db.session.remove()
 
+
 def init_db():
     """Initialize database"""
     db.create_all()
+
 
 def reset_db():
     """Reset database"""
     db.drop_all()
     db.create_all()
+
 
 def bulk_save_objects(objects):
     """Efficiently save multiple objects"""

@@ -1,19 +1,19 @@
-
 import requests
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 class ClaudeService:
     def __init__(self):
-        self.api_key = os.getenv('ANTHROPIC_API_KEY')
+        self.api_key = os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
             logger.error("Anthropic API key not found")
             raise ValueError("Anthropic API key not found in environment variables")
-            
+
         self.api_url = "https://api.anthropic.com/v1/messages"
-        
+
     def review_and_fix_code(self, code_snippet, max_tokens=4000):
         """Performs comprehensive code review and fixes issues."""
         prompt = f"""You are an expert DevOps engineer. Please perform a thorough deployment readiness review and fix the following code. Pay special attention to:
@@ -62,13 +62,13 @@ Return a detailed JSON structure:
         headers = {
             "anthropic-version": "2023-06-01",
             "x-api-key": self.api_key,
-            "content-type": "application/json"
+            "content-type": "application/json",
         }
-        
+
         data = {
             "model": "claude-3-sonnet-20240229",
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": max_tokens
+            "max_tokens": max_tokens,
         }
 
         try:
@@ -92,13 +92,13 @@ Return only the corrected code ready for production deployment without any expla
         headers = {
             "anthropic-version": "2023-06-01",
             "x-api-key": self.api_key,
-            "content-type": "application/json"
+            "content-type": "application/json",
         }
-        
+
         data = {
             "model": "claude-3-sonnet-20240229",
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": max_tokens
+            "max_tokens": max_tokens,
         }
 
         try:
@@ -109,9 +109,10 @@ Return only the corrected code ready for production deployment without any expla
             logger.error(f"Claude API request failed: {str(e)}")
             raise
 
+
 if __name__ == "__main__":
     claude = ClaudeService()
-    
+
     print("Enter the code snippet to be fixed (end input with Ctrl+D):")
     try:
         code_snippet = ""
@@ -132,15 +133,13 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {str(e)}")
 
-
-
     def fix_code_from_file(self, file_path: str, max_tokens=2000) -> str:
         """Reads code from a file and sends it to Claude for fixing."""
         try:
             with open(file_path, "r") as file:
                 code_snippet = file.read()
             fixed_code = self.fix_code(code_snippet, max_tokens)
-            
+
             # Save the fixed code to a new file
             fixed_file_path = file_path.replace(".py", "_fixed.py")
             with open(fixed_file_path, "w") as fixed_file:
@@ -156,11 +155,9 @@ if __name__ == "__main__":
         try:
             logger.info("Starting deployment process...")
             result = subprocess.run(
-                ["python3", file_path], 
-                capture_output=True, 
-                text=True
+                ["python3", file_path], capture_output=True, text=True
             )
-            
+
             if result.returncode == 0:
                 logger.info("Deployment completed successfully")
                 return True

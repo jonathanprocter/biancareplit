@@ -1,4 +1,5 @@
 """Core middleware integration service."""
+
 from typing import Dict, Any, Optional, List
 import logging
 from flask import Flask, Request, Response
@@ -7,9 +8,10 @@ from ..middleware.middleware_config import middleware_registry
 
 logger = logging.getLogger(__name__)
 
+
 class MiddlewareIntegration:
     """Core middleware integration and orchestration service."""
-    
+
     def __init__(self, app: Optional[Flask] = None):
         self.app = app
         self.middleware: Dict[str, BaseMiddleware] = {}
@@ -19,13 +21,13 @@ class MiddlewareIntegration:
         """Initialize middleware integration with Flask app."""
         if self._initialized:
             return
-            
+
         self.app = app
         self._register_core_middleware()
         self._setup_request_handlers()
         self._initialized = True
         logger.info("Middleware integration initialized")
-    
+
     def _register_core_middleware(self) -> None:
         """Register and initialize core middleware components."""
         try:
@@ -33,32 +35,34 @@ class MiddlewareIntegration:
             from ..middleware.security import SecurityMiddleware
             from ..middleware.error_handler import ErrorHandlerMiddleware
             from ..middleware.request_tracking import RequestTrackingMiddleware
-            
+
             # Register core middleware with settings from config
             core_middleware = {
                 "logging": LoggingMiddleware,
                 "security": SecurityMiddleware,
                 "error_handler": ErrorHandlerMiddleware,
-                "request_tracking": RequestTrackingMiddleware
+                "request_tracking": RequestTrackingMiddleware,
             }
-            
+
             for name, middleware_class in core_middleware.items():
                 settings = middleware_registry.get_middleware_settings(name)
                 if middleware_registry.is_enabled(name):
-                    self.register_middleware(name, middleware_class(self.app, **settings))
-            
+                    self.register_middleware(
+                        name, middleware_class(self.app, **settings)
+                    )
+
         except Exception as e:
             logger.error(f"Failed to register core middleware: {e}")
             raise
-    
+
     def register_middleware(self, name: str, middleware: BaseMiddleware) -> None:
         """Register a middleware component."""
         if name in self.middleware:
             logger.warning(f"Middleware {name} already registered, updating...")
-        
+
         self.middleware[name] = middleware
         logger.info(f"Registered middleware: {name}")
-    
+
     def _setup_request_handlers(self) -> None:
         """Set up Flask before/after request handlers."""
         if not self.app:
@@ -75,7 +79,7 @@ class MiddlewareIntegration:
                             return response
                     except Exception as e:
                         logger.error(f"Error in {name} before_request: {e}")
-                        
+
             return None
 
         @self.app.after_request
@@ -87,7 +91,7 @@ class MiddlewareIntegration:
                         response = self.middleware[name].after_request(response)
                     except Exception as e:
                         logger.error(f"Error in {name} after_request: {e}")
-                        
+
             return response
 
     def get_middleware(self, name: str) -> Optional[BaseMiddleware]:
@@ -97,5 +101,6 @@ class MiddlewareIntegration:
     def get_active_middleware(self) -> List[str]:
         """Get list of active middleware names."""
         return list(self.middleware.keys())
+
 
 middleware_integration = MiddlewareIntegration()

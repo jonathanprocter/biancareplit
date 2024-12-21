@@ -1,4 +1,5 @@
 """Middleware initialization system."""
+
 import logging
 from typing import Dict, Type, Optional
 from flask import Flask
@@ -7,43 +8,44 @@ from .middleware_config import middleware_registry
 
 logger = logging.getLogger(__name__)
 
+
 class MiddlewareInitializer:
     """Handles middleware initialization and registration."""
-    
+
     def __init__(self, app: Optional[Flask] = None):
         self.app = app
         self._registry: Dict[str, Type[BaseMiddleware]] = {}
         self._initialized: Dict[str, BaseMiddleware] = {}
-        
+
         if app:
             self.init_app(app)
-    
+
     def init_app(self, app: Flask) -> None:
         """Initialize all registered middleware with Flask app."""
         self.app = app
         self._initialize_middleware()
-    
+
     def register(self, name: str, middleware_class: Type[BaseMiddleware]) -> None:
         """Register middleware class."""
         self._registry[name] = middleware_class
         logger.debug(f"Registered middleware: {name}")
-    
+
     def _initialize_middleware(self) -> None:
         """Initialize all registered middleware components."""
         if not self.app:
             logger.error("No Flask app configured")
             return
-            
+
         # Register error handler and request tracking by default
-        self.register('error_handler', ErrorHandlerMiddleware)
-        self.register('request_tracking', RequestTrackingMiddleware)
-            
+        self.register("error_handler", ErrorHandlerMiddleware)
+        self.register("request_tracking", RequestTrackingMiddleware)
+
         enabled = middleware_registry.get_enabled_middleware()
-        
+
         for name in enabled:
             if name not in self._registry:
                 continue
-                
+
             try:
                 settings = middleware_registry.get_middleware_settings(name)
                 middleware = self._registry[name](self.app, **settings)
@@ -55,5 +57,6 @@ class MiddlewareInitializer:
     def get_middleware(self, name: str) -> Optional[BaseMiddleware]:
         """Get initialized middleware instance."""
         return self._initialized.get(name)
+
 
 middleware_initializer = MiddlewareInitializer()

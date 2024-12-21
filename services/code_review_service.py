@@ -10,10 +10,11 @@ from openai import AsyncOpenAI, OpenAI
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class CodeReviewService:
     def __init__(self):
         """Initialize the code review service"""
-        self.api_key = os.getenv('OPENAI_API_KEY')
+        self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OpenAI API key not found in environment variables")
 
@@ -34,7 +35,7 @@ class CodeReviewService:
             ".jsx": "JavaScript React",
             ".py": "Python",
             ".css": "CSS",
-            ".html": "HTML"
+            ".html": "HTML",
         }
 
     def review_file(self, file_path: Path) -> Dict:
@@ -45,12 +46,12 @@ class CodeReviewService:
 
             extension = file_path.suffix
             language = self.supported_languages.get(extension)
-            
+
             if not language:
                 logger.warning(f"Unsupported file type: {extension}")
                 return {"error": f"Unsupported file type: {extension}"}
 
-            with open(file_path, 'r', encoding='utf-8') as file:
+            with open(file_path, "r", encoding="utf-8") as file:
                 code = file.read()
 
             # Create prompt for code review
@@ -74,14 +75,14 @@ class CodeReviewService:
 
             response = self.client.chat.completions.create(
                 model="gpt-4o",
-                messages=[{
-                    "role": "system",
-                    "content": "You are an expert code reviewer. Analyze code for issues and provide specific, actionable improvements."
-                }, {
-                    "role": "user",
-                    "content": prompt
-                }],
-                response_format={ "type": "json_object" }
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert code reviewer. Analyze code for issues and provide specific, actionable improvements.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                response_format={"type": "json_object"},
             )
 
             result = json.loads(response.choices[0].message.content)
@@ -95,7 +96,7 @@ class CodeReviewService:
     def apply_fixes(self, file_path: Path, improved_code: str) -> bool:
         """Apply the suggested fixes to the file"""
         try:
-            with open(file_path, 'w', encoding='utf-8') as file:
+            with open(file_path, "w", encoding="utf-8") as file:
                 file.write(improved_code)
             logger.info(f"Successfully applied fixes to {file_path}")
             return True
@@ -110,22 +111,26 @@ class CodeReviewService:
             dir_path = Path(directory)
             if not dir_path.exists():
                 raise FileNotFoundError(f"Directory not found: {directory}")
-                
-            for file_path in dir_path.rglob('*'):
+
+            for file_path in dir_path.rglob("*"):
                 if file_path.is_file() and file_path.suffix in self.supported_languages:
-                    if not any(exclude in str(file_path) for exclude in ['node_modules', '__pycache__', 'venv', '.git']):
+                    if not any(
+                        exclude in str(file_path)
+                        for exclude in ["node_modules", "__pycache__", "venv", ".git"]
+                    ):
                         logger.info(f"Reviewing {file_path}")
                         result = self.review_file(file_path)
-                        if result and 'improved_code' in result:
-                            self.apply_fixes(file_path, result['improved_code'])
+                        if result and "improved_code" in result:
+                            self.apply_fixes(file_path, result["improved_code"])
                         results[str(file_path)] = result
-            
+
             logger.info(f"Completed review of directory: {directory}")
             return results
         except Exception as e:
             error_msg = f"Error reviewing directory: {str(e)}"
             logger.error(error_msg)
             return {"error": error_msg}
+
 
 def main():
     """Main function to handle command line execution"""
@@ -141,6 +146,7 @@ def main():
     except Exception as e:
         print(json.dumps({"error": str(e)}))
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

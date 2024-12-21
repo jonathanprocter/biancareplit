@@ -10,6 +10,7 @@ from extensions import db
 
 logger = logging.getLogger(__name__)
 
+
 class InstructorReportingService:
     def __init__(self, app=None):
         self.app = app
@@ -33,30 +34,32 @@ class InstructorReportingService:
             # Get daily progress
             progress = DailyProgress.query.filter(
                 DailyProgress.userId == student_id,
-                func.date(DailyProgress.date) == date
+                func.date(DailyProgress.date) == date,
             ).first()
 
             # Get quiz attempts
             attempts = QuizAttempt.query.filter(
                 QuizAttempt.userId == student_id,
-                func.date(QuizAttempt.createdAt) == date
+                func.date(QuizAttempt.createdAt) == date,
             ).all()
 
             # Calculate statistics
             total_attempts = len(attempts)
             correct_answers = sum(1 for a in attempts if a.isCorrect)
-            accuracy = (correct_answers / total_attempts * 100) if total_attempts > 0 else 0
+            accuracy = (
+                (correct_answers / total_attempts * 100) if total_attempts > 0 else 0
+            )
 
             report = {
-                'student_name': student.username,
-                'date': date.strftime('%Y-%m-%d'),
-                'questions_attempted': total_attempts,
-                'correct_answers': correct_answers,
-                'accuracy_rate': round(accuracy, 2),
-                'time_spent': progress.timeSpent if progress else 0,
-                'topics_studied': progress.topicsStudied if progress else [],
-                'strength_areas': progress.strengthAreas if progress else [],
-                'weak_areas': progress.weakAreas if progress else [],
+                "student_name": student.username,
+                "date": date.strftime("%Y-%m-%d"),
+                "questions_attempted": total_attempts,
+                "correct_answers": correct_answers,
+                "accuracy_rate": round(accuracy, 2),
+                "time_spent": progress.timeSpent if progress else 0,
+                "topics_studied": progress.topicsStudied if progress else [],
+                "strength_areas": progress.strengthAreas if progress else [],
+                "weak_areas": progress.weakAreas if progress else [],
             }
 
             return report
@@ -68,27 +71,31 @@ class InstructorReportingService:
         """Send daily email report to instructor."""
         try:
             instructor = User.query.get(instructor_id)
-            if not instructor or instructor.role != 'instructor':
+            if not instructor or instructor.role != "instructor":
                 raise ValueError(f"Invalid instructor ID: {instructor_id}")
 
             # Create email content
             msg = MIMEMultipart()
-            msg['Subject'] = f'Daily Student Progress Report - {datetime.now().strftime("%Y-%m-%d")}'
-            msg['From'] = current_app.config['MAIL_DEFAULT_SENDER']
-            msg['To'] = instructor.email
+            msg["Subject"] = (
+                f'Daily Student Progress Report - {datetime.now().strftime("%Y-%m-%d")}'
+            )
+            msg["From"] = current_app.config["MAIL_DEFAULT_SENDER"]
+            msg["To"] = instructor.email
 
             # Generate HTML content
             html_content = self._generate_email_html(student_reports)
-            msg.attach(MIMEText(html_content, 'html'))
+            msg.attach(MIMEText(html_content, "html"))
 
             # Send email
-            with smtplib.SMTP(current_app.config['MAIL_SERVER'], current_app.config['MAIL_PORT']) as server:
-                if current_app.config['MAIL_USE_TLS']:
+            with smtplib.SMTP(
+                current_app.config["MAIL_SERVER"], current_app.config["MAIL_PORT"]
+            ) as server:
+                if current_app.config["MAIL_USE_TLS"]:
                     server.starttls()
-                if current_app.config['MAIL_USERNAME']:
+                if current_app.config["MAIL_USERNAME"]:
                     server.login(
-                        current_app.config['MAIL_USERNAME'],
-                        current_app.config['MAIL_PASSWORD']
+                        current_app.config["MAIL_USERNAME"],
+                        current_app.config["MAIL_PASSWORD"],
                     )
                 server.send_message(msg)
 
@@ -114,7 +121,9 @@ class InstructorReportingService:
         <body>
             <h1>Daily Student Progress Report</h1>
             <p>Here's a summary of your students' progress for {date}</p>
-        """.format(date=datetime.now().strftime("%Y-%m-%d"))
+        """.format(
+            date=datetime.now().strftime("%Y-%m-%d")
+        )
 
         for report in student_reports:
             html += """
@@ -147,13 +156,17 @@ class InstructorReportingService:
                 </div>
             </div>
             """.format(
-                student_name=report['student_name'],
-                questions=report['questions_attempted'],
-                accuracy=report['accuracy_rate'],
-                time=report['time_spent'],
-                topics=''.join(f"<li>{topic}</li>" for topic in report['topics_studied']),
-                strengths=''.join(f"<li>{area}</li>" for area in report['strength_areas']),
-                weaknesses=''.join(f"<li>{area}</li>" for area in report['weak_areas'])
+                student_name=report["student_name"],
+                questions=report["questions_attempted"],
+                accuracy=report["accuracy_rate"],
+                time=report["time_spent"],
+                topics="".join(
+                    f"<li>{topic}</li>" for topic in report["topics_studied"]
+                ),
+                strengths="".join(
+                    f"<li>{area}</li>" for area in report["strength_areas"]
+                ),
+                weaknesses="".join(f"<li>{area}</li>" for area in report["weak_areas"]),
             )
 
         html += """
@@ -165,11 +178,13 @@ class InstructorReportingService:
     def schedule_daily_reports(self):
         """Schedule daily reports for all instructors."""
         try:
-            instructors = User.query.filter_by(role='instructor').all()
+            instructors = User.query.filter_by(role="instructor").all()
             for instructor in instructors:
                 # Get all students assigned to this instructor
-                students = User.query.filter_by(role='student').all()  # TODO: Add proper instructor-student relationship
-                
+                students = User.query.filter_by(
+                    role="student"
+                ).all()  # TODO: Add proper instructor-student relationship
+
                 if not students:
                     continue
 

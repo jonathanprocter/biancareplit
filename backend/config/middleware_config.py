@@ -1,4 +1,3 @@
-
 from typing import Dict, List, Optional, Any
 import logging
 from pathlib import Path
@@ -6,11 +5,12 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+
 class MiddlewareConfig:
     def __init__(self):
         self.config: Dict[str, Any] = {}
         self.load_config()
-    
+
     def load_config(self) -> None:
         try:
             config_path = Path("config/middleware.yaml")
@@ -31,10 +31,11 @@ class MiddlewareConfig:
             "logging": {"enabled": True, "level": "INFO"},
             "cors": {"enabled": True},
             "database": {"enabled": True},
-            "metrics": {"enabled": True}
+            "metrics": {"enabled": True},
         }
 
     def get_middleware_config(self, name: str) -> Optional[Dict[str, Any]]:
         return self.config.get(name)
+
 
 middleware_config = MiddlewareConfig()

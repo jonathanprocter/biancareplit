@@ -1,4 +1,3 @@
-
 import asyncio
 import json
 import logging
@@ -6,6 +5,7 @@ from typing import Set, Dict
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
 
 class RealtimeMetricsHandler:
     def __init__(self):
@@ -37,9 +37,11 @@ class RealtimeMetricsHandler:
 
     def collect_metrics(self) -> Dict:
         from ..monitoring.metrics_collector import metrics_collector
+
         return {
-            'timestamp': datetime.now().isoformat(),
-            'metrics': metrics_collector.collect_system_metrics()
+            "timestamp": datetime.now().isoformat(),
+            "metrics": metrics_collector.collect_system_metrics(),
         }
+
 
 metrics_handler = RealtimeMetricsHandler()

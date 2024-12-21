@@ -1,7 +1,7 @@
-
 import openai
 from datetime import datetime, timedelta
 from models import CyberContent
+
 
 class AICoachService:
     def __init__(self):
@@ -14,18 +14,15 @@ class AICoachService:
             - Security protocols
             - Threat analysis
             - Security compliance
-            Provide practical, real-world examples."""
+            Provide practical, real-world examples.""",
         }
 
     async def generate_response(self, user_input, topic):
         try:
             completion = await openai.ChatCompletion.create(
                 model=self.model,
-                messages=[
-                    self.context,
-                    {"role": "user", "content": user_input}
-                ]
+                messages=[self.context, {"role": "user", "content": user_input}],
             )
-            return completion.choices[0].message['content']
+            return completion.choices[0].message["content"]
         except Exception as e:
             return f"Error generating response: {str(e)}"

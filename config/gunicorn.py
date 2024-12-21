@@ -1,4 +1,3 @@
-
 from backend.deployment_config import DeploymentConfig
 
 bind = DeploymentConfig.get_bind()

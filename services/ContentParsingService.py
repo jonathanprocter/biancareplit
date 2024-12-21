@@ -12,21 +12,22 @@ from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
 
+
 class ContentParsingService:
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(ContentParsingService, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         """Initialize the content parsing service as a singleton"""
         if self._initialized:
             return
-            
-        self.api_key = os.getenv('OPENAI_API_KEY')
+
+        self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             logger.error("OpenAI API key not found in environment variables")
             raise ValueError("OpenAI API key not found in environment variables")
@@ -37,24 +38,24 @@ class ContentParsingService:
             # do not change this unless explicitly requested by the user
             self.client = AsyncOpenAI(api_key=self.api_key)
             logger.info("OpenAI client initialized successfully")
-            
+
             # Verify API connection
             asyncio.create_task(self._verify_api_connection())
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise
-            
+
         self._initialized = True
         logger.info("ContentParsingService initialization completed")
-        
+
     async def _verify_api_connection(self):
         """Verify the API connection is working"""
         try:
             response = await self.client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "system", "content": "API connection test"}],
-                max_tokens=5
+                max_tokens=5,
             )
             logger.info("OpenAI API connection verified successfully")
             return True
@@ -76,11 +77,14 @@ class ContentParsingService:
             logger.info(f"Detected mime type: {mime_type} for file: {file_path}")
 
             content = ""
-            if mime_type == 'application/pdf':
+            if mime_type == "application/pdf":
                 content = self._parse_pdf(file_path)
-            elif mime_type in ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword']:
+            elif mime_type in [
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/msword",
+            ]:
                 content = self._parse_docx(file_path)
-            elif mime_type.startswith('text/'):
+            elif mime_type.startswith("text/"):
                 content = self._parse_text(file_path)
             else:
                 raise ValueError(f"Unsupported file type: {mime_type}")
@@ -107,7 +111,7 @@ class ContentParsingService:
             logger.error(f"Error parsing PDF: {str(e)}")
             raise
         finally:
-            if 'doc' in locals():
+            if "doc" in locals():
                 doc.close()
 
     def _parse_docx(self, file_path: Path) -> str:
@@ -122,7 +126,7 @@ class ContentParsingService:
     def _parse_text(self, file_path: Path) -> str:
         """Parse plain text file"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
         except Exception as e:
             logger.error(f"Error parsing text file: {str(e)}")
@@ -176,10 +180,13 @@ class ContentParsingService:
             response = await self.client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": "You are an expert educational content analyzer."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are an expert educational content analyzer.",
+                    },
+                    {"role": "user", "content": prompt},
                 ],
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
 
             return json.loads(response.choices[0].message.content)
@@ -195,7 +202,7 @@ class ContentParsingService:
                 raise ValueError("No file provided")
 
             # Check if we have the file path
-            temp_file_path = getattr(file, 'tempFilePath', None)
+            temp_file_path = getattr(file, "tempFilePath", None)
             if not temp_file_path or not os.path.exists(temp_file_path):
                 raise ValueError("Invalid or missing temporary file")
 
@@ -205,14 +212,14 @@ class ContentParsingService:
             try:
                 mime_type = magic.from_file(temp_file_path, mime=True)
                 allowed_types = [
-                    'application/pdf',
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                    'text/plain'
+                    "application/pdf",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "text/plain",
                 ]
-                
+
                 if mime_type not in allowed_types:
                     raise ValueError(f"Unsupported file type detected: {mime_type}")
-                
+
                 logger.info(f"File type validated: {mime_type}")
             except Exception as e:
                 logger.error(f"File type validation failed: {str(e)}")
@@ -231,13 +238,13 @@ class ContentParsingService:
 
                 # Add metadata if provided
                 if metadata:
-                    analysis['metadata'] = metadata
+                    analysis["metadata"] = metadata
                     logger.info("Metadata added to analysis")
 
                 return {
                     "success": True,
                     "analysis": analysis,
-                    "message": "Content processed successfully"
+                    "message": "Content processed successfully",
                 }
 
             except Exception as e:

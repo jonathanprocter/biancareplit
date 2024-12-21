@@ -1,4 +1,5 @@
 """Base metrics registry implementation with proper singleton pattern."""
+
 from prometheus_client import CollectorRegistry, Counter, Histogram, Gauge
 import logging
 from typing import Optional, Dict, Any
@@ -6,16 +7,17 @@ from threading import Lock
 
 logger = logging.getLogger(__name__)
 
+
 class BaseMetricsRegistry:
     """Base singleton metrics registry with proper initialization controls."""
-    
-    _instance: Optional['BaseMetricsRegistry'] = None
+
+    _instance: Optional["BaseMetricsRegistry"] = None
     _initialized: bool = False
     _registry: Optional[CollectorRegistry] = None
     _metrics: Dict[str, Any] = {}
     _lock = Lock()
 
-    def __new__(cls) -> 'BaseMetricsRegistry':
+    def __new__(cls) -> "BaseMetricsRegistry":
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -36,16 +38,16 @@ class BaseMetricsRegistry:
         """Initialize a fresh registry with cleanup."""
         try:
             from .metrics_cleanup import cleanup_metrics
-            
+
             # Clean existing metrics if we have a registry
             if self._registry:
                 cleanup_metrics(self._registry)
                 logger.info("Cleaned existing metrics registry")
-            
+
             # Create fresh registry
             self._registry = CollectorRegistry()
             logger.info("Created fresh metrics registry")
-            
+
         except Exception as e:
             logger.error(f"Error setting up metrics registry: {e}")
             raise
@@ -54,27 +56,27 @@ class BaseMetricsRegistry:
         """Setup default metrics that should be available globally."""
         try:
             # HTTP metrics
-            self._metrics['http_request_total'] = Counter(
-                'http_requests_total',
-                'Total number of HTTP requests',
-                ['method', 'endpoint', 'status'],
-                registry=self._registry
+            self._metrics["http_request_total"] = Counter(
+                "http_requests_total",
+                "Total number of HTTP requests",
+                ["method", "endpoint", "status"],
+                registry=self._registry,
             )
-            
-            self._metrics['http_request_duration'] = Histogram(
-                'http_request_duration_seconds',
-                'HTTP request duration in seconds',
-                ['method', 'endpoint'],
-                registry=self._registry
+
+            self._metrics["http_request_duration"] = Histogram(
+                "http_request_duration_seconds",
+                "HTTP request duration in seconds",
+                ["method", "endpoint"],
+                registry=self._registry,
             )
-            
+
             # System metrics
-            self._metrics['system_memory_usage'] = Gauge(
-                'system_memory_bytes',
-                'System memory usage in bytes',
-                registry=self._registry
+            self._metrics["system_memory_usage"] = Gauge(
+                "system_memory_bytes",
+                "System memory usage in bytes",
+                registry=self._registry,
             )
-            
+
             logger.info("Default metrics initialized successfully")
         except Exception as e:
             logger.error(f"Error setting up default metrics: {e}")
@@ -118,6 +120,7 @@ class BaseMetricsRegistry:
         """Clean up the current registry."""
         try:
             from .metrics_cleanup import cleanup_metrics
+
             with self._lock:
                 if self._registry:
                     cleanup_metrics(self._registry)

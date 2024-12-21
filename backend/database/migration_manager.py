@@ -1,11 +1,12 @@
-
 """Database migration manager."""
+
 import os
 import logging
 from flask_migrate import Migrate
 from backend.database.db_config import db
 
 logger = logging.getLogger(__name__)
+
 
 def init_migrations(app):
     """Initialize database migrations."""

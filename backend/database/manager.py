@@ -1,4 +1,5 @@
 """Database management module."""
+
 from contextlib import contextmanager
 import logging
 from flask import current_app
@@ -6,17 +7,19 @@ from .extensions import db
 
 logger = logging.getLogger(__name__)
 
+
 class DatabaseManager:
     """Database management and utilities"""
-    
+
     @staticmethod
     def verify_connection():
         """Verify database connection"""
         try:
             # Execute simple query to verify connection
             from sqlalchemy import text
+
             with current_app.app_context():
-                db.session.execute(text('SELECT 1'))
+                db.session.execute(text("SELECT 1"))
             return True
         except Exception as e:
             logging.error(f"Database connection verification failed: {e}")
@@ -28,25 +31,22 @@ class DatabaseManager:
         try:
             with current_app.app_context():
                 # Get database info
-                result = db.session.execute('SELECT version();')
+                result = db.session.execute("SELECT version();")
                 version = result.scalar()
-                
+
                 # Get connection pool info
                 engine = db.engine
                 pool_size = engine.pool.size()
                 overflow = engine.pool.overflow()
-                
+
                 return {
-                    'connected': True,
-                    'version': version,
-                    'pool_size': pool_size,
-                    'overflow': overflow
+                    "connected": True,
+                    "version": version,
+                    "pool_size": pool_size,
+                    "overflow": overflow,
                 }
         except Exception as e:
-            return {
-                'connected': False,
-                'error': str(e)
-            }
+            return {"connected": False, "error": str(e)}
 
     @staticmethod
     @contextmanager

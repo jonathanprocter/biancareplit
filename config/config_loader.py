@@ -1,4 +1,3 @@
-
 import os
 from pathlib import Path
 import yaml
@@ -7,10 +6,11 @@ from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
+
 def load_config() -> Dict[str, Any]:
     """Load configuration from YAML files"""
-    config_dir = Path('config')
-    env = os.getenv('FLASK_ENV', 'development')
+    config_dir = Path("config")
+    env = os.getenv("FLASK_ENV", "development")
     config = {}
 
     try:
@@ -21,14 +21,15 @@ def load_config() -> Dict[str, Any]:
                 config.update(yaml.safe_load(f) or {})
 
         # Load middleware config
-        middleware_config = config_dir / 'middleware.yaml'
+        middleware_config = config_dir / "middleware.yaml"
         if middleware_config.exists():
             with open(middleware_config) as f:
-                config['middleware'] = yaml.safe_load(f) or {}
+                config["middleware"] = yaml.safe_load(f) or {}
 
         return config
     except Exception as e:
         logger.error(f"Failed to load configuration: {str(e)}")
         return {}
+
 
 config_loader = load_config()
