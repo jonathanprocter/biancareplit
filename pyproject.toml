@@ -41,4 +41,16 @@ dependencies = [
     "backend>=0.2.4.1",
     "requests",
     "jsonschema>=4.23.0",
+    "black",
+    "flake8",
 ]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/migrations/
+'''

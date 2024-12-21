@@ -266,7 +266,13 @@ def main():
         # Print detailed results
         logger.info("\nDetailed Test Results:")
         logger.info("-" * 50)
-        for component, status in test_results.items(): #Corrected variable name here.
+        test_results = {
+            "security": tester.test_security_middleware(),
+            "metrics": tester.test_metrics_middleware(),
+            "cache": tester.test_cache_middleware(),
+            "health": tester.test_health_endpoint()
+        }
+        for component, status in test_results.items():
             status_symbol = "✓" if status else "✗"
             logger.info("%20s [%s]", component, status_symbol)
         logger.info("-" * 50)

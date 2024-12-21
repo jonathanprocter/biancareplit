@@ -28,3 +28,5 @@ black
 flake8
 requests
 flake8
+black
+flake8

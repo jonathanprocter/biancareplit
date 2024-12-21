@@ -1,17 +1,14 @@
 """Code formatting utility for the project."""
+
 import os
 import subprocess
 import time
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 # Supported file extensions and their corresponding formatters
 # For now, focus only on Python files to avoid timeout issues
 SUPPORTED_LANGUAGES = {
-    ".py": {
-        "name": "Python",
-        "formatters": ["black", "flake8"],
-        "priority": 1
-    }
+    ".py": {"name": "Python", "formatters": ["black", "flake8"], "priority": 1}
 }
 
 
@@ -109,12 +106,10 @@ def process_directory(directory: str, batch_size: int = 1) -> None:
                     flush=True,
                 )
             except Exception as e:
-                print(
-                    f"\nError processing {os.path.basename(file_path)}: {str(e)}"
-                )
+                print(f"\nError processing {os.path.basename(file_path)}: {str(e)}")
 
         # Add pause between batches to prevent timeouts
-        time.sleep(1)  
+        time.sleep(1)
         print(f"\nCompleted batch {current_batch}")
         # Small additional pause for stability
         time.sleep(0.5)
@@ -123,9 +118,7 @@ def process_directory(directory: str, batch_size: int = 1) -> None:
 def main() -> None:
     """Main entry point for the code formatting script."""
     print("🔍 Starting code formatting process...")
-    project_root = os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))
-    )
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     print(f"Processing files in: {project_root}")
     process_directory(project_root)
