@@ -1,7 +1,6 @@
 
 import requests
 import os
-from flask import current_app
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,26 +12,26 @@ class ClaudeService:
             logger.error("Anthropic API key not found")
             raise ValueError("Anthropic API key not found in environment variables")
             
-        self.api_url = "https://api.anthropic.com/v1/complete"
+        self.api_url = "https://api.anthropic.com/v1/messages"
         
     def interact_with_claude(self, prompt, max_tokens=1000):
         """Interacts with Claude to process a prompt and return its response."""
         headers = {
+            "anthropic-version": "2023-06-01",
             "x-api-key": self.api_key,
-            "Content-Type": "application/json",
-            "anthropic-version": "2023-06-01"
+            "content-type": "application/json"
         }
         
         data = {
-            "model": "claude-2.1",
-            "prompt": prompt,
-            "max_tokens_to_sample": max_tokens
+            "model": "claude-3-5-sonnet-20241022",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": max_tokens
         }
 
         try:
             response = requests.post(self.api_url, headers=headers, json=data)
             response.raise_for_status()
-            return response.json()["completion"]
+            return response.json()["content"][0]["text"]
         except requests.exceptions.RequestException as e:
             logger.error(f"Claude API request failed: {str(e)}")
             raise
