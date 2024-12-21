@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowUpIcon, ArrowDownIcon, BookOpenIcon } from 'lucide-react';
+import { ArrowUpIcon, ArrowDownIcon, BookOpenIcon, Calendar, Clock, Target } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart,
   Line,
@@ -9,6 +10,7 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
+  ResponsiveContainer
 } from 'recharts';
 
 interface ProgressData {
@@ -35,7 +37,25 @@ interface ProgressData {
 export const DailyWelcomeCard = () => {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [greeting, setGreeting] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
   const { toast } = useToast();
+
+  // Update greeting based on time of day
+  useEffect(() => {
+    const updateTimeAndGreeting = () => {
+      const now = new Date();
+      setCurrentTime(now);
+      const hour = now.getHours();
+      if (hour < 12) setGreeting('Good Morning');
+      else if (hour < 18) setGreeting('Good Afternoon');
+      else setGreeting('Good Evening');
+    };
+
+    updateTimeAndGreeting();
+    const timer = setInterval(updateTimeAndGreeting, 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchDailyProgress = async () => {
@@ -61,23 +81,35 @@ export const DailyWelcomeCard = () => {
 
   if (loading) {
     return (
-      <Card className="w-full max-w-3xl mx-auto">
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+      <Card className="w-full max-w-3xl mx-auto overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <CardContent className="p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-full bg-primary/20"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-primary/20 rounded w-[200px]"></div>
+                  <div className="h-3 bg-primary/20 rounded w-[150px]"></div>
+                </div>
               </div>
-              <div className="space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="h-4 bg-primary/20 rounded w-full"></div>
+                  <div className="h-4 bg-primary/20 rounded w-2/3"></div>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-primary/20 rounded w-full"></div>
+                  <div className="h-4 bg-primary/20 rounded w-2/3"></div>
+                </div>
               </div>
+              <div className="h-32 bg-primary/20 rounded w-full"></div>
             </div>
-            <div className="h-32 bg-gray-200 rounded w-full"></div>
-          </div>
-        </CardContent>
+          </CardContent>
+        </motion.div>
       </Card>
     );
   }
@@ -102,11 +134,46 @@ export const DailyWelcomeCard = () => {
     : 0;
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardContent className="p-6">
-        <h2 className="text-2xl font-bold mb-4">
-          Welcome back! Here's your learning overview
-        </h2>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="w-full max-w-3xl mx-auto backdrop-blur-sm bg-gradient-to-r from-primary/5 to-primary/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-4">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="p-2 rounded-full bg-primary/10"
+            >
+              <Target className="h-6 w-6 text-primary" />
+            </motion.div>
+            <div>
+              <motion.h2
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-2xl font-bold"
+              >
+                {greeting}!
+              </motion.h2>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-sm text-muted-foreground flex items-center gap-2"
+              >
+                <Calendar className="h-4 w-4" />
+                {currentTime.toLocaleDateString()}
+                <Clock className="h-4 w-4 ml-2" />
+                {currentTime.toLocaleTimeString()}
+              </motion.div>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-2">

@@ -1,5 +1,16 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run lint-staged with no-install flag
-npx --no-install lint-staged
+echo "Running pre-commit hooks..."
+
+# Run lint-staged to format and lint files
+npx lint-staged --verbose
+
+# Exit with error code if lint-staged fails
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+  echo "❌ Pre-commit hook failed. Please fix the errors and try again."
+  exit $exit_code
+fi
+
+echo "✅ Pre-commit hook completed successfully!"

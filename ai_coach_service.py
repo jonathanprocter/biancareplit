@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from openai import OpenAI
+from openai import AsyncOpenAI, OpenAIError
 import json
 from datetime import datetime
 import logging
@@ -28,7 +28,7 @@ def handle_openai_error(func):
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
-        except openai.APIError as e:
+        except OpenAIError as e:
             logger.error(f"OpenAI API Error: {str(e)}")
             raise
         except Exception as e:
@@ -42,6 +42,7 @@ class AICoachService:
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         self.app = app
         self.client = None
+        self.study_patterns = {}
         
         if not self.api_key:
             logger.error("OpenAI API key not found")
@@ -51,10 +52,59 @@ class AICoachService:
         try:
             # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
             # do not change this unless explicitly requested by the user
-            self.client = OpenAI(api_key=self.api_key)
+            self.client = AsyncOpenAI(api_key=self.api_key)
             logger.info("OpenAI client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
+            raise
+
+    async def generate_motivational_insights(self, user_patterns):
+        """Generate personalized motivational insights based on study patterns."""
+        try:
+            prompt = f"""As a supportive AI study companion, provide personalized motivational insights based on these study patterns:
+            - Study streak: {user_patterns.get('studyStreak', 0)} days
+            - Topics focused: {', '.join(user_patterns.get('topicsFocused', []))}
+            - Strengths: {', '.join(user_patterns.get('strengths', []))}
+            - Areas for improvement: {', '.join(user_patterns.get('areasForImprovement', []))}
+
+            Generate a response that includes:
+            1. A personalized motivational message
+            2. Recognition of achievements
+            3. Gentle encouragement for improvement areas
+            4. A specific actionable tip
+
+            Format the response as JSON:
+            {{
+                "message": "Main motivational message",
+                "achievements": ["achievement 1", "achievement 2"],
+                "encouragement": "Encouraging message for improvement areas",
+                "actionable_tip": "Specific study tip for today",
+                "study_streak_message": "Message about the study streak"
+            }}
+            """
+
+            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            response = await self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an empathetic and encouraging study companion focused on medical education."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                response_format={"type": "json_object"},
+                max_tokens=1000
+            )
+
+            return json.loads(response.choices[0].message.content)
+
+        except Exception as e:
+            logger.error(f"Error generating motivational insights: {str(e)}")
             raise
             
         # Set up application context if app is provided
@@ -283,7 +333,7 @@ async def create_flashcard_endpoint():
     except ValueError as ve:
         logger.error(f"Validation error: {str(ve)}")
         return jsonify({"error": str(ve)}), 400
-    except openai.APIError as oe:
+    except OpenAIError as oe:
         logger.error(f"OpenAI API error: {str(oe)}")
         return jsonify({"error": "AI service error", "details": str(oe)}), 503
     except Exception as e:
@@ -303,6 +353,51 @@ def generate_study_tip():
         
     except Exception as e:
         logger.error(f"Error in generate_study_tip endpoint: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@ai_coach_blueprint.route('/motivation', methods=['POST'])
+async def get_motivational_insights():
+    """Get personalized motivational insights based on study patterns."""
+    try:
+        logger.info("Received request for motivational insights")
+        data = request.get_json()
+        if not data or 'patterns' not in data:
+            logger.error("Missing study patterns in request")
+            return jsonify({"error": "Study patterns are required"}), 400
+
+        logger.info(f"Generating insights for patterns: {data['patterns']}")
+        insights = await ai_coach_service.generate_motivational_insights(data['patterns'])
+        logger.info("Successfully generated motivational insights")
+        return jsonify(insights)
+
+    except OpenAIError as e:
+        logger.error(f"OpenAI API error in motivational insights: {str(e)}")
+        return jsonify({"error": "AI service error", "details": str(e)}), 503
+    except Exception as e:
+        logger.error(f"Unexpected error in get_motivational_insights endpoint: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+
+@ai_coach_blueprint.route('/progress', methods=['POST'])
+def update_study_progress():
+    """Update and track study patterns."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Study session data is required"}), 400
+
+        # Update study patterns in the service
+        ai_coach_service.study_patterns[request.remote_addr] = {
+            'lastStudyTime': data.get('timestamp', datetime.utcnow().isoformat()),
+            'studyStreak': data.get('studyStreak', 0),
+            'topicsFocused': list(set(data.get('topicsFocused', []))),
+            'strengths': data.get('strengths', []),
+            'areasForImprovement': data.get('areasForImprovement', [])
+        }
+
+        return jsonify(ai_coach_service.study_patterns[request.remote_addr])
+
+    except Exception as e:
+        logger.error(f"Error in update_study_progress endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 # Error handlers

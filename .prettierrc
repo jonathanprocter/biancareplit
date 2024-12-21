@@ -19,5 +19,15 @@
         "parser": "typescript"
       }
     }
-  ]
+  ],
+  "importOrder": [
+    "^react",
+    "^@/components/(.*)$",
+    "^@/hooks/(.*)$",
+    "^@/lib/(.*)$",
+    "^@/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
 }

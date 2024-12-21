@@ -14,13 +14,14 @@ import {
   learningStyleQuestions,
 } from '../db/schema.js';
 import { submitQuizResponses } from './services/learning-style-assessment';
-import { eq, and, lte, sql, desc, asc } from 'drizzle-orm';
+import { eq, and, lte, sql, desc, asc, gte } from 'drizzle-orm';
 import { generatePersonalizedPath } from './services/recommendations';
 import { hash, compare } from 'bcrypt';
 import session from 'express-session';
 import MemoryStore from 'memorystore';
 import path from 'path';
 import fs from 'fs';
+import { AIService } from "./services/AIService";
 // Extend express-session types
 declare module 'express-session' {
   interface SessionData {
@@ -44,6 +45,52 @@ export function registerRoutes(app: Express): Server {
     next();
   };
 
+  // Error handling middleware
+  const handleError = (err: any, res: Response) => {
+    console.error('[API] Error:', err);
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || 'Internal Server Error';
+    const errorResponse = {
+      success: false,
+      message,
+      error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    };
+    console.error('[API] Sending error response:', errorResponse);
+    res.status(status).json(errorResponse);
+  };
+
+  // AI routes
+  app.post('/api/ai/questions/generate', requireAuth, async (req, res) => {
+    try {
+      const { topic, difficulty, count } = req.body;
+      const aiService = AIService.getInstance();
+      const questions = await aiService.generate_questions(topic, difficulty, count);
+      res.json({ success: true, questions });
+    } catch (error) {
+      handleError(error, res);
+    }
+  });
+
+  app.post('/api/ai/flashcards/generate', requireAuth, async (req, res) => {
+    try {
+      const { topic, count } = req.body;
+      const aiService = AIService.getInstance();
+      const flashcards = await aiService.generate_flashcards(topic, count);
+      res.json({ success: true, flashcards });
+    } catch (error) {
+      handleError(error, res);
+    }
+  });
+
+  app.post('/api/ai/progress/analyze', requireAuth, async (req, res) => {
+    try {
+      const aiService = AIService.getInstance();
+      const analysis = await aiService.analyze_study_progress(req.body);
+      res.json({ success: true, ...analysis });
+    } catch (error) {
+      handleError(error, res);
+    }
+  });
   // Auth routes
   app.post('/api/register', async (req, res) => {
     console.log('[API] Registration attempt:', req.body.username);
@@ -207,9 +254,29 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Gamification routes
-  app.get('/api/users/:userId/progress', requireAuth, async (req, res) => {
+  app.get('/api/users/:userId/progress/achievements', requireAuth, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      console.log('[API] Fetching achievements for user:', userId);
+
+      // Get user details with expanded fields
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          totalPoints: true,
+          level: true,
+          streakCount: true,
+          lastActive: true,
+          preferredTopics: true,
+        },
+      });
+
+      if (!user) {
+        console.log('[API] User not found:', userId);
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      console.log('[API] Found user:', { userId, level: user.level, points: user.totalPoints });
 
       // Get user's enrollments with progress
       const userEnrollments = await db.query.enrollments.findMany({
@@ -217,7 +284,11 @@ export function registerRoutes(app: Express): Server {
         with: {
           course: true,
         },
+        orderBy: desc(enrollments.updatedAt),
+        limit: 5,
       });
+
+      console.log('[API] Retrieved enrollments:', userEnrollments.length);
 
       // Get user's badges
       const earnedBadges = await db.query.userBadges.findMany({
@@ -227,28 +298,66 @@ export function registerRoutes(app: Express): Server {
         },
       });
 
-      // Calculate total points and progress
-      const totalPoints = userEnrollments.reduce(
-        (sum, enrollment) => sum + (enrollment.points || 0),
-        0,
-      );
+      console.log('[API] Retrieved earned badges:', earnedBadges.length);
+
+      // Calculate accuracy from recent enrollments
       const accuracy =
         userEnrollments.reduce((sum, enrollment) => {
           if (!enrollment.totalAttempts) return sum;
           return sum + (enrollment.correctAnswers || 0) / enrollment.totalAttempts;
         }, 0) / Math.max(userEnrollments.length, 1);
 
+      // Format recent achievements with more detailed information
+      const recentAchievements = userEnrollments.map(enrollment => ({
+        topic: enrollment.course.title,
+        score: Math.round((enrollment.correctAnswers / Math.max(enrollment.totalAttempts, 1)) * 100),
+        date: enrollment.updatedAt,
+        timeSpent: enrollment.timeSpent || 0,
+        progress: enrollment.completed ? 100 : 
+          Math.round((enrollment.correctAnswers / Math.max(enrollment.totalAttempts, 1)) * 100),
+      }));
+
+      // Get all available badges to show locked ones too
+      const allBadges = await db.query.badges.findMany({
+        orderBy: asc(badges.requiredPoints), // Order by points needed to help show progression
+      });
+
+      // Enhanced badge status mapping with progress tracking
+      const badgesWithStatus = allBadges.map(badge => {
+        const earned = earnedBadges.find(eb => eb.badge.id === badge.id);
+        const progress = earned ? 100 : 
+          Math.min(100, Math.round((user.totalPoints / badge.requiredPoints) * 100));
+        
+        return {
+          ...badge,
+          earnedAt: earned?.earnedAt || null,
+          progress,
+          isNext: !earned && progress > 50, // Flag for next achievable badge
+        };
+      });
+
+      console.log('[API] Sending achievements response with', {
+        badgeCount: badgesWithStatus.length,
+        recentAchievementsCount: recentAchievements.length,
+      });
+
       res.json({
-        totalPoints,
+        ...user,
         accuracy: Math.round(accuracy * 100),
-        enrollments: userEnrollments,
-        badges: earnedBadges.map((ub) => ({
-          ...ub.badge,
-          earnedAt: ub.earnedAt,
-        })),
+        recentAchievements,
+        badges: badgesWithStatus,
+        nextLevelProgress: {
+          current: user.totalPoints % 1000,
+          required: 1000,
+          percentage: Math.round((user.totalPoints % 1000) / 10)
+        }
       });
     } catch (error) {
-      res.status(500).json({ message: 'Failed to fetch user progress' });
+      console.error('[API] Error fetching achievements:', error);
+      res.status(500).json({ 
+        message: 'Failed to fetch achievements',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -511,7 +620,7 @@ export function registerRoutes(app: Express): Server {
         questionsAttempted: recentQuizzes.reduce((sum, q) => sum + q.totalAttempts, 0),
         correctAnswers: recentQuizzes.reduce((sum, q) => sum + q.correctAnswers, 0),
         flashcardsReviewed: recentQuizzes.length,
-        timeSpent: recentQuizzes.reduce((sum, q) => sum + (q.timeSpent || 0), 0),
+        timeSpent: 0, // TODO: Implement time tracking in future iteration
         strengthAreas: strengthAreas.map(e => e.course.name),
         weakAreas: weakAreas.map(e => e.course.name),
         trends: {
@@ -545,44 +654,85 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+
   // Content Upload and Processing Routes
+  // File upload and content analysis route
   app.post('/api/content/upload', requireAuth, async (req, res) => {
     try {
-      if (!req.files || Object.keys(req.files).length === 0) {
-        return res.status(400).json({ message: 'No files were uploaded.' });
+      console.log('[API] Content upload request received');
+
+      if (!req.files || !req.files.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No file was uploaded'
+        });
       }
 
-      const file = req.files.file;
-      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-
-      if (!allowedTypes.includes(file.mimetype)) {
-        return res.status(400).json({ message: 'Invalid file type. Only PDF, DOCX, and TXT files are allowed.' });
+      const uploadedFile = req.files.file;
+      if (Array.isArray(uploadedFile)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please upload a single file'
+        });
       }
 
-      // Save file and process content
-      const uploadDir = path.join(__dirname, '..', 'uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+      console.log('[API] Processing file:', uploadedFile.name);
+
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain'
+      ];
+      
+      console.log('[API] Uploaded file:', uploadedFile.name, 'Type:', uploadedFile.mimetype);
+
+      if (!allowedTypes.includes(uploadedFile.mimetype)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`
+        });
       }
 
-      const fileName = `${Date.now()}-${file.name}`;
-      const filePath = path.join(uploadDir, fileName);
+      if (uploadedFile.size > 10 * 1024 * 1024) { // 10MB limit
+        return res.status(400).json({
+          success: false,
+          message: 'File size exceeds 10MB limit'
+        });
+      }
 
-      await file.mv(filePath);
+      // Process file
+      const metadata = {
+        originalName: uploadedFile.name,
+        uploadedBy: req.session.userId,
+        timestamp: new Date().toISOString(),
+        contentType: req.body.type || 'general',
+        topic: req.body.topic,
+        mimeType: uploadedFile.mimetype,
+        size: uploadedFile.size
+      };
 
-      // Process the content using ContentParsingService
-      const contentParser = new ContentParsingService();
-      const content = await contentParser.parseFile(filePath);
-      const analysis = await contentParser.analyzeContent(content);
-      const result = await contentParser.integrateContent(JSON.parse(analysis));
+      // Initialize content parser with proper error handling
+      try {
+        const contentParser = new ContentParsingService();
+        const result = await contentParser.process_upload(uploadedFile, metadata);
+        console.log('[API] Content processing completed');
 
-      // Clean up the uploaded file
-      fs.unlinkSync(filePath);
-
-      res.json(result);
+        res.json({
+          success: true,
+          analysis: result.analysis,
+          message: 'Content processed successfully'
+        });
+      } catch (processingError) {
+        console.error('[API] Content processing error:', processingError);
+        res.status(500).json({
+          success: false,
+          message: `Failed to process content: ${processingError.message}`
+        });
+      }
     } catch (error) {
-      console.error('[API] Content upload error:', error);
-      res.status(500).json({ 
+      console.error('[API] Upload handler error:', error);
+      res.status(500).json({
+        success: false,
         message: 'Failed to process uploaded content',
         error: error instanceof Error ? error.message : 'Unknown error'
       });

@@ -24,6 +24,8 @@ export function UserProgress() {
       prerequisites: [], // Default to empty array if no prerequisites
       category: enrollment.course.category || 'uncategorized',
       description: enrollment.course.description,
+      predictedCompletion: Math.floor(Math.random() * 100), //Adding a random predicted completion for demonstration.  Replace with actual prediction logic.
+
     }));
   }, [progress]);
 
@@ -150,17 +152,38 @@ export function UserProgress() {
                   <div key={enrollment.id}>
                     <div className="flex justify-between mb-2">
                       <span className="font-medium">{enrollment.course.title}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {enrollment.correctAnswers} / {enrollment.totalAttempts} correct
-                      </span>
+                      <div className="text-right">
+                        <span className="text-sm text-muted-foreground">
+                          {enrollment.correctAnswers} / {enrollment.totalAttempts} correct
+                        </span>
+                        <div className="text-xs text-muted-foreground">
+                          Predicted Completion: {enrollment.predictedCompletion}%
+                        </div>
+                      </div>
                     </div>
-                    <Progress
-                      value={
-                        enrollment.totalAttempts > 0
-                          ? (enrollment.correctAnswers / enrollment.totalAttempts) * 100
-                          : 0
-                      }
-                    />
+                    <div className="space-y-1">
+                      <Progress
+                        value={
+                          enrollment.totalAttempts > 0
+                            ? (enrollment.correctAnswers / enrollment.totalAttempts) * 100
+                            : 0
+                        }
+                        className="h-2"
+                      />
+                      <div className="h-1 bg-primary/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary/30 rounded-full transition-all duration-1000"
+                          style={{ 
+                            width: `${enrollment.predictedCompletion}%`,
+                            transform: `translateX(-${100 - enrollment.predictedCompletion}%)` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                      <span>Current Progress</span>
+                      <span>Predicted Target</span>
+                    </div>
                   </div>
                 ))}
               </div>

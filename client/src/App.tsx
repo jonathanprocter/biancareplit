@@ -27,22 +27,7 @@ function App() {
         <Switch>
           <Route path="/" component={Login} />
           <Route path="/register" component={Register} />
-          <Route path="/dashboard">
-            {() => (
-              <div className="space-y-8">
-                <DailyWelcomeCard />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="space-y-8">
-                    <AITutorAvatar />
-                    <StudyTimer />
-                  </div>
-                  <LearningHeatMap />
-                </div>
-                <Achievements />
-                <FileUploadWizard />
-              </div>
-            )}
-          </Route>
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/courses/:id" component={Course} />
           <Route path="/progress" component={UserProgress} />
           <Route path="/learning-style-quiz" component={LearningStyleQuiz} />

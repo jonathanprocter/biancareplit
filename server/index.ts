@@ -7,6 +7,11 @@ import session from 'express-session';
 import fileUpload from 'express-fileupload';
 import type { SessionOptions } from 'express-session';
 import MemoryStore from 'memorystore';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Extend express-session types
 declare module 'express-session' {
@@ -42,18 +47,37 @@ const sessionConfig: SessionOptions = {
   },
 };
 
+// Serve static files from client/public
+app.use(express.static(path.join(__dirname, '../client/public')));
+
 // Basic middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session(sessionConfig));
 
+// Ensure API routes don't interfere with Vite in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    if (!req.path.startsWith('/api')) {
+      // Skip API middleware for non-API routes to prevent interference with Vite
+      return next();
+    }
+    return next();
+  });
+}
+
 // File upload middleware
 app.use(fileUpload({
+  createParentPath: true,
+  limits: { 
+    fileSize: 10 * 1024 * 1024 // 10MB max file size
+  },
+  abortOnLimit: true,
   useTempFiles: true,
   tempFileDir: '/tmp/',
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
-  abortOnLimit: true,
   debug: process.env.NODE_ENV === 'development',
+  safeFileNames: true,
+  preserveExtension: true,
 }));
 
 // Request logging middleware
@@ -98,13 +122,15 @@ const errorHandler = (err: AppError, _req: Request, res: Response, _next: NextFu
     await db.execute(sql`SELECT 1`);
     log('Database connection verified successfully');
 
-    // Register routes and get HTTP server
+    // Register API routes first
     const server = registerRoutes(app);
 
     // Add error handler after routes
     app.use(errorHandler);
 
-    // Setup Vite in development or serve static files in production
+    // importantly only setup vite in development and after
+    // setting up all the other routes so the catch-all route
+    // doesn't interfere with the other routes
     if (app.get('env') === 'development') {
       await setupVite(app, server);
     } else {

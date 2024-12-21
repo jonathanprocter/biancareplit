@@ -10,3 +10,7 @@ psutil
 pyjwt
 python-dotenv
 sqlalchemy
+pymupdf
+python-docx
+python-magic
+aiofiles

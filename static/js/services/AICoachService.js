@@ -5,13 +5,101 @@ class AICoachService {
     this.endpoints = {
       flashcard: `${this.baseUrl}/flashcard`,
       studyTip: `${this.baseUrl}/study-tip`,
+      motivation: `${this.baseUrl}/motivation`,
+      progress: `${this.baseUrl}/progress`,
+      questionGeneration: `${this.baseUrl}/questions/generate`,
+      contentAnalysis: `${this.baseUrl}/content/analyze`,
     };
 
-    // Log configuration
-    console.log('AI Coach Service initialized with endpoints:', this.endpoints);
+    // Study pattern tracking
+    this.studyPatterns = {
+      lastStudyTime: null,
+      studyStreak: 0,
+      topicsFocused: new Set(),
+      strengths: [],
+      areasForImprovement: [],
+      lastAssessment: null,
+    };
+
+    // Configuration
     this.retryAttempts = 3;
     this.retryDelay = 1000;
     this.initialized = false;
+    this.initializationPromise = null;
+
+    // Bind methods
+    this.initialize = this.initialize.bind(this);
+    this.handleError = this.handleError.bind(this);
+    this.retryOperation = this.retryOperation.bind(this);
+
+    console.log('AI Coach Service: Created instance with endpoints:', this.endpoints);
+  }
+
+  async retryOperation(operation, maxAttempts = this.retryAttempts) {
+    let lastError;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        console.warn(`Attempt ${attempt}/${maxAttempts} failed:`, error);
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  // Track study patterns
+  async updateStudyPatterns(studySession) {
+    try {
+      const response = await fetch(this.endpoints.progress, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(studySession),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update study patterns');
+      }
+
+      const data = await response.json();
+      this.studyPatterns = { ...this.studyPatterns, ...data };
+      return data;
+    } catch (error) {
+      console.error('Error updating study patterns:', error);
+      this.handleError(error);
+      throw error;
+    }
+  }
+
+  // Get personalized motivational insights
+  async getMotivationalInsights() {
+    try {
+      const response = await fetch(this.endpoints.motivation, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          patterns: this.studyPatterns,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get motivational insights');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting motivational insights:', error);
+      this.handleError(error);
+      throw error;
+    }
   }
 
   async initialize() {

@@ -6,16 +6,23 @@ import { Toaster } from '@/components/ui/toaster';
 import App from './App';
 import './index.css';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) throw new Error('Failed to find the root element');
+try {
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    console.error('Root element not found in the DOM');
+    throw new Error('Failed to find the root element');
+  }
 
-const root = createRoot(rootElement);
+  const root = createRoot(rootElement);
 
-root.render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-      <Toaster />
-    </QueryClientProvider>
-  </StrictMode>,
-);
+  root.render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <App />
+        <Toaster />
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+} catch (error) {
+  console.error('Error initializing application:', error);
+}
