@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run TypeScript type checking
+echo "Running type checking..."
+npm run check || exit 1
+
+# Run tests
+echo "Running tests..."
+npx jest || exit 1
+
+# If all checks pass, allow the push
+echo "All checks passed!"
+exit 0
