@@ -9,6 +9,7 @@ import type { SessionOptions } from 'express-session';
 import MemoryStore from 'memorystore';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cors from 'cors'; // Added cors package import
 
 // Import types
 import type { Server } from 'http';
@@ -62,6 +63,12 @@ app.use(express.static(path.join(__dirname, '../client/public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session(sessionConfig));
+app.use(cors({ // Added CORS middleware
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
 
 // Ensure API routes don't interfere with Vite in development
 if (process.env.NODE_ENV !== 'production') {

@@ -59,9 +59,13 @@ export const useLogin = () => {
     mutationFn: async (credentials: { username: string; password: string }) => {
       const res = await fetch('/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(credentials),
         credentials: 'include',
+        mode: 'cors',
       });
 
       if (!res.ok) {
