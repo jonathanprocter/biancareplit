@@ -1,3 +1,4 @@
+
 // Type definitions for formatting test
 interface FormattedItem {
   id: number;
@@ -20,6 +21,9 @@ interface NestedConfig {
   };
 }
 
+// Predefined timestamp to ensure consistency
+const creationTimestamp = new Date().toISOString();
+
 // Object formatting test with complex types
 export const formattedCode: NestedConfig = {
   enabled: true,
@@ -29,7 +33,7 @@ export const formattedCode: NestedConfig = {
       id: 1,
       name: 'First Item',
       status: 'active',
-      metadata: { created: new Date().toISOString(), tags: ['important', 'featured'] },
+      metadata: { created: creationTimestamp, tags: ['important', 'featured'] },
     },
     { id: 2, name: 'Second Item', status: 'inactive' },
   ],
@@ -41,6 +45,8 @@ export function processItems(
   items: FormattedItem[],
   config: Partial<NestedConfig>
 ): FormattedItem[] {
-  console.log('Processing items with config:', config);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Processing items with config:', config);
+  }
   return items.filter((item) => item.status === 'active');
 }

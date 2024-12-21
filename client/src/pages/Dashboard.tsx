@@ -3,15 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Calendar,
-  Clock,
-  Upload,
-  Bot,
-  Trophy,
-  Activity,
-  ChevronRight
-} from 'lucide-react';
+import { Calendar, Clock, Upload, Bot, Trophy, Activity } from 'lucide-react';
 
 const DailyWelcomeCard = () => {
   const [greeting, setGreeting] = useState('');
@@ -25,7 +17,7 @@ const DailyWelcomeCard = () => {
 
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [time]);
 
   return (
     <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
@@ -88,10 +80,14 @@ const StudyTimer = () => {
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isActive) {
-      interval = setInterval(() => setTime(t => t + 1), 1000);
+      interval = setInterval(() => {
+        setTime(t => t + 1);
+      }, 1000);
+    } else if (!isActive && time !== 0) {
+      clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [isActive, time]);
 
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
@@ -160,10 +156,10 @@ const Achievements = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {achievements.map((achievement, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${achievement.completed ? 'bg-white' : 'bg-yellow-300'}`} />
-              <span>{achievement.title}</span>
+          {achievements.map(({ title, completed }) => (
+            <div key={title} className="flex items-center gap-2">
+              <div className={`h-2 w-2 rounded-full ${completed ? 'bg-white' : 'bg-yellow-300'}`} />
+              <span>{title}</span>
             </div>
           ))}
         </div>

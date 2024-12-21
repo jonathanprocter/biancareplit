@@ -3,14 +3,28 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import React from 'react';
+
+interface Module {
+  id: number;
+  order: number;
+  title: string;
+  content: string;
+}
+
+interface CourseData {
+  title: string;
+  description: string;
+  modules: Module[];
+}
 
 export function Course({ params }: { params: { id: string } }) {
-  const courseId = parseInt(params.id);
-  const { data: course, isLoading } = useCourse(courseId);
+  const courseId = parseInt(params.id, 10);
+  const { data: course, isLoading } = useCourse<CourseData>(courseId);
   const enroll = useEnroll();
   const { toast } = useToast();
 
-  const handleEnroll = async () => {
+  const handleEnroll = React.useCallback(async () => {
     try {
       await enroll.mutateAsync(courseId);
       toast({
@@ -21,10 +35,10 @@ export function Course({ params }: { params: { id: string } }) {
       toast({
         variant: 'destructive',
         title: 'Failed to enroll',
-        description: error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
       });
     }
-  };
+  }, [enroll, courseId, toast]);
 
   if (isLoading) {
     return (

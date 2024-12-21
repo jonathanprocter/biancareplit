@@ -3,11 +3,16 @@
 @tailwind utilities;
 
 @layer base {
-  * {
+  /* Consider only applying to necessary elements instead of using * */
+  html, body {
     @apply border-border;
   }
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    /* Ensure fallback styles exist */
+    background-color: #ffffff; /* example fallback */
+    color: #000000; /* example fallback */
+    border-color: #e5e7eb; /* example fallback */
   }
 }

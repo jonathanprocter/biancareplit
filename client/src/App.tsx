@@ -9,34 +9,61 @@ import { LearningPathRecommendations } from '@/components/LearningPathRecommenda
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
-import { DailyWelcomeCard } from '@/components/DailyWelcomeCard';
-import { FileUploadWizard } from '@/components/FileUploadWizard';
-import { Achievements } from '@/components/Achievements';
-import { LearningHeatMap } from '@/components/LearningHeatMap';
-import { AITutorAvatar } from '@/components/AITutorAvatar';
-import { StudyTimer } from '@/components/StudyTimer';
+import { Helmet } from 'react-helmet';
+// Assuming you have installed react-helmet
+import { ROUTES } from '@/constants/routes'; // centralizing route paths
 
 function App() {
   const [location] = useLocation();
-  const isAuthPage = location === '/' || location === '/register';
+
+  const isAuthPage = [ROUTES.HOME, ROUTES.REGISTER].includes(location);
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>My App</title>
+        <meta charSet="utf-8" />
+        <meta name="description" content="A sample app" />
+      </Helmet>
       {!isAuthPage && <Navigation />}
       <main className="container mx-auto px-4 py-8">
         <Switch>
-          <Route path="/" component={Login} />
-          <Route path="/register" component={Register} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/courses/:id" component={Course} />
-          <Route path="/progress" component={UserProgress} />
-          <Route path="/learning-style-quiz" component={LearningStyleQuiz} />
-          <Route path="/learning-paths" component={LearningPathRecommendations} />
+          <Route path={ROUTES.HOME} component={Login} />
+          <Route path={ROUTES.REGISTER} component={Register} />
+          <Route path={ROUTES.DASHBOARD} component={Dashboard} />
+          <Route path={ROUTES.COURSE} component={Course} />
+          <Route path={ROUTES.PROGRESS} component={UserProgress} />
+          <Route path={ROUTES.LEARNING_STYLE_QUIZ} component={LearningStyleQuiz} />
+          <Route path={ROUTES.LEARNING_PATHS} component={LearningPathRecommendations} />
           <Route component={NotFound} />
         </Switch>
       </main>
     </div>
   );
+}
+
+// Error boundary class component or use a library for error boundaries
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.log(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h1>Something went wrong.</h1>;
+    }
+
+    return this.props.children; 
+  }
 }
 
 function NotFound() {

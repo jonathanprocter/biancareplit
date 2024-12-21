@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useRegister } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,16 @@ export function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Perform validation and sanitization here.
+    const isValid = validateForm(username, password, email);
+    if (!isValid) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid input',
+        description: 'Please check your inputs and try again.',
+      });
+      return;
+    }
     try {
       await register.mutateAsync({ username, password, email });
       setLocation('/dashboard');
@@ -25,9 +35,15 @@ export function Register() {
       toast({
         variant: 'destructive',
         title: 'Registration failed',
-        description: error instanceof Error ? error.message : 'Please try again',
+        description: 'Please try again.',
       });
     }
+  };
+
+  // Example validation function
+  const validateForm = (username: string, password: string, email: string) => {
+    // Add more comprehensive validation logic here
+    return username.length >= 3 && password.length >= 6 && email.includes('@');
   };
 
   return (
@@ -39,9 +55,10 @@ export function Register() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Username</label>
+              <label className="text-sm font-medium" htmlFor="username">Username</label>
               <Input
                 type="text"
+                id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -49,18 +66,20 @@ export function Register() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm font-medium" htmlFor="email">Email</label>
               <Input
                 type="email"
+                id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Password</label>
+              <label className="text-sm font-medium" htmlFor="password">Password</label>
               <Input
                 type="password"
+                id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

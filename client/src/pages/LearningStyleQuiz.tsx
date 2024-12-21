@@ -26,8 +26,15 @@ export function LearningStyleQuiz() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const { data: questions, isLoading } = useQuery<Question[]>({
-    queryKey: ['/api/learning-style/questions'],
+  const fetchQuestions = async () => {
+    const res = await fetch('/api/learning-style/questions');
+    if (!res.ok) throw new Error('Failed to fetch questions');
+    return res.json();
+  };
+
+  const { data: questions, isLoading, error } = useQuery<Question[]>({
+    queryKey: ['questions'],
+    queryFn: fetchQuestions
   });
 
   const submitQuiz = useMutation({
@@ -69,6 +76,10 @@ export function LearningStyleQuiz() {
     );
   }
 
+  if (error) {
+    return <p>Error loading questions: {error.message}</p>;
+  }
+
   if (!questions || questions.length === 0) {
     return (
       <div className="container mx-auto p-6">
@@ -83,13 +94,13 @@ export function LearningStyleQuiz() {
     );
   }
 
-  const currentQ = questions[currentQuestion];
+  const currentQ = questions[currentQuestion] || {};
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   const handleResponse = (value: string) => {
     const response = {
       questionId: currentQ.id,
-      response: parseInt(value),
+      response: parseInt(value, 10),
     };
 
     setResponses((prev) => {
@@ -132,7 +143,7 @@ export function LearningStyleQuiz() {
             <p className="text-lg font-medium">{currentQ.question}</p>
             <RadioGroup
               onValueChange={handleResponse}
-              value={responses.find((r) => r.questionId === currentQ.id)?.response?.toString()}
+              value={responses.find((r) => r.questionId === currentQ.id)?.response?.toString() || ''}
             >
               {[1, 2, 3, 4, 5].map((value) => (
                 <div key={value} className="flex items-center space-x-2">

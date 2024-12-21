@@ -12,7 +12,6 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-
   const login = useLogin();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,11 +20,19 @@ export function Login() {
       await login.mutateAsync({ username, password });
       setLocation('/dashboard');
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Login failed',
-        description: error instanceof Error ? error.message : 'Please try again',
-      });
+      if (error instanceof Error) {
+        toast({
+          variant: 'destructive',
+          title: 'Login failed',
+          description: error.message,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Login failed',
+          description: 'An unexpected error occurred. Please try again.',
+        });
+      }
     }
   };
 
@@ -40,8 +47,9 @@ export function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Username</label>
+              <label htmlFor="username" className="text-sm font-medium">Username</label>
               <Input
+                id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -49,8 +57,9 @@ export function Login() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Password</label>
+              <label htmlFor="password" className="text-sm font-medium">Password</label>
               <Input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

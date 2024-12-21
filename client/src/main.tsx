@@ -6,11 +6,11 @@ import { Toaster } from '@/components/ui/toaster';
 import App from './App';
 import './index.css';
 
-try {
+function initializeApp() {
   const rootElement = document.getElementById('root');
   if (!rootElement) {
     console.error('Root element not found in the DOM');
-    throw new Error('Failed to find the root element');
+    return;
   }
 
   const root = createRoot(rootElement);
@@ -21,8 +21,12 @@ try {
         <App />
         <Toaster />
       </QueryClientProvider>
-    </StrictMode>,
+    </StrictMode>
   );
+}
+
+try {
+  initializeApp();
 } catch (error) {
   console.error('Error initializing application:', error);
 }
