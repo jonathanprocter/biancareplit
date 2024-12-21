@@ -41,7 +41,6 @@ class AICoachService:
         """Initialize the AI Coach Service with proper API key validation."""
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         self.app = app
-        self.client = None
         self.study_patterns = {}
         
         if not self.api_key:
@@ -50,9 +49,13 @@ class AICoachService:
         
         # Initialize OpenAI client
         try:
-            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-            # do not change this unless explicitly requested by the user
+            # Initialize the OpenAI client
             self.client = AsyncOpenAI(api_key=self.api_key)
+            
+            # Verify the client initialization
+            if not self.client:
+                raise ValueError("Failed to initialize OpenAI client")
+                
             logger.info("OpenAI client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
