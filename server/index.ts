@@ -232,7 +232,7 @@ async function startServer(): Promise<void> {
     }
 
     // Step 4: Start server
-    const PORT = 5000;
+    const PORT = process.env.PORT || 3000;
     await new Promise<void>((resolve, reject) => {
       server?.listen(PORT, '0.0.0.0')
         .once('listening', () => {
