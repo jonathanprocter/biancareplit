@@ -1,9 +1,19 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, Bot, Calendar, Clock, Trophy, Upload } from 'lucide-react';
+
+import { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import { AIFlashcardGenerator } from '@/components/AIFlashcardGenerator';
+import { AIMentor } from '@/components/AIMentor';
+import { AnalyticsVisualizer } from '@/components/AnalyticsVisualizer';
+import { LearningPathVisualizer } from '@/components/LearningPathVisualizer';
+import { ProgressAnimation } from '@/components/ProgressAnimation';
+
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Upload, Bot, Trophy, Activity } from 'lucide-react';
 
 const DailyWelcomeCard = () => {
   const [greeting, setGreeting] = useState('');
@@ -31,7 +41,9 @@ const DailyWelcomeCard = () => {
           <Clock className="h-5 w-5 ml-4" />
           <p>{time.toLocaleTimeString()}</p>
         </div>
-        <p className="mt-4">Your learning journey continues. Let's achieve something great today!</p>
+        <p className="mt-4">
+          Your learning journey continues. Let's achieve something great today!
+        </p>
       </CardContent>
     </Card>
   );
@@ -44,7 +56,7 @@ const AITutorAvatar = () => {
   const handleAskQuestion = () => {
     setIsTyping(true);
     toast({
-      title: "AI Tutor",
+      title: 'AI Tutor',
       description: "I'm here to help! What would you like to learn about?",
     });
     setTimeout(() => setIsTyping(false), 1000);
@@ -59,8 +71,10 @@ const AITutorAvatar = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="mb-4">Your personal AI tutor is ready to assist you with any questions.</p>
-        <Button 
+        <p className="mb-4">
+          Your personal AI tutor is ready to assist you with any questions.
+        </p>
+        <Button
           onClick={handleAskQuestion}
           variant="secondary"
           className="w-full"
@@ -81,7 +95,7 @@ const StudyTimer = () => {
     let interval: NodeJS.Timeout;
     if (isActive) {
       interval = setInterval(() => {
-        setTime(t => t + 1);
+        setTime((t) => t + 1);
       }, 1000);
     } else if (!isActive && time !== 0) {
       clearInterval(interval);
@@ -105,8 +119,10 @@ const StudyTimer = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-mono text-center mb-4">{formatTime(time)}</div>
-        <Button 
+        <div className="text-4xl font-mono text-center mb-4">
+          {formatTime(time)}
+        </div>
+        <Button
           onClick={() => setIsActive(!isActive)}
           variant="secondary"
           className="w-full"
@@ -132,7 +148,10 @@ const LearningHeatMap = () => {
       <CardContent>
         <div className="space-y-4">
           <Progress value={progress} className="h-2 bg-orange-300" />
-          <p>You're making great progress! {progress}% of your daily goal completed.</p>
+          <p>
+            You're making great progress! {progress}% of your daily goal
+            completed.
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -158,7 +177,9 @@ const Achievements = () => {
         <div className="space-y-2">
           {achievements.map(({ title, completed }) => (
             <div key={title} className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${completed ? 'bg-white' : 'bg-yellow-300'}`} />
+              <div
+                className={`h-2 w-2 rounded-full ${completed ? 'bg-white' : 'bg-yellow-300'}`}
+              />
               <span>{title}</span>
             </div>
           ))}
@@ -170,11 +191,11 @@ const Achievements = () => {
 
 const FileUploadWizard = () => {
   const { toast } = useToast();
-  
+
   const handleUpload = () => {
     toast({
-      title: "Upload Started",
-      description: "Your study materials are being processed...",
+      title: 'Upload Started',
+      description: 'Your study materials are being processed...',
     });
   };
 
@@ -187,12 +208,11 @@ const FileUploadWizard = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="mb-4">Upload your study materials for AI-powered analysis and flashcard generation.</p>
-        <Button 
-          onClick={handleUpload}
-          variant="secondary"
-          className="w-full"
-        >
+        <p className="mb-4">
+          Upload your study materials for AI-powered analysis and flashcard
+          generation.
+        </p>
+        <Button onClick={handleUpload} variant="secondary" className="w-full">
           Select Files to Upload
         </Button>
       </CardContent>
@@ -200,18 +220,11 @@ const FileUploadWizard = () => {
   );
 };
 
-import { ProgressAnimation } from '@/components/ProgressAnimation';
-import { AnalyticsVisualizer } from '@/components/AnalyticsVisualizer';
-import { AIFlashcardGenerator } from '@/components/AIFlashcardGenerator';
-import { AIMentor } from '@/components/AIMentor';
-import { LearningPathVisualizer } from '@/components/LearningPathVisualizer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 export function Dashboard() {
   return (
     <div className="container mx-auto p-6 space-y-8">
       <DailyWelcomeCard />
-      
+
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>

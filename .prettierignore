@@ -64,3 +64,12 @@ yarn.lock
 # Backend generated
 uploads/
 tmp/
+
+# Additional excludes
+*.min.css
+*.map
+.history
+.env.local
+.env.development
+.env.test
+.env.production

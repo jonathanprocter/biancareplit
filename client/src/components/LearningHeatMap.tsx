@@ -1,13 +1,11 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { Award, Brain, Calendar, Sparkles } from 'lucide-react';
+
 import React, { useEffect, useState } from 'react';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { useToast } from '@/hooks/use-toast';
-import {
-  Calendar,
-  Brain,
-  Award,
-  Sparkles,
-} from 'lucide-react';
 
 interface ActivityData {
   date: string;
@@ -29,9 +27,9 @@ export const LearningHeatMap = () => {
         setActivities(data);
       } catch (error) {
         toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load learning activities"
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load learning activities',
         });
       }
     };
@@ -49,8 +47,10 @@ export const LearningHeatMap = () => {
     const cells = Array.from({ length: 30 }, (_, i) => {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const activity = activities.find(a => new Date(a.date).toDateString() === date.toDateString());
-      
+      const activity = activities.find(
+        (a) => new Date(a.date).toDateString() === date.toDateString(),
+      );
+
       return (
         <motion.div
           key={date.toISOString()}
@@ -62,7 +62,9 @@ export const LearningHeatMap = () => {
             transition-colors duration-200
           `}
           style={{
-            backgroundColor: activity ? getIntensityColor(activity.intensity) : 'rgb(243, 244, 246)',
+            backgroundColor: activity
+              ? getIntensityColor(activity.intensity)
+              : 'rgb(243, 244, 246)',
           }}
         >
           {activity?.achievements.length > 0 && (
@@ -72,11 +74,7 @@ export const LearningHeatMap = () => {
       );
     });
 
-    return (
-      <div className="grid grid-cols-7 gap-2">
-        {cells}
-      </div>
-    );
+    return <div className="grid grid-cols-7 gap-2">{cells}</div>;
   };
 
   return (
@@ -119,7 +117,8 @@ export const LearningHeatMap = () => {
                     {new Date(selectedCell.date).toLocaleDateString()}
                   </h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Learning Intensity: {Math.round(selectedCell.intensity * 100)}%
+                    Learning Intensity:{' '}
+                    {Math.round(selectedCell.intensity * 100)}%
                   </p>
                   {selectedCell.achievements.length > 0 && (
                     <div className="mt-2">

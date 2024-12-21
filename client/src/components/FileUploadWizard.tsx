@@ -1,9 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import { AlertCircle, CheckCircle, FileText, Upload } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import { Card, CardContent } from '@/components/ui/card';
+
+import React, { useCallback, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { FileText, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+
 import { useToast } from '@/hooks/use-toast';
 
 interface UploadStatus {
@@ -18,77 +21,77 @@ export const FileUploadWizard = () => {
   const [uploads, setUploads] = useState<UploadStatus[]>([]);
   const { toast } = useToast();
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const newUploads = acceptedFiles.map(file => ({
-      file,
-      progress: 0,
-      status: 'pending' as const
-    }));
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const newUploads = acceptedFiles.map((file) => ({
+        file,
+        progress: 0,
+        status: 'pending' as const,
+      }));
 
-    setUploads(prev => [...prev, ...newUploads]);
+      setUploads((prev) => [...prev, ...newUploads]);
 
-    for (const upload of newUploads) {
-      try {
-        setUploads(prev => 
-          prev.map(u => 
-            u.file === upload.file 
-              ? { ...u, status: 'uploading' }
-              : u
-          )
-        );
+      for (const upload of newUploads) {
+        try {
+          setUploads((prev) =>
+            prev.map((u) =>
+              u.file === upload.file ? { ...u, status: 'uploading' } : u,
+            ),
+          );
 
-        const formData = new FormData();
-        formData.append('file', upload.file);
+          const formData = new FormData();
+          formData.append('file', upload.file);
 
-        const response = await fetch('/api/content/upload', {
-          method: 'POST',
-          body: formData,
-        });
+          const response = await fetch('/api/content/upload', {
+            method: 'POST',
+            body: formData,
+          });
 
-        if (!response.ok) {
-          throw new Error(await response.text());
+          if (!response.ok) {
+            throw new Error(await response.text());
+          }
+
+          const result = await response.json();
+
+          setUploads((prev) =>
+            prev.map((u) =>
+              u.file === upload.file ? { ...u, status: 'complete', result } : u,
+            ),
+          );
+
+          toast({
+            title: 'Upload Successful',
+            description: `${upload.file.name} has been processed and integrated into the learning system.`,
+          });
+        } catch (error) {
+          setUploads((prev) =>
+            prev.map((u) =>
+              u.file === upload.file
+                ? { ...u, status: 'error', error: error.message }
+                : u,
+            ),
+          );
+
+          toast({
+            variant: 'destructive',
+            title: 'Upload Failed',
+            description: `Failed to process ${upload.file.name}. Please try again.`,
+          });
         }
-
-        const result = await response.json();
-
-        setUploads(prev =>
-          prev.map(u =>
-            u.file === upload.file
-              ? { ...u, status: 'complete', result }
-              : u
-          )
-        );
-
-        toast({
-          title: "Upload Successful",
-          description: `${upload.file.name} has been processed and integrated into the learning system.`,
-        });
-      } catch (error) {
-        setUploads(prev =>
-          prev.map(u =>
-            u.file === upload.file
-              ? { ...u, status: 'error', error: error.message }
-              : u
-          )
-        );
-
-        toast({
-          variant: "destructive",
-          title: "Upload Failed",
-          description: `Failed to process ${upload.file.name}. Please try again.`,
-        });
       }
-    }
-  }, [toast]);
+    },
+    [toast],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'text/plain': ['.txt']
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        ['.docx'],
+      'text/plain': ['.txt'],
     },
-    multiple: true
+    multiple: true,
   });
 
   return (
@@ -140,8 +143,14 @@ export const FileUploadWizard = () => {
                 {upload.status === 'complete' && upload.result && (
                   <div className="mt-2 text-sm text-gray-600">
                     <p>Extracted {upload.result.topics?.length || 0} topics</p>
-                    <p>Generated {upload.result.flashcards?.length || 0} flashcards</p>
-                    <p>Created {upload.result.quiz_questions?.length || 0} quiz questions</p>
+                    <p>
+                      Generated {upload.result.flashcards?.length || 0}{' '}
+                      flashcards
+                    </p>
+                    <p>
+                      Created {upload.result.quiz_questions?.length || 0} quiz
+                      questions
+                    </p>
                   </div>
                 )}
               </div>

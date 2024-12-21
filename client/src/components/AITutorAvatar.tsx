@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Brain, Lightbulb, MessageCircle, Sparkles, Timer } from 'lucide-react';
+
+import React, { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+
 import { useToast } from '@/hooks/use-toast';
-import {
-  MessageCircle,
-  Brain,
-  Sparkles,
-  Lightbulb,
-  Timer,
-} from 'lucide-react';
 
 interface TutorMood {
   expression: string;
@@ -23,7 +20,7 @@ export const AITutorAvatar = () => {
   const [mood, setMood] = useState<TutorMood>({
     expression: '😊',
     color: 'bg-blue-500',
-    message: "Hi! I'm your AI study companion. How can I help you today?"
+    message: "Hi! I'm your AI study companion. How can I help you today?",
   });
   const { toast } = useToast();
 
@@ -32,19 +29,20 @@ export const AITutorAvatar = () => {
       setMood({
         expression: '🌟',
         color: 'bg-green-500',
-        message: "Outstanding progress! You're really mastering these concepts!"
+        message:
+          "Outstanding progress! You're really mastering these concepts!",
       });
     } else if (progress >= 60) {
       setMood({
         expression: '😊',
         color: 'bg-blue-500',
-        message: "You're doing great! Keep up the good work!"
+        message: "You're doing great! Keep up the good work!",
       });
     } else {
       setMood({
         expression: '🤔',
         color: 'bg-yellow-500',
-        message: "Let's work together to improve your understanding."
+        message: "Let's work together to improve your understanding.",
       });
     }
   };
@@ -59,17 +57,17 @@ export const AITutorAvatar = () => {
         },
         body: JSON.stringify({ query }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to get AI response');
-      
+
       const data = await response.json();
       setCurrentMessage(data.message);
       updateTutorMood(data.confidence || 70);
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to get AI tutor response"
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to get AI tutor response',
       });
     } finally {
       setIsTyping(false);
@@ -77,10 +75,10 @@ export const AITutorAvatar = () => {
   };
 
   const quickPrompts = [
-    "Can you explain this concept?",
-    "What should I study next?",
-    "Review my progress",
-    "Give me a practice question"
+    'Can you explain this concept?',
+    'What should I study next?',
+    'Review my progress',
+    'Give me a practice question',
   ];
 
   return (
@@ -94,13 +92,13 @@ export const AITutorAvatar = () => {
           >
             {mood.expression}
           </motion.div>
-          
+
           <div className="flex-1">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Brain className="w-5 h-5" />
               AI Study Companion
             </h3>
-            
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentMessage}

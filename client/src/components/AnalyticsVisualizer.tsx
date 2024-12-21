@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  AreaChart,
   Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
+
+import { useEffect, useState } from 'react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface PerformanceData {
   category: string;
@@ -39,7 +41,8 @@ const nclexCategories: NCLEXCategory[] = [
 
 export function AnalyticsVisualizer() {
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
-  const [categoryData, setCategoryData] = useState<NCLEXCategory[]>(nclexCategories);
+  const [categoryData, setCategoryData] =
+    useState<NCLEXCategory[]>(nclexCategories);
   const [predictiveIndex, setPredictiveIndex] = useState<number>(0);
 
   useEffect(() => {
@@ -48,21 +51,38 @@ export function AnalyticsVisualizer() {
       try {
         // Use mock data for initial implementation
         const mockData = [
-          { category: 'Safe Care', score: 85, timestamp: '2024-01-01', totalQuestions: 20, correctAnswers: 17 },
-          { category: 'Health Promotion', score: 78, timestamp: '2024-01-02', totalQuestions: 15, correctAnswers: 12 },
-          { category: 'Psychosocial', score: 92, timestamp: '2024-01-03', totalQuestions: 25, correctAnswers: 23 },
+          {
+            category: 'Safe Care',
+            score: 85,
+            timestamp: '2024-01-01',
+            totalQuestions: 20,
+            correctAnswers: 17,
+          },
+          {
+            category: 'Health Promotion',
+            score: 78,
+            timestamp: '2024-01-02',
+            totalQuestions: 15,
+            correctAnswers: 12,
+          },
+          {
+            category: 'Psychosocial',
+            score: 92,
+            timestamp: '2024-01-03',
+            totalQuestions: 25,
+            correctAnswers: 23,
+          },
         ];
-        
+
         setPerformanceData(mockData);
         calculatePredictiveIndex(mockData);
-        
+
         // Initialize category distribution with mock data
         const updatedCategories = nclexCategories.map((category, index) => ({
           ...category,
-          value: Math.floor(Math.random() * 40) + 60 // Random scores between 60-100
+          value: Math.floor(Math.random() * 40) + 60, // Random scores between 60-100
         }));
         setCategoryData(updatedCategories);
-        
       } catch (error) {
         console.error('Error setting up analytics data:', error);
       }
@@ -76,11 +96,14 @@ export function AnalyticsVisualizer() {
 
     // Calculate trend based on recent performance
     const recentScores = data.slice(-5);
-    const averageScore = recentScores.reduce((acc, curr) => acc + curr.score, 0) / recentScores.length;
-    const trend = recentScores[recentScores.length - 1].score - recentScores[0].score;
-    
+    const averageScore =
+      recentScores.reduce((acc, curr) => acc + curr.score, 0) /
+      recentScores.length;
+    const trend =
+      recentScores[recentScores.length - 1].score - recentScores[0].score;
+
     // Predictive index formula: (average * 0.7) + (trend * 0.3)
-    const index = (averageScore * 0.7) + (trend * 0.3);
+    const index = averageScore * 0.7 + trend * 0.3;
     setPredictiveIndex(Math.round(index));
   };
 

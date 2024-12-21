@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
+
 import { queryClient } from './queryClient';
 
 export interface User {
@@ -59,16 +60,16 @@ export const useLogin = () => {
     mutationFn: async (credentials: { username: string; password: string }) => {
       const res = await fetch('/api/login', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache',
         },
         body: JSON.stringify(credentials),
         credentials: 'include',
         mode: 'cors',
-        cache: 'no-store'
+        cache: 'no-store',
       });
 
       if (!res.ok) {
@@ -87,7 +88,11 @@ export const useLogin = () => {
 
 export const useRegister = () => {
   return useMutation({
-    mutationFn: async (userData: { username: string; password: string; email: string }) => {
+    mutationFn: async (userData: {
+      username: string;
+      password: string;
+      email: string;
+    }) => {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

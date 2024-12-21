@@ -1,11 +1,15 @@
-import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useLogin } from '@/lib/api';
+import { Link } from 'wouter';
+
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+
+import { useLogin } from '@/lib/api';
+
 import { useToast } from '@/hooks/use-toast';
-import { Link } from 'wouter';
 
 export function Login() {
   const [username, setUsername] = useState('');
@@ -47,7 +51,9 @@ export function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium">Username</label>
+              <label htmlFor="username" className="text-sm font-medium">
+                Username
+              </label>
               <Input
                 id="username"
                 type="text"
@@ -57,7 +63,9 @@ export function Login() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">Password</label>
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
               <Input
                 id="password"
                 type="password"

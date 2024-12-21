@@ -1,9 +1,12 @@
-import { useCourse, useEnroll } from '@/lib/api';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+
+import { useCourse, useEnroll } from '@/lib/api';
+
+import { useToast } from '@/hooks/use-toast';
 
 interface Module {
   id: number;
@@ -35,7 +38,10 @@ export function Course({ params }: { params: { id: string } }) {
       toast({
         variant: 'destructive',
         title: 'Failed to enroll',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred',
       });
     }
   }, [enroll, courseId, toast]);

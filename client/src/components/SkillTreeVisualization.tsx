@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/ui/card';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Brain, CheckCircle, Lock } from 'lucide-react';
+
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
-import { Brain, Lock, CheckCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 interface Skill {
   id: string;
@@ -169,7 +171,12 @@ export function SkillTreeVisualization({
 
   return (
     <div className="relative w-full h-full">
-      <svg ref={svgRef} width={width} height={height} className="absolute inset-0">
+      <svg
+        ref={svgRef}
+        width={width}
+        height={height}
+        className="absolute inset-0"
+      >
         <g>{renderConnections()}</g>
         {nodes.map((node) => (
           <g key={node.id}>
@@ -208,8 +215,12 @@ export function SkillTreeVisualization({
             <Card className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">{selectedSkill.name}</h3>
-                  <p className="text-sm text-gray-500">{selectedSkill.description}</p>
+                  <h3 className="text-lg font-semibold">
+                    {selectedSkill.name}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {selectedSkill.description}
+                  </p>
                 </div>
                 <button
                   onClick={() => setSelectedSkill(null)}
@@ -221,7 +232,9 @@ export function SkillTreeVisualization({
 
               <div className="mt-4 space-y-2">
                 <div className="flex items-center gap-2">
-                  <Badge variant={selectedSkill.mastered ? 'success' : 'secondary'}>
+                  <Badge
+                    variant={selectedSkill.mastered ? 'success' : 'secondary'}
+                  >
                     {selectedSkill.mastered ? (
                       <CheckCircle className="w-4 h-4 mr-1" />
                     ) : (
@@ -244,7 +257,9 @@ export function SkillTreeVisualization({
                             variant="outline"
                             className="cursor-pointer"
                             onClick={() => {
-                              const prereqNode = nodes.find((n) => n.id === prereqId);
+                              const prereqNode = nodes.find(
+                                (n) => n.id === prereqId,
+                              );
                               if (prereqNode) setSelectedSkill(prereqNode);
                             }}
                           >

@@ -1,6 +1,9 @@
+import { RefreshCw, Upload } from 'lucide-react';
+
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -9,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
 import { useToast } from '@/hooks/use-toast';
-import { Upload, RefreshCw } from 'lucide-react';
 
 interface Flashcard {
   id: string;
@@ -26,7 +29,8 @@ interface Flashcard {
 export function AIFlashcardGenerator() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('medium');
+  const [selectedDifficulty, setSelectedDifficulty] =
+    useState<string>('medium');
   const { toast } = useToast();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,9 +43,9 @@ export function AIFlashcardGenerator() {
   const generateFlashcards = async () => {
     if (!selectedFile) {
       toast({
-        title: "No File Selected",
-        description: "Please select a file to generate flashcards.",
-        variant: "destructive",
+        title: 'No File Selected',
+        description: 'Please select a file to generate flashcards.',
+        variant: 'destructive',
       });
       return;
     }
@@ -53,8 +57,8 @@ export function AIFlashcardGenerator() {
 
     try {
       // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // Mock response data
       const mockFlashcards = [
         {
@@ -65,30 +69,31 @@ export function AIFlashcardGenerator() {
           difficulty: selectedDifficulty,
           lastReviewed: null,
           nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          repetitionCount: 0
+          repetitionCount: 0,
         },
         // Add more mock flashcards as needed
       ];
-      
+
       toast({
-        title: "Success!",
+        title: 'Success!',
         description: `Generated ${mockFlashcards.length} flashcards from your material.`,
       });
-      
+
       // Schedule mock spaced repetition
-      const schedule = mockFlashcards.map(card => ({
+      const schedule = mockFlashcards.map((card) => ({
         ...card,
-        nextReview: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000)
+        nextReview: new Date(
+          Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000,
+        ),
       }));
-      
+
       console.log('Generated flashcards:', schedule);
-      
     } catch (error) {
       console.error('Error generating flashcards:', error);
       toast({
-        title: "Error",
-        description: "Failed to generate flashcards. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to generate flashcards. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsGenerating(false);
@@ -140,7 +145,7 @@ export function AIFlashcardGenerator() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <Button
             onClick={generateFlashcards}
             disabled={isGenerating || !selectedFile}
@@ -160,9 +165,9 @@ export function AIFlashcardGenerator() {
           </Button>
 
           <p className="text-sm text-gray-500 mt-4">
-            Upload your study materials and our AI will generate smart flashcards with
-            spaced repetition scheduling. Missed quiz questions will automatically be
-            converted into flashcards.
+            Upload your study materials and our AI will generate smart
+            flashcards with spaced repetition scheduling. Missed quiz questions
+            will automatically be converted into flashcards.
           </p>
         </div>
       </CardContent>

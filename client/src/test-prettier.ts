@@ -1,4 +1,3 @@
-
 // Type definitions for formatting test
 interface FormattedItem {
   id: number;
@@ -37,13 +36,17 @@ export const formattedCode: NestedConfig = {
     },
     { id: 2, name: 'Second Item', status: 'inactive' },
   ],
-  settings: { timeout: 5000, retryCount: 3, flags: { debug: false, verbose: true } },
+  settings: {
+    timeout: 5000,
+    retryCount: 3,
+    flags: { debug: false, verbose: true },
+  },
 };
 
 // Utility function with type safety
 export function processItems(
   items: FormattedItem[],
-  config: Partial<NestedConfig>
+  config: Partial<NestedConfig>,
 ): FormattedItem[] {
   if (process.env.NODE_ENV !== 'production') {
     console.log('Processing items with config:', config);

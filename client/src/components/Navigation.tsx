@@ -1,6 +1,9 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
+
+import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+
 import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
@@ -49,8 +52,8 @@ export function Navigation() {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={handleLogout}
               disabled={isLoggingOut}
             >

@@ -3,4 +3,8 @@
 
 # Run formatting and linting checks
 echo "Running pre-commit checks..."
-npx lint-staged && npm run check
+npx lint-staged
+npm run check || exit 1
+
+# Success message
+echo "✅ Pre-commit checks passed"

@@ -1,11 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
-import { getMentorResponse } from '@/lib/openai-service';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BookOpen, Bot, Brain, Loader2, Send, Target } from 'lucide-react';
+
+import { useEffect, useRef, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+import { getMentorResponse } from '@/lib/openai-service';
+
 import { useToast } from '@/hooks/use-toast';
-import { Bot, Send, Loader2, BookOpen, Brain, Target } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -37,16 +41,18 @@ export function AIMentor() {
           currentTopic: 'Cardiovascular System',
           recentPerformance: 85,
           strugglingAreas: ['Pharmacology', 'Critical Care'],
-          learningStyle: 'Visual'
+          learningStyle: 'Visual',
         };
         setMentorContext(mockContext);
-        
+
         // Add initial greeting
-        setMessages([{
-          role: 'assistant',
-          content: `Hello! I'm your AI learning mentor. I see you're studying ${mockContext.currentTopic}. How can I help you today?`,
-          timestamp: new Date()
-        }]);
+        setMessages([
+          {
+            role: 'assistant',
+            content: `Hello! I'm your AI learning mentor. I see you're studying ${mockContext.currentTopic}. How can I help you today?`,
+            timestamp: new Date(),
+          },
+        ]);
       } catch (error) {
         console.error('Error fetching mentor context:', error);
       }
@@ -66,34 +72,41 @@ export function AIMentor() {
 
     try {
       setIsLoading(true);
-      const userMessage = { role: 'user' as const, content: input, timestamp: new Date() };
-      setMessages(prev => [...prev, userMessage]);
+      const userMessage = {
+        role: 'user' as const,
+        content: input,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
       setInput('');
 
       const { content, error } = await getMentorResponse(
         messages.map(({ role, content }) => ({ role, content })),
-        mentorContext
+        mentorContext,
       );
 
       if (error) {
         toast({
-          title: "Error",
+          title: 'Error',
           description: error,
-          variant: "destructive"
+          variant: 'destructive',
         });
       }
 
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content,
-        timestamp: new Date()
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content,
+          timestamp: new Date(),
+        },
+      ]);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: "Error",
-        description: "Failed to get response from AI mentor. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to get response from AI mentor. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);

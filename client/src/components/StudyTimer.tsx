@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Brain, Coffee, Pause, Play, RotateCcw, Timer } from 'lucide-react';
+
+import React, { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+
 import { useToast } from '@/hooks/use-toast';
-import { Timer, Play, Pause, RotateCcw, Brain, Coffee } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface TimerState {
   minutes: number;
@@ -37,11 +40,11 @@ export const StudyTimer = () => {
   const { toast } = useToast();
 
   const motivationalMessages = [
-    "Great focus! Keep going!",
+    'Great focus! Keep going!',
     "You're making excellent progress!",
     "Stay determined, you're doing great!",
-    "Each session brings you closer to mastery!",
-    "Your dedication is inspiring!"
+    'Each session brings you closer to mastery!',
+    'Your dedication is inspiring!',
   ];
 
   useEffect(() => {
@@ -54,16 +57,16 @@ export const StudyTimer = () => {
             // Timer completed
             handleTimerComplete();
           } else {
-            setTimer(prev => ({
+            setTimer((prev) => ({
               ...prev,
               minutes: prev.minutes - 1,
-              seconds: 59
+              seconds: 59,
             }));
           }
         } else {
-          setTimer(prev => ({
+          setTimer((prev) => ({
             ...prev,
-            seconds: prev.seconds - 1
+            seconds: prev.seconds - 1,
           }));
         }
       }, 1000);
@@ -74,47 +77,65 @@ export const StudyTimer = () => {
     };
   }, [timer.isActive, timer.minutes, timer.seconds]);
 
-  const calculateOptimalDuration = (sessionHistory: TimerState['sessionHistory']) => {
+  const calculateOptimalDuration = (
+    sessionHistory: TimerState['sessionHistory'],
+  ) => {
     if (sessionHistory.length < 2) return 25; // Default Pomodoro duration
 
     const recentSessions = sessionHistory.slice(-5);
-    const averageProductivity = recentSessions.reduce((sum, session) => 
-      sum + session.productivity, 0) / recentSessions.length;
-    
+    const averageProductivity =
+      recentSessions.reduce((sum, session) => sum + session.productivity, 0) /
+      recentSessions.length;
+
     // Adjust duration based on productivity trends
-    if (averageProductivity > 0.8) return Math.min(timer.optimalDuration + 5, 45);
-    if (averageProductivity < 0.6) return Math.max(timer.optimalDuration - 5, 15);
+    if (averageProductivity > 0.8)
+      return Math.min(timer.optimalDuration + 5, 45);
+    if (averageProductivity < 0.6)
+      return Math.max(timer.optimalDuration - 5, 15);
     return timer.optimalDuration;
   };
 
-  const calculateFocusScore = (sessionHistory: TimerState['sessionHistory']) => {
+  const calculateFocusScore = (
+    sessionHistory: TimerState['sessionHistory'],
+  ) => {
     if (sessionHistory.length === 0) return 0;
     const recentSessions = sessionHistory.slice(-3);
-    return (recentSessions.reduce((sum, session) => sum + session.productivity, 0) / recentSessions.length) * 100;
+    return (
+      (recentSessions.reduce((sum, session) => sum + session.productivity, 0) /
+        recentSessions.length) *
+      100
+    );
   };
 
   const handleTimerComplete = () => {
     const isBreakCompleted = timer.isBreak;
-    const newCompletedSessions = isBreakCompleted ? timer.completedSessions : timer.completedSessions + 1;
-    
+    const newCompletedSessions = isBreakCompleted
+      ? timer.completedSessions
+      : timer.completedSessions + 1;
+
     // Record session completion
-    const newSessionHistory = [...timer.sessionHistory, {
-      duration: timer.isBreak ? 
-        (newCompletedSessions % 4 === 0 ? 15 : 5) : 
-        timer.optimalDuration,
-      type: timer.isBreak ? 'break' : 'work',
-      completedAt: new Date().toISOString(),
-      productivity: Math.random() * 0.4 + 0.6, // Simulated productivity score between 0.6 and 1.0
-    }];
+    const newSessionHistory = [
+      ...timer.sessionHistory,
+      {
+        duration: timer.isBreak
+          ? newCompletedSessions % 4 === 0
+            ? 15
+            : 5
+          : timer.optimalDuration,
+        type: timer.isBreak ? 'break' : 'work',
+        completedAt: new Date().toISOString(),
+        productivity: Math.random() * 0.4 + 0.6, // Simulated productivity score between 0.6 and 1.0
+      },
+    ];
 
     // Calculate new optimal duration and focus score
     const newOptimalDuration = calculateOptimalDuration(newSessionHistory);
     const newFocusScore = calculateFocusScore(newSessionHistory);
-    
+
     // Play notification sound
     const audio = new Audio('/notification.mp3');
     audio.play().catch(() => {}); // Ignore if audio fails to play
-    
+
     if (isBreakCompleted) {
       // Break completed, start work session with optimized duration
       setTimer({
@@ -125,11 +146,11 @@ export const StudyTimer = () => {
         completedSessions: newCompletedSessions,
         focusScore: newFocusScore,
         optimalDuration: newOptimalDuration,
-        sessionHistory: newSessionHistory
+        sessionHistory: newSessionHistory,
       });
       toast({
-        title: "Break Complete!",
-        description: "Time to focus on your studies again.",
+        title: 'Break Complete!',
+        description: 'Time to focus on your studies again.',
       });
     } else {
       // Work session completed, start break
@@ -142,22 +163,26 @@ export const StudyTimer = () => {
         completedSessions: newCompletedSessions,
         focusScore: timer.focusScore,
         optimalDuration: timer.optimalDuration,
-        sessionHistory: newSessionHistory
+        sessionHistory: newSessionHistory,
       });
       toast({
-        title: "Session Complete!",
+        title: 'Session Complete!',
         description: `Time for a ${longBreak ? '15' : '5'} minute break!`,
       });
     }
 
     // Set new motivational message
-    setMotivation(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
+    setMotivation(
+      motivationalMessages[
+        Math.floor(Math.random() * motivationalMessages.length)
+      ],
+    );
   };
 
   const toggleTimer = () => {
-    setTimer(prev => ({
+    setTimer((prev) => ({
       ...prev,
-      isActive: !prev.isActive
+      isActive: !prev.isActive,
     }));
   };
 
@@ -170,14 +195,16 @@ export const StudyTimer = () => {
       completedSessions: 0,
       focusScore: 0,
       optimalDuration: 25,
-      sessionHistory: []
+      sessionHistory: [],
     });
     setMotivation('');
   };
 
   const calculateProgress = () => {
-    const totalSeconds = timer.isBreak ? (timer.completedSessions % 4 === 0 ? 15 : 5) * 60 : 25 * 60;
-    const remainingSeconds = (timer.minutes * 60) + timer.seconds;
+    const totalSeconds = timer.isBreak
+      ? (timer.completedSessions % 4 === 0 ? 15 : 5) * 60
+      : 25 * 60;
+    const remainingSeconds = timer.minutes * 60 + timer.seconds;
     return ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
   };
 
@@ -185,40 +212,43 @@ export const StudyTimer = () => {
     <Card className="w-full">
       <CardContent className="p-6">
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Timer className="w-5 h-5" />
-                {timer.isBreak ? 'Break Time' : 'Optimized Study Session'}
-              </h3>
-              <div className="flex items-center gap-2">
-                <motion.div
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  className="bg-primary/10 px-3 py-1 rounded-full text-sm"
-                >
-                  {timer.completedSessions} sessions completed
-                </motion.div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-primary/5 p-3 rounded-lg">
-                <div className="text-sm text-muted-foreground">Focus Score</div>
-                <div className="text-2xl font-semibold">{Math.round(timer.focusScore)}%</div>
-              </div>
-              <div className="bg-primary/5 p-3 rounded-lg">
-                <div className="text-sm text-muted-foreground">Optimal Duration</div>
-                <div className="text-2xl font-semibold">{timer.optimalDuration}min</div>
-              </div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Timer className="w-5 h-5" />
+              {timer.isBreak ? 'Break Time' : 'Optimized Study Session'}
+            </h3>
+            <div className="flex items-center gap-2">
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                className="bg-primary/10 px-3 py-1 rounded-full text-sm"
+              >
+                {timer.completedSessions} sessions completed
+              </motion.div>
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-primary/5 p-3 rounded-lg">
+              <div className="text-sm text-muted-foreground">Focus Score</div>
+              <div className="text-2xl font-semibold">
+                {Math.round(timer.focusScore)}%
+              </div>
+            </div>
+            <div className="bg-primary/5 p-3 rounded-lg">
+              <div className="text-sm text-muted-foreground">
+                Optimal Duration
+              </div>
+              <div className="text-2xl font-semibold">
+                {timer.optimalDuration}min
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-col items-center space-y-6">
           <div className="relative w-full">
-            <Progress 
-              value={calculateProgress()} 
-              className="h-3"
-            />
+            <Progress value={calculateProgress()} className="h-3" />
           </div>
 
           <motion.div
@@ -227,12 +257,13 @@ export const StudyTimer = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="text-4xl font-bold"
           >
-            {String(timer.minutes).padStart(2, '0')}:{String(timer.seconds).padStart(2, '0')}
+            {String(timer.minutes).padStart(2, '0')}:
+            {String(timer.seconds).padStart(2, '0')}
           </motion.div>
 
           <div className="flex gap-4">
             <Button
-              variant={timer.isActive ? "destructive" : "default"}
+              variant={timer.isActive ? 'destructive' : 'default'}
               size="lg"
               onClick={toggleTimer}
               className="flex items-center gap-2"

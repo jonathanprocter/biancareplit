@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
+import { Award, Star, Trophy } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Star, Award } from 'lucide-react';
 
 interface Milestone {
   id: number;
@@ -61,11 +62,11 @@ export function ProgressAnimation() {
         <div className="relative pt-8 pb-4">
           {/* Progress Path */}
           <div className="absolute top-12 left-0 right-0 h-2 bg-white/20 rounded-full" />
-          <motion.div 
+          <motion.div
             className="absolute top-12 left-0 h-2 bg-white rounded-full"
             initial={{ width: '0%' }}
             animate={{ width: `${currentProgress}%` }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
+            transition={{ duration: 1.5, ease: 'easeOut' }}
           />
 
           {/* Milestone Markers */}
@@ -78,9 +79,9 @@ export function ProgressAnimation() {
                 }`}
                 style={{ left: `${milestone.requiredProgress}%` }}
                 initial={{ scale: 0, y: 0 }}
-                animate={{ 
+                animate={{
                   scale: 1,
-                  y: milestone.requiredProgress <= currentProgress ? -8 : 0
+                  y: milestone.requiredProgress <= currentProgress ? -8 : 0,
                 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
               >
@@ -100,7 +101,9 @@ export function ProgressAnimation() {
               className="text-center"
             >
               <p className="text-3xl font-bold mb-2">{currentProgress}%</p>
-              <p className="text-sm opacity-80">Keep going! You're making great progress!</p>
+              <p className="text-sm opacity-80">
+                Keep going! You're making great progress!
+              </p>
             </motion.div>
 
             {/* Milestone List */}
@@ -118,7 +121,9 @@ export function ProgressAnimation() {
                   <IconComponent icon={milestone.icon} />
                   <div>
                     <p className="font-semibold">{milestone.title}</p>
-                    <p className="text-sm opacity-80">{milestone.description}</p>
+                    <p className="text-sm opacity-80">
+                      {milestone.description}
+                    </p>
                   </div>
                 </motion.div>
               ))}

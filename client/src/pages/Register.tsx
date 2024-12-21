@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useRegister } from '@/lib/api';
+import { Link } from 'wouter';
+
+import React, { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+
+import { useRegister } from '@/lib/api';
+
 import { useToast } from '@/hooks/use-toast';
-import { Link } from 'wouter';
 
 export function Register() {
   const [username, setUsername] = useState('');
@@ -50,12 +54,16 @@ export function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">
+            Create Account
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="username">Username</label>
+              <label className="text-sm font-medium" htmlFor="username">
+                Username
+              </label>
               <Input
                 type="text"
                 id="username"
@@ -66,7 +74,9 @@ export function Register() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="email">Email</label>
+              <label className="text-sm font-medium" htmlFor="email">
+                Email
+              </label>
               <Input
                 type="email"
                 id="email"
@@ -76,7 +86,9 @@ export function Register() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="password">Password</label>
+              <label className="text-sm font-medium" htmlFor="password">
+                Password
+              </label>
               <Input
                 type="password"
                 id="password"
@@ -86,7 +98,11 @@ export function Register() {
                 minLength={6}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={register.isPending}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={register.isPending}
+            >
               {register.isPending ? 'Creating Account...' : 'Create Account'}
             </Button>
             <p className="text-sm text-center mt-4">
