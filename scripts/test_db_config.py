@@ -1,4 +1,3 @@
-import os
 import sys
 import logging
 from backend.config.unified_config import config_manager

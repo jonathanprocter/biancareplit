@@ -7,8 +7,6 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from backend.config.config_manager import config_manager
-
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))

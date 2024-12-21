@@ -3,7 +3,6 @@ import requests
 import sys
 import time
 import logging
-from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,

@@ -3,7 +3,6 @@ import requests
 import sys
 import logging
 import time
-from typing import Dict, Any
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -40,7 +39,8 @@ class DeploymentVerifier:
             if attempt > 0:
                 wait_time = min(5 * attempt, 30)
                 logger.info(
-                    f"Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{self.max_retries})"
+                    f"Retrying in {wait_time}s... "
+                    f"(Attempt {attempt + 1}/{self.max_retries})"
                 )
                 time.sleep(wait_time)
 
