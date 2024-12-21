@@ -19,12 +19,24 @@ describe('TestPrettier', () => {
     { id: 2, name: 'Item 2' },
   ];
 
-  it('renders correctly with title and items', () => {
+  it('renders correctly with title and items', async () => {
     render(<TestPrettier title="Test Title" items={mockItems} />);
 
+    // Check main title
     expect(screen.getByText('Test Title')).toBeInTheDocument();
-    expect(screen.getByText('Item 1')).toBeInTheDocument();
-    expect(screen.getByText('Item 2')).toBeInTheDocument();
+
+    // Open dialog
+    const openButton = screen.getByText('Open Dialog');
+    await userEvent.click(openButton);
+
+    // Check dialog content
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    
+    // Check items in dialog
+    for (const item of mockItems) {
+      expect(screen.getByText(item.name)).toBeInTheDocument();
+    }
   });
 
   it('opens and closes dialog when buttons are clicked', async () => {

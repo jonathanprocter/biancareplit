@@ -25,28 +25,29 @@ export const TestPrettier = ({ title, items }: TestProps) => {
       </Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
+          <DialogTitle className="text-xl font-semibold mb-4">
+            {title}
+          </DialogTitle>
           <div className="space-y-4">
-            <div className="space-y-4">
-              {items.map((item) => (
-                <div key={item.id} className="space-y-2">
-                  <div className="text-sm font-medium">{item.name}</div>
-                  <div className="flex items-center gap-2">
-                    <Input value={item.name} readOnly />
-                    <Button
-                      onClick={() =>
-                        toast({
-                          title: 'Clicked',
-                          description: `Clicked item ${item.id}`,
-                        })
-                      }
-                      size="sm"
-                    >
-                      Click Me
-                    </Button>
-                  </div>
+            {items.map((item) => (
+              <div key={item.id} className="space-y-2">
+                <div className="text-sm font-medium">{item.name}</div>
+                <div className="flex items-center gap-2">
+                  <Input value={item.name} readOnly />
+                  <Button
+                    onClick={() =>
+                      toast({
+                        title: 'Clicked',
+                        description: `Clicked item ${item.id}`,
+                      })
+                    }
+                    size="sm"
+                  >
+                    Click Me
+                  </Button>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
