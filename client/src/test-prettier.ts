@@ -32,24 +32,14 @@ export const formattedCode: NestedConfig = {
       id: 1,
       name: 'First Item',
       status: 'active',
-      metadata: {
-        created: creationTimestamp,
-        tags: ['important', 'featured'],
-      },
+      metadata: { created: creationTimestamp, tags: ['important', 'featured'] },
     },
-    {
-      id: 2,
-      name: 'Second Item',
-      status: 'inactive',
-    },
+    { id: 2, name: 'Second Item', status: 'inactive' },
   ],
   settings: {
     timeout: 5000,
     retryCount: 3,
-    flags: {
-      debug: false,
-      verbose: true,
-    },
+    flags: { debug: false, verbose: true },
   },
 };
 
