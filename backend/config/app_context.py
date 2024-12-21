@@ -1,12 +1,12 @@
 """Application context management system."""
 
 from flask import Flask, current_app
-from contextlib import contextmanager, nullcontext
-from typing import Generator, Optional, Dict, Any, Union, ContextManager
+from contextlib import contextmanager
+from typing import Generator
 import logging
 from pathlib import Path
 from sqlalchemy import text
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session
 import os
 
 
