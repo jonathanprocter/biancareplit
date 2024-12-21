@@ -3,19 +3,39 @@
 
 echo "🔍 Running pre-commit checks..."
 
-# Run prettier, eslint, and tests through lint-staged
-echo "🎨 Running formatting, linting, and tests..."
-npx lint-staged || {
-  echo "❌ Code style checks failed. Please fix the errors and try committing again."
-  exit 1
+# Function to display step status
+step_status() {
+  if [ $? -eq 0 ]; then
+    echo "✅ $1 passed"
+  else
+    echo "❌ $1 failed"
+    echo "💡 $2"
+    exit 1
+  fi
 }
+
+# Run prettier, eslint, and tests through lint-staged
+echo "🎨 Running code quality checks..."
+npx lint-staged
+step_status "Code quality checks" "Fix the style issues and ensure all tests pass for modified files"
 
 # Type checking
 echo "📝 Running type checking..."
-npm run check || {
-  echo "❌ Type checking failed"
-  exit 1
-}
+npm run check
+step_status "Type checking" "Fix type errors before committing"
 
-# Success message
-echo "✅ All pre-commit checks passed!"
+# Run quick tests for affected files
+echo "🧪 Running tests for changed files..."
+git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | xargs -I {} jest --findRelatedTests --passWithNoTests --verbose {}
+step_status "Tests" "Ensure all tests pass for the changed files"
+
+# Success message with helpful information
+echo "
+✨ All pre-commit checks passed! 
+   Your code meets our quality standards.
+
+💡 Remember:
+   - Write tests for new features
+   - Update documentation if needed
+   - Break down large changes into smaller commits
+"

@@ -2,29 +2,56 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 # Run TypeScript type checking
-echo "Running type checking..."
+echo "🔍 Running type checking..."
 npm run check || {
   echo "❌ TypeScript type checking failed"
+  echo "Please fix type errors before pushing"
   exit 1
 }
 
-# Run tests with coverage
-echo "Running tests with coverage..."
-npx jest --coverage --passWithNoTests --bail --ci || {
+# Run tests with coverage and generate detailed report
+echo "🧪 Running tests with coverage..."
+npx jest --coverage --passWithNoTests --bail --ci --verbose || {
   echo "❌ Tests failed"
+  echo "Please fix failing tests before pushing"
   exit 1
 }
 
-# Check minimum coverage thresholds
-if [ $? -eq 0 ]; then
-  echo "✅ All tests passed and coverage meets requirements!"
-  echo "Type checking and testing completed successfully."
-else
-  echo "❌ Tests failed or coverage is below requirements"
-  echo "Please ensure your code meets the minimum coverage thresholds:"
-  echo "- Branches: 70%"
-  echo "- Functions: 70%"
-  echo "- Lines: 70%"
-  echo "- Statements: 70%"
+# Enhanced coverage threshold check
+check_coverage() {
+  local type=$1
+  local actual=$2
+  local required=80
+  
+  if (( $(echo "$actual < $required" | bc -l) )); then
+    echo "❌ $type coverage is $actual%, which is below the required $required%"
+    return 1
+  else
+    echo "✅ $type coverage: $actual%"
+    return 0
+  }
+}
+
+echo "📊 Checking coverage thresholds..."
+coverage_check_failed=0
+
+# Extract coverage numbers
+branches=$(cat coverage/coverage-summary.json | grep -o '"branches":{"pct":[0-9]*' | grep -o '[0-9]*$')
+functions=$(cat coverage/coverage-summary.json | grep -o '"functions":{"pct":[0-9]*' | grep -o '[0-9]*$')
+lines=$(cat coverage/coverage-summary.json | grep -o '"lines":{"pct":[0-9]*' | grep -o '[0-9]*$')
+statements=$(cat coverage/coverage-summary.json | grep -o '"statements":{"pct":[0-9]*' | grep -o '[0-9]*$')
+
+check_coverage "Branches" $branches || coverage_check_failed=1
+check_coverage "Functions" $functions || coverage_check_failed=1
+check_coverage "Lines" $lines || coverage_check_failed=1
+check_coverage "Statements" $statements || coverage_check_failed=1
+
+if [ $coverage_check_failed -eq 1 ]; then
+  echo "❌ Coverage requirements not met"
+  echo "Please add more tests to improve coverage before pushing"
+  echo "Required coverage for all metrics: 80%"
   exit 1
 fi
+
+echo "✅ All checks passed successfully!"
+echo "Type checking and testing completed successfully."
