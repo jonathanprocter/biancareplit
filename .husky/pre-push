@@ -5,10 +5,10 @@
 echo "Running type checking..."
 npm run check || exit 1
 
-# Run tests with coverage report
-echo "Running tests..."
-npx jest --coverage || exit 1
+# Run tests with coverage
+echo "Running tests with coverage..."
+npx jest --coverage --passWithNoTests || exit 1
 
-# If all checks pass, allow the push
+# If all checks pass
 echo "✅ All checks passed!"
 exit 0

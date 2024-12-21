@@ -35,7 +35,8 @@ const config: Config.InitialOptions = {
     '!client/src/**/*.d.ts',
     '!**/node_modules/**',
   ],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/test.tsx'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  roots: ['<rootDir>/client/src'],
   transformIgnorePatterns: [
     '/node_modules/',
     '^.+\\.module\\.(css|sass|scss)$',
