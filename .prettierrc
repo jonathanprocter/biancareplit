@@ -10,20 +10,14 @@
   "endOfLine": "lf",
   "jsxSingleQuote": false,
   "quoteProps": "as-needed",
+  "useTabs": false,
   "plugins": ["prettier-plugin-tailwindcss"],
   "tailwindConfig": "./tailwind.config.ts",
-  "useTabs": false,
   "overrides": [
     {
-      "files": "*.{ts,tsx}",
+      "files": ["*.ts", "*.tsx"],
       "options": {
         "parser": "typescript"
-      }
-    },
-    {
-      "files": "*.{json,md,yml,yaml}",
-      "options": {
-        "tabWidth": 2
       }
     }
   ]
