@@ -1,4 +1,4 @@
-import { type FC, useState, useEffect } from 'react';
+import { type FC, useEffect, useState } from 'react';
 
 interface TestProps {
   title: string;

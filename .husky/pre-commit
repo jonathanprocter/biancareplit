@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run lint-staged
-npx lint-staged
+# Run formatting and linting checks
+echo "Running pre-commit checks..."
+npx lint-staged && npm run check
