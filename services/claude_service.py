@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 
 class ClaudeService:
     def __init__(self):
-        self.api_key = os.getenv('CLAUDE_API_KEY')
+        self.api_key = os.getenv('ANTHROPIC_API_KEY')
         if not self.api_key:
-            logger.error("Claude API key not found")
-            raise ValueError("Claude API key not found in environment variables")
+            logger.error("Anthropic API key not found")
+            raise ValueError("Anthropic API key not found in environment variables")
             
         self.api_url = "https://api.anthropic.com/v1/complete"
         
