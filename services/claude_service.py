@@ -14,6 +14,48 @@ class ClaudeService:
             
         self.api_url = "https://api.anthropic.com/v1/messages"
         
+    def review_and_fix_code(self, code_snippet, max_tokens=2000):
+        """Performs comprehensive code review and fixes issues."""
+        prompt = f"""You are a senior software engineer. Please perform a thorough code review and fix the following code:
+
+```python
+{code_snippet}
+```
+
+Analyze for:
+1. Bugs and logic errors
+2. Performance optimizations
+3. Security vulnerabilities
+4. Code style and best practices
+5. Error handling
+
+Return the following JSON structure:
+{{
+    "issues": [list of identified issues],
+    "fixed_code": "the corrected code",
+    "improvements": [list of improvements made]
+}}"""
+
+        headers = {
+            "anthropic-version": "2023-06-01",
+            "x-api-key": self.api_key,
+            "content-type": "application/json"
+        }
+        
+        data = {
+            "model": "claude-3-sonnet-20240229",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": max_tokens
+        }
+
+        try:
+            response = requests.post(self.api_url, headers=headers, json=data)
+            response.raise_for_status()
+            return response.json()["content"][0]["text"]
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Claude API request failed: {str(e)}")
+            raise
+
     def fix_code(self, code_snippet, max_tokens=2000):
         """Sends code to Claude and requests a fixed version."""
         prompt = f"""You are a skilled programmer. Please review, fix, and optimize the following code for deployment:

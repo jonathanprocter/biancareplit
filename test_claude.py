@@ -13,6 +13,22 @@ def main():
     try:
         response = claude.review_code(code)
 
+    # Test code review functionality
+    code_with_issues = """
+def calculate_sum(numbers):
+    total = 0
+    for i in range(len(numbers)):
+        total = total + numbers[i]
+    return total"""
+    
+    try:
+        review_result = claude.review_and_fix_code(code_with_issues)
+        print("\nCode Review Results:\n")
+        print(review_result)
+    except Exception as e:
+        print(f"Error during code review: {str(e)}")
+
+
 
     # Example code review
     code = """def factorial(n):
