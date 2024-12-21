@@ -24,3 +24,6 @@ black
 flake8
 openai
 requests
+black
+flake8
+requests
