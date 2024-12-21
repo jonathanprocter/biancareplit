@@ -16,7 +16,7 @@ class ClaudeService:
         
     def review_and_fix_code(self, code_snippet, max_tokens=4000):
         """Performs comprehensive code review and fixes issues."""
-        prompt = f"""You are an expert software engineer. Please perform a thorough code review and fix the following code. Pay special attention to:
+        prompt = f"""You are an expert DevOps engineer. Please perform a thorough deployment readiness review and fix the following code. Pay special attention to:
 
 ```python
 {code_snippet}
