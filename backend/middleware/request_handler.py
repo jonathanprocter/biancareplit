@@ -1,13 +1,9 @@
 """Request handling middleware for the NCLEX coaching platform."""
 
-import time
 import logging
+import time
 from functools import wraps
 from flask import g, request, current_app
-from functools import wraps
-import logging
-import time
-from datetime import datetime
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

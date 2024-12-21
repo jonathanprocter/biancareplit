@@ -1,7 +1,6 @@
 """Core application initializer."""
 
 import logging
-from typing import Optional
 from flask import Flask
 from backend.core.context import app_context
 from backend.database.db_config import init_db

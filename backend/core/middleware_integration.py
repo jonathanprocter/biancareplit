@@ -1,8 +1,8 @@
 """Core middleware integration service."""
 
-from typing import Dict, Any, Optional, List
+from typing import Optional, List
 import logging
-from flask import Flask, Request, Response
+from flask import Flask, Response
 from ..middleware.base import BaseMiddleware
 from ..middleware.middleware_config import middleware_registry
 

@@ -1,9 +1,10 @@
+"""Middleware initialization module."""
+
+import logging
 from flask import Flask
-from typing import List
 from .error_middleware import ErrorMiddleware
 from .metrics_middleware import MetricsMiddleware
 from ..routes.health import health_bp
-import logging
 
 logger = logging.getLogger(__name__)
 
