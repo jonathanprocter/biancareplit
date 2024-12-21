@@ -3,8 +3,17 @@
 
 # Run prettier and linting checks
 echo "Running pre-commit checks..."
-npx prettier --write . || exit 1
-npx lint-staged || exit 1
+npx lint-staged || {
+  echo "❌ Prettier/ESLint checks failed"
+  exit 1
+}
+
+# Type checking
+echo "Running type checking..."
+npm run check || {
+  echo "❌ Type checking failed"
+  exit 1
+}
 
 # Success message
-echo "✅ Pre-commit checks passed"
+echo "✅ All pre-commit checks passed"
