@@ -1,8 +1,10 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Calendar } from 'lucide-react';
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 // Create contexts for flashcard system and question bank
 export const FlashcardContext = createContext(null);
@@ -80,7 +82,9 @@ const FlashcardReview = ({ flashcard, onReview }) => {
         >
           {isFlipped ? (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">{learningSteps[currentStep]?.title}</h3>
+              <h3 className="text-lg font-semibold">
+                {learningSteps[currentStep]?.title}
+              </h3>
               <p className="text-gray-700 whitespace-pre-line">
                 {learningSteps[currentStep]?.content}
               </p>
@@ -104,7 +108,11 @@ const FlashcardReview = ({ flashcard, onReview }) => {
         </div>
 
         <div className="mt-4">
-          <Button variant="outline" onClick={() => setShowHints(!showHints)} className="w-full">
+          <Button
+            variant="outline"
+            onClick={() => setShowHints(!showHints)}
+            className="w-full"
+          >
             {showHints ? 'Hide Hints' : 'Show Hints'}
           </Button>
           {showHints && flashcard.metadata?.relatedConcepts && (
@@ -135,10 +143,15 @@ const FlashcardReview = ({ flashcard, onReview }) => {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <Button onClick={() => onReview(flashcard.id, confidence, 1)} variant="destructive">
+              <Button
+                onClick={() => onReview(flashcard.id, confidence, 1)}
+                variant="destructive"
+              >
                 Hard
               </Button>
-              <Button onClick={() => onReview(flashcard.id, confidence, 3)}>Good</Button>
+              <Button onClick={() => onReview(flashcard.id, confidence, 3)}>
+                Good
+              </Button>
               <Button
                 onClick={() => onReview(flashcard.id, confidence, 5)}
                 variant="outline"
@@ -168,7 +181,8 @@ const FlashcardReview = ({ flashcard, onReview }) => {
           <div className="flex items-center justify-between text-sm text-gray-500">
             <div className="flex items-center">
               <Calendar className="w-4 h-4 mr-2" />
-              Next review: {new Date(flashcard.nextReviewDate).toLocaleDateString()}
+              Next review:{' '}
+              {new Date(flashcard.nextReviewDate).toLocaleDateString()}
             </div>
             <div className="flex items-center">
               <span className="mr-2">Study streak: {studyStreak}</span>
@@ -248,7 +262,9 @@ const FlashcardReviewSession = ({ onBackToDashboard }) => {
       const filteredCards =
         selectedCategory === 'all'
           ? dueCards
-          : dueCards.filter((card) => card.metadata?.category === selectedCategory) || [];
+          : dueCards.filter(
+              (card) => card.metadata?.category === selectedCategory,
+            ) || [];
 
       // Set cards in state
       setCurrentCards(filteredCards);
@@ -256,7 +272,9 @@ const FlashcardReviewSession = ({ onBackToDashboard }) => {
       // Update progress if cards were loaded
       if (filteredCards.length > 0) {
         const progress =
-          (filteredCards.filter((card) => card.reviewed).length / filteredCards.length) * 100;
+          (filteredCards.filter((card) => card.reviewed).length /
+            filteredCards.length) *
+          100;
         setProgress(progress);
       }
     } catch (error) {
@@ -270,7 +288,9 @@ const FlashcardReviewSession = ({ onBackToDashboard }) => {
           const filteredCards =
             selectedCategory === 'all'
               ? dueCards
-              : dueCards?.filter((card) => card.metadata?.category === selectedCategory) || [];
+              : dueCards?.filter(
+                  (card) => card.metadata?.category === selectedCategory,
+                ) || [];
           setCurrentCards(filteredCards);
         } catch (fallbackError) {
           console.error('Fallback also failed:', fallbackError);
@@ -320,7 +340,10 @@ const FlashcardReviewSession = ({ onBackToDashboard }) => {
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
-        <Button onClick={onBackToDashboard} className="flex items-center text-sm">
+        <Button
+          onClick={onBackToDashboard}
+          className="flex items-center text-sm"
+        >
           ← Back to NCLEX Exam Preparation
         </Button>
       </div>

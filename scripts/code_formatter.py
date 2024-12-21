@@ -47,56 +47,66 @@ def apply_formatters(file_path: str, language_config: Dict) -> None:
     """
     Applies appropriate formatters based on the language configuration.
     """
-    print(f"\nFormatting {file_path} ({language_config['name']})...")
+    file_name = os.path.basename(file_path)
+    print(f"Formatting {file_name}...", end=" ", flush=True)
     
     for formatter in language_config["formatters"]:
         try:
             if formatter == "black":
-                subprocess.run(["black", file_path], check=True)
-                print(f"✓ Black formatting completed for {file_path}")
-            
+                subprocess.run(["black", "-q", file_path], check=True)
             elif formatter == "flake8":
                 result = subprocess.run(["flake8", file_path], capture_output=True, text=True)
                 if result.returncode != 0:
-                    print(f"⚠ Flake8 found issues in {file_path}:")
-                    print(result.stdout)
-                else:
-                    print(f"✓ Flake8 check passed for {file_path}")
-            
+                    print(f"\n⚠ Flake8 issues in {file_name}:")
+                    print(result.stdout.strip())
             elif formatter == "prettier":
-                subprocess.run(["npx", "prettier", "--write", file_path], check=True)
-                print(f"✓ Prettier formatting completed for {file_path}")
-            
+                subprocess.run(["npx", "prettier", "--loglevel=error", "--write", file_path], check=True)
             elif formatter == "eslint":
-                subprocess.run(["npx", "eslint", "--fix", file_path], check=True)
-                print(f"✓ ESLint formatting completed for {file_path}")
-                
+                subprocess.run(["npx", "eslint", "--quiet", "--fix", file_path], check=True)
         except subprocess.CalledProcessError as e:
-            print(f"⚠ Error running {formatter} on {file_path}:")
-            print(e.stderr if e.stderr else e)
+            print(f"\n⚠ {formatter} failed on {file_name}")
+            if e.stderr:
+                print(e.stderr.decode().strip())
+    
+    print("✓")
 
-def process_directory(directory: str) -> None:
+def process_directory(directory: str, batch_size: int = 10) -> None:
     """
-    Recursively processes all supported files in the project directory.
+    Recursively processes files in batches to avoid timeout issues.
     """
     excluded_dirs = {
         'node_modules', 'venv', '.git', '__pycache__', 
         'build', 'dist', 'coverage'
     }
     
+    files_to_process = []
+    
+    # First collect all files
     for root, dirs, files in os.walk(directory):
         # Skip excluded directories
         dirs[:] = [d for d in dirs if d not in excluded_dirs]
         
         for file_name in files:
             file_path = os.path.join(root, file_name)
+            if detect_language(file_path):
+                files_to_process.append(file_path)
+
+    # Then process in batches
+    total_files = len(files_to_process)
+    print(f"\nFound {total_files} files to format")
+    
+    for i in range(0, total_files, batch_size):
+        batch = files_to_process[i:i + batch_size]
+        print(f"\nProcessing batch {i//batch_size + 1} of {(total_files + batch_size - 1)//batch_size}")
+        
+        for file_path in batch:
             language_config = detect_language(file_path)
-            
-            if language_config:
-                try:
-                    apply_formatters(file_path, language_config)
-                except Exception as e:
-                    print(f"Error processing {file_path}: {str(e)}")
+            try:
+                apply_formatters(file_path, language_config)
+            except Exception as e:
+                print(f"Error processing {file_path}: {str(e)}")
+        
+        print(f"Completed batch {i//batch_size + 1}")
 
 def main():
     """

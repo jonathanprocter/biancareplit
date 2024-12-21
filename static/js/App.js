@@ -1,5 +1,6 @@
-const { useState, useEffect } = React;
 import { FlashcardSystem } from './flashcard-system.js';
+
+const { useState, useEffect } = React;
 
 const App = () => {
   useEffect(() => {

@@ -55,8 +55,8 @@ function displayCurrentQuestion() {
             <div class="question-header">
                 <h3>Question ${state.currentQuestionIndex + 1} of ${state.questions.length}</h3>
                 <span class="difficulty-badge ${difficultyClass}">${question.difficulty.toUpperCase()}</span> <span class="score">Score: ${
-    state.score
-  }/${state.totalAnswered}</span>
+                  state.score
+                }/${state.totalAnswered}</span>
             </div>
             <p class="question">${question.question}</p>
             <form id="questionForm">
@@ -77,7 +77,9 @@ function displayCurrentQuestion() {
                   state.currentQuestionIndex === 0 ? 'disabled' : ''
                 }>← Previous</button>
                 <button type="button" class="action-btn next" onclick="nextQuestion()" ${
-                  state.currentQuestionIndex >= state.questions.length - 1 ? 'disabled' : ''
+                  state.currentQuestionIndex >= state.questions.length - 1
+                    ? 'disabled'
+                    : ''
                 }>Next →</button>
             </div>
         </div>

@@ -158,7 +158,10 @@ class NursingContentHandler {
     try {
       // Setup window event listeners for timer management
       window.addEventListener('beforeunload', () => this.cleanup());
-      window.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+      window.addEventListener(
+        'visibilitychange',
+        this.handleVisibilityChange.bind(this),
+      );
       console.log('NursingContentHandler initialized with timer');
     } catch (error) {
       console.error('Error in NursingContentHandler constructor:', error);
@@ -182,7 +185,10 @@ class NursingContentHandler {
         this.timer.destroy();
       }
       // Remove all event listeners
-      document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+      document.removeEventListener(
+        'visibilitychange',
+        this.handleVisibilityChange,
+      );
       window.removeEventListener('blur', this.handleWindowBlur);
       window.removeEventListener('focus', this.handleWindowFocus);
     } catch (error) {
@@ -219,7 +225,10 @@ class NursingContentHandler {
       };
 
       // Add event listeners
-      document.addEventListener('visibilitychange', this.handleVisibilityChange);
+      document.addEventListener(
+        'visibilitychange',
+        this.handleVisibilityChange,
+      );
       window.addEventListener('blur', this.handleWindowBlur);
       window.addEventListener('focus', this.handleWindowFocus);
 
@@ -233,7 +242,10 @@ class NursingContentHandler {
 
   async loadQuestions(category = null) {
     try {
-      const loadingNotification = this.showNotification('Loading questions...', 'info');
+      const loadingNotification = this.showNotification(
+        'Loading questions...',
+        'info',
+      );
       console.log('Loading questions for category:', category || this.category);
 
       category = category || this.category;
@@ -263,7 +275,9 @@ class NursingContentHandler {
       this.displayCurrentQuestion();
     }
     if (this.questions.length === 0) {
-      this.showError('No questions found for the selected category. Please try another category.');
+      this.showError(
+        'No questions found for the selected category. Please try another category.',
+      );
       return;
     }
 
@@ -305,7 +319,9 @@ class NursingContentHandler {
       }
 
       // Ensure difficulty is lowercase for consistent CSS class mapping
-      const difficulty = (this.currentQuestion.difficulty || 'intermediate').toLowerCase();
+      const difficulty = (
+        this.currentQuestion.difficulty || 'intermediate'
+      ).toLowerCase();
       const difficultyClass =
         {
           beginner: 'beginner',
@@ -373,7 +389,9 @@ class NursingContentHandler {
                 </div>`;
     } catch (error) {
       console.error('Error displaying question:', error);
-      this.showError('Failed to display question. Please try refreshing the page.');
+      this.showError(
+        'Failed to display question. Please try refreshing the page.',
+      );
     }
   }
 
@@ -415,13 +433,16 @@ class NursingContentHandler {
         requestData: requestData,
       });
 
-      const response = await fetch(`/api/nursing/verify-answer/${this.currentQuestion.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/nursing/verify-answer/${this.currentQuestion.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
         },
-        body: JSON.stringify(requestData),
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}`);
@@ -439,12 +460,14 @@ class NursingContentHandler {
             }\n\nRationale: ${result.rationale}`,
             category: this.currentQuestion.category,
             difficulty: this.currentQuestion.difficulty,
-            nclexCategory: this.currentQuestion.nclex_category || 'Pharmacology',
+            nclexCategory:
+              this.currentQuestion.nclex_category || 'Pharmacology',
             keywords: this.currentQuestion.keywords || [],
             aiEnhanced: true,
             relatedConcepts: this.currentQuestion.related_concepts || [],
             studyTips:
-              result.study_tips || 'Focus on understanding the underlying concepts and rationale.',
+              result.study_tips ||
+              'Focus on understanding the underlying concepts and rationale.',
           };
 
           // Create flashcard with enhanced metadata
@@ -459,9 +482,15 @@ class NursingContentHandler {
             flashcardData.relatedConcepts,
             flashcardData.studyTips,
           );
-          console.log('Created enhanced flashcard from missed question:', flashcardData);
+          console.log(
+            'Created enhanced flashcard from missed question:',
+            flashcardData,
+          );
         } catch (error) {
-          console.error('Error creating flashcard from missed question:', error);
+          console.error(
+            'Error creating flashcard from missed question:',
+            error,
+          );
         }
       }
 
@@ -519,7 +548,9 @@ class NursingContentHandler {
   showNotification(message, type = 'error') {
     try {
       // Remove existing notifications of the same type
-      const existingNotifications = document.querySelectorAll(`.notification-${type}`);
+      const existingNotifications = document.querySelectorAll(
+        `.notification-${type}`,
+      );
       existingNotifications.forEach((notification) => notification.remove());
 
       const notificationDiv = document.createElement('div');
@@ -609,7 +640,9 @@ class NursingContentHandler {
             `;
 
       // Remove existing notifications of the same type
-      document.querySelectorAll(`.${type}-notification`).forEach((el) => el.remove());
+      document
+        .querySelectorAll(`.${type}-notification`)
+        .forEach((el) => el.remove());
 
       // Add to DOM with animation
       notificationDiv.style.opacity = '0';

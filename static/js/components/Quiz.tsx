@@ -1,5 +1,6 @@
-import React from 'react';
 import { Container, Paper, Typography } from '@mui/material';
+
+import React from 'react';
 
 const Quiz = () => {
   return (

@@ -50,13 +50,15 @@ const MorningGreeting = ({ userId }) => {
 
       <div>
         <h3 className="text-xl font-semibold mb-2">NCLEX Predictions</h3>
-        {Object.entries(greetingData.nclex_predictions).map(([topic, prediction]) => (
-          <div key={topic} className="mb-2">
-            <p className="font-medium">{topic}</p>
-            <p>Predicted Score: {prediction.predicted_score}%</p>
-            <p>Confidence: {prediction.confidence_level}%</p>
-          </div>
-        ))}
+        {Object.entries(greetingData.nclex_predictions).map(
+          ([topic, prediction]) => (
+            <div key={topic} className="mb-2">
+              <p className="font-medium">{topic}</p>
+              <p>Predicted Score: {prediction.predicted_score}%</p>
+              <p>Confidence: {prediction.confidence_level}%</p>
+            </div>
+          ),
+        )}
       </div>
     </div>
   );

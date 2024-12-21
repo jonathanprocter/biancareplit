@@ -6,7 +6,9 @@ class EventEmitter {
     this._listenerCounts = new Map();
     this._warnings = new Set();
     this._debugMode =
-      typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development';
+      typeof process !== 'undefined' &&
+      process.env &&
+      process.env.NODE_ENV === 'development';
 
     // Initialize with basic error handling
     this.on('error', (error) => {
@@ -32,7 +34,9 @@ class EventEmitter {
 
   setMaxListeners(n) {
     if (typeof n !== 'number' || n < 0 || Number.isNaN(n)) {
-      throw new TypeError('The value of "n" is out of range. It must be a non-negative number.');
+      throw new TypeError(
+        'The value of "n" is out of range. It must be a non-negative number.',
+      );
     }
     this._maxListeners = n;
     return this;
@@ -118,7 +122,10 @@ class EventEmitter {
         }
       });
       this.onceEvents.delete(event);
-      this._listenerCounts.set(event, (this._listenerCounts.get(event) || 0) - onceListeners.size);
+      this._listenerCounts.set(
+        event,
+        (this._listenerCounts.get(event) || 0) - onceListeners.size,
+      );
     }
 
     return handled;
@@ -148,7 +155,10 @@ class EventEmitter {
   }
 
   listenerCount(event) {
-    return (this.events.get(event)?.size || 0) + (this.onceEvents.get(event)?.size || 0);
+    return (
+      (this.events.get(event)?.size || 0) +
+      (this.onceEvents.get(event)?.size || 0)
+    );
   }
 
   rawListeners(event) {

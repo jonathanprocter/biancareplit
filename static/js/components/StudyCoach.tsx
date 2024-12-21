@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import { aiCoachService } from '../services/AICoachService';
 
 interface NCLEXQuestion {
@@ -32,7 +33,9 @@ const StudyCoach: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState<NCLEXQuestion | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<NCLEXQuestion | null>(
+    null,
+  );
 
   useEffect(() => {
     // Add initial greeting
@@ -94,7 +97,8 @@ const StudyCoach: React.FC = () => {
         ...prev,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an error generating the question. Please try again.',
+          content:
+            'Sorry, I encountered an error generating the question. Please try again.',
         },
       ]);
     } finally {
@@ -118,7 +122,10 @@ const StudyCoach: React.FC = () => {
     } else {
       try {
         const response = await aiCoachService.getStudyTip(userMessage);
-        setMessages((prev) => [...prev, { role: 'assistant', content: response.tip }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: response.tip },
+        ]);
       } catch (error) {
         console.error('Error getting response:', error);
         setMessages((prev) => [
@@ -183,7 +190,11 @@ const StudyCoach: React.FC = () => {
           placeholder="Ask a question..."
           rows={2}
         />
-        <button onClick={handleSendMessage} disabled={isLoading} className="btn btn-primary">
+        <button
+          onClick={handleSendMessage}
+          disabled={isLoading}
+          className="btn btn-primary"
+        >
           Send
         </button>
       </div>

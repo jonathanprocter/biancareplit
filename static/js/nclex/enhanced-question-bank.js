@@ -96,14 +96,18 @@ export class NCLEXFlashcard {
     this.reviewCount++;
     this.lastReviewed = new Date();
     const daysUntilNextReview = this.calculateNextReviewInterval();
-    this.nextReviewDate = new Date(Date.now() + daysUntilNextReview * 24 * 60 * 60 * 1000);
+    this.nextReviewDate = new Date(
+      Date.now() + daysUntilNextReview * 24 * 60 * 60 * 1000,
+    );
   }
 
   calculateNextReviewInterval() {
     const baseInterval = 24;
     const confidenceMultiplier = Math.max(0.5, this.confidence / 5);
     const reviewMultiplier = Math.log(this.reviewCount + 1) + 1;
-    return Math.ceil((baseInterval * confidenceMultiplier * reviewMultiplier) / 24);
+    return Math.ceil(
+      (baseInterval * confidenceMultiplier * reviewMultiplier) / 24,
+    );
   }
 }
 
@@ -182,8 +186,10 @@ export class NCLEXQuestionBank {
 
     this.flashcards.forEach((card) => {
       const { category, difficulty } = card.metadata;
-      categoryDistribution[category] = (categoryDistribution[category] || 0) + 1;
-      difficultyDistribution[difficulty] = (difficultyDistribution[difficulty] || 0) + 1;
+      categoryDistribution[category] =
+        (categoryDistribution[category] || 0) + 1;
+      difficultyDistribution[difficulty] =
+        (difficultyDistribution[difficulty] || 0) + 1;
     });
 
     return {

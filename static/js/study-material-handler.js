@@ -45,10 +45,12 @@ export class StudyMaterialHandler {
 
       // System status verification
       console.log('[StudyMaterialHandler] Verifying system status...');
-      const statusResponse = await fetch('/api/system/status').catch((error) => {
-        console.error('[StudyMaterialHandler] Status check failed:', error);
-        throw new Error('Failed to verify system status');
-      });
+      const statusResponse = await fetch('/api/system/status').catch(
+        (error) => {
+          console.error('[StudyMaterialHandler] Status check failed:', error);
+          throw new Error('Failed to verify system status');
+        },
+      );
 
       if (!statusResponse.ok) {
         const errorData = await statusResponse.json().catch(() => ({}));
@@ -85,12 +87,17 @@ export class StudyMaterialHandler {
       // Set up form handlers
       this.uploadForm = document.getElementById('material-upload-form');
       if (this.uploadForm) {
-        this.uploadForm.addEventListener('submit', this.handleUpload.bind(this));
+        this.uploadForm.addEventListener(
+          'submit',
+          this.handleUpload.bind(this),
+        );
         console.log('[StudyMaterialHandler] Upload form handlers initialized');
       }
 
       this.initialized = true;
-      console.log('[StudyMaterialHandler] Initialization completed successfully');
+      console.log(
+        '[StudyMaterialHandler] Initialization completed successfully',
+      );
       return true;
     } catch (error) {
       console.error('[StudyMaterialHandler] Initialization failed:', error);

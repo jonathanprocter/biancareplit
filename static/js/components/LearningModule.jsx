@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import React, { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
 const LearningModule = () => {
@@ -54,7 +55,9 @@ const LearningModule = () => {
   if (error) {
     return (
       <div className="error-container p-4 bg-red-50 border border-red-200 rounded-md">
-        <h2 className="text-xl font-semibold text-red-700 mb-2">Initialization Error</h2>
+        <h2 className="text-xl font-semibold text-red-700 mb-2">
+          Initialization Error
+        </h2>
         <p className="text-red-600">{error}</p>
         <Button className="mt-4" onClick={() => window.location.reload()}>
           Retry

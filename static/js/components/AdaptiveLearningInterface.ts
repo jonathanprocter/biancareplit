@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+import { calculateConfidence, formatDate } from '../../lib/utils';
 import { configManager } from '../config/system.config';
 import { NCLEXQuestion } from '../types/study';
-import { formatDate, calculateConfidence } from '../../lib/utils';
 
 interface AdaptiveLearningState {
   currentQuestion: NCLEXQuestion | null;
@@ -53,7 +54,8 @@ export class AdaptiveLearningSystem {
       const question = await response.json();
       this.state.currentQuestion = question;
     } catch (error) {
-      this.state.error = error instanceof Error ? error.message : 'Failed to initialize';
+      this.state.error =
+        error instanceof Error ? error.message : 'Failed to initialize';
     } finally {
       this.state.loading = false;
     }
@@ -65,7 +67,9 @@ export class AdaptiveLearningSystem {
         throw new Error('No active question');
       }
 
-      const timeSpent = Math.floor((Date.now() - this.state.sessionStartTime) / 1000);
+      const timeSpent = Math.floor(
+        (Date.now() - this.state.sessionStartTime) / 1000,
+      );
       const isCorrect = answer === this.state.currentQuestion.correctAnswer;
 
       const attempt: QuestionAttempt = {
@@ -85,7 +89,8 @@ export class AdaptiveLearningSystem {
       await this.saveAttempt(attempt);
       await this.loadNextQuestion();
     } catch (error) {
-      this.state.error = error instanceof Error ? error.message : 'Failed to submit answer';
+      this.state.error =
+        error instanceof Error ? error.message : 'Failed to submit answer';
     }
   }
 

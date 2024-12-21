@@ -1,5 +1,6 @@
-import React from 'react';
 import { Container, Grid, Paper, Typography } from '@mui/material';
+
+import React from 'react';
 
 const Dashboard = () => {
   return (
@@ -7,7 +8,12 @@ const Dashboard = () => {
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-            <Typography component="h1" variant="h6" color="primary" gutterBottom>
+            <Typography
+              component="h1"
+              variant="h6"
+              color="primary"
+              gutterBottom
+            >
               NCLEX Study Dashboard
             </Typography>
           </Paper>

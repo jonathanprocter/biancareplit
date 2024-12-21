@@ -2,11 +2,21 @@ class StudyMaterialHandler {
   constructor() {
     this.form = document.getElementById('uploadMaterialForm');
     this.resultDiv = document.getElementById('uploadResult');
-    this.progressBar = this.form ? this.form.querySelector('.progress-bar') : null;
-    this.uploadProgress = this.form ? this.form.querySelector('.upload-progress') : null;
-    this.uploadStatus = this.form ? this.form.querySelector('.upload-status') : null;
-    this.fileInput = this.form ? this.form.querySelector('#materialFile') : null;
-    this.fileValidationMessage = document.getElementById('fileValidationMessage');
+    this.progressBar = this.form
+      ? this.form.querySelector('.progress-bar')
+      : null;
+    this.uploadProgress = this.form
+      ? this.form.querySelector('.upload-progress')
+      : null;
+    this.uploadStatus = this.form
+      ? this.form.querySelector('.upload-status')
+      : null;
+    this.fileInput = this.form
+      ? this.form.querySelector('#materialFile')
+      : null;
+    this.fileValidationMessage = document.getElementById(
+      'fileValidationMessage',
+    );
 
     if (!this.form || !this.fileInput) {
       console.error('Required upload form elements not found');
@@ -32,7 +42,8 @@ class StudyMaterialHandler {
       return false;
     }
 
-    const validFileType = file.type === 'text/plain' || file.name.endsWith('.txt');
+    const validFileType =
+      file.type === 'text/plain' || file.name.endsWith('.txt');
     if (!validFileType) {
       this.showError('Please upload a valid text file (.txt)');
       this.fileInput.value = '';
@@ -43,9 +54,9 @@ class StudyMaterialHandler {
     const maxSize = 1024 * 1024; // 1MB in bytes
     if (file.size > maxSize) {
       this.showError(
-        `File size exceeds the maximum limit of 1MB (current size: ${(file.size / 1024).toFixed(
-          1,
-        )}KB)`,
+        `File size exceeds the maximum limit of 1MB (current size: ${(
+          file.size / 1024
+        ).toFixed(1)}KB)`,
       );
       this.fileInput.value = '';
       return false;
@@ -82,7 +93,9 @@ class StudyMaterialHandler {
       formData.append('file', file);
       formData.append('study_date', new Date().toISOString().split('T')[0]);
 
-      console.log(`Uploading file: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
+      console.log(
+        `Uploading file: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`,
+      );
       const response = await fetch('/api/study-materials/submit', {
         method: 'POST',
         body: formData,
@@ -106,7 +119,9 @@ class StudyMaterialHandler {
           console.log('Parsed response:', result);
         } catch (parseError) {
           console.error('Failed to parse response as JSON:', responseText);
-          throw new Error('Server returned invalid response format. Please try again.');
+          throw new Error(
+            'Server returned invalid response format. Please try again.',
+          );
         }
 
         // Validate JSON structure
@@ -124,12 +139,15 @@ class StudyMaterialHandler {
       }
 
       if (!response.ok) {
-        const errorMessage = result?.error || result?.details || 'Unknown error';
+        const errorMessage =
+          result?.error || result?.details || 'Unknown error';
         throw new Error(`Server error (${response.status}): ${errorMessage}`);
       }
 
       if (result.success) {
-        this.showSuccess(result.message || 'Study material uploaded successfully!');
+        this.showSuccess(
+          result.message || 'Study material uploaded successfully!',
+        );
         this.form.reset();
 
         if (result.analysis) {
@@ -212,7 +230,8 @@ class StudyMaterialHandler {
   }
   showAnalysis(analysis) {
     try {
-      const parsedAnalysis = typeof analysis === 'string' ? JSON.parse(analysis) : analysis;
+      const parsedAnalysis =
+        typeof analysis === 'string' ? JSON.parse(analysis) : analysis;
       console.log('Displaying analysis:', parsedAnalysis);
 
       const analysisHtml = `

@@ -91,17 +91,24 @@ class EnhancedFlashcardSystem {
 
       const normalizedCategory =
         validCategories.find((c) =>
-          category.toLowerCase().includes(c.toLowerCase().replace(/ & | and /g, '')),
+          category
+            .toLowerCase()
+            .includes(c.toLowerCase().replace(/ & | and /g, '')),
         ) || 'General Nursing';
 
       // Validate and normalize difficulty
       const validDifficulties = ['beginner', 'intermediate', 'advanced'];
-      const normalizedDifficulty = validDifficulties.includes(difficulty.toLowerCase())
+      const normalizedDifficulty = validDifficulties.includes(
+        difficulty.toLowerCase(),
+      )
         ? difficulty.toLowerCase()
         : 'intermediate';
 
       // Show save confirmation dialog first
-      const saveConfirm = await this.showSaveConfirmation(cleanFront, cleanBack);
+      const saveConfirm = await this.showSaveConfirmation(
+        cleanFront,
+        cleanBack,
+      );
       if (!saveConfirm || !saveConfirm.confirmed) {
         console.log('User cancelled saving flashcard');
         return false;
@@ -176,7 +183,12 @@ class EnhancedFlashcardSystem {
             answer: cleanBack,
             difficulty: normalizedDifficulty,
             category: normalizedCategory,
-            tags: [...new Set([...(Array.isArray(keywords) ? keywords : []), ...tags])],
+            tags: [
+              ...new Set([
+                ...(Array.isArray(keywords) ? keywords : []),
+                ...tags,
+              ]),
+            ],
             nclexCategory: nclexCategory,
           }),
         });
@@ -228,7 +240,10 @@ class EnhancedFlashcardSystem {
         ...questionData,
         timestamp: new Date().toISOString(),
       });
-      localStorage.setItem('wrongAnswersDB', JSON.stringify(this.wrongAnswersDB));
+      localStorage.setItem(
+        'wrongAnswersDB',
+        JSON.stringify(this.wrongAnswersDB),
+      );
 
       // Create the flashcard
       return await this.createCustomFlashcard(
@@ -261,7 +276,9 @@ class EnhancedFlashcardSystem {
   }
 
   getFlashcardsByCategory(category) {
-    return this.flashcards.filter((f) => f.category.toLowerCase() === category.toLowerCase());
+    return this.flashcards.filter(
+      (f) => f.category.toLowerCase() === category.toLowerCase(),
+    );
   }
 
   render() {
@@ -280,7 +297,8 @@ class EnhancedFlashcardSystem {
     }
 
     const currentCard = this.flashcards[this.currentIndex];
-    const normalizedDifficulty = currentCard.difficulty?.toLowerCase() || 'intermediate';
+    const normalizedDifficulty =
+      currentCard.difficulty?.toLowerCase() || 'intermediate';
 
     this.displayContainer.innerHTML = `
             <div class="flashcard">
@@ -314,7 +332,10 @@ class EnhancedFlashcardSystem {
                                         <h4>Related Concepts:</h4>
                                         <ul>
                                             ${currentCard.relatedConcepts
-                                              .map((concept) => `<li>${concept}</li>`)
+                                              .map(
+                                                (concept) =>
+                                                  `<li>${concept}</li>`,
+                                              )
                                               .join('')}
                                         </ul>
                                     </div>
@@ -397,7 +418,8 @@ class EnhancedFlashcardSystem {
   }
 
   previousCard() {
-    this.currentIndex = (this.currentIndex - 1 + this.flashcards.length) % this.flashcards.length;
+    this.currentIndex =
+      (this.currentIndex - 1 + this.flashcards.length) % this.flashcards.length;
     this.render();
   }
 

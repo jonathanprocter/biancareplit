@@ -1,5 +1,6 @@
 // FlashcardInterface.js - Core module for flashcard system
 import React from 'react';
+
 import { configManager } from '../config';
 import { middlewareManager } from '../middleware';
 
@@ -107,10 +108,14 @@ class FlashcardSystem {
       try {
         console.log(`Initializing ${component.name}...`);
         const success = await component.init();
-        console.log(`${component.name} initialization ${success ? 'successful' : 'failed'}`);
+        console.log(
+          `${component.name} initialization ${success ? 'successful' : 'failed'}`,
+        );
 
         if (!success && component.required) {
-          throw new Error(`Required component ${component.name} failed to initialize`);
+          throw new Error(
+            `Required component ${component.name} failed to initialize`,
+          );
         }
       } catch (error) {
         console.error(`Error initializing ${component.name}:`, error);

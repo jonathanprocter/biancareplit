@@ -1,3 +1,5 @@
+import { singletonManager } from './singleton-manager';
+
 // Performance monitoring utilities
 class PerformanceMonitor {
   constructor() {
@@ -49,7 +51,9 @@ class PerformanceMonitor {
     metrics.averageDuration = metrics.totalDuration / metrics.renders;
 
     this.metrics.componentMetrics.set(componentName, metrics);
-    console.log(`[Performance] Component ${componentName} rendered in ${duration}ms`);
+    console.log(
+      `[Performance] Component ${componentName} rendered in ${duration}ms`,
+    );
   }
 
   trackResourceTiming(entry) {
@@ -86,14 +90,18 @@ class PerformanceMonitor {
 
     // Log performance issues
     if (measure.duration > 1000) {
-      console.warn(`Performance warning: ${measure.name} took ${measure.duration}ms`);
+      console.warn(
+        `Performance warning: ${measure.name} took ${measure.duration}ms`,
+      );
     }
 
     return measure;
   }
 
   trackPaintTiming(entry) {
-    console.log(`[Performance] ${entry.name}: ${Math.round(entry.startTime)}ms`);
+    console.log(
+      `[Performance] ${entry.name}: ${Math.round(entry.startTime)}ms`,
+    );
   }
 
   getMetrics() {
@@ -111,7 +119,10 @@ class PerformanceMonitor {
       timestamp: new Date().toISOString(),
       ...metrics,
       summary: {
-        totalBundleSize: Object.values(metrics.bundleSizes).reduce((a, b) => a + b, 0),
+        totalBundleSize: Object.values(metrics.bundleSizes).reduce(
+          (a, b) => a + b,
+          0,
+        ),
         averageLoadTime:
           metrics.loadTimes.reduce((acc, curr) => acc + curr.duration, 0) /
             metrics.loadTimes.length || 0,
@@ -120,8 +131,6 @@ class PerformanceMonitor {
     };
   }
 }
-
-import { singletonManager } from './singleton-manager';
 
 // Get or create performance monitor instance
 export const performanceMonitor = singletonManager.getInstance(

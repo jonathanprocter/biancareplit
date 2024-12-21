@@ -1,13 +1,15 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
-import { theme } from './theme';
-import Dashboard from './components/Dashboard';
-import Quiz from './components/Quiz';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+
+import React from 'react';
+
 import AIChat from './components/AIChat';
 import Analytics from './components/Analytics';
+import Dashboard from './components/Dashboard';
 import Navigation from './components/Navigation';
+import Quiz from './components/Quiz';
+import { theme } from './theme';
 
 function App() {
   return (

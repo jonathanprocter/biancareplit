@@ -1,4 +1,3 @@
-
 import os
 import smtplib
 from email.mime.text import MIMEText
@@ -8,42 +7,43 @@ from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+
 class EmailService:
-    _instance: Optional['EmailService'] = None
-    
+    _instance: Optional["EmailService"] = None
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(EmailService, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         if self._initialized:
             return
-            
+
         try:
             # Get SMTP settings with validation
-            self.smtp_server = os.getenv('SMTP_SERVER')
-            smtp_port = os.getenv('SMTP_PORT')
-            self.smtp_username = os.getenv('SMTP_USERNAME')
-            self.smtp_password = os.getenv('SMTP_PASSWORD')
-            
+            self.smtp_server = os.getenv("SMTP_SERVER")
+            smtp_port = os.getenv("SMTP_PORT")
+            self.smtp_username = os.getenv("SMTP_USERNAME")
+            self.smtp_password = os.getenv("SMTP_PASSWORD")
+
             # Validate all required settings
             missing_settings = []
             if not self.smtp_server:
-                missing_settings.append('SMTP_SERVER')
+                missing_settings.append("SMTP_SERVER")
             if not smtp_port:
-                missing_settings.append('SMTP_PORT')
+                missing_settings.append("SMTP_PORT")
             if not self.smtp_username:
-                missing_settings.append('SMTP_USERNAME')
+                missing_settings.append("SMTP_USERNAME")
             if not self.smtp_password:
-                missing_settings.append('SMTP_PASSWORD')
-                
+                missing_settings.append("SMTP_PASSWORD")
+
             if missing_settings:
                 error_msg = f"Email service configuration incomplete - missing: {', '.join(missing_settings)}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
-                
+
             # Validate port number with proper type handling
             try:
                 if smtp_port is None:
@@ -56,15 +56,17 @@ class EmailService:
             except (TypeError, ValueError) as e:
                 logger.error(f"Invalid SMTP_PORT value: {smtp_port}")
                 raise ValueError(f"Invalid SMTP port configuration: {str(e)}")
-                
+
             logger.info("Email service initialized successfully")
             self._initialized = True
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize email service: {str(e)}")
             raise
 
-    def send_daily_summary(self, email: str, summary_data: Dict[str, Any]) -> tuple[bool, str]:
+    def send_daily_summary(
+        self, email: str, summary_data: Dict[str, Any]
+    ) -> tuple[bool, str]:
         """
         Send a daily study summary email to the specified address.
         Returns a tuple of (success: bool, message: str)
@@ -72,28 +74,33 @@ class EmailService:
         try:
             if not email:
                 return (False, "Email address is required")
-                
+
             # Basic email format validation
-            if not '@' in email or not '.' in email:
+            if not "@" in email or not "." in email:
                 return (False, "Invalid email address format")
-                
+
             if not summary_data:
                 return (False, "No summary data available to send")
-                
+
             # Verify required fields in summary data
-            required_fields = ['questionsAttempted', 'accuracyRate', 'studyTime']
-            missing_fields = [field for field in required_fields if field not in summary_data]
+            required_fields = ["questionsAttempted", "accuracyRate", "studyTime"]
+            missing_fields = [
+                field for field in required_fields if field not in summary_data
+            ]
             if missing_fields:
-                return (False, f"Incomplete summary data: missing {', '.join(missing_fields)}")
-            
+                return (
+                    False,
+                    f"Incomplete summary data: missing {', '.join(missing_fields)}",
+                )
+
             logger.info(f"Preparing daily summary email for {email}")
             msg = MIMEMultipart()
-            msg['From'] = f"NCLEX Study Coach <{self.smtp_username}>"
-            msg['To'] = email
-            msg['Subject'] = 'Your Daily NCLEX Study Summary'
+            msg["From"] = f"NCLEX Study Coach <{self.smtp_username}>"
+            msg["To"] = email
+            msg["Subject"] = "Your Daily NCLEX Study Summary"
 
             # Format study time
-            study_time = summary_data.get('studyTime', 0)
+            study_time = summary_data.get("studyTime", 0)
             hours = study_time // 60
             minutes = study_time % 60
             time_str = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
@@ -128,7 +135,7 @@ class EmailService:
             </html>
             """
 
-            msg.attach(MIMEText(html_body, 'html'))
+            msg.attach(MIMEText(html_body, "html"))
 
             if not all([self.smtp_server, self.smtp_username, self.smtp_password]):
                 error_msg = "SMTP configuration is incomplete"
@@ -146,7 +153,7 @@ class EmailService:
                 error_msg = f"SMTP error: {str(e)}"
                 logger.error(error_msg)
                 return (False, error_msg)
-            
+
         except smtplib.SMTPAuthenticationError:
             error_msg = "Failed to authenticate with SMTP server"
             logger.error(error_msg)

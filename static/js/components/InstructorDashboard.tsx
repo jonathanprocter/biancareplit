@@ -1,16 +1,19 @@
+import { useMutation } from '@tanstack/react-query';
+import { BookOpen, FileText, Loader2, Upload } from 'lucide-react';
+
 import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Loader2, Upload, FileText, BookOpen } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+
+import { useToast } from '@/hooks/use-toast';
 
 export const InstructorDashboard: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -28,13 +31,13 @@ export const InstructorDashboard: React.FC = () => {
         method: 'POST',
         body: formData,
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
-        credentials: 'include'
+        credentials: 'include',
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || 'Upload failed');
       }
@@ -48,16 +51,16 @@ export const InstructorDashboard: React.FC = () => {
     onSuccess: (data) => {
       setAnalysis(data.analysis);
       toast({
-        title: "Upload Successful",
-        description: "Content has been processed and analyzed",
+        title: 'Upload Successful',
+        description: 'Content has been processed and analyzed',
       });
       setUploadProgress(100);
     },
     onError: (error: Error) => {
       toast({
-        title: "Upload Failed",
+        title: 'Upload Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
       setUploadProgress(0);
     },
@@ -101,9 +104,13 @@ export const InstructorDashboard: React.FC = () => {
             <div>
               <h3 className="font-semibold mb-2">Learning Objectives</h3>
               <ul className="list-disc pl-6">
-                {analysis.learning_objectives?.map((objective: string, index: number) => (
-                  <li key={index} className="text-sm text-muted-foreground">{objective}</li>
-                ))}
+                {analysis.learning_objectives?.map(
+                  (objective: string, index: number) => (
+                    <li key={index} className="text-sm text-muted-foreground">
+                      {objective}
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
 
@@ -111,12 +118,19 @@ export const InstructorDashboard: React.FC = () => {
             <div>
               <h3 className="font-semibold mb-2">Key Concepts</h3>
               <div className="grid gap-4 md:grid-cols-2">
-                {analysis.key_concepts?.map((concept: { term: string, definition: string }, index: number) => (
-                  <Card key={index} className="p-4">
-                    <h4 className="font-medium">{concept.term}</h4>
-                    <p className="text-sm text-muted-foreground">{concept.definition}</p>
-                  </Card>
-                ))}
+                {analysis.key_concepts?.map(
+                  (
+                    concept: { term: string; definition: string },
+                    index: number,
+                  ) => (
+                    <Card key={index} className="p-4">
+                      <h4 className="font-medium">{concept.term}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {concept.definition}
+                      </p>
+                    </Card>
+                  ),
+                )}
               </div>
             </div>
 
@@ -179,7 +193,8 @@ export const InstructorDashboard: React.FC = () => {
         <CardHeader>
           <CardTitle>Upload Study Material</CardTitle>
           <CardDescription>
-            Upload educational content to generate AI-powered analysis and learning materials
+            Upload educational content to generate AI-powered analysis and
+            learning materials
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -202,11 +217,15 @@ export const InstructorDashboard: React.FC = () => {
                     <Upload className="h-8 w-8 text-muted-foreground" />
                     <div className="text-sm text-muted-foreground">
                       {file ? (
-                        <span className="text-primary font-medium">{file.name}</span>
+                        <span className="text-primary font-medium">
+                          {file.name}
+                        </span>
                       ) : (
                         <>
-                          <span className="font-semibold text-primary">Click to upload</span> or
-                          drag and drop
+                          <span className="font-semibold text-primary">
+                            Click to upload
+                          </span>{' '}
+                          or drag and drop
                         </>
                       )}
                     </div>

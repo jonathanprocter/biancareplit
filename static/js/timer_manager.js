@@ -67,7 +67,9 @@ class TimerManager {
     return {
       sessionStart: this.sessionStartTime,
       questionStart: this.questionStartTime,
-      timeTaken: this.questionStartTime ? Math.floor((now - this.questionStartTime) / 1000) : 0,
+      timeTaken: this.questionStartTime
+        ? Math.floor((now - this.questionStartTime) / 1000)
+        : 0,
       studyDuration: this.studyDuration,
     };
   }

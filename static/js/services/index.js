@@ -1,8 +1,8 @@
 // Enhanced services initialization with proper error handling
-import { openAIService } from './OpenAIQuestionService';
-import { aiCoachService } from './AICoachService';
 import { NursingContentHandler } from '../nursing_content';
 import { StudyTimer } from '../study_timer';
+import { aiCoachService } from './AICoachService';
+import { openAIService } from './OpenAIQuestionService';
 
 // Service exports
 export { openAIService, aiCoachService };

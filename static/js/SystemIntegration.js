@@ -1,6 +1,6 @@
 // Core system integration module
-import { EventEmitter } from './utils/EventEmitter.js';
 import { configManager } from './config/system.config.js';
+import { EventEmitter } from './utils/EventEmitter.js';
 
 // Ensure EventEmitter is available
 if (!EventEmitter) {
@@ -83,7 +83,9 @@ class SystemIntegration {
   validateConfiguration(config) {
     try {
       if (!config || typeof config !== 'object') {
-        throw new Error('[SystemIntegration] Invalid configuration: must be an object');
+        throw new Error(
+          '[SystemIntegration] Invalid configuration: must be an object',
+        );
       }
 
       // Schema for validation
@@ -132,7 +134,9 @@ class SystemIntegration {
           } else {
             // Leaf configuration value
             if (value === undefined) {
-              console.log(`[SystemIntegration] Using default value for ${currentPath}`);
+              console.log(
+                `[SystemIntegration] Using default value for ${currentPath}`,
+              );
               validated[key] = definition.default;
             } else {
               const actualType = typeof value;
@@ -158,7 +162,10 @@ class SystemIntegration {
 
       return validatedConfig;
     } catch (error) {
-      console.error('[SystemIntegration] Configuration validation failed:', error);
+      console.error(
+        '[SystemIntegration] Configuration validation failed:',
+        error,
+      );
       throw error;
     }
   }
@@ -233,7 +240,9 @@ class SystemIntegration {
       // Initialize configuration with defaults and provided config
       const initialConfig = await this.initializeConfiguration(config);
       if (!initialConfig) {
-        throw new Error('Configuration initialization failed: no configuration returned');
+        throw new Error(
+          'Configuration initialization failed: no configuration returned',
+        );
       }
 
       // Validate the configuration before proceeding
@@ -242,17 +251,23 @@ class SystemIntegration {
         throw new Error('Configuration validation failed after initialization');
       }
 
-      console.log('[SystemIntegration] Configuration initialized successfully:', {
-        version: validatedConfig.version,
-        environment: process.env.NODE_ENV,
-        features: Object.keys(validatedConfig),
-      });
+      console.log(
+        '[SystemIntegration] Configuration initialized successfully:',
+        {
+          version: validatedConfig.version,
+          environment: process.env.NODE_ENV,
+          features: Object.keys(validatedConfig),
+        },
+      );
 
       // Initialize middleware system with enhanced error handling and retries
       const initializeMiddleware = async (retryCount = 0) => {
         try {
-          const { initializeMiddlewareSystem } = await import('./middleware/system.middleware.js');
-          const middlewareInitResult = await initializeMiddlewareSystem(initialConfig);
+          const { initializeMiddlewareSystem } = await import(
+            './middleware/system.middleware.js'
+          );
+          const middlewareInitResult =
+            await initializeMiddlewareSystem(initialConfig);
 
           if (!middlewareInitResult?.success) {
             throw new Error(
@@ -262,7 +277,9 @@ class SystemIntegration {
           }
 
           this.middlewareSystem = middlewareInitResult.system;
-          console.log('[SystemIntegration] Middleware system initialized successfully');
+          console.log(
+            '[SystemIntegration] Middleware system initialized successfully',
+          );
 
           // Initialize core services with timeout
           await Promise.race([
@@ -351,11 +368,15 @@ class SystemIntegration {
             if (this.ws) {
               this.ws.close();
             }
-            console.log(`[SystemIntegration] Attempting WebSocket connection to ${this.wsUrl}`);
+            console.log(
+              `[SystemIntegration] Attempting WebSocket connection to ${this.wsUrl}`,
+            );
             this.ws = new WebSocket(this.wsUrl);
             const connectionTimeout = setTimeout(() => {
               if (this.ws.readyState !== WebSocket.OPEN) {
-                console.warn('[SystemIntegration] WebSocket connection timeout');
+                console.warn(
+                  '[SystemIntegration] WebSocket connection timeout',
+                );
                 this.ws.close();
                 this._scheduleReconnection();
               }
@@ -366,7 +387,10 @@ class SystemIntegration {
                 this._handleWebSocketMessage(data);
                 this.wsReconnectAttempts = 0;
               } catch (error) {
-                console.warn('[SystemIntegration] WebSocket message parse error:', error);
+                console.warn(
+                  '[SystemIntegration] WebSocket message parse error:',
+                  error,
+                );
                 this.eventEmitter.emit('websocket_message_error', {
                   error: error.message,
                   data: event.data,
@@ -376,7 +400,10 @@ class SystemIntegration {
             };
             this.ws.onerror = (error) => {
               const errorMessage = error.message || 'Unknown WebSocket error';
-              console.warn('[SystemIntegration] WebSocket error:', errorMessage);
+              console.warn(
+                '[SystemIntegration] WebSocket error:',
+                errorMessage,
+              );
               this.eventEmitter.emit('websocket_error', {
                 error: errorMessage,
                 attempt: this.wsReconnectAttempts + 1,
@@ -415,7 +442,8 @@ class SystemIntegration {
               });
               if (
                 !wasExpected &&
-                this.wsState.reconnectAttempts < this.wsConfig.maxReconnectAttempts
+                this.wsState.reconnectAttempts <
+                  this.wsConfig.maxReconnectAttempts
               ) {
                 const baseDelay = this.wsConfig.reconnectDelay;
                 const maxDelay = Math.min(
@@ -425,8 +453,13 @@ class SystemIntegration {
                 const jitter = Math.random() * 1000;
                 this.wsState.currentDelay = Math.min(maxDelay + jitter, 30000);
                 this._scheduleReconnection();
-              } else if (this.wsState.reconnectAttempts >= this.wsConfig.maxReconnectAttempts) {
-                console.error('[SystemIntegration] Max reconnection attempts reached');
+              } else if (
+                this.wsState.reconnectAttempts >=
+                this.wsConfig.maxReconnectAttempts
+              ) {
+                console.error(
+                  '[SystemIntegration] Max reconnection attempts reached',
+                );
                 this.eventEmitter.emit('websocket_max_retries', {
                   timestamp: new Date().toISOString(),
                   attempts: this.wsState.reconnectAttempts,
@@ -435,7 +468,9 @@ class SystemIntegration {
               }
             };
             this.ws.onopen = () => {
-              console.log('[SystemIntegration] WebSocket connected successfully');
+              console.log(
+                '[SystemIntegration] WebSocket connected successfully',
+              );
               this.wsConnected = true;
               this.wsReconnectAttempts = 0;
               this.eventEmitter.emit('websocket_connected', {
@@ -445,7 +480,10 @@ class SystemIntegration {
               this._sendHeartbeat();
             };
           } catch (error) {
-            console.error('[SystemIntegration] WebSocket initialization error:', error);
+            console.error(
+              '[SystemIntegration] WebSocket initialization error:',
+              error,
+            );
             this.eventEmitter.emit('websocket_failed', {
               error: error.message,
               timestamp: new Date().toISOString(),
@@ -477,7 +515,10 @@ class SystemIntegration {
       console.log('[SystemIntegration] Configuration initialized successfully');
       return validatedConfig;
     } catch (error) {
-      console.error('[SystemIntegration] Configuration initialization failed:', error);
+      console.error(
+        '[SystemIntegration] Configuration initialization failed:',
+        error,
+      );
       throw error;
     }
   }
@@ -531,14 +572,19 @@ class SystemIntegration {
             console.warn(
               `[SystemIntegration] Analytics initialization retry ${retryCount}/${maxRetries}`,
             );
-            await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+            await new Promise((resolve) =>
+              setTimeout(resolve, 1000 * retryCount),
+            );
           } else {
             throw retryError;
           }
         }
       }
     } catch (error) {
-      console.error('[SystemIntegration] Analytics initialization failed:', error);
+      console.error(
+        '[SystemIntegration] Analytics initialization failed:',
+        error,
+      );
       // Set to minimal analytics mode instead of completely failing
       this.analyticsReady = false;
       this.eventEmitter.emit('analytics_fallback', {
@@ -622,7 +668,10 @@ class SystemIntegration {
     this.wsState.reconnectTimer = setTimeout(() => {
       if (!this.wsState.connected) {
         this.initializeWebSocket().catch((error) => {
-          console.error('[SystemIntegration] Reconnection attempt failed:', error);
+          console.error(
+            '[SystemIntegration] Reconnection attempt failed:',
+            error,
+          );
           this._scheduleReconnection();
         });
       }
@@ -647,7 +696,9 @@ class SystemIntegration {
         this.ws = null;
       }
 
-      console.log(`[SystemIntegration] Attempting WebSocket connection to ${this.wsUrl}`);
+      console.log(
+        `[SystemIntegration] Attempting WebSocket connection to ${this.wsUrl}`,
+      );
       this.ws = new WebSocket(this.wsUrl);
 
       // Clear existing connection timeout if any
@@ -674,7 +725,10 @@ class SystemIntegration {
             this.wsState.lastMessageTime = Date.now();
           }
         } catch (error) {
-          console.warn('[SystemIntegration] WebSocket message parse error:', error);
+          console.warn(
+            '[SystemIntegration] WebSocket message parse error:',
+            error,
+          );
           this.eventEmitter.emit('websocket_message_error', {
             error: error.message,
             data: event.data,
@@ -724,14 +778,24 @@ class SystemIntegration {
           code: event.code,
           reason: event.reason || 'No reason provided',
         });
-        if (!wasExpected && this.wsState.reconnectAttempts < this.wsConfig.maxReconnectAttempts) {
+        if (
+          !wasExpected &&
+          this.wsState.reconnectAttempts < this.wsConfig.maxReconnectAttempts
+        ) {
           const baseDelay = this.wsConfig.reconnectDelay;
-          const maxDelay = Math.min(baseDelay * Math.pow(2, this.wsState.reconnectAttempts), 30000);
+          const maxDelay = Math.min(
+            baseDelay * Math.pow(2, this.wsState.reconnectAttempts),
+            30000,
+          );
           const jitter = Math.random() * 1000;
           this.wsState.currentDelay = Math.min(maxDelay + jitter, 30000);
           this._scheduleReconnection();
-        } else if (this.wsState.reconnectAttempts >= this.wsConfig.maxReconnectAttempts) {
-          console.error('[SystemIntegration] Max reconnection attempts reached');
+        } else if (
+          this.wsState.reconnectAttempts >= this.wsConfig.maxReconnectAttempts
+        ) {
+          console.error(
+            '[SystemIntegration] Max reconnection attempts reached',
+          );
           this.eventEmitter.emit('websocket_max_retries', {
             timestamp: new Date().toISOString(),
             attempts: this.wsState.reconnectAttempts,
@@ -751,7 +815,10 @@ class SystemIntegration {
         this._sendHeartbeat();
       };
     } catch (error) {
-      console.error('[SystemIntegration] WebSocket initialization error:', error);
+      console.error(
+        '[SystemIntegration] WebSocket initialization error:',
+        error,
+      );
       this.eventEmitter.emit('websocket_failed', {
         error: error.message,
         timestamp: new Date().toISOString(),

@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowUpIcon, ArrowDownIcon, BookOpenIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, BookOpenIcon } from 'lucide-react';
 import {
-  LineChart,
   Line,
+  LineChart,
+  ReferenceLine,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ReferenceLine,
 } from 'recharts';
+
+import React, { useEffect, useState } from 'react';
+
+import { Card, CardContent } from '@/components/ui/card';
+
+import { useToast } from '@/hooks/use-toast';
 
 interface ProgressData {
   questionsAttempted: number;
@@ -42,14 +45,14 @@ export const DailyWelcomeCard = () => {
       try {
         const response = await fetch('/api/daily-progress');
         if (!response.ok) throw new Error('Failed to fetch daily progress');
-        
+
         const data = await response.json();
         setProgress(data);
       } catch (error) {
         toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load your daily progress"
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load your daily progress',
         });
       } finally {
         setLoading(false);
@@ -97,9 +100,12 @@ export const DailyWelcomeCard = () => {
     );
   }
 
-  const accuracyRate = progress.questionsAttempted > 0 
-    ? (progress.correctAnswers / progress.questionsAttempted * 100).toFixed(1)
-    : 0;
+  const accuracyRate =
+    progress.questionsAttempted > 0
+      ? ((progress.correctAnswers / progress.questionsAttempted) * 100).toFixed(
+          1,
+        )
+      : 0;
 
   return (
     <Card className="w-full max-w-3xl mx-auto">
@@ -110,7 +116,9 @@ export const DailyWelcomeCard = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Yesterday's Progress</p>
+            <p className="text-sm text-muted-foreground">
+              Yesterday's Progress
+            </p>
             <div className="flex items-center gap-2">
               <BookOpenIcon className="h-5 w-5 text-primary" />
               <span className="font-medium">
@@ -165,16 +173,26 @@ export const DailyWelcomeCard = () => {
             <h3 className="font-semibold mb-4">Your Learning Journey</h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Current Performance:</span>
+                <span className="text-sm text-muted-foreground">
+                  Current Performance:
+                </span>
                 <span className="font-medium">{accuracyRate}%</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Target Performance:</span>
-                <span className="font-medium">{progress.trends.targetPerformance}%</span>
+                <span className="text-sm text-muted-foreground">
+                  Target Performance:
+                </span>
+                <span className="font-medium">
+                  {progress.trends.targetPerformance}%
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Estimated Time to Target:</span>
-                <span className="font-medium">{progress.learningPath.estimatedTimeToTarget} days</span>
+                <span className="text-sm text-muted-foreground">
+                  Estimated Time to Target:
+                </span>
+                <span className="font-medium">
+                  {progress.learningPath.estimatedTimeToTarget} days
+                </span>
               </div>
               <div className="mt-4">
                 <div className="h-24 w-full">
@@ -206,7 +224,11 @@ export const DailyWelcomeCard = () => {
                       strokeWidth={2}
                       dot={false}
                     />
-                    <ReferenceLine y={progress.trends.targetPerformance} stroke="#dc2626" strokeDasharray="3 3" />
+                    <ReferenceLine
+                      y={progress.trends.targetPerformance}
+                      stroke="#dc2626"
+                      strokeDasharray="3 3"
+                    />
                   </LineChart>
                 </div>
               </div>
@@ -219,7 +241,9 @@ export const DailyWelcomeCard = () => {
             <div className="space-y-3">
               <div>
                 <p className="text-sm font-medium">Current Topic:</p>
-                <p className="text-sm text-muted-foreground">{progress.learningPath.currentTopic}</p>
+                <p className="text-sm text-muted-foreground">
+                  {progress.learningPath.currentTopic}
+                </p>
               </div>
               <div>
                 <p className="text-sm font-medium">Coming Up Next:</p>
@@ -232,9 +256,11 @@ export const DailyWelcomeCard = () => {
               <div className="pt-2">
                 <p className="text-sm font-medium">Completion Rate:</p>
                 <div className="w-full h-2 bg-gray-200 rounded-full mt-1">
-                  <div 
+                  <div
                     className="h-full bg-primary rounded-full"
-                    style={{ width: `${progress.learningPath.completionRate}%` }}
+                    style={{
+                      width: `${progress.learningPath.completionRate}%`,
+                    }}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -248,8 +274,9 @@ export const DailyWelcomeCard = () => {
           <div className="p-4 bg-primary/5 rounded-lg">
             <h3 className="font-semibold mb-2">Today's Study Recommendation</h3>
             <p className="text-sm text-muted-foreground">
-              Focus on {progress.weakAreas[0]} today. We've prepared targeted questions 
-              and flashcards to help strengthen your understanding in this area.
+              Focus on {progress.weakAreas[0]} today. We've prepared targeted
+              questions and flashcards to help strengthen your understanding in
+              this area.
             </p>
           </div>
         </div>

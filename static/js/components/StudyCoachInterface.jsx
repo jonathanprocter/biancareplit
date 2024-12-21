@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { systemIntegration } from '../SystemIntegration';
 
 const StudyCoachInterface = () => {
@@ -27,8 +29,13 @@ const StudyCoachInterface = () => {
     setMessages((prev) => [...prev, { role: 'user', content: inputValue }]);
 
     try {
-      const response = await systemIntegration.studyCoach?.askQuestion(inputValue.trim());
-      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+      const response = await systemIntegration.studyCoach?.askQuestion(
+        inputValue.trim(),
+      );
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: response },
+      ]);
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages((prev) => [
@@ -56,8 +63,8 @@ const StudyCoachInterface = () => {
                   message.role === 'user'
                     ? 'bg-blue-100 ml-auto'
                     : message.role === 'error'
-                    ? 'bg-red-100'
-                    : 'bg-gray-100'
+                      ? 'bg-red-100'
+                      : 'bg-gray-100'
                 }`}
               >
                 <p className="text-sm">{message.content}</p>
@@ -78,7 +85,11 @@ const StudyCoachInterface = () => {
                 }
               }}
             />
-            <Button onClick={handleSendMessage} disabled={isLoading} className="whitespace-nowrap">
+            <Button
+              onClick={handleSendMessage}
+              disabled={isLoading}
+              className="whitespace-nowrap"
+            >
               {isLoading ? 'Sending...' : 'Send'}
             </Button>
           </div>

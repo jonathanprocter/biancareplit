@@ -1,8 +1,9 @@
-import { format, formatDistance, parseISO, isValid } from 'date-fns';
+import { format, formatDistance, isValid, parseISO } from 'date-fns';
+
 import type {
   DateFormatOptions,
-  FormattedDateResult,
   DateFormatterConfig,
+  FormattedDateResult,
   Locale,
 } from '../types/common';
 
@@ -33,7 +34,10 @@ class DateFormatter {
     return DateFormatter.instance;
   }
 
-  public formatDate(date: Date | string, options: DateFormatOptions = {}): FormattedDateResult {
+  public formatDate(
+    date: Date | string,
+    options: DateFormatOptions = {},
+  ): FormattedDateResult {
     try {
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
 
@@ -65,7 +69,9 @@ class DateFormatter {
 
       const formatString =
         options.format ||
-        (options.includeTime ? this.config.defaultTimeFormat : this.config.defaultFormat);
+        (options.includeTime
+          ? this.config.defaultTimeFormat
+          : this.config.defaultFormat);
 
       const formatOptions: Record<string, any> = {
         locale,
@@ -99,7 +105,10 @@ class DateFormatter {
 
 export const dateFormatter = DateFormatter.getInstance();
 
-export function formatDate(date: Date | string, options: DateFormatOptions = {}): string {
+export function formatDate(
+  date: Date | string,
+  options: DateFormatOptions = {},
+): string {
   const result = dateFormatter.formatDate(date, options);
   return result.formatted;
 }

@@ -1,6 +1,6 @@
-import EventEmitter from './utils/EventEmitter';
 import { configManager } from './config/system.config.js';
 import { initializeMiddlewareSystem } from './middleware/system.middleware.js';
+import EventEmitter from './utils/EventEmitter';
 
 // Singleton middleware system instance
 let middlewareSystem = null;
@@ -10,9 +10,14 @@ const getMiddlewareSystem = async () => {
   if (!middlewareSystem) {
     try {
       middlewareSystem = await initializeMiddlewareSystem(configManager.get());
-      console.log('[FlashcardSystem] Middleware system initialized successfully');
+      console.log(
+        '[FlashcardSystem] Middleware system initialized successfully',
+      );
     } catch (error) {
-      console.error('[FlashcardSystem] Failed to initialize middleware system:', error);
+      console.error(
+        '[FlashcardSystem] Failed to initialize middleware system:',
+        error,
+      );
       throw error;
     }
   }
@@ -103,7 +108,10 @@ class EnhancedFlashcardSystem extends EventEmitter {
         this.analyticsReady = true;
         return true;
       } catch (error) {
-        console.error('[FlashcardSystem] Analytics initialization failed:', error);
+        console.error(
+          '[FlashcardSystem] Analytics initialization failed:',
+          error,
+        );
         this.analyticsReady = false;
         throw error;
       }

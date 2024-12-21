@@ -165,7 +165,9 @@ const questionService = new QuestionService();
 document.addEventListener('DOMContentLoaded', () => {
   questionService.initialize().catch((error) => {
     console.error('Failed to initialize QuestionService:', error);
-    showErrorNotification('Question service initialization failed. Please refresh the page.');
+    showErrorNotification(
+      'Question service initialization failed. Please refresh the page.',
+    );
   });
 });
 

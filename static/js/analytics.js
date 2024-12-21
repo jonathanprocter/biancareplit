@@ -61,9 +61,12 @@ export const initializeAnalytics = async () => {
     const dashboard = new AnalyticsDashboard();
 
     // Set up automatic metric saving
-    setInterval(() => {
-      dashboard.saveMetrics().catch(console.error);
-    }, 5 * 60 * 1000); // Save every 5 minutes
+    setInterval(
+      () => {
+        dashboard.saveMetrics().catch(console.error);
+      },
+      5 * 60 * 1000,
+    ); // Save every 5 minutes
 
     console.log('Analytics dashboard initialized successfully');
     return dashboard;

@@ -5,17 +5,10 @@
     "jest --bail --findRelatedTests --passWithNoTests --verbose",
     "tsc --noEmit --pretty"
   ],
-  "*.{css,scss}": [
-    "prettier --write", 
-    "stylelint --fix"
-  ],
-  "*.{json,md,yml,yaml,html}": [
-    "prettier --write"
-  ],
+  "*.{css,scss}": ["prettier --write", "stylelint --fix"],
+  "*.{json,md,yml,yaml,html}": ["prettier --write"],
   "*.test.{ts,tsx}": [
     "jest --bail --findRelatedTests --passWithNoTests --verbose"
   ],
-  "*.{ts,tsx}": [
-    "tsc --noEmit --pretty"
-  ]
+  "*.{ts,tsx}": ["tsc --noEmit --pretty"]
 }

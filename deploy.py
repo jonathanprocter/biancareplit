@@ -1,4 +1,3 @@
-
 import subprocess
 import sys
 import logging
@@ -10,12 +9,13 @@ from backend.config.system_verifier import SystemVerification
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def deploy():
     """Deploy the application"""
     try:
         # Initialize monitoring
         monitor = DeploymentMonitor()
-        
+
         # Step 1: Verify system
         logger.info("Verifying system configuration...")
         verifier = SystemVerification(context_manager)
@@ -34,7 +34,9 @@ def deploy():
 
         # Step 4: Start application with monitoring
         logger.info("Starting application...")
-        subprocess.run(["gunicorn", "--config", "gunicorn.conf.py", "wsgi:app"], check=True)
+        subprocess.run(
+            ["gunicorn", "--config", "gunicorn.conf.py", "wsgi:app"], check=True
+        )
 
         logger.info("Deployment successful!")
         return True
@@ -42,6 +44,7 @@ def deploy():
     except Exception as e:
         logger.error(f"Deployment failed: {str(e)}")
         return False
+
 
 if __name__ == "__main__":
     if not deploy():

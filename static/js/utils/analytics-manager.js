@@ -75,7 +75,10 @@ class AnalyticsManager {
 
       document.addEventListener('visibilitychange', handleVisibilityChange);
       this.cleanupListeners.add(() => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange,
+        );
       });
     }
 

@@ -67,7 +67,8 @@ class StudyCoachInterface {
     contentDiv.className = 'message-content';
 
     if (typeof message === 'object' && message !== null) {
-      contentDiv.textContent = message.content || JSON.stringify(message, null, 2);
+      contentDiv.textContent =
+        message.content || JSON.stringify(message, null, 2);
       messageDiv.appendChild(contentDiv);
 
       if (message.isFlashcard) {
@@ -122,7 +123,10 @@ class StudyCoachInterface {
       this.addMessageToChat('assistant', response);
     } catch (error) {
       console.error('Error in sendMessage:', error);
-      this.addMessageToChat('error', 'Sorry, I encountered an error. Please try again.');
+      this.addMessageToChat(
+        'error',
+        'Sorry, I encountered an error. Please try again.',
+      );
     }
   }
 
@@ -147,7 +151,9 @@ class StudyCoachInterface {
                           suggestedDifficulty === 'BEGINNER' ? 'selected' : ''
                         }>Beginner</option>
                         <option value="INTERMEDIATE" ${
-                          suggestedDifficulty === 'INTERMEDIATE' ? 'selected' : ''
+                          suggestedDifficulty === 'INTERMEDIATE'
+                            ? 'selected'
+                            : ''
                         }>Intermediate</option>
                         <option value="ADVANCED" ${
                           suggestedDifficulty === 'ADVANCED' ? 'selected' : ''
@@ -177,7 +183,8 @@ class StudyCoachInterface {
 
   async saveFlashcard() {
     try {
-      const difficulty = document.getElementById('difficultyLevel')?.value || 'INTERMEDIATE';
+      const difficulty =
+        document.getElementById('difficultyLevel')?.value || 'INTERMEDIATE';
       const tags =
         document
           .getElementById('flashcardTags')
@@ -201,11 +208,17 @@ class StudyCoachInterface {
           await window.analyticsDashboard.initialize();
         }
       } else {
-        this.addMessageToChat('error', 'Failed to save flashcard. Please try again.');
+        this.addMessageToChat(
+          'error',
+          'Failed to save flashcard. Please try again.',
+        );
       }
     } catch (error) {
       console.error('Error saving flashcard:', error);
-      this.addMessageToChat('error', 'Failed to save flashcard. Please try again.');
+      this.addMessageToChat(
+        'error',
+        'Failed to save flashcard. Please try again.',
+      );
     }
     this.closeDialog();
   }

@@ -29,7 +29,9 @@ class SystemIntegration extends EventEmitter {
 
       const result = await this.flashcardSystem.initialize();
       if (!result.success) {
-        throw new Error(result.error || 'Failed to initialize flashcard system');
+        throw new Error(
+          result.error || 'Failed to initialize flashcard system',
+        );
       }
 
       // Set up event listeners

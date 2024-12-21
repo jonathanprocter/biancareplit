@@ -32,7 +32,10 @@ class AICoachService {
     this.handleError = this.handleError.bind(this);
     this.retryOperation = this.retryOperation.bind(this);
 
-    console.log('AI Coach Service: Created instance with endpoints:', this.endpoints);
+    console.log(
+      'AI Coach Service: Created instance with endpoints:',
+      this.endpoints,
+    );
   }
 
   async retryOperation(operation, maxAttempts = this.retryAttempts) {
@@ -44,7 +47,9 @@ class AICoachService {
         lastError = error;
         console.warn(`Attempt ${attempt}/${maxAttempts} failed:`, error);
         if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
+          await new Promise((resolve) =>
+            setTimeout(resolve, this.retryDelay * attempt),
+          );
         }
       }
     }
@@ -135,7 +140,9 @@ class AICoachService {
       console.log('Health check response:', data);
 
       if (!response.ok) {
-        throw new Error(`API health check failed: ${response.status} - ${JSON.stringify(data)}`);
+        throw new Error(
+          `API health check failed: ${response.status} - ${JSON.stringify(data)}`,
+        );
       }
       return true;
     } catch (error) {
@@ -162,7 +169,9 @@ class AICoachService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Server error: ${response.status} - ${JSON.stringify(errorData)}`);
+        throw new Error(
+          `Server error: ${response.status} - ${JSON.stringify(errorData)}`,
+        );
       }
 
       return await response.json();
@@ -189,7 +198,9 @@ class AICoachService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Server error: ${response.status} - ${JSON.stringify(errorData)}`);
+        throw new Error(
+          `Server error: ${response.status} - ${JSON.stringify(errorData)}`,
+        );
       }
 
       return await response.json();

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { configManager } from '../config';
 
+import { configManager } from '../config';
 import type { Config } from '../config';
 
 export interface MiddlewareContext {
