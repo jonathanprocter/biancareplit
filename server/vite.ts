@@ -23,6 +23,10 @@ export function log(message: string, source = 'express') {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    next();
+  });
   let vite: ViteDevServer | null = null; // Added to handle Vite server lifecycle
 
   try {
