@@ -13,7 +13,8 @@
   "plugins": ["prettier-plugin-tailwindcss", "@trivago/prettier-plugin-sort-imports"],
   "tailwindConfig": "./tailwind.config.ts",
   "importOrder": [
-    "^react",
+    "^(react|react-dom)$",
+    "^@/components/ui/(.*)$",
     "^@/components/(.*)$",
     "^@/lib/(.*)$",
     "^@/hooks/(.*)$",

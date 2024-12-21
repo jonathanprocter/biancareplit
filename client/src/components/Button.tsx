@@ -1,4 +1,5 @@
-import { type FC, type ButtonHTMLAttributes } from 'react';
+import React from 'react';
+import type { FC, ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
