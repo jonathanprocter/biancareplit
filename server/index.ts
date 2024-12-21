@@ -249,6 +249,8 @@ async function startServer(): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       server?.listen(PORT, '0.0.0.0')
         .once('listening', () => {
+          server?.keepAliveTimeout = 65000;
+          server?.headersTimeout = 66000;
           log('=================================');
           log(`Server started successfully on port ${PORT}`);
           log(`Environment: ${process.env.NODE_ENV || 'development'}`);

@@ -35,6 +35,12 @@ export const config: Config = {
   server: {
     port: Number(process.env.PORT) || 5000,
     env: process.env.NODE_ENV || 'development',
+    timeout: 120000,
+    keepAliveTimeout: 65000,
+    headers: {
+      'Connection': 'keep-alive',
+      'Keep-Alive': 'timeout=65'
+    }
   },
   session: {
     secret: process.env.SESSION_SECRET || 'development-secret-key',
