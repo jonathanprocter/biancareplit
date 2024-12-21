@@ -24,7 +24,9 @@ def calculate_average(numbers: list) -> float:
         print("-" * 50)
         print(review_result)
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error details: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
 
 if __name__ == "__main__":
     main()
