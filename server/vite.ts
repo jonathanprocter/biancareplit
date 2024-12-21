@@ -49,7 +49,13 @@ export async function setupVite(app: Express, server: Server) {
       },
       server: {
         middlewareMode: true,
-        hmr: { server, ws: true }, // Explicitly enable WebSocket support in HMR
+        hmr: {
+          server,
+          path: '/hmr/',
+          clientPort: 443,
+          host: '0.0.0.0',
+          protocol: 'ws'
+        },
       },
       appType: 'custom',
     });
