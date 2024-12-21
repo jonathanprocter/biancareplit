@@ -3,7 +3,9 @@
 import os
 import socket
 import logging
-from typing import Dict, Optional
+import time
+import requests
+from typing import Dict
 from contextlib import contextmanager
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -86,12 +88,7 @@ class ConnectionManager:
             self._connections = results
 
             # Log connection status
-            for service, status in results.items():
-                log_level = logging.INFO if status else logging.WARNING
-                self.logger.log(
-                    log_level,
-                    f"Connection check - {service}: {'healthy' if status else 'unhealthy'}",
-                )
+            self.log_connection_status(results)
 
             return results
 
@@ -200,6 +197,7 @@ class ConnectionManager:
             session.commit()
         except Exception as e:
             session.rollback()
+            self.logger.error("Database session failed")
             raise
         finally:
             session.close()
@@ -222,7 +220,7 @@ class ConnectionManager:
             ]
         )
 
-        self.logger.info(f"Connection verification complete - Healthy: {is_healthy}")
+        self.log_connection_status(connection_status)
         return is_healthy
 
     def _check_middleware_connections(self) -> bool:
@@ -243,13 +241,34 @@ class ConnectionManager:
         try:
             endpoints = ["/api/health", "/api/v1/status"]
             for endpoint in endpoints:
-                response = self._request_with_retry("GET", endpoint)
-                if not response.ok:
+                if not self._request_with_retry("GET", endpoint):
                     return False
             return True
         except Exception as e:
-            self.logger.error(f"Frontend connection check failed: {e}")
+            self.logger.error(f"Frontend connection check failed: {str(e)}")
             return False
+
+    def _request_with_retry(self, method: str, endpoint: str) -> bool:
+        """Verify frontend API endpoints with retry logic."""
+        try:
+            for _ in range(3):  # Retry up to 3 times
+                try:
+                    response = requests.request(method, endpoint, timeout=5)
+                    return response.ok
+                except requests.RequestException:
+                    time.sleep(1)
+                    continue
+            return False
+        except Exception as e:
+            self.logger.error(f"Frontend connection check failed: {str(e)}")
+            return False
+
+    def log_connection_status(self, connection_status: Dict[str, bool]) -> None:
+        """Log the status of all system connections."""
+        is_healthy = all(
+            status for name, status in connection_status.items()
+            if isinstance(status, bool)
+        )
 
         if is_healthy:
             self.logger.info("All system connections verified successfully")
@@ -261,8 +280,8 @@ class ConnectionManager:
             ]
             self.logger.warning(f"Unhealthy connections: {', '.join(unhealthy)}")
 
-        return is_healthy
-
 
 # Create singleton instance
 connection_manager = ConnectionManager()
+
+

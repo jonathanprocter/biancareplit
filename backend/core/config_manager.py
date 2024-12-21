@@ -2,8 +2,6 @@
 
 import os
 import logging
-from pathlib import Path
-from typing import Dict, Any
 from flask import Flask
 
 logger = logging.getLogger(__name__)

@@ -5,8 +5,7 @@ import logging
 import time
 from datetime import datetime
 from sqlalchemy import text
-from typing import Dict, Any, Tuple
-from flask import Blueprint, jsonify, request, Response, current_app
+from flask import Blueprint, jsonify, current_app
 from flask_cors import cross_origin
 from backend.monitoring.metrics_manager import metrics_manager
 from backend.middleware.config import middleware_registry
