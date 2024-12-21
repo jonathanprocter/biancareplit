@@ -3,6 +3,7 @@
 
 # Run prettier and linting checks
 echo "Running pre-commit checks..."
+npx prettier --write . || exit 1
 npx lint-staged || exit 1
 
 # Success message

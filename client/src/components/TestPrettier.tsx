@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Dialog } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
 import { queryClient } from '@/lib/queryClient';
@@ -24,12 +24,8 @@ export const TestPrettier = ({ title, items }: TestProps) => {
         Open Dialog
       </Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center"
-        >
-          <div className="bg-background p-6 rounded-lg shadow-lg space-y-4">
+        <DialogContent>
+          <div className="space-y-4">
             <div className="space-y-4">
               {items.map((item) => (
                 <div key={item.id} className="space-y-2">
@@ -52,7 +48,7 @@ export const TestPrettier = ({ title, items }: TestProps) => {
               ))}
             </div>
           </div>
-        </div>
+        </DialogContent>
       </Dialog>
     </div>
   );

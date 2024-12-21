@@ -3,12 +3,28 @@
 
 # Run TypeScript type checking
 echo "Running type checking..."
-npm run check || exit 1
+npm run check || {
+  echo "❌ TypeScript type checking failed"
+  exit 1
+}
 
 # Run tests with coverage
 echo "Running tests with coverage..."
-npx jest --coverage --passWithNoTests || exit 1
+npx jest --coverage --passWithNoTests --bail --ci || {
+  echo "❌ Tests failed"
+  exit 1
+}
 
-# If all checks pass
-echo "✅ All checks passed!"
-exit 0
+# Check minimum coverage thresholds
+if [ $? -eq 0 ]; then
+  echo "✅ All tests passed and coverage meets requirements!"
+  echo "Type checking and testing completed successfully."
+else
+  echo "❌ Tests failed or coverage is below requirements"
+  echo "Please ensure your code meets the minimum coverage thresholds:"
+  echo "- Branches: 70%"
+  echo "- Functions: 70%"
+  echo "- Lines: 70%"
+  echo "- Statements: 70%"
+  exit 1
+fi
