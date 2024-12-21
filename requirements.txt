@@ -14,3 +14,5 @@ pymupdf
 python-docx
 python-magic
 aiofiles
+requests
+requests
