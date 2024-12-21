@@ -13,10 +13,7 @@ interface NestedConfig {
   settings: {
     timeout: number;
     retryCount: number;
-    flags: {
-      debug: boolean;
-      verbose: boolean;
-    };
+    flags: { debug: boolean; verbose: boolean };
   };
 }
 
