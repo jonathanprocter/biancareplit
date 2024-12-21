@@ -127,6 +127,8 @@ export const badges = pgTable('badges', {
   requiredPoints: integer('required_points').notNull(),
   category: text('category').notNull(),
   tier: text('tier').default('bronze').notNull(), // bronze, silver, gold, platinum
+  unlockCondition: text('unlock_condition').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Learning paths and recommendations

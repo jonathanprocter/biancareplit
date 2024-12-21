@@ -31,55 +31,29 @@ export class AIService {
     const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
     
     if (!apiKey || apiKey.trim() === '') {
-      console.error('AIService: Missing API key in environment variables');
-      throw new Error('OpenAI API key is required. Please check your environment variables.');
+      console.warn('AIService: Missing API key in environment variables');
+      this.initialized = false;
+      return;
     }
 
     try {
       this.openai = new OpenAI({
         apiKey: apiKey.trim(),
       });
-      
-      // Set initialized to false until first successful API call
-      this.initialized = false;
+      this.initialized = true;
       console.log('AIService: OpenAI client initialized with API key');
     } catch (error) {
-      console.error('AIService: Failed to initialize client:', error);
-      throw new Error('Failed to initialize OpenAI client. Please check your configuration.');
+      console.warn('AIService: Failed to initialize client:', error);
+      this.initialized = false;
     }
   }
 
   private async ensureInitialized() {
-    if (this.initialized) return;
-
-    try {
-      // Simple validation request
-      await this.openai.chat.completions.create({
-        messages: [{ role: 'system', content: 'Test' }],
-        model: 'gpt-4',
-        max_tokens: 1,
-      });
-
-      this.initialized = true;
-      console.log('AIService: API key validated successfully');
-    } catch (error: any) {
-      console.error('AIService: API key validation failed', {
-        error: error.message,
-        type: error.type,
-        status: error.status,
-      });
-
-      // Provide more specific error messages based on error type
-      if (error.status === 401) {
-        throw new Error('Invalid API key. Please check your OpenAI API key.');
-      } else if (error.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again later.');
-      } else if (error.message.includes('network')) {
-        throw new Error('Network error during API validation. Please check your connection.');
-      }
-
-      throw new Error('Failed to validate OpenAI API key. Please try again later.');
+    if (!this.initialized) {
+      console.warn('AIService: Not initialized. Some features requiring AI capabilities may be limited.');
+      return false;
     }
+    return true;
   }
 
   static getInstance(): AIService {
@@ -111,7 +85,10 @@ export class AIService {
   }
 
   async generate_questions(topic: string, difficulty: string = 'intermediate', count: number = 5): Promise<Question[]> {
-    await this.ensureInitialized();
+    if (!await this.ensureInitialized()) {
+      console.warn('AIService: Cannot generate questions - service not initialized');
+      return [];
+    }
 
     try {
       console.log(`Generating ${count} questions about ${topic} at ${difficulty} difficulty`);
@@ -128,13 +105,16 @@ export class AIService {
       console.log(`Successfully generated ${result.questions?.length || 0} questions`);
       return result.questions || [];
     } catch (error) {
-      console.error('Error generating questions:', error);
-      throw new Error(`Failed to generate questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.warn('Error generating questions:', error);
+      return [];
     }
   }
 
   async generate_flashcards(topic: string, count: number = 5): Promise<Flashcard[]> {
-    await this.ensureInitialized();
+    if (!await this.ensureInitialized()) {
+      console.warn('AIService: Cannot generate flashcards - service not initialized');
+      return [];
+    }
 
     try {
       console.log(`Generating ${count} flashcards about ${topic}`);
@@ -151,13 +131,21 @@ export class AIService {
       console.log(`Successfully generated ${result.flashcards?.length || 0} flashcards`);
       return result.flashcards || [];
     } catch (error) {
-      console.error('Error generating flashcards:', error);
-      throw new Error(`Failed to generate flashcards: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.warn('Error generating flashcards:', error);
+      return [];
     }
   }
 
   async analyze_study_progress(userData: any): Promise<StudyProgress> {
-    await this.ensureInitialized();
+    if (!await this.ensureInitialized()) {
+      console.warn('AIService: Cannot analyze study progress - service not initialized');
+      return {
+        strengths: [],
+        weaknesses: [],
+        recommendations: ['AI service not available. Please try again later.'],
+        estimated_proficiency: 0
+      };
+    }
 
     try {
       console.log('Analyzing study progress data');
@@ -176,8 +164,13 @@ export class AIService {
       console.log('Successfully analyzed study progress');
       return result;
     } catch (error) {
-      console.error('Error analyzing study progress:', error);
-      throw new Error(`Failed to analyze study progress: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.warn('Error analyzing study progress:', error);
+      return {
+        strengths: [],
+        weaknesses: [],
+        recommendations: ['Error analyzing progress. Please try again later.'],
+        estimated_proficiency: 0
+      };
     }
   }
 }
