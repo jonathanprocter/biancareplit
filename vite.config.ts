@@ -14,6 +14,15 @@ export default defineConfig({
     strictPort: true,
     hmr: {
       clientPort: 443,
+      timeout: 5000
+    }
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
+    hmr: {
+      clientPort: 443,
     },
     proxy: {
       '/api': {

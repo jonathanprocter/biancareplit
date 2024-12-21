@@ -3,6 +3,7 @@ import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer, createLogger } from 'vite';
+import type { ViteDevServer } from 'vite'; // Added for type safety
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { type Server } from 'http';
@@ -22,50 +23,57 @@ export function log(message: string, source = 'express') {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        if (msg.includes('[TypeScript] Found 0 errors. Watching for file changes')) {
-          log('no errors found', 'tsc');
-          return;
-        }
+  let vite: ViteDevServer | null = null; // Added to handle Vite server lifecycle
 
-        if (msg.includes('[TypeScript] ')) {
-          const [errors, summary] = msg.split('[TypeScript] ', 2);
-          log(`${summary} ${errors}\u001b[0m`, 'tsc');
-          return;
-        } else {
-          viteLogger.error(msg, options);
-          process.exit(1);
-        }
+  try {
+    vite = await createViteServer({
+      ...viteConfig,
+      configFile: false,
+      customLogger: {
+        ...viteLogger,
+        error: (msg, options) => {
+          if (msg.includes('[TypeScript] Found 0 errors. Watching for file changes')) {
+            log('no errors found', 'tsc');
+            return;
+          }
+
+          if (msg.includes('[TypeScript] ')) {
+            const [errors, summary] = msg.split('[TypeScript] ', 2);
+            log(`${summary} ${errors}\u001b[0m`, 'tsc');
+            return;
+          } else {
+            viteLogger.error(msg, options);
+            process.exit(1);
+          }
+        },
       },
-    },
-    server: {
-      middlewareMode: true,
-      hmr: { server },
-    },
-    appType: 'custom',
-  });
+      server: {
+        middlewareMode: true,
+        hmr: { server, ws: true }, // Explicitly enable WebSocket support in HMR
+      },
+      appType: 'custom',
+    });
 
-  app.use(vite.middlewares);
-  app.use('*', async (req, res, next) => {
-    const url = req.originalUrl;
+    app.use(vite.middlewares);
+    app.use('*', async (req, res, next) => {
+      const url = req.originalUrl;
 
-    try {
-      const clientTemplate = path.resolve(__dirname, '..', 'client', 'index.html');
+      try {
+        const clientTemplate = path.resolve(__dirname, '..', 'client', 'index.html');
 
-      // always reload the index.html file from disk incase it changes
-      const template = await fs.promises.readFile(clientTemplate, 'utf-8');
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ 'Content-Type': 'text/html' }).end(page);
-    } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
-      next(e);
-    }
-  });
+        // always reload the index.html file from disk incase it changes
+        const template = await fs.promises.readFile(clientTemplate, 'utf-8');
+        const page = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(page);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
+  } catch (error) {
+    console.error("Error setting up Vite:", error);
+    process.exit(1);
+  }
 }
 
 export function serveStatic(app: Express) {
