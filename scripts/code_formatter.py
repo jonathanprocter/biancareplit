@@ -1,38 +1,16 @@
 import os
 import subprocess
-import requests
+import time
 from typing import Optional, List, Dict
 import json
 
 # Supported file extensions and their corresponding formatters
+# For now, focus only on Python files to avoid timeout issues
 SUPPORTED_LANGUAGES = {
     ".py": {
         "name": "Python",
-        "formatters": ["black", "flake8"]
-    },
-    ".js": {
-        "name": "JavaScript",
-        "formatters": ["prettier", "eslint"]
-    },
-    ".ts": {
-        "name": "TypeScript",
-        "formatters": ["prettier", "eslint"]
-    },
-    ".tsx": {
-        "name": "TypeScript React",
-        "formatters": ["prettier", "eslint"]
-    },
-    ".jsx": {
-        "name": "JavaScript React",
-        "formatters": ["prettier", "eslint"]
-    },
-    ".css": {
-        "name": "CSS",
-        "formatters": ["prettier"]
-    },
-    ".json": {
-        "name": "JSON",
-        "formatters": ["prettier"]
+        "formatters": ["black", "flake8"],
+        "priority": 1
     }
 }
 
@@ -70,43 +48,89 @@ def apply_formatters(file_path: str, language_config: Dict) -> None:
     
     print("✓")
 
-def process_directory(directory: str, batch_size: int = 10) -> None:
+def should_process_file(file_path: str) -> bool:
     """
-    Recursively processes files in batches to avoid timeout issues.
+    Determines if a file should be processed based on patterns.
+    Focus on main Python source files.
+    """
+    exclude_patterns = {
+        'generated', 'vendor', 'dist', 'build',
+        'test', 'mock', 'fixture', 'migrations',
+        'coverage', '__pycache__', 'venv',
+        '.pytest_cache', '__init__'
+    }
+    
+    file_lower = file_path.lower()
+    return not any(pattern in file_lower for pattern in exclude_patterns)
+
+def process_directory(directory: str, batch_size: int = 2) -> None:
+    """
+    Recursively processes files in very small batches, prioritizing by file type.
     """
     excluded_dirs = {
         'node_modules', 'venv', '.git', '__pycache__', 
-        'build', 'dist', 'coverage'
+        'build', 'dist', 'coverage', '.next', 'migrations',
+        '.pytest_cache', '__snapshots__', '.husky'
     }
     
-    files_to_process = []
+    files_by_priority = {}
+    processed_count = 0
+    total_eligible_files = 0
     
-    # First collect all files
+    # First collect and categorize files
     for root, dirs, files in os.walk(directory):
         # Skip excluded directories
         dirs[:] = [d for d in dirs if d not in excluded_dirs]
         
         for file_name in files:
             file_path = os.path.join(root, file_name)
-            if detect_language(file_path):
-                files_to_process.append(file_path)
-
-    # Then process in batches
-    total_files = len(files_to_process)
-    print(f"\nFound {total_files} files to format")
-    
-    for i in range(0, total_files, batch_size):
-        batch = files_to_process[i:i + batch_size]
-        print(f"\nProcessing batch {i//batch_size + 1} of {(total_files + batch_size - 1)//batch_size}")
-        
-        for file_path in batch:
+            
+            if not should_process_file(file_path):
+                continue
+                
             language_config = detect_language(file_path)
-            try:
-                apply_formatters(file_path, language_config)
-            except Exception as e:
-                print(f"Error processing {file_path}: {str(e)}")
+            if language_config:
+                priority = language_config.get('priority', 999)
+                if priority not in files_by_priority:
+                    files_by_priority[priority] = []
+                files_by_priority[priority].append(file_path)
+                total_eligible_files += 1
+
+    if total_eligible_files == 0:
+        print("No eligible files found to format.")
+        return
         
-        print(f"Completed batch {i//batch_size + 1}")
+    print(f"\nFound {total_eligible_files} files to format")
+        
+    # Process files by priority
+    for priority in sorted(files_by_priority.keys()):
+        files = files_by_priority[priority]
+        total_files = len(files)
+        
+        if total_files == 0:
+            continue
+            
+        print(f"\nProcessing {total_files} files with priority {priority}")
+        
+        for i in range(0, total_files, batch_size):
+            batch = files[i:i + batch_size]
+            current_batch = i // batch_size + 1
+            total_batches = (total_files + batch_size - 1) // batch_size
+            
+            print(f"\nBatch {current_batch}/{total_batches}", end="", flush=True)
+            
+            for file_path in batch:
+                language_config = detect_language(file_path)
+                try:
+                    apply_formatters(file_path, language_config)
+                    processed_count += 1
+                    print(f"\rProgress: {processed_count}/{total_eligible_files} files", end="", flush=True)
+                except Exception as e:
+                    print(f"\nError processing {os.path.basename(file_path)}: {str(e)}")
+            time.sleep(1) #Added a 1-second pause between batches
+            print(f"\nCompleted batch {current_batch}")
+            # Add a small pause between batches to prevent timeouts
+            time.sleep(0.5)
 
 def main():
     """

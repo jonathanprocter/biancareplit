@@ -1,5 +1,9 @@
-import { BaseMiddleware, type ExecutionContext, type NextFunction } from './base.middleware';
 import { configManager } from '../config/config';
+import {
+  BaseMiddleware,
+  type ExecutionContext,
+  type NextFunction,
+} from './base.middleware';
 
 export class MiddlewareManager {
   private static instance: MiddlewareManager;
@@ -41,7 +45,9 @@ export class MiddlewareManager {
 
   public addMiddleware(middleware: BaseMiddleware): void {
     if (this.middlewares.some((m) => m.getName() === middleware.getName())) {
-      throw new Error(`Middleware '${middleware.getName()}' already registered`);
+      throw new Error(
+        `Middleware '${middleware.getName()}' already registered`,
+      );
     }
 
     this.middlewares.push(middleware);

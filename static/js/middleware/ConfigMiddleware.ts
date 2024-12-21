@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import { configManager, type Config } from '../config/config';
+
+import { type Config, configManager } from '../config/config';
+import { Environment } from '../config/environment';
 import { BaseMiddleware } from './base.middleware';
 import type { ExecutionContext, NextFunction } from './base.middleware';
-import { Environment } from '../config/environment';
 
 const ConfigContextSchema = z.object({
   operation: z.string(),
@@ -46,7 +47,10 @@ export class ConfigMiddleware extends BaseMiddleware {
     }
   }
 
-  protected async _execute(context: ExecutionContext, next: NextFunction): Promise<void> {
+  protected async _execute(
+    context: ExecutionContext,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       // Validate context
       const validatedContext = ConfigContextSchema.parse(context);

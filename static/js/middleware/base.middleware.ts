@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { configManager } from '../config/config';
 
 // Core middleware options schema
@@ -68,7 +69,10 @@ export abstract class BaseMiddleware {
     }
   }
 
-  protected abstract _execute(context: ExecutionContext, next: NextFunction): Promise<any>;
+  protected abstract _execute(
+    context: ExecutionContext,
+    next: NextFunction,
+  ): Promise<any>;
 
   protected async onInitialize(_config: any): Promise<void> {}
   protected async beforeExecute(_context: ExecutionContext): Promise<void> {}
