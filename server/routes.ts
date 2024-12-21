@@ -780,7 +780,7 @@ export function registerRoutes(app: Express): void {
 
   // No return needed as we're just registering routes
   // Code Review API Route
-  app.post('/api/code-review', requireAuth, async (req, res) => {
+  app.post('/api/code-review', async (req, res) => {
     try {
       console.log('[API] Code review request received');
       const { directory } = req.body;

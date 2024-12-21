@@ -102,22 +102,29 @@ class CodeReviewService:
             logger.error(f"Error applying fixes to {file_path}: {str(e)}")
             return False
 
-    async def review_directory(self, directory: Path) -> Dict[str, Dict]:
+    async def review_directory(self, directory: str) -> Dict[str, Dict]:
         """Review all supported files in a directory recursively"""
         results = {}
         try:
-            for file_path in directory.rglob('*'):
+            dir_path = Path(directory)
+            if not dir_path.exists():
+                raise FileNotFoundError(f"Directory not found: {directory}")
+                
+            for file_path in dir_path.rglob('*'):
                 if file_path.is_file() and file_path.suffix in self.supported_languages:
                     if not any(exclude in str(file_path) for exclude in ['node_modules', '__pycache__', 'venv', '.git']):
                         logger.info(f"Reviewing {file_path}")
                         result = await self.review_file(file_path)
-                        if 'improved_code' in result:
+                        if result and 'improved_code' in result:
                             await self.apply_fixes(file_path, result['improved_code'])
                         results[str(file_path)] = result
+            
+            logger.info(f"Completed review of directory: {directory}")
             return results
         except Exception as e:
-            logger.error(f"Error reviewing directory: {str(e)}")
-            return {"error": str(e)}
+            error_msg = f"Error reviewing directory: {str(e)}"
+            logger.error(error_msg)
+            return {"error": error_msg}
 
 # Create singleton instance
 code_review_service = CodeReviewService()
