@@ -38,5 +38,5 @@ class ClaudeService:
             
     def review_code(self, code):
         """Specialized method for code review"""
-        prompt = f"You are a helpful AI assistant. Please review this code and suggest fixes:\n\n{code}"
-        return self.interact_with_claude(prompt)
+        prompt = f"You are an expert Python developer. Fix the issues in the code below and explain the changes:\n\n{code}"
+        return self.interact_with_claude(prompt, max_tokens=2000)
