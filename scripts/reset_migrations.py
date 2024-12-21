@@ -9,10 +9,7 @@ from datetime import datetime
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - "
-           "%(name)s - "
-           "%(levelname)s - "
-           "%(message)s"
+    format="%(asctime)s - " "%(name)s - " "%(levelname)s - " "%(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -30,11 +27,7 @@ class MigrationResetter:
 
         if self.migrations_dir.exists():
             self.backup_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copytree(
-                self.migrations_dir,
-                backup_path,
-                dirs_exist_ok=True
-            )
+            shutil.copytree(self.migrations_dir, backup_path, dirs_exist_ok=True)
             logger.info(f"Created backup at: {backup_path}")
 
         return backup_path

@@ -14,10 +14,7 @@ from backend.database.db_config import db
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - "
-           "%(name)s - "
-           "%(levelname)s - "
-           "%(message)s"
+    format="%(asctime)s - " "%(name)s - " "%(levelname)s - " "%(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -68,10 +65,7 @@ def verify_system():
             logger.info("All system checks passed successfully!")
             return True
         else:
-            logger.warning(
-                "Some system checks failed. "
-                "Check logs for details."
-            )
+            logger.warning("Some system checks failed. " "Check logs for details.")
             return False
 
     except Exception as e:

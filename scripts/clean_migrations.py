@@ -7,7 +7,9 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-# Add the project root to Python path
+from backend.config.config_manager import config_manager
+
+# Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -54,7 +56,6 @@ def clean_migrations():
 def init_migrations():
     """Initialize fresh migrations."""
     try:
-        from flask import Flask
         from backend.app_factory import create_app
         from backend.database.core import db_manager
 

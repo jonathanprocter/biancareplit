@@ -20,7 +20,7 @@ SUPPORTED_LANGUAGES = {
                 "name": "flake8",
                 "args": ["--ignore=E402"],
                 "error_pattern": r"[A-Z]\d{3}",
-            }
+            },
         ],
         "priority": 1,
     }
@@ -46,14 +46,9 @@ def apply_formatters(file_path: str, language_config: Dict) -> None:
         try:
             formatter_name = formatter["name"]
             cmd = [formatter_name] + formatter["args"] + [file_path]
-            
+
             # Run the formatter
-            result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True,
-                check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
 
             # Handle formatter output
             if result.returncode != 0:
@@ -61,10 +56,7 @@ def apply_formatters(file_path: str, language_config: Dict) -> None:
                 if "fix_args" in formatter and formatter_name == "black":
                     fix_cmd = [formatter_name] + formatter["fix_args"] + [file_path]
                     fix_result = subprocess.run(
-                        fix_cmd,
-                        capture_output=True,
-                        text=True,
-                        check=False
+                        fix_cmd, capture_output=True, text=True, check=False
                     )
                     if fix_result.returncode == 0:
                         print(f"✓ (auto-fixed {formatter_name})")

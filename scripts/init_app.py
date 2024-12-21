@@ -2,8 +2,9 @@
 
 import os
 import sys
-from pathlib import Path
 import logging
+
+from backend.database.db_config import db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +14,6 @@ logger = logging.getLogger(__name__)
 def init_app():
     """Initialize the application."""
     try:
-        from backend.config.unified_config import config_manager
-        from backend.database.db_config import db
-
         # Set required environment variables
         os.environ["FLASK_ENV"] = "development"
         os.environ["DATABASE_URL"] = (

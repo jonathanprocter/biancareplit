@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-import os
 import sys
 import logging
-from pathlib import Path
 from flask import Flask
 from backend.database.db_config import db_config
 from backend.database.db_verifier import db_verifier

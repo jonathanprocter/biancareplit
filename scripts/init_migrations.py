@@ -2,7 +2,7 @@
 
 import logging
 from flask import Flask
-from flask_migrate import Migrate, init, migrate
+from flask_migrate import Migrate, init
 from pathlib import Path
 from backend.database.db_config import db, DatabaseConfig
 
@@ -24,15 +24,12 @@ def init_migrations():
             logger.info("Creating migrations directory")
             init()
 
-        # Setup migration environment
-        migrate = Migrate(app, db)
-
-        # Create initial migration
+        # Setup migration environment and create initial migration
         logger.info("Creating initial migration")
         with app.app_context():
             migrate = Migrate(app, db)
             migrate.init_app(app, db)
-            migrate("Initial migration")
+            migrate.revision("Initial migration")
 
         return True
     except Exception as e:
