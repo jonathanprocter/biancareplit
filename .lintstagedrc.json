@@ -1,16 +1,4 @@
 {
-  "*.{js,jsx,ts,tsx}": [
-    "prettier --write",
-    "eslint --fix --max-warnings=0",
-    "tsc --noEmit"
-  ],
-  "*.{css,scss}": [
-    "prettier --write"
-  ],
-  "*.{json,md,yaml,yml,html}": [
-    "prettier --write"
-  ],
-  "package.json": [
-    "prettier --write"
-  ]
+  "*.{js,jsx,ts,tsx}": ["prettier --write", "eslint --fix --max-warnings=0", "tsc --noEmit"],
+  "*.{css,scss,json,md,yaml,yml,html}": ["prettier --write"]
 }

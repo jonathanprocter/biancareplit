@@ -10,7 +10,14 @@ interface NestedConfig {
   enabled: boolean;
   values: Array<number>;
   items: FormattedItem[];
-  settings: { timeout: number; retryCount: number; flags: { debug: boolean; verbose: boolean } };
+  settings: {
+    timeout: number;
+    retryCount: number;
+    flags: {
+      debug: boolean;
+      verbose: boolean;
+    };
+  };
 }
 
 // Object formatting test with complex types
