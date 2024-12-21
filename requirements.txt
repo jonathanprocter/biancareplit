@@ -27,3 +27,4 @@ requests
 black
 flake8
 requests
+flake8
