@@ -1,4 +1,4 @@
-// Type definitions
+// Type definitions for formatting test
 interface FormattedItem {
   id: number;
   name: string;
