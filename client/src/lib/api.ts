@@ -62,11 +62,13 @@ export const useLogin = () => {
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
+          'X-Requested-With': 'XMLHttpRequest',
+          'Cache-Control': 'no-cache'
         },
         body: JSON.stringify(credentials),
         credentials: 'include',
         mode: 'cors',
+        cache: 'no-store'
       });
 
       if (!res.ok) {

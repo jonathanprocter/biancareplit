@@ -65,11 +65,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session(sessionConfig));
 const corsOptions: CorsOptions = {
-  origin: 'http://0.0.0.0:5173',
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-  exposedHeaders: ['set-cookie']
+  exposedHeaders: ['set-cookie'],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
