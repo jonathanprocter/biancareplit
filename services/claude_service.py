@@ -16,13 +16,13 @@ class ClaudeService:
         
     def fix_code(self, code_snippet, max_tokens=2000):
         """Sends code to Claude and requests a fixed version."""
-        prompt = f"""You are an expert programmer. Please review the following code, fix any issues, and improve its quality:
+        prompt = f"""You are a skilled programmer. Please review, fix, and optimize the following code for deployment:
 
 ```python
 {code_snippet}
 ```
 
-Return only the fixed and improved code without any explanation."""
+Return only the corrected code ready for production deployment without any explanation."""
 
         headers = {
             "anthropic-version": "2023-06-01",
@@ -66,3 +66,42 @@ if __name__ == "__main__":
         print("\nThe fixed code has been saved to 'fixed_code.py'.")
     except Exception as e:
         print(f"Error: {str(e)}")
+
+
+
+    def fix_code_from_file(self, file_path: str, max_tokens=2000) -> str:
+        """Reads code from a file and sends it to Claude for fixing."""
+        try:
+            with open(file_path, "r") as file:
+                code_snippet = file.read()
+            fixed_code = self.fix_code(code_snippet, max_tokens)
+            
+            # Save the fixed code to a new file
+            fixed_file_path = file_path.replace(".py", "_fixed.py")
+            with open(fixed_file_path, "w") as fixed_file:
+                fixed_file.write(fixed_code)
+            logger.info(f"Fixed code saved to: {fixed_file_path}")
+            return fixed_file_path
+        except Exception as e:
+            logger.error(f"Error fixing code from file: {str(e)}")
+            raise
+
+    def deploy_code(self, file_path: str) -> bool:
+        """Deploys the fixed code using Python interpreter."""
+        try:
+            logger.info("Starting deployment process...")
+            result = subprocess.run(
+                ["python3", file_path], 
+                capture_output=True, 
+                text=True
+            )
+            
+            if result.returncode == 0:
+                logger.info("Deployment completed successfully")
+                return True
+            else:
+                logger.error(f"Deployment failed: {result.stderr}")
+                return False
+        except Exception as e:
+            logger.error(f"Deployment error: {str(e)}")
+            raise
