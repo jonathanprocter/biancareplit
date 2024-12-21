@@ -25,6 +25,9 @@
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
   "quoteProps": "as-needed",
+  "jsxBracketSameLine": false,
+  "htmlWhitespaceSensitivity": "css",
+  "vueIndentScriptAndStyle": true,
   "overrides": [
     {
       "files": "*.{ts,tsx}",
@@ -36,6 +39,12 @@
       "files": "*.json",
       "options": {
         "parser": "json"
+      }
+    },
+    {
+      "files": "*.{css,scss}",
+      "options": {
+        "parser": "css"
       }
     }
   ]

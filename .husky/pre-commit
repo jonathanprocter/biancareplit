@@ -3,10 +3,17 @@
 
 echo "🔍 Running pre-commit checks..."
 
-# Run prettier and eslint through lint-staged
-echo "🎨 Running formatting and linting..."
+# Run prettier, eslint, and tests through lint-staged
+echo "🎨 Running formatting, linting, and tests..."
 npx lint-staged || {
   echo "❌ Code style checks failed. Please fix the errors and try committing again."
+  exit 1
+}
+
+# Type checking
+echo "📝 Running type checking..."
+npm run check || {
+  echo "❌ Type checking failed"
   exit 1
 }
 

@@ -6,12 +6,17 @@ import { Input } from '@/components/ui/input';
 
 import { useToast } from '@/hooks/use-toast';
 
-interface TestProps {
-  title: string;
-  items: Array<{ id: number; name: string }>;
+export interface TestItem {
+  id: number;
+  name: string;
 }
 
-export const TestPrettier = ({ title, items }: TestProps) => {
+export interface TestProps {
+  title: string;
+  items: TestItem[];
+}
+
+export const TestPrettier = ({ title, items }: TestProps): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 

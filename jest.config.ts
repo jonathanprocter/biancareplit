@@ -8,6 +8,7 @@ const config: Config.InitialOptions = {
     // Handle module aliases
     '^@/(.*)$': '<rootDir>/client/src/$1',
     '^@db/(.*)$': '<rootDir>/db/$1',
+    '^@test-utils': '<rootDir>/client/src/lib/test-utils',
     // Handle CSS imports (with CSS modules)
     '\\.css$': 'identity-obj-proxy',
     // Handle image imports

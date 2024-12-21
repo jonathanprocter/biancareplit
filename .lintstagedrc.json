@@ -1,5 +1,10 @@
 {
-  "*.{js,jsx,ts,tsx}": ["prettier --write", "eslint --fix --max-warnings=0"],
+  "*.{js,jsx,ts,tsx}": [
+    "prettier --write",
+    "eslint --fix --max-warnings=0",
+    "jest --bail --findRelatedTests --passWithNoTests"
+  ],
   "*.{css,scss}": ["prettier --write"],
-  "*.{json,md,yml,yaml,html}": ["prettier --write"]
+  "*.{json,md,yml,yaml,html}": ["prettier --write"],
+  "*.{ts,tsx}": ["tsc --noEmit --pretty"]
 }
