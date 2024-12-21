@@ -1,4 +1,5 @@
 """Database models initialization."""
+
 from datetime import datetime
 import logging
 from typing import Any, Dict, Optional, Type, TypeVar
@@ -10,15 +11,19 @@ from ..core import db
 # Setup logging
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T', bound='BaseModel')
+T = TypeVar("T", bound="BaseModel")
+
 
 class BaseModel(db.Model):
     """Abstract base model with common fields and methods"""
+
     __abstract__ = True
 
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     @classmethod
     @contextmanager
@@ -88,9 +93,11 @@ class BaseModel(db.Model):
             result[column.name] = value
         return result
 
+
 class AuditLog(BaseModel):
     """Audit log for tracking model changes"""
-    __tablename__ = 'audit_logs'
+
+    __tablename__ = "audit_logs"
 
     action = Column(String(50), nullable=False)
     table_name = Column(String(50), nullable=False)
@@ -99,7 +106,13 @@ class AuditLog(BaseModel):
     user_id = Column(Integer, nullable=True)
 
     @classmethod
-    def log_change(cls, session: Session, action: str, model: BaseModel, user_id: Optional[int] = None) -> Optional['AuditLog']:
+    def log_change(
+        cls,
+        session: Session,
+        action: str,
+        model: BaseModel,
+        user_id: Optional[int] = None,
+    ) -> Optional["AuditLog"]:
         """Log model changes"""
         try:
             with cls.safe_session(session) as safe_session:
@@ -108,7 +121,7 @@ class AuditLog(BaseModel):
                     table_name=model.__tablename__,
                     record_id=model.id,
                     user_id=user_id,
-                    changes=model.to_dict()
+                    changes=model.to_dict(),
                 )
                 safe_session.add(log)
                 return log
@@ -116,22 +129,18 @@ class AuditLog(BaseModel):
             logger.error(f"Failed to create audit log: {str(e)}")
             return None
 
+
 # Only export base classes initially
-__all__ = ['BaseModel', 'AuditLog']
+__all__ = ["BaseModel", "AuditLog"]
+
 
 # Delayed import of specific models to avoid circular dependencies
 def init_models():
     """Initialize all models after database setup"""
     try:
         from .nclex import Question, Answer, Student, Progress
+
         global __all__
-        __all__ = [
-            'BaseModel',
-            'AuditLog',
-            'Question',
-            'Answer',
-            'Student',
-            'Progress'
-        ]
+        __all__ = ["BaseModel", "AuditLog", "Question", "Answer", "Student", "Progress"]
     except ImportError as e:
         logger.warning(f"Could not import some models: {str(e)}")

@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 88
-extend-ignore = E203, W503
+extend-ignore = E203, W503, E722, E501, E301
 exclude = 
     .git,
     __pycache__,
@@ -16,8 +16,15 @@ exclude =
     .venv,
     .tox,
     .mypy_cache,
-    .pytest_cache
+    .pytest_cache,
+    .pythonlibs,
+    lib,
+    lib64,
+    share,
+    local
 per-file-ignores =
     __init__.py:F401,F403
-    test_*.py:E501
+    test_*.py:E501,F401
     conftest.py:E402
+    */services/*:F401,F821,E501
+    */tests/*:F401

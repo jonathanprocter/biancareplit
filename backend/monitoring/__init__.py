@@ -1,9 +1,9 @@
-
 import logging
 from flask import Flask
 from .metrics import setup_metrics
 
 logger = logging.getLogger(__name__)
+
 
 def init_monitoring(app: Flask):
     """Initialize monitoring systems"""

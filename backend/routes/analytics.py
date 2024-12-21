@@ -613,4 +613,3 @@ def get_analytics_dashboard():
             ),
             500,
         )
-
