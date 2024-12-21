@@ -38,9 +38,25 @@ def calculate_sum(numbers):
     """
     
     try:
+        # Test comprehensive code review
+        test_code = """
+def process_data(data):
+    result = []
+    for i in range(len(data)):
+        if data[i] > 0:
+            result.append(data[i] * 2)
+    return result
+        """
+        review_result = claude.review_and_fix_code(test_code)
+        print("\nCode Review Results:")
+        print("-" * 50)
+        print(review_result)
+        
         # Test code fixing
         fixed_file = claude.fix_code(code)
-        print("Fixed code:\n", fixed_file)
+        print("\nFixed code:")
+        print("-" * 50)
+        print(fixed_file)
     except Exception as e:
         print(f"Error: {str(e)}")
 

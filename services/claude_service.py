@@ -14,26 +14,49 @@ class ClaudeService:
             
         self.api_url = "https://api.anthropic.com/v1/messages"
         
-    def review_and_fix_code(self, code_snippet, max_tokens=2000):
+    def review_and_fix_code(self, code_snippet, max_tokens=4000):
         """Performs comprehensive code review and fixes issues."""
-        prompt = f"""You are a senior software engineer. Please perform a thorough code review and fix the following code:
+        prompt = f"""You are an expert software engineer. Please perform a thorough code review and fix the following code. Pay special attention to:
 
 ```python
 {code_snippet}
 ```
 
-Analyze for:
-1. Bugs and logic errors
-2. Performance optimizations
-3. Security vulnerabilities
-4. Code style and best practices
-5. Error handling
+Analyze deeply for:
+1. Critical bugs and logic errors
+2. Performance bottlenecks and optimization opportunities
+3. Security vulnerabilities and data safety
+4. Code style, documentation, and Python best practices
+5. Error handling and edge cases
+6. Type hints and input validation
+7. Memory management and resource usage
+8. API design and interface consistency
+9. Testing considerations
+10. Maintainability and readability
 
-Return the following JSON structure:
+Return a detailed JSON structure:
 {{
-    "issues": [list of identified issues],
-    "fixed_code": "the corrected code",
-    "improvements": [list of improvements made]
+    "severity": "high|medium|low",
+    "issues": [
+        {{
+            "type": "bug|security|performance|style",
+            "description": "detailed issue description",
+            "location": "file/line reference",
+            "severity": "high|medium|low",
+            "suggestion": "how to fix"
+        }}
+    ],
+    "fixed_code": "the corrected code with comments explaining changes",
+    "improvements": [
+        {{
+            "category": "performance|security|maintainability",
+            "description": "detailed improvement description",
+            "impact": "expected impact of change"
+        }}
+    ],
+    "testing_recommendations": [
+        "suggested test cases and scenarios"
+    ]
 }}"""
 
         headers = {
