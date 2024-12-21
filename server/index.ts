@@ -9,7 +9,8 @@ import type { SessionOptions } from 'express-session';
 import MemoryStore from 'memorystore';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import cors from 'cors'; // Added cors package import
+import cors from 'cors';
+import type { CorsOptions } from 'cors'; // Added cors package import
 
 // Import types
 import type { Server } from 'http';
@@ -63,12 +64,16 @@ app.use(express.static(path.join(__dirname, '../client/public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session(sessionConfig));
-app.use(cors({ // Added CORS middleware
-  origin: true,
+const corsOptions: CorsOptions = {
+  origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:5173',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  exposedHeaders: ['set-cookie']
+};
+
+app.use(cors(corsOptions));
+app.set('trust proxy', 1);
 
 // Ensure API routes don't interfere with Vite in development
 if (process.env.NODE_ENV !== 'production') {
