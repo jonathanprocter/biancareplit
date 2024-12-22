@@ -607,6 +607,18 @@ export function registerRoutes(app: Express): Server {
     try {
       const userId = req.session.userId!;
       const responses = req.body.responses
+              if (!responses) {
+                throw new Error(`Invalid responses provided`);
+              }
+              // Sanitize medical data
+              const sanitizedresponses = sanitizeMedicalData(responses);
+            
+              if (!responses) {
+                throw new Error(`Invalid responses provided`);
+              }
+              // Sanitize medical data
+              const sanitizedresponses = sanitizeMedicalData(responses);
+            
               if (!responses || !Array.isArray(responses)) {
         throw new Error('Invalid responses format: responses must be an array');
       }
