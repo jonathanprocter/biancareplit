@@ -67,12 +67,16 @@ const sessionConfig: SessionOptions = {
 // Serve static files from client/public
 app.use(express.static(path.join(__dirname, '../client/public')));
 
-// Basic middleware setup
+// Basic middleware setup with enhanced error handling
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session(sessionConfig));
+
+// Enhanced CORS configuration for development
 const corsOptions: CorsOptions = {
-  origin: true,
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.FRONTEND_URL || 'http://localhost:5000'
+    : ['http://localhost:5000', 'http://localhost:5173', 'http://0.0.0.0:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
@@ -82,6 +86,14 @@ const corsOptions: CorsOptions = {
 
 app.use(cors(corsOptions));
 app.set('trust proxy', 1);
+
+// Add error handling for JSON parsing
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  next(err);
+});
 
 // Ensure API routes don't interfere with Vite in development
 if (process.env.NODE_ENV !== 'production') {
@@ -269,10 +281,11 @@ async function startServer(): Promise<void> {
     log('Step 2: Creating HTTP server');
     server = http.createServer(app);
 
-    // Initialize WebSocket server
+    // Initialize WebSocket server with proper host configuration
     wss = new WebSocketServer({
       server,
       path: '/ws',
+      host: '0.0.0.0',
     });
 
     wss.on('connection', (ws) => {

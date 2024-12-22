@@ -70,6 +70,21 @@ export function registerRoutes(app: Express): Server {
 
   // AI routes
   app.post('/api/ai/questions/generate', requireAuth, async (req, res) => {
+  // AI Service health check endpoint
+  app.get('/api/ai/health', requireAuth, async (req, res) => {
+    try {
+      const aiService = AIService.getInstance();
+      await aiService.ensureConnection();
+      res.json({ 
+        status: 'healthy',
+        message: 'AI Service connection validated successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      handleError(error, res);
+    }
+  });
+
     try {
       const { topic, difficulty, count } = req.body;
       const aiService = AIService.getInstance();
