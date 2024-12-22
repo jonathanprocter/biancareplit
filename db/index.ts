@@ -15,7 +15,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool, { schema });
+export const db = drizzle(pool, { schema });
 
 // Health check function
 export async function checkDatabaseHealth() {
@@ -63,5 +63,3 @@ export async function closeDatabase() {
 // Handle cleanup
 process.on('SIGINT', () => void closeDatabase());
 process.on('SIGTERM', () => void closeDatabase());
-
-export { db };
