@@ -1,3 +1,4 @@
+
 {
   "semi": true,
   "tabWidth": 2,
@@ -13,8 +14,7 @@
   "plugins": ["prettier-plugin-tailwindcss", "@trivago/prettier-plugin-sort-imports"],
   "tailwindConfig": "./tailwind.config.ts",
   "importOrder": [
-    "^(react|react-dom)$",
-    "^@radix-ui/(.*)$",
+    "^react$",
     "^@/components/ui/(.*)$",
     "^@/components/(.*)$",
     "^@/lib/(.*)$",
@@ -23,44 +23,5 @@
     "^[./]"
   ],
   "importOrderSeparation": true,
-  "importOrderSortSpecifiers": true,
-  "quoteProps": "as-needed",
-  "jsxBracketSameLine": false,
-  "htmlWhitespaceSensitivity": "css",
-  "proseWrap": "always",
-  "overrides": [
-    {
-      "files": "*.{ts,tsx}",
-      "options": {
-        "parser": "typescript",
-        "importOrderParserPlugins": ["typescript", "jsx", "decorators-legacy"]
-      }
-    },
-    {
-      "files": "*.{js,jsx}",
-      "options": {
-        "parser": "babel",
-        "importOrderParserPlugins": ["jsx", "decorators-legacy"]
-      }
-    },
-    {
-      "files": "*.json",
-      "options": {
-        "parser": "json"
-      }
-    },
-    {
-      "files": "*.{css,scss}",
-      "options": {
-        "parser": "css"
-      }
-    },
-    {
-      "files": "*.md",
-      "options": {
-        "proseWrap": "always",
-        "printWidth": 80
-      }
-    }
-  ]
+  "importOrderSortSpecifiers": true
 }
