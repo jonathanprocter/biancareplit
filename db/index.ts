@@ -39,8 +39,8 @@ const getPostgresConfig = () => ({
       parse: (str: string) => new Date(str),
     },
   },
-  // Enhanced error handling
-  onnotice: (notice: any) => {
+  // Enhanced error handling with proper types
+  onnotice: (notice: postgres.NoticeMessage) => {
     console.log('PostgreSQL Notice:', notice);
   },
   onerror: (err: Error) => {
@@ -48,7 +48,7 @@ const getPostgresConfig = () => ({
   },
   debug: process.env.NODE_ENV === 'development',
   // Connection pool error handler
-  onConnectionError: (err: Error, client: any) => {
+  onConnectionError: (err: Error, client: postgres.Client) => {
     console.error('PostgreSQL Connection Error:', err);
     console.error('Failed Client:', client?.processID);
   },

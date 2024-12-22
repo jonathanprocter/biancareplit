@@ -68,7 +68,30 @@ export async function submitQuizResponses(
   };
 }
 
-async function analyzeResponses(responses: any[]) {
+interface QuizResponse {
+  question: {
+    id: number;
+    question: string;
+    category: string;
+  };
+  response: number;
+}
+
+interface LearningAnalysis {
+  learningStyleAnalysis: string;
+  recommendations: string[];
+  strengths: string[];
+  areasForImprovement: string[];
+}
+
+interface LearningScores {
+  visual: number;
+  auditory: number;
+  kinesthetic: number;
+  readingWriting: number;
+}
+
+async function analyzeResponses(responses: QuizResponse[]): Promise<LearningAnalysis> {
   try {
     const message = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
@@ -94,7 +117,7 @@ async function analyzeResponses(responses: any[]) {
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic API');
     }
-    return JSON.parse(content.text);
+    return JSON.parse(content.text) as LearningAnalysis;
   } catch (error) {
     console.error('Error analyzing responses:', error);
     return {
@@ -106,8 +129,8 @@ async function analyzeResponses(responses: any[]) {
   }
 }
 
-function calculateScores(responses: any[]) {
-  const scores = {
+function calculateScores(responses: QuizResponse[]): LearningScores {
+  const scores: LearningScores = {
     visual: 0,
     auditory: 0,
     kinesthetic: 0,
