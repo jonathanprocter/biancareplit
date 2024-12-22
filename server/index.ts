@@ -292,6 +292,8 @@ async function startServer(): Promise<void> {
       server,
       path: '/ws',
       host: '0.0.0.0',
+      clientTracking: true,
+      perMessageDeflate: false
     });
 
     wss.on('connection', (ws) => {
