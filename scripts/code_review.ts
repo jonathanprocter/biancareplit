@@ -573,39 +573,217 @@ async function generateReport(files: string[]): Promise<void> {
       console.log('   - Consider adding more TypeScript type definitions');
     }
     
-    console.log('\nNext Steps:');
-    console.log('\nRecommended Actions:');
+// Import required modules
+import { promises as fs } from 'fs';
+
+// Function to apply automatic fixes to code issues
+export const applyAutoFixes = async (files: string[]) => {
+  console.log('\n🔧 Applying automatic fixes...');
+  
+  for (const file of files) {
+    const content = await fs.readFile(file, 'utf-8');
+    let modified = content;
+    let hasChanges = false;
+
+    // Fix unused variables by removing them
+    const unusedVarMatches = content.matchAll(/(?:const|let|var)\s+(\w+)[^;]*;.*?\/\/ @typescript-eslint\/no-unused-vars/g);
+    for (const match of Array.from(unusedVarMatches)) {
+      modified = modified.replace(match[0], '');
+      hasChanges = true;
+      console.log(`📝 Removed unused variable: ${match[1]} in ${file}`);
+    }
+
+    // Fix React hook dependencies
+    const hookMatches = content.matchAll(/useEffect\(\(\)\s*=>\s*{[\s\S]*?},\s*\[(.*?)\]\s*\)/g);
+    for (const match of Array.from(hookMatches)) {
+      const currentDeps = match[1].split(',').map(d => d.trim()).filter(Boolean);
+      const missingDeps = content.match(new RegExp(`warning.*?'(.*?)'.*?react-hooks\/exhaustive-deps`));
+      
+      if (missingDeps) {
+        const newDeps = [...new Set([...currentDeps, missingDeps[1]])].join(', ');
+        modified = modified.replace(match[0], match[0].replace(match[1], newDeps));
+        hasChanges = true;
+        console.log(`📝 Added missing dependency: ${missingDeps[1]} to useEffect in ${file}`);
+      }
+    }
+
+    // Fix type-only imports
+    const typeOnlyMatches = content.matchAll(/import\s*{\s*(\w+)\s*}\s*from\s*['"].*?['"]\s*;.*?\/\/ @typescript-eslint\/no-unused-vars/g);
+    for (const match of Array.from(typeOnlyMatches)) {
+      const newImport = `import type { ${match[1]} } from`;
+      modified = modified.replace(match[0], match[0].replace('import {', newImport));
+      hasChanges = true;
+      console.log(`📝 Converted to type-only import: ${match[1]} in ${file}`);
+    }
+
+    if (hasChanges) {
+      await fs.writeFile(file, modified, 'utf-8');
+      console.log(`✅ Applied fixes to ${file}`);
+    }
+  }
+  
+  console.log('🎉 Automatic fixes complete\n');
+};
+    // Calculate code quality metrics
+    const calculateMetrics = () => {
+      const maxScore = 100;
+      let deductions = 0;
+      const metricsResult = {
+        totalFiles: files.length,
+        totalFunctions: 0,
+        avgComplexity: 0,
+        maxComplexity: 0,
+        maintainabilityScore: 0,
+        testabilityScore: 0,
+        codeHealthScore: 0
+      };
+      
+      // Calculate complexity metrics
+      const complexityStats = Object.values(complexityResults).reduce((acc, curr) => {
+        metricsResult.totalFunctions += curr.functions;
+        acc.totalComplexity += curr.cyclomaticComplexity;
+        metricsResult.maxComplexity = Math.max(metricsResult.maxComplexity, curr.cyclomaticComplexity);
+        return acc;
+      }, { totalComplexity: 0 });
+      
+      metricsResult.avgComplexity = complexityStats.totalComplexity / Object.keys(complexityResults).length;
+      
+      // Calculate deductions
+      const complexityDeduction = Math.min(30, highComplexityFiles.length * 5);
+      const lintDeduction = Math.min(30, (issues.warnings * 0.5) + (issues.errors * 2));
+      const deadCodeDeduction = Math.min(20, unusedFiles.length * 2);
+      const testDeduction = 20; // Placeholder for test coverage deduction
+      
+      deductions = complexityDeduction + lintDeduction + deadCodeDeduction + testDeduction;
+      metricsResult.codeHealthScore = Math.max(0, maxScore - deductions);
+      
+      // Calculate maintainability score (0-100)
+      metricsResult.maintainabilityScore = Math.max(0, 100 - (
+        (metricsResult.avgComplexity * 10) +
+        (unusedFiles.length * 5) +
+        (issues.warnings * 2) +
+        (issues.errors * 5)
+      ));
+      
+      // Calculate testability score (0-100)
+      metricsResult.testabilityScore = Math.max(0, 100 - (
+        (metricsResult.maxComplexity * 5) +
+        (highComplexityFiles.length * 10)
+      ));
+      
+      return metricsResult;
+    };
+
+    const result = calculateMetrics();
+    const healthGrade = 
+      result.codeHealthScore >= 90 ? 'A' :
+      result.codeHealthScore >= 80 ? 'B' :
+      result.codeHealthScore >= 70 ? 'C' :
+      result.codeHealthScore >= 60 ? 'D' : 'F';
+
+    console.log('\n📊 Code Quality Dashboard');
+    console.log('══════════════════════════════');
+    console.log('\n🏥 Health Metrics:');
+    console.log(`• Overall Health: ${result.codeHealthScore}/100 (Grade ${healthGrade})`);
+    console.log(`• Maintainability: ${result.maintainabilityScore}/100`);
+    console.log(`• Testability: ${result.testabilityScore}/100`);
+    
+    console.log('\n🔍 Code Analysis:');
+    console.log(`• Average Complexity: ${result.avgComplexity.toFixed(2)}`);
+    console.log(`• Maximum Complexity: ${result.maxComplexity}`);
+    console.log(`• Total Functions: ${result.totalFunctions}`);
+    
+    console.log('\n⚠️ Issues Overview:');
+    console.log(`• Critical Errors: ${issues.errors}`);
+    console.log(`• Warnings: ${issues.warnings}`);
+    console.log(`• Complex Files: ${highComplexityFiles.length}`);
+    console.log(`• Dead Code Files: ${unusedFiles.length}`);
+    
+    console.log('\n🎯 Action Items');
     console.log('──────────────────────────────');
 
     if (issues.warnings > 0 || issues.errors > 0) {
-      console.log('\n🔧 Immediate Actions (Next 24 Hours):');
+      console.log('\n🔧 Critical (Next 24 Hours):');
       console.log('1. Clean up unused variables in high-priority components:');
-      console.log('   • Remove unused imports in AITutorAvatar.tsx');
-      console.log('     - Sparkles, useEffect imports');
-      console.log('   • Clean up unused state variables in LearningPathVisualizer.tsx');
+      console.log('   • AITutorAvatar.tsx: Remove unused imports (Sparkles, useEffect)');
+      console.log('   • LearningPathVisualizer.tsx: Clean up state variables');
       console.log('     - setCurrentLevel, setXpPoints, setNextLevelXP');
-      console.log('   • Address React Hook dependencies in StudyTimer.tsx');
+      console.log('   • StudyTimer.tsx: Fix React Hook dependencies');
       console.log('     - Add handleTimerComplete to useEffect deps array');
     }
 
-    console.log('\n📅 Short-term Improvements (Next Sprint):');
-    console.log('1. Remove or refactor dead code files');
-    console.log(`   • ${unusedFiles.length} files identified for cleanup`);
-    console.log('2. Consolidate UI components');
-    console.log(`   • Focus on ${files.filter(f => f.includes('/components/')).length} component files`);
-    console.log('3. Implement proper error handling');
-    console.log('   • Add error boundaries and logging');
+    if (highComplexityFiles.length > 0) {
+      console.log('\n⚡ High Priority (This Week):');
+      console.log('Complex files requiring refactoring:');
+      highComplexityFiles.slice(0, 5).forEach(([file, data]) => 
+        console.log(`   • ${file} (Complexity: ${data.cyclomaticComplexity}, Functions: ${data.functions})`)
+      );
+      if (highComplexityFiles.length > 5) {
+        console.log(`   ... and ${highComplexityFiles.length - 5} more files`);
+      }
+    }
 
-    console.log('\n🎯 Long-term Goals (Next Quarter):');
-    console.log('1. Test Coverage');
-    console.log('   • Write unit tests for components');
-    console.log('   • Add integration tests for critical paths');
-    console.log('2. Code Standards');
-    console.log('   • Document and enforce naming conventions');
-    console.log('   • Set up automated style checks');
-    console.log('3. Quality Assurance');
-    console.log('   • Schedule regular code reviews');
-    console.log('   • Implement automated quality gates');
+    console.log('\n📅 Planned Improvements (Next Sprint):');
+    console.log('1. Code Cleanup');
+    console.log(`   • Remove ${unusedFiles.length} unused files`);
+    console.log(`   • Consolidate ${files.filter(f => f.includes('/components/')).length} UI components`);
+    console.log('2. Error Handling');
+    console.log('   • Implement error boundaries');
+    console.log('   • Add structured error logging');
+    console.log('3. Testing');
+    console.log('   • Add unit tests for components');
+    console.log('   • Implement integration tests');
+    
+    console.log('\n📈 Ongoing Maintenance:');
+    console.log('• Regular code reviews');
+    console.log('• Automated quality checks');
+    console.log('• Documentation updates');
+    
+    console.log('\n──────────────────────────────');
+
+    // Print detailed metrics
+    console.log('\n📈 Detailed Metrics:');
+    console.log('──────────────────────────────');
+    console.log('Code Complexity:');
+    console.log(`• Average Cyclomatic Complexity: ${result.avgComplexity.toFixed(2)}`);
+    console.log(`• Maximum Complexity: ${result.maxComplexity}`);
+    console.log(`• Total Functions: ${result.totalFunctions}`);
+
+    // Print ESLint statistics by category
+    console.log('\n🔍 ESLint Issues by Category:');
+    console.log('──────────────────────────────');
+    const issuesByType = Object.entries(issues.details).reduce((acc, [rule, count]) => {
+      const category = rule.split('/')[0];
+      acc[category] = (acc[category] || 0) + count;
+      return acc;
+    }, {});
+
+    Object.entries(issuesByType)
+      .sort(([_, a], [__, b]) => b - a)
+      .forEach(([category, count]) => {
+        console.log(`• ${category}: ${count} issues`);
+      });
+
+    // Technical debt estimation
+    const estimateDebtDays = () => {
+      const COMPLEXITY_FACTOR = 0.5; // Half day per high complexity file
+      const WARNING_FACTOR = 0.2; // 0.2 days per warning
+      const ERROR_FACTOR = 1; // 1 day per error
+      const DEAD_CODE_FACTOR = 0.3; // 0.3 days per unused file
+
+      return Math.ceil(
+        highComplexityFiles.length * COMPLEXITY_FACTOR +
+        issues.warnings * WARNING_FACTOR +
+        issues.errors * ERROR_FACTOR +
+        unusedFiles.length * DEAD_CODE_FACTOR
+      );
+    };
+
+    const debtDays = estimateDebtDays();
+    console.log('\n⏱️ Technical Debt');
+    console.log('──────────────────────────────');
+    console.log(`Estimated Resolution Time: ~${debtDays} developer days`);
+    console.log(`Priority Level: ${debtDays > 10 ? 'High' : debtDays > 5 ? 'Medium' : 'Low'}`);
     
     console.log('──────────────────────────────');
     
@@ -672,8 +850,13 @@ async function main() {
       }
     }
     
-    // Generate report for all files
+    // Collect all processed files
     const allFiles = [...highPriorityFiles, ...remainingFiles];
+    
+    // Apply automatic fixes
+    await applyAutoFixes(allFiles);
+    
+    // Generate final report
     console.log('\nGenerating comprehensive code quality report...');
     await generateReport(allFiles);
     
