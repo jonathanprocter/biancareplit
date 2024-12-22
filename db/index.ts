@@ -4,228 +4,300 @@ import postgres from 'postgres';
 
 import * as schema from './schema';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required');
+// Custom error types for better error handling
+class DatabaseError extends Error {
+  constructor(
+    message: string,
+    public readonly code?: string,
+    public readonly details?: Record<string, unknown>
+  ) {
+    super(message);
+    this.name = 'DatabaseError';
+  }
 }
 
-// Singleton instances
+class ConnectionError extends DatabaseError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message, 'CONNECTION_ERROR', details);
+    this.name = 'ConnectionError';
+  }
+}
+
+class ConfigurationError extends DatabaseError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message, 'CONFIG_ERROR', details);
+    this.name = 'ConfigurationError';
+  }
+}
+
+// Validate environment configuration
+if (!process.env.DATABASE_URL) {
+  throw new ConfigurationError('DATABASE_URL environment variable is required');
+}
+
+// Singleton instances with proper typing
 let _client: postgres.Sql<{}> | null = null;
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Enhanced PostgreSQL configuration with better connection handling
-const getPostgresConfig = () => ({
-  max: 20, // Increased pool size for better concurrency
-  idle_timeout: 30, // Increased idle timeout
-  connect_timeout: 20, // Increased connect timeout
-  connection: {
-    application_name: 'medical_education_platform',
-    // SSL configuration for all environments
-    ssl: {
-      rejectUnauthorized: process.env.NODE_ENV === 'production',
-      // In development, we're more permissive with SSL
-      ...(process.env.NODE_ENV !== 'production' && {
-        rejectUnauthorized: false,
-      }),
+// Connection state tracking
+let _isConnected = false;
+let _lastConnectionAttempt = 0;
+const CONNECTION_RETRY_INTERVAL = 5000; // 5 seconds
+
+// Enhanced PostgreSQL configuration with comprehensive error handling and monitoring
+function getPostgresConfig(): postgres.Options<{}> {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const config: postgres.Options<{}> = {
+    max: isProduction ? 50 : 20, // Increased pool size in production
+    idle_timeout: 60, // 1 minute idle timeout
+    connect_timeout: 30, // 30 seconds connect timeout
+    connection: {
+      application_name: 'medical_education_platform',
+      ssl: {
+        rejectUnauthorized: isProduction,
+        ...(process.env.NODE_ENV !== 'production' && {
+          rejectUnauthorized: false,
+        }),
+      },
+      statement_timeout: 60000, // 1 minute
+      query_timeout: 60000, // 1 minute
+      connectionTimeoutMillis: 30000, // 30 seconds
     },
-    statement_timeout: 30000, // 30 seconds
-    query_timeout: 30000, // 30 seconds
-    connectionTimeoutMillis: 30000,
-  },
-  types: {
-    date: {
-      to: 1114,
-      from: [1082, 1083, 1114, 1184],
-      serialize: (date: Date) => date.toISOString(),
-      parse: (str: string) => new Date(str),
+    types: {
+      date: {
+        to: 1114,
+        from: [1082, 1083, 1114, 1184],
+        serialize: (date: Date) => date.toISOString(),
+        parse: (str: string) => new Date(str),
+      },
     },
-  },
-  // Enhanced error handling with proper types
-  onnotice: (notice: postgres.NoticeMessage) => {
-    console.log('PostgreSQL Notice:', notice);
-  },
-  onerror: (err: Error) => {
-    console.error('PostgreSQL Error:', err);
-  },
-  debug: process.env.NODE_ENV === 'development',
-  // Connection pool error handler
-  onConnectionError: (err: Error, client: postgres.Client) => {
-    console.error('PostgreSQL Connection Error:', err);
-    console.error('Failed Client:', client?.processID);
-  },
-});
-
-// Get or create PostgreSQL client with proper error handling
-export function getClient(): postgres.Sql<{}> {
-  if (!_client) {
-    try {
-      console.log('Creating new PostgreSQL client...');
-      if (!process.env.DATABASE_URL) {
-        throw new Error('DATABASE_URL environment variable is required');
-      }
-      _client = postgres(process.env.DATABASE_URL, getPostgresConfig());
-    } catch (error) {
-      console.error('Failed to create PostgreSQL client:', error);
-      throw error instanceof Error ? error : new Error('Unknown error creating PostgreSQL client');
-    }
-  }
-  return _client;
-}
-
-// Get or create Drizzle instance
-function getDrizzle() {
-  if (!_db) {
-    try {
-      console.log('Creating new Drizzle ORM instance...');
-      const client = getClient();
-      _db = drizzle(client, { schema });
-    } catch (error) {
-      console.error('Failed to create Drizzle instance:', error);
-      throw error;
-    }
-  }
-  return _db;
-}
-
-// Export database instance
-export const db = getDrizzle();
-
-// Initialize database with comprehensive error handling, retries, and health checks
-export async function initializeDatabase(retries = 3, delay = 2000): Promise<void> {
-  let lastError: Error | null = null;
-  let client: postgres.Sql<{}> | null = null;
-
-  // Configuration validation
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is required');
-  }
-
-  const validateConnection = async (client: postgres.Sql<{}>) => {
-    const results = await Promise.all([
-      client`SELECT current_timestamp`,
-      client`SELECT current_database()`,
-      client`SELECT version()`,
-    ]);
-    return {
-      timestamp: results[0][0].current_timestamp,
-      database: results[1][0].current_database,
-      version: results[2][0].version,
-    };
+    debug: process.env.NODE_ENV === 'development',
+    transform: {
+      undefined: null, // Convert undefined to null for better PostgreSQL compatibility
+    },
+    onnotice: (notice: postgres.NoticeMessage) => {
+      console.log('[Database Notice]', {
+        severity: notice.severity,
+        code: notice.code,
+        message: notice.message,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    onerror: (err: Error) => {
+      console.error('[Database Error]', {
+        error: err.message,
+        stack: err.stack,
+        timestamp: new Date().toISOString(),
+      });
+      _isConnected = false;
+    },
+    onconnect: () => {
+      console.log('[Database] New connection established', {
+        timestamp: new Date().toISOString(),
+      });
+      _isConnected = true;
+      _lastConnectionAttempt = Date.now();
+    },
+    onconnectionerror: (err: Error, client: postgres.Client) => {
+      console.error('[Database] Connection error', {
+        error: err.message,
+        stack: err.stack,
+        clientId: client?.processID,
+        timestamp: new Date().toISOString(),
+      });
+      _isConnected = false;
+    },
   };
 
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      console.log(`Database connection attempt ${attempt}/${retries}`);
-
-      // Step 1: Establish raw connection
-      const startTime = Date.now();
-      client = getClient();
-
-      // Step 2: Validate connection with timeout
-      const connectionTimeout = 30000; // 30 seconds
-      const connectionInfo = (await Promise.race([
-        validateConnection(client),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Connection validation timeout')), connectionTimeout),
-        ),
-      ])) as { timestamp: Date; database: string; version: string };
-
-      const connectionTime = Date.now() - startTime;
-      console.log(`Raw connection successful (${connectionTime}ms)`);
-      console.log('Connection Info:', {
-        database: connectionInfo.database,
-        serverTime: connectionInfo.timestamp,
-        postgresVersion: connectionInfo.version,
-      });
-
-      // Step 3: Verify ORM connection
-      const ormStartTime = Date.now();
-      await db.execute(sql`
-        SELECT EXISTS (
-          SELECT FROM pg_tables 
-          WHERE schemaname = 'public'
-        ) as has_tables
-      `);
-      const ormTime = Date.now() - ormStartTime;
-      console.log(`ORM connection verified (${ormTime}ms)`);
-
-      // Step 4: Verify connection pool
-      const poolStartTime = Date.now();
-      const poolPromises = Array.from({ length: 5 }, () => db.execute(sql`SELECT 1`));
-      await Promise.all(poolPromises);
-      const poolTime = Date.now() - poolStartTime;
-      console.log(`Connection pool verified (${poolTime}ms)`);
-
-      console.log('Database initialization completed successfully', {
-        totalTime: Date.now() - startTime,
-        connectionTime,
-        ormTime,
-        poolTime,
-      });
-      return;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-
-      // Enhanced error logging
-      console.error(`Database connection attempt ${attempt} failed:`, {
-        attempt,
-        error: lastError.message,
-        stack: lastError.stack,
-        timestamp: new Date().toISOString(),
-        retryDelay: delay * attempt,
-      });
-
-      // Check if error is fatal
-      const isFatalError =
-        error instanceof Error &&
-        (error.message.includes('password authentication failed') ||
-          error.message.includes('role does not exist') ||
-          error.message.includes('database does not exist'));
-
-      if (isFatalError) {
-        console.error('Fatal database error detected, stopping retry attempts');
-        throw lastError;
-      }
-
-      if (attempt < retries) {
-        const nextDelay = delay * Math.pow(2, attempt - 1); // Exponential backoff
-        console.log(`Retrying in ${nextDelay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, nextDelay));
-      }
-    } finally {
-      // Cleanup if needed
-      if (client && lastError) {
-        try {
-          await client.end();
-        } catch (cleanupError) {
-          console.error('Error during cleanup:', cleanupError);
-        }
-      }
-    }
-  }
-
-  const errorMessage = `Failed to initialize database after ${retries} attempts. Last error: ${lastError?.message}`;
-  console.error(errorMessage);
-  throw new Error(errorMessage);
+  return config;
 }
 
-// Export cleanup function for external use
-export async function closeDatabase() {
-  if (_client) {
+// Enhanced client initialization with connection management and retries
+async function createClient(): Promise<postgres.Sql<{}>> {
+  const now = Date.now();
+  if (_client && _isConnected) {
+    return _client;
+  }
+
+  // Prevent connection spam
+  if (now - _lastConnectionAttempt < CONNECTION_RETRY_INTERVAL) {
+    throw new ConnectionError('Too many connection attempts', {
+      lastAttempt: new Date(_lastConnectionAttempt).toISOString(),
+      nextAttemptIn: CONNECTION_RETRY_INTERVAL - (now - _lastConnectionAttempt),
+    });
+  }
+
+  try {
+    console.log('[Database] Initializing PostgreSQL client...');
+    _lastConnectionAttempt = now;
+
+    if (!process.env.DATABASE_URL) {
+      throw new ConfigurationError('DATABASE_URL environment variable is required');
+    }
+
+    const client = postgres(process.env.DATABASE_URL, getPostgresConfig());
+
+    // Verify connection
+    await client`SELECT 1`; // Simple connection test
+    _client = client;
+    _isConnected = true;
+
+    console.log('[Database] PostgreSQL client initialized successfully');
+    return client;
+  } catch (error) {
+    _isConnected = false;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Database] Failed to create PostgreSQL client:', {
+      error: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
+
+    throw new ConnectionError('Failed to create PostgreSQL client', {
+      originalError: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
+// Enhanced Drizzle instance management
+async function createDrizzleInstance() {
+  if (_db && _isConnected) {
+    return _db;
+  }
+
+  try {
+    console.log('[Database] Creating Drizzle ORM instance...');
+    const client = await createClient();
+    _db = drizzle(client, { schema });
+
+    // Verify ORM connection
+    await _db.execute(sql`SELECT 1`);
+    console.log('[Database] Drizzle ORM instance created successfully');
+
+    return _db;
+  } catch (error) {
+    _isConnected = false;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Database] Failed to create Drizzle instance:', {
+      error: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
+
+    throw new DatabaseError('Failed to create Drizzle instance', 'ORM_ERROR', {
+      originalError: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
+// Create the database instance
+export const db = await createDrizzleInstance();
+
+// Health check function
+export async function checkDatabaseHealth() {
+  if (!_client || !_isConnected) {
+    return { healthy: false, error: 'No active database connection' };
+  }
+
+  try {
+    const [
+      timestampResult,
+      databaseResult,
+      versionResult,
+      tableCountResult,
+      connectionCountResult
+    ] = await Promise.all([
+      _client`SELECT current_timestamp`,
+      _client`SELECT current_database()`,
+      _client`SELECT version()`,
+      _client`SELECT count(*) as table_count FROM information_schema.tables WHERE table_schema = 'public'`,
+      _client`SELECT count(*) as connection_count FROM pg_stat_activity WHERE datname = current_database()`
+    ]);
+
+    return {
+      healthy: true,
+      timestamp: timestampResult[0].current_timestamp,
+      database: databaseResult[0].current_database,
+      version: versionResult[0].version,
+      tableCount: tableCountResult[0].table_count,
+      connectionCount: connectionCountResult[0].connection_count,
+      lastCheck: new Date().toISOString(),
+    };
+  } catch (error) {
+    _isConnected = false;
+    return {
+      healthy: false,
+      error: error instanceof Error ? error.message : String(error),
+      lastCheck: new Date().toISOString(),
+    };
+  }
+}
+
+// Enhanced database cleanup with connection pool management
+export async function closeDatabase(): Promise<void> {
+  if (_client || _db) {
     try {
-      console.log('Closing database connections...');
-      await _client.end();
-      console.log('Database connections closed successfully');
+      console.log('[Database] Initiating graceful shutdown...');
+
+      // Close active queries first
+      if (_db) {
+        try {
+          await _db.execute(sql`SELECT pg_cancel_backend(pid) 
+            FROM pg_stat_activity 
+            WHERE datname = current_database() 
+            AND pid <> pg_backend_pid()`);
+          console.log('[Database] Active queries terminated');
+        } catch (error) {
+          console.warn('[Database] Error terminating queries:', error);
+        }
+      }
+
+      // Close client connections
+      if (_client) {
+        await _client.end({ timeout: 5000 });
+        console.log('[Database] All connections closed successfully');
+      }
+
     } catch (error) {
-      console.error('Error closing database connections:', error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[Database] Error during cleanup:', {
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+      throw new DatabaseError('Failed to close database connections', 'CLEANUP_ERROR', {
+        originalError: errorMessage,
+      });
     } finally {
       _client = null;
       _db = null;
+      _isConnected = false;
     }
   }
 }
 
-// Cleanup handler
+// Enhanced cleanup handlers
 process.on('beforeExit', async () => {
-  await closeDatabase().catch(console.error);
+  console.log('[Database] Process exit detected, initiating cleanup...');
+  await closeDatabase().catch(error => {
+    console.error('[Database] Cleanup error during exit:', error);
+    process.exit(1);
+  });
+});
+
+process.on('SIGINT', async () => {
+  console.log('[Database] Interrupt signal received, initiating cleanup...');
+  await closeDatabase().catch(error => {
+    console.error('[Database] Cleanup error during interrupt:', error);
+    process.exit(1);
+  });
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('[Database] Termination signal received, initiating cleanup...');
+  await closeDatabase().catch(error => {
+    console.error('[Database] Cleanup error during termination:', error);
+    process.exit(1);
+  });
+  process.exit(0);
 });

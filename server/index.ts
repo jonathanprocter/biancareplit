@@ -17,7 +17,7 @@ import { fileURLToPath } from 'url';
 // Added http import
 import { WebSocketServer } from 'ws';
 
-import { closeDatabase, db, initializeDatabase } from '../db';
+import { closeDatabase, db, checkDatabaseHealth } from '../db';
 import type { DatabaseError } from '../db';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
@@ -224,27 +224,28 @@ async function startServer(): Promise<void> {
   try {
     log('Starting server initialization...');
 
-    // Step 1: Initialize database with enhanced error handling and retries
-    log('Step 1: Database initialization');
+    // Step 1: Initialize database and verify health
+    log('Step 1: Database initialization and health check');
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 5000; // 5 seconds between retries
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        log(`Database connection attempt ${attempt}/${MAX_RETRIES}`);
-        await initializeDatabase();
+        log(`Database health check attempt ${attempt}/${MAX_RETRIES}`);
+        
+        const healthStatus = await checkDatabaseHealth();
+        if (!healthStatus.healthy) {
+          throw new Error(`Database health check failed: ${healthStatus.error}`);
+        }
 
-        // Verify connection with timeout
-        const connectionTimeout = 10000; // 10 seconds
-        await Promise.race([
-          db.execute(sql`SELECT 1`),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Connection timeout')), connectionTimeout),
-          ),
-        ]);
-
-        log('Database connection verified successfully');
-        break; // Connection successful, exit retry loop
+        log('Database health check passed:', {
+          database: healthStatus.database,
+          version: healthStatus.version,
+          tableCount: healthStatus.tableCount,
+          connectionCount: healthStatus.connectionCount,
+        });
+        
+        break; // Health check successful, exit retry loop
       } catch (dbError) {
         const errorDetails = {
           attempt,
@@ -254,11 +255,11 @@ async function startServer(): Promise<void> {
         };
 
         if (attempt === MAX_RETRIES) {
-          console.error('Fatal error during database initialization:', errorDetails);
-          throw new Error(`Database initialization failed after ${MAX_RETRIES} attempts`);
+          console.error('Fatal error during database health check:', errorDetails);
+          throw new Error(`Database health check failed after ${MAX_RETRIES} attempts`);
         }
 
-        console.warn(`Database connection attempt ${attempt} failed:`, errorDetails);
+        console.warn(`Database health check attempt ${attempt} failed:`, errorDetails);
         log(`Retrying in ${RETRY_DELAY / 1000} seconds...`);
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
       }
