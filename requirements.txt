@@ -46,3 +46,6 @@ openai
 python-dotenv
 openai
 python-shell
+flask-cors
+openai
+python-shell

@@ -2,10 +2,13 @@ import os
 import logging
 import json
 import sys
-from typing import Dict, Optional, List
-from pathlib import Path
-from openai import AsyncOpenAI, OpenAI
 import time
+from typing import Dict, Optional, List, Any, Union
+from pathlib import Path
+try:
+    from openai import AsyncOpenAI, OpenAI
+except ImportError:
+    logging.error("OpenAI package not found. Please install it using: pip install openai")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -76,7 +79,7 @@ class CodeReviewService:
             ".zsh": "Zsh",
         }
 
-    def review_file(self, file_path: Path) -> Dict:
+    def review_file(self, file_path: Path) -> Dict[str, Any]:
         """Review a single file and return suggestions"""
         try:
             if not file_path.exists():
@@ -213,7 +216,7 @@ Code to review:
             logger.error(f"Error applying fixes to {file_path}: {str(e)}")
             return False
 
-    def review_directory(self, directory: str) -> Dict[str, Dict]:
+    def review_directory(self, directory: str) -> Dict[str, Union[Dict[str, Any], str]]:
         """Review all supported files in a directory recursively"""
         results = {}
         try:
@@ -239,44 +242,78 @@ Code to review:
                     logger.warning(f"Could not stat file {file}: {str(e)}")
                     continue
 
-            # Calculate timeout: base time + additional time based on file count and size
-            base_timeout = 30  # 30 seconds base
-            time_per_file = 1  # 1 second per file
-            time_per_mb = 2  # 2 seconds per MB
+            # Enhanced timeout calculation based on workload
+            base_timeout = 60  # 60 seconds base
+            time_per_file = 2  # 2 seconds per file
+            time_per_mb = 5  # 5 seconds per MB
+            # Additional time for larger codebases
+            complexity_factor = 1 + (len(file_stats) / 1000)  # Scale up for larger projects
             calculated_timeout = int(
-                base_timeout +
+                (base_timeout +
                 (len(file_stats) * time_per_file) +
-                (total_size / (1024 * 1024) * time_per_mb)
+                (total_size / (1024 * 1024) * time_per_mb)) * complexity_factor
             )
-            total_timeout = min(calculated_timeout, 300)  # Max 5 minutes
+            total_timeout = min(calculated_timeout, 600)  # Max 10 minutes
 
             logger.info(f"Processing {len(file_stats)} files ({total_size / (1024 * 1024):.2f}MB) with {total_timeout}s timeout")
+            logger.info(f"Complexity factor: {complexity_factor:.2f}")
 
-
+            # Initialize progress tracking
             processed_count = 0
             total_files = len([f for f in files if f.is_file() and f.suffix in self.supported_languages])
+            start_time = time.time()
             
-            for file_path in files:
-                if file_path.is_file() and file_path.suffix in self.supported_languages:
-                    if not any(
-                        exclude in str(file_path)
-                        for exclude in ["node_modules", "__pycache__", "venv", ".git"]
-                    ):
-                        logger.info(f"Reviewing {file_path}")
-                        # Print progress as JSON for the Node.js process to parse
-                        print(json.dumps({
-                            "type": "progress",
-                            "data": {
-                                "processed": processed_count,
-                                "total": total_files,
-                                "current_file": str(file_path)
-                            }
-                        }))
-                        result = self.review_file(file_path)
-                        if result and "improved_code" in result:
-                            self.apply_fixes(file_path, result["improved_code"])
-                        results[str(file_path)] = result
-                        processed_count += 1
+            try:
+                # Add try-except block for file processing
+                try:
+                    for file_path in files:
+                        try:
+                            if file_path.is_file() and file_path.suffix in self.supported_languages:
+                                if not any(
+                                    exclude in str(file_path)
+                                    for exclude in ["node_modules", "__pycache__", "venv", ".git", "dist", "build"]
+                                ):
+                                    logger.info(f"Reviewing {file_path}")
+                                    
+                                    # Calculate and log progress metrics
+                                    elapsed_time = time.time() - start_time
+                                    files_per_second = processed_count / max(elapsed_time, 1)
+                                    estimated_remaining = (total_files - processed_count) / max(files_per_second, 0.1)
+                                    
+                                    # Enhanced progress update
+                                    progress_data = {
+                                        "type": "progress",
+                                        "data": {
+                                            "processed": processed_count,
+                                            "total": total_files,
+                                            "current_file": str(file_path),
+                                            "elapsed_time": round(elapsed_time, 2),
+                                            "estimated_remaining": round(estimated_remaining, 2),
+                                            "files_per_second": round(files_per_second, 2)
+                                        }
+                                    }
+                                    print(json.dumps(progress_data))
+
+                                    # Review file with timeout protection
+                                    try:
+                                        result = self.review_file(file_path)
+                                        if result and "improved_code" in result:
+                                            self.apply_fixes(file_path, result["improved_code"])
+                                        results[str(file_path)] = result
+                                    except Exception as review_error:
+                                        logger.error(f"Error reviewing {file_path}: {str(review_error)}")
+                                        results[str(file_path)] = {
+                                            "error": f"Failed to review: {str(review_error)}",
+                                            "type": "review_error"
+                                        }
+                                    
+                                    processed_count += 1
+                        except Exception as file_error:
+                            logger.error(f"Error processing file {file_path}: {str(file_error)}")
+                            continue
+
+            except Exception as e:
+                logger.error(f"An error occured during directory processing: {str(e)}")
 
             logger.info(f"Completed review of directory: {directory}")
             return results
