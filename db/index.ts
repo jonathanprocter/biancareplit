@@ -1,206 +1,79 @@
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from 'ws';
-
 import * as schema from './schema';
 
-// Custom error types for better error handling
-class DatabaseError extends Error {
-  constructor(
-    message: string,
-    public readonly code?: string,
-    public readonly details?: Record<string, unknown>,
-  ) {
-    super(message);
-    this.name = 'DatabaseError';
-  }
-}
-
-// Connection configuration with retry logic
-const CONNECTION_CONFIG = {
-  maxRetries: 3,
-  retryDelay: 1000,
-  connectionTimeout: 10000,
-};
-
-// Validate environment configuration
-if (!process.env.DATABASE_URL) {
-  throw new DatabaseError('DATABASE_URL environment variable is required', 'CONFIG_ERROR');
-}
-
-// Initialize WebSocket proxy with retry mechanism
+// Configure WebSocket for Neon database connection
 const wsProxy = {
-  webSocketFactory: async (url: string) => {
-    let lastError;
-    for (let attempt = 1; attempt <= CONNECTION_CONFIG.maxRetries; attempt++) {
-      try {
-        console.log(
-          `[Database] WebSocket connection attempt ${attempt}/${CONNECTION_CONFIG.maxRetries}`,
-        );
-        const wsClient = new ws(url, {
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              process.env.DATABASE_URL?.split('@')[0].split('//')[1] || '',
-            ).toString('base64')}`,
-          },
-          handshakeTimeout: CONNECTION_CONFIG.connectionTimeout,
-        });
-
-        // Set up event handlers
-        wsClient.on('error', (error) => {
-          console.error('[Database] WebSocket error:', error);
-        });
-
-        wsClient.on('close', () => {
-          console.log('[Database] WebSocket connection closed');
-        });
-
-        wsClient.on('open', () => {
-          console.log('[Database] WebSocket connection established');
-        });
-
-        return wsClient;
-      } catch (error) {
-        lastError = error;
-        if (attempt < CONNECTION_CONFIG.maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, CONNECTION_CONFIG.retryDelay));
-        }
-      }
-    }
-    throw lastError;
-  },
-  keepalive: true,
-  keepaliveInterval: 10000,
+  webSocketConstructor: ws,
+  onClose: () => console.log('[Database] WebSocket connection closed'),
+  onError: (err: Error) => console.error('[Database] WebSocket error:', err),
 };
 
-// Initialize pool with optimized configuration
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+// Create connection pool with optimized settings
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: CONNECTION_CONFIG.connectionTimeout,
+  connectionTimeoutMillis: 10000,
   max: 10,
   idleTimeoutMillis: 30000,
-  maxUses: 7500,
-  maxLifetimeSeconds: 3600,
-  maxRetries: CONNECTION_CONFIG.maxRetries,
-  retryDelay: CONNECTION_CONFIG.retryDelay,
-  wsProxy,
+  ssl: true,
 });
 
-// Initialize Drizzle with enhanced error handling
-export const db = drizzle(pool, {
-  schema,
-  logger: true,
-});
+// Initialize Drizzle ORM
+export const db = drizzle(pool, { schema });
 
-// Enhanced health check function with connection verification
+// Health check function
 export async function checkDatabaseHealth() {
   try {
     const startTime = Date.now();
     const result = await pool.query('SELECT 1');
     const duration = Date.now() - startTime;
 
-    const status = {
+    return {
       healthy: result.rows.length > 0,
       timestamp: new Date().toISOString(),
       responseTime: duration,
-      connectionPoolStats: {
+      poolStats: {
         totalCount: pool.totalCount,
         idleCount: pool.idleCount,
         waitingCount: pool.waitingCount,
-      },
+      }
     };
-
-    console.log('[Database] Health check passed:', status);
-    return status;
   } catch (error) {
-    const status = {
+    console.error('[Database] Health check failed:', error);
+    return {
       healthy: false,
       error: error instanceof Error ? error.message : String(error),
-      timestamp: new Date().toISOString(),
-      details: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
     };
-    console.error('[Database] Health check failed:', status);
-    return status;
   }
 }
 
-// Enhanced database cleanup with graceful shutdown
+// Clean shutdown function
 export async function closeDatabase(): Promise<void> {
   try {
-    console.log('[Database] Initiating graceful shutdown...');
-
-    // Set a timeout for the shutdown process
-    const shutdownTimeout = setTimeout(() => {
-      console.error('[Database] Shutdown timed out after 5 seconds');
-      process.exit(1);
-    }, 5000);
-
     await pool.end();
-    clearTimeout(shutdownTimeout);
-
-    console.log('[Database] Database connections closed successfully');
+    console.log('[Database] Connection pool closed successfully');
   } catch (error) {
     console.error('[Database] Error during cleanup:', error);
     throw error;
   }
 }
 
-// Setup cleanup handlers with enhanced error handling
-process.on('SIGINT', async () => {
+// Graceful shutdown handlers
+const cleanup = async (signal: string) => {
   try {
+    console.log(`[Database] Received ${signal}, cleaning up...`);
     await closeDatabase();
-    process.exit(0);
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    console.error('[Database] Error during SIGINT cleanup:', error);
+    console.error(`[Database] ${signal} cleanup failed:`, error);
     process.exit(1);
   }
-});
+};
 
-process.on('SIGTERM', async () => {
-  try {
-    await closeDatabase();
-    process.exit(0);
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    console.error('[Database] Error during SIGTERM cleanup:', error);
-    process.exit(1);
-  }
-});
-
-process.on('beforeExit', async () => {
-  try {
-    await closeDatabase();
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    console.error('[Database] Error during beforeExit cleanup:', error);
-    process.exit(1);
-  }
-});
+process.on('SIGINT', () => cleanup('SIGINT'));
+process.on('SIGTERM', () => cleanup('SIGTERM'));
