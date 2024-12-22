@@ -55,7 +55,7 @@ const createWebSocketProxy = () => ({
 });
 
 // Initialize database pool with retry mechanism
-async function initializePool(): Promise<void> {
+async function initializePool() {
   if (isConnecting) return;
   isConnecting = true;
 
@@ -112,8 +112,7 @@ async function initializePool(): Promise<void> {
     console.info('[Database] Connection established successfully');
     retryCount = 0;
 
-    const db = drizzle(pool, { schema });
-    return db;
+    return drizzle(pool, { schema });
   } catch (error) {
     console.error(
       '[Database] Connection attempt failed:',
@@ -128,7 +127,7 @@ async function initializePool(): Promise<void> {
 }
 
 // Reconnection handler
-async function reconnect(): Promise<void> {
+async function reconnect() {
   if (pool) {
     try {
       await pool.end();
@@ -140,7 +139,7 @@ async function reconnect(): Promise<void> {
     }
     pool = null;
   }
-  await initializePool();
+  return initializePool();
 }
 
 // Health check function
@@ -182,7 +181,7 @@ async function checkDatabaseHealth() {
 }
 
 // Cleanup function
-async function closeDatabase(): Promise<void> {
+async function closeDatabase() {
   if (pool) {
     try {
       await pool.end();
@@ -204,5 +203,6 @@ const db = await initializePool();
 process.on('SIGINT', () => void closeDatabase());
 process.on('SIGTERM', () => void closeDatabase());
 
-// Export the initialized database instance and utilities
+// Export database instance and utilities
+export type { Pool };
 export { db, checkDatabaseHealth, closeDatabase };
