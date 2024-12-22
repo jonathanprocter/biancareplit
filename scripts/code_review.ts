@@ -166,6 +166,12 @@ interface ComplexityMetrics {
   functions: number;
   dependencies: number;
   lines: number;
+  duplicatePatterns: number;
+  importComplexity: number;
+  accessibilityScore: number;
+  performanceScore: number;
+  medicalTermAccuracy: number;
+  testCoverage: number;
 }
 
 interface CodeAnalysisResult {
@@ -191,23 +197,123 @@ interface CodeAnalysisResult {
 async function analyzeComplexity(filePath: string): Promise<ComplexityMetrics | null> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
-    const lines = content.split('\n').length;
+    const lines = content.split('\n');
+    const totalLines = lines.length;
+    
+    // Basic metrics
     const functionMatches = content.match(/function\s+\w+\s*\(|\w+\s*:\s*function\s*\(|\(\s*\)\s*=>/g);
     const dependencies = content.match(/import\s+.*?from/g);
-    
-    // Basic cyclomatic complexity calculation
     const controlFlows = content.match(/if|else|for|while|switch|catch|&&|\|\||\?/g);
+    
+    // Import complexity analysis
+    const importStatements = content.match(/import\s+{[^}]+}/g) || [];
+    const importComplexity = importStatements.reduce((acc, imp) => 
+      acc + (imp.match(/,/g)?.length || 0) + 1, 0);
+    
+    // Duplicate code detection
+    const codeBlocks = new Map<string, number>();
+    const minBlockSize = 4; // Minimum lines to consider as a duplicate block
+    let duplicatePatterns = 0;
+    
+    for (let i = 0; i < lines.length - minBlockSize; i++) {
+      const block = lines.slice(i, i + minBlockSize).join('\n').trim();
+      if (block.length > 50) { // Ignore very short blocks
+        codeBlocks.set(block, (codeBlocks.get(block) || 0) + 1);
+        if (codeBlocks.get(block)! > 1) {
+          duplicatePatterns++;
+        }
+      }
+    }
+    
+    // Accessibility analysis
+    const accessibilityPatterns = {
+      ariaLabels: (content.match(/aria-label/g) || []).length,
+      roleAttributes: (content.match(/role=/g) || []).length,
+      altTexts: (content.match(/alt=/g) || []).length,
+    };
+    const accessibilityScore = calculateAccessibilityScore(accessibilityPatterns, totalLines);
+    
+    // Performance patterns analysis
+    const performanceIssues = {
+      largeLoops: (content.match(/for\s*\([^)]+\)\s*{[\s\S]{1000,}?}/g) || []).length,
+      nestedLoops: (content.match(/for\s*\([^)]+\)\s*{[^}]*for\s*\([^)]+\)/g) || []).length,
+      heavyOperations: (content.match(/\.forEach|\.map|\.filter|\.reduce/g) || []).length,
+    };
+    const performanceScore = calculatePerformanceScore(performanceIssues, totalLines);
+    
+    // Medical terminology accuracy
+    const medicalTerms = content.match(/patient|diagnosis|treatment|medication|clinical|medical|health|care|provider|physician|nurse|symptom|condition|therapy/g) || [];
+    const medicalTermAccuracy = calculateMedicalTermAccuracy(medicalTerms, content);
+    
+    // Test coverage estimation
+    const testPatterns = {
+      testCases: (content.match(/test\(|it\(|describe\(/g) || []).length,
+      assertions: (content.match(/expect\(|assert\./g) || []).length,
+    };
+    const testCoverage = calculateTestCoverage(testPatterns, functionMatches?.length || 0);
     
     return {
       cyclomaticComplexity: (controlFlows?.length || 0) + 1,
       functions: functionMatches?.length || 0,
       dependencies: dependencies?.length || 0,
-      lines
+      lines: totalLines,
+      duplicatePatterns,
+      importComplexity,
+      accessibilityScore,
+      performanceScore,
+      medicalTermAccuracy,
+      testCoverage,
     };
   } catch (error) {
     console.error(`Error analyzing complexity for ${filePath}:`, error);
     return null;
   }
+}
+
+function calculateAccessibilityScore(patterns: { ariaLabels: number, roleAttributes: number, altTexts: number }, totalLines: number): number {
+  const componentProbability = totalLines / 100; // Estimate number of potential components
+  const expectedAccessibilityElements = Math.ceil(componentProbability);
+  const actualElements = patterns.ariaLabels + patterns.roleAttributes + patterns.altTexts;
+  return Math.min(100, (actualElements / expectedAccessibilityElements) * 100);
+}
+
+function calculatePerformanceScore(issues: { largeLoops: number, nestedLoops: number, heavyOperations: number }, totalLines: number): number {
+  const baseScore = 100;
+  const deductions = {
+    largeLoops: 15,
+    nestedLoops: 20,
+    heavyOperations: 5,
+  };
+  
+  const totalDeduction =
+    (issues.largeLoops * deductions.largeLoops) +
+    (issues.nestedLoops * deductions.nestedLoops) +
+    (issues.heavyOperations * deductions.heavyOperations);
+  
+  return Math.max(0, Math.min(100, baseScore - (totalDeduction * (totalLines / 1000))));
+}
+
+function calculateMedicalTermAccuracy(terms: string[], content: string): number {
+  if (terms.length === 0) return 100; // If no medical terms, assume perfect accuracy
+  
+  // Check for common medical term patterns and context
+  const contextPatterns = {
+    properCapitalization: terms.filter(term => /[A-Z]/.test(term[0])).length,
+    properContext: terms.filter(term => {
+      const termIndex = content.indexOf(term);
+      const surroundingContext = content.slice(Math.max(0, termIndex - 50), termIndex + 50);
+      return /\b(is|are|was|were|has|have|had|may|might|could|would|should|must)\b/.test(surroundingContext);
+    }).length,
+  };
+  
+  return Math.min(100, ((contextPatterns.properCapitalization + contextPatterns.properContext) / (terms.length * 2)) * 100);
+}
+
+function calculateTestCoverage(patterns: { testCases: number, assertions: number }, functionCount: number): number {
+  if (functionCount === 0) return 0;
+  const coverage = Math.min(100, (patterns.testCases / functionCount) * 100);
+  const assertionRatio = patterns.assertions / Math.max(1, patterns.testCases);
+  return Math.min(100, coverage * Math.min(1, assertionRatio));
 }
 
 async function calculateMetrics(files: string[]): Promise<CodeAnalysisResult> {
@@ -258,26 +364,35 @@ async function calculateMetrics(files: string[]): Promise<CodeAnalysisResult> {
 
 async function generateReport(files: string[]): Promise<void> {
   try {
-    console.log('\n📊 Generating Comprehensive Code Quality Report...');
-    console.log('═════════════════════════════════════════════\n');
+    console.log('\n📊 Generating Enhanced Code Quality Report for Medical Education Platform...');
+    console.log('═══════════════════════════════════════════════════════════════════════\n');
 
     const analysis = await calculateMetrics(files);
     const { metrics, highComplexityFiles } = analysis;
 
-    // Health Score Section
-    console.log('🏥 Health Metrics');
-    console.log('───────────────');
-    console.log(`• Overall Health Score: ${metrics.codeHealthScore.toFixed(1)}/100`);
-    console.log(`• Maintainability Score: ${metrics.maintainabilityScore.toFixed(1)}/100`);
-    console.log(`• Test Coverage: ${metrics.testCoverage.toFixed(1)}%\n`);
+    // Health Score Section with Color Coding
+    console.log('🏥 Overall System Health');
+    console.log('─────────────────────');
+    const healthColor = metrics.codeHealthScore >= 80 ? '\x1b[32m' : metrics.codeHealthScore >= 60 ? '\x1b[33m' : '\x1b[31m';
+    console.log(`• Overall Health Score: ${healthColor}${metrics.codeHealthScore.toFixed(1)}/100\x1b[0m`);
+    console.log(`• Maintainability: ${getColorForScore(metrics.maintainabilityScore)}${metrics.maintainabilityScore.toFixed(1)}/100\x1b[0m`);
+    console.log(`• Test Coverage: ${getColorForScore(metrics.testCoverage)}${metrics.testCoverage.toFixed(1)}%\x1b[0m\n`);
 
-    // Codebase Statistics
-    console.log('📈 Codebase Statistics');
-    console.log('───────────────────');
-    console.log(`• Total Files: ${metrics.totalFiles}`);
-    console.log(`• Total Lines of Code: ${metrics.totalLines.toLocaleString()}`);
-    console.log(`• Average Complexity: ${metrics.avgComplexity.toFixed(2)}`);
-    console.log(`• Maximum Complexity: ${metrics.maxComplexity}\n`);
+    // Enhanced Metrics Dashboard
+    console.log('📈 Enhanced Quality Metrics');
+    console.log('────────────────────────');
+    console.log(`• Accessibility Compliance: ${getColorForScore(metrics.accessibilityScore)}${metrics.accessibilityScore.toFixed(1)}%\x1b[0m`);
+    console.log(`• Performance Score: ${getColorForScore(metrics.performanceScore)}${metrics.performanceScore.toFixed(1)}/100\x1b[0m`);
+    console.log(`• Medical Term Accuracy: ${getColorForScore(metrics.medicalTermAccuracy)}${metrics.medicalTermAccuracy.toFixed(1)}%\x1b[0m\n`);
+
+    // Codebase Analysis
+    console.log('🔍 Codebase Analysis');
+    console.log('──────────────────');
+    console.log(`• Files Analyzed: ${metrics.totalFiles}`);
+    console.log(`• Total Lines: ${metrics.totalLines.toLocaleString()}`);
+    console.log(`• Average Complexity: ${getColorForComplexity(metrics.avgComplexity)}${metrics.avgComplexity.toFixed(2)}\x1b[0m`);
+    console.log(`• Code Duplication: ${getColorForDuplication(metrics.duplicatePatterns)}${metrics.duplicatePatterns} occurrences\x1b[0m`);
+    console.log(`• Import Complexity: ${getColorForImportComplexity(metrics.importComplexity)}${metrics.importComplexity.toFixed(2)}\x1b[0m\n`);
 
     // Issues Overview
     console.log('⚠️ Issues Overview');
@@ -301,24 +416,79 @@ async function generateReport(files: string[]): Promise<void> {
       console.log();
     }
 
-    // Recommendations
-    console.log('💡 Recommendations');
-    console.log('────────────────');
+    // Enhanced Recommendations with Domain Focus
+    console.log('\n💡 Comprehensive Recommendations');
+    console.log('─────────────────────────────');
+    
+    // Code Health Recommendations
     if (metrics.codeHealthScore < 80) {
-      console.log('• Consider refactoring high complexity files into smaller components');
-      console.log('• Implement additional unit tests to improve coverage');
-      console.log('• Review and simplify complex functions');
+      console.log('\n📝 Code Health Improvements:');
+      console.log('• Refactor high complexity components into smaller, focused modules');
+      console.log('• Implement comprehensive error handling for medical data processing');
+      console.log('• Enhance type safety for patient data structures');
     }
-    if (metrics.maintainabilityScore < 80) {
-      console.log('• Break down large files into more manageable pieces');
-      console.log('• Reduce function complexity through composition');
-      console.log('• Document complex business logic');
+
+    // Medical Domain Specific Recommendations
+    console.log('\n🏥 Medical Domain Enhancements:');
+    if (metrics.medicalTermAccuracy < 90) {
+      console.log('• Standardize medical terminology usage across the codebase');
+      console.log('• Implement medical term validation using standardized medical dictionaries');
+      console.log('• Add JSDoc comments for medical terms and procedures');
     }
-    if (metrics.testCoverage < 70) {
-      console.log('• Increase test coverage for critical components');
-      console.log('• Add integration tests for complex workflows');
-      console.log('• Implement end-to-end tests for critical paths');
+
+    // Accessibility Recommendations
+    if (metrics.accessibilityScore < 90) {
+      console.log('\n♿ Accessibility Improvements:');
+      console.log('• Enhance ARIA labels for medical interface elements');
+      console.log('• Implement keyboard navigation for critical medical workflows');
+      console.log('• Add screen reader support for medical data visualization');
     }
+
+    // Performance Optimization
+    if (metrics.performanceScore < 85) {
+      console.log('\n⚡ Performance Optimizations:');
+      console.log('• Implement data pagination for large medical records');
+      console.log('• Optimize medical image loading and processing');
+      console.log('• Add caching for frequently accessed medical reference data');
+    }
+
+    // Testing Strategy
+    if (metrics.testCoverage < 80) {
+      console.log('\n🧪 Testing Enhancements:');
+      console.log('• Add unit tests for medical data validation functions');
+      console.log('• Implement integration tests for clinical workflows');
+      console.log('• Add end-to-end tests for critical patient data paths');
+    }
+
+    // Security Considerations
+    console.log('\n🔒 Security Recommendations:');
+    console.log('• Implement strict input validation for medical data');
+    console.log('• Add audit logging for sensitive medical operations');
+    console.log('• Enhance data encryption for patient information');
+
+function getColorForScore(score: number): string {
+  if (score >= 90) return '\x1b[32m'; // Green
+  if (score >= 70) return '\x1b[33m'; // Yellow
+  return '\x1b[31m'; // Red
+}
+
+function getColorForComplexity(complexity: number): string {
+  if (complexity <= 5) return '\x1b[32m';
+  if (complexity <= 10) return '\x1b[33m';
+  return '\x1b[31m';
+}
+
+function getColorForDuplication(duplicates: number): string {
+  if (duplicates <= 2) return '\x1b[32m';
+  if (duplicates <= 5) return '\x1b[33m';
+  return '\x1b[31m';
+}
+
+function getColorForImportComplexity(complexity: number): string {
+  if (complexity <= 3) return '\x1b[32m';
+  if (complexity <= 6) return '\x1b[33m';
+  return '\x1b[31m';
+}
 
     console.log('\n✨ Next Steps');
     console.log('──────────');
