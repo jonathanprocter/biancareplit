@@ -814,11 +814,53 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Code Review API Route
+  // Code Review API Routes
+  // Get supported file types
+  app.get('/api/code-review/supported-types', async (_req, res) => {
+    try {
+      const { PythonShell } = await import('python-shell');
+      const options = {
+        mode: 'json',
+        pythonPath: 'python3',
+        pythonOptions: ['-u'],
+        scriptPath: './services/',
+      };
+
+      const shell = new PythonShell('code_review_service.py', {
+        ...options,
+        args: ['--list-supported-types'],
+      });
+
+      shell.on('message', (message) => {
+        res.json({
+          success: true,
+          supportedTypes: message,
+        });
+      });
+
+      shell.on('error', (err) => {
+        console.error('[API] Error getting supported types:', err);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to get supported file types',
+          error: err.message,
+        });
+      });
+    } catch (error) {
+      console.error('[API] Error in supported types handler:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process supported types request',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  // Code Review API Route with enhanced features
   app.post('/api/code-review', async (req, res) => {
     try {
       console.log('[API] Code review request received');
-      const { directory } = req.body;
+      const { directory, options: userOptions } = req.body;
 
       if (!directory) {
         return res.status(400).json({
@@ -840,40 +882,75 @@ export function registerRoutes(app: Express): Server {
 
       // Initialize Python code review service with proper error handling
       const { PythonShell } = await import('python-shell');
-      const options = {
+      const defaultOptions = {
         mode: 'json',
         pythonPath: 'python3',
         pythonOptions: ['-u'], // unbuffered output
         scriptPath: './services/',
-        args: [directory],
-        timeout: 60000, // 60 second timeout
+        args: [
+          directory,
+          '--format=json',
+          ...(userOptions?.excludePatterns ? [`--exclude=${userOptions.excludePatterns.join(',')}`] : []),
+          ...(userOptions?.includeOnly ? [`--include-only=${userOptions.includeOnly.join(',')}`] : []),
+          ...(userOptions?.maxFileSize ? [`--max-file-size=${userOptions.maxFileSize}`] : []),
+          ...(userOptions?.minConfidence ? [`--min-confidence=${userOptions.minConfidence}`] : []),
+        ],
       };
 
       try {
-        // Set shorter timeout for smaller directories
-        const directorySize = await (async () => {
-          const files = await fs.readdir(directory, { recursive: true });
-          return files.length;
-        })();
+        // Set dynamic timeout based on directory size and complexity
+        const files = await fs.readdir(directory, { recursive: true });
+        const fileStats = await Promise.all(
+          files.map(async (file) => {
+            try {
+              const stats = await fs.stat(`${directory}/${file}`);
+              return { file, size: stats.size, isFile: stats.isFile() };
+            } catch {
+              return null;
+            }
+          }),
+        );
+
+        const validFiles = fileStats.filter((stat) => stat && stat.isFile);
+        const totalSize = validFiles.reduce((sum, stat) => sum + (stat?.size || 0), 0);
         
-        // Adjust timeout based on directory size
-        options.timeout = Math.min(30000 + (directorySize * 1000), 120000); // Between 30s and 120s
-        console.log(`[API] Processing ${directorySize} files with ${options.timeout}ms timeout`);
+        // Calculate timeout: base time + additional time based on file count and size
+        const baseTimeout = 30000; // 30 seconds base
+        const timePerFile = 1000; // 1 second per file
+        const timePerMB = 2000; // 2 seconds per MB
+        const totalTimeout = Math.min(
+          baseTimeout + 
+          (validFiles.length * timePerFile) + 
+          (totalSize / (1024 * 1024) * timePerMB),
+          300000 // Max 5 minutes
+        );
+
+        console.log(`[API] Processing ${validFiles.length} files (${totalSize / (1024 * 1024)}MB) with ${totalTimeout}ms timeout`);
 
         const results = await new Promise((resolve, reject) => {
-          const shell = new PythonShell('code_review_service.py', options);
+          const shell = new PythonShell('code_review_service.py', {
+            ...defaultOptions,
+            timeout: totalTimeout,
+          });
+
           let output = '';
           let lastUpdate = Date.now();
+          let progress = { processed: 0, total: validFiles.length };
 
           shell.on('message', (message) => {
             lastUpdate = Date.now();
             try {
-              // Try to parse each message as it comes in
+              // Try to parse progress updates or final results
               const parsed = JSON.parse(message);
-              output = message;
-              console.log('[API] Received valid review output');
+              if (parsed.type === 'progress') {
+                progress = parsed.data;
+                console.log(`[API] Progress: ${progress.processed}/${progress.total} files`);
+              } else {
+                output = message;
+                console.log('[API] Received valid review output');
+              }
             } catch (err) {
-              // If not valid JSON, treat as progress message
+              // Log any non-JSON progress messages
               console.log('[API] Progress:', message);
             }
           });
@@ -898,28 +975,38 @@ export function registerRoutes(app: Express): Server {
             }
           });
 
-          // Progressive timeout checking
-          const checkProgress = setInterval(() => {
+          // Enhanced progress monitoring
+          const progressInterval = setInterval(() => {
             const timeSinceUpdate = Date.now() - lastUpdate;
-            if (timeSinceUpdate > options.timeout / 2) {
-              clearInterval(checkProgress);
+            // Send progress updates to client
+            if (progress.processed > 0) {
+              res.write(`data: ${JSON.stringify({ type: 'progress', data: progress })}\n\n`);
+            }
+            // Check for stalled process
+            if (timeSinceUpdate > totalTimeout / 2) {
+              clearInterval(progressInterval);
               shell.terminate();
               reject(new Error('Code review process stalled'));
             }
-          }, 5000);
+          }, 2000);
 
           // Final timeout
           setTimeout(() => {
-            clearInterval(checkProgress);
+            clearInterval(progressInterval);
             shell.terminate();
-            reject(new Error(`Code review timed out after ${options.timeout}ms`));
-          }, options.timeout);
+            reject(new Error(`Code review timed out after ${totalTimeout}ms`));
+          }, totalTimeout);
         });
 
         console.log('[API] Code review completed successfully');
         res.json({
           success: true,
-          results
+          results,
+          metadata: {
+            filesProcessed: validFiles.length,
+            totalSize: totalSize,
+            processingTime: Date.now() - lastUpdate,
+          },
         });
       } catch (error) {
         console.error('[API] Code review execution error:', error);
@@ -938,6 +1025,97 @@ export function registerRoutes(app: Express): Server {
       });
     } finally {
       console.log('[API] Code review request completed');
+    }
+  });
+
+  // Batch review endpoint for multiple files or directories
+  app.post('/api/code-review/batch', async (req, res) => {
+    try {
+      const { paths, options } = req.body;
+
+      if (!Array.isArray(paths) || paths.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one path is required',
+        });
+      }
+
+      const fs = await import('fs/promises');
+      const { PythonShell } = await import('python-shell');
+
+      // Validate all paths exist
+      for (const path of paths) {
+        try {
+          await fs.access(path);
+        } catch {
+          return res.status(400).json({
+            success: false,
+            message: `Path not accessible: ${path}`,
+          });
+        }
+      }
+
+      const batchResults = await Promise.all(
+        paths.map(async (path) => {
+          try {
+            const shell = new PythonShell('code_review_service.py', {
+              mode: 'json',
+              pythonPath: 'python3',
+              pythonOptions: ['-u'],
+              scriptPath: './services/',
+              args: [
+                path,
+                '--format=json',
+                ...(options?.excludePatterns ? [`--exclude=${options.excludePatterns.join(',')}`] : []),
+                ...(options?.includeOnly ? [`--include-only=${options.includeOnly.join(',')}`] : []),
+              ],
+            });
+
+            return new Promise((resolve) => {
+              let output = '';
+              shell.on('message', (message) => {
+                try {
+                  const parsed = JSON.parse(message);
+                  output = parsed;
+                } catch (err) {
+                  console.log('[API] Progress:', message);
+                }
+              });
+
+              shell.on('close', () => {
+                resolve({
+                  path,
+                  results: output || { error: 'No output received' },
+                });
+              });
+
+              shell.on('error', (err) => {
+                resolve({
+                  path,
+                  error: err.message,
+                });
+              });
+            });
+          } catch (error) {
+            return {
+              path,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            };
+          }
+        }),
+      );
+
+      res.json({
+        success: true,
+        results: batchResults,
+      });
+    } catch (error) {
+      console.error('[API] Batch review error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process batch review request',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   });
 

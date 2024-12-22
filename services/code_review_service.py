@@ -221,17 +221,82 @@ Code to review:
             return {"error": error_msg}
 
 
+def parse_args():
+    """Parse command line arguments"""
+    import argparse
+    parser = argparse.ArgumentParser(description='Code Review Service')
+    parser.add_argument('path', nargs='?', help='Path to file or directory to review')
+    parser.add_argument('--format', choices=['json', 'text'], default='json',
+                      help='Output format')
+    parser.add_argument('--exclude', help='Comma-separated patterns to exclude')
+    parser.add_argument('--include-only', help='Comma-separated patterns to include')
+    parser.add_argument('--max-file-size', type=int, default=100,
+                      help='Maximum file size in KB')
+    parser.add_argument('--min-confidence', type=float, default=0.7,
+                      help='Minimum confidence score for issues')
+    parser.add_argument('--list-supported-types', action='store_true',
+                      help='List supported file types')
+    return parser.parse_args()
+
+
 def main():
     """Main function to handle command line execution"""
     try:
-        if len(sys.argv) < 2:
-            print(json.dumps({"error": "Please provide a directory path"}))
+        args = parse_args()
+        service = CodeReviewService()
+
+        if args.list_supported_types:
+            print(json.dumps(service.supported_languages))
+            return
+
+        if not args.path:
+            print(json.dumps({"error": "Please provide a path"}))
             sys.exit(1)
 
-        directory = sys.argv[1]
-        service = CodeReviewService()
-        results = service.review_directory(directory)
-        print(json.dumps(results))
+        # Convert exclude and include patterns to lists
+        exclude_patterns = args.exclude.split(',') if args.exclude else []
+        include_patterns = args.include_only.split(',') if args.include_only else []
+
+        path = Path(args.path)
+        if path.is_file():
+            results = service.review_file(
+                path,
+                max_size_kb=args.max_file_size,
+                min_confidence=args.min_confidence
+            )
+        else:
+            results = service.review_directory(
+                args.path,
+                exclude_patterns=exclude_patterns,
+                include_patterns=include_patterns,
+                max_size_kb=args.max_file_size,
+                min_confidence=args.min_confidence
+            )
+
+        if args.format == 'json':
+            print(json.dumps(results))
+        else:
+            # Format results as human-readable text
+            print(f"Code Review Results for {args.path}")
+            print("=" * 50)
+            if isinstance(results, dict) and 'error' in results:
+                print(f"Error: {results['error']}")
+            else:
+                for file_path, review in results.items():
+                    print(f"\nFile: {file_path}")
+                    print("-" * 30)
+                    if 'summary' in review:
+                        print(f"Overall Score: {review['summary']['score']}/10")
+                        print(f"Severity: {review['summary']['severity']}")
+                        print(f"Lines of Code: {review['summary']['loc']}")
+                    if 'issues' in review:
+                        print("\nIssues Found:")
+                        for issue in review['issues']:
+                            print(f"- {issue['type']} ({issue['severity']})")
+                            print(f"  {issue['description']}")
+                            print(f"  Suggestion: {issue['suggestion']}")
+                    print("\n")
+
     except Exception as e:
         print(json.dumps({"error": str(e)}))
         sys.exit(1)
