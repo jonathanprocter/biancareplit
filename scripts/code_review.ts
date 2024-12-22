@@ -324,6 +324,12 @@ async function calculateMetrics(files: string[]): Promise<CodeAnalysisResult> {
   let totalLines = 0;
   let errorCount = 0;
   let warningCount = 0;
+  let totalAccessibilityScore = 0;
+  let totalPerformanceScore = 0;
+  let totalMedicalTermAccuracy = 0;
+  let totalTestCoverage = 0;
+  let totalDuplicatePatterns = 0;
+  let totalImportComplexity = 0;
 
   for (const file of files) {
     const metrics = await analyzeComplexity(file);
@@ -331,6 +337,12 @@ async function calculateMetrics(files: string[]): Promise<CodeAnalysisResult> {
       totalComplexity += metrics.cyclomaticComplexity;
       maxComplexity = Math.max(maxComplexity, metrics.cyclomaticComplexity);
       totalLines += metrics.lines;
+      totalAccessibilityScore += metrics.accessibilityScore;
+      totalPerformanceScore += metrics.performanceScore;
+      totalMedicalTermAccuracy += metrics.medicalTermAccuracy;
+      totalTestCoverage += metrics.testCoverage;
+      totalDuplicatePatterns += metrics.duplicatePatterns;
+      totalImportComplexity += metrics.importComplexity;
 
       if (metrics.cyclomaticComplexity > 10) {
         highComplexityFiles.set(file, metrics);
@@ -338,10 +350,14 @@ async function calculateMetrics(files: string[]): Promise<CodeAnalysisResult> {
     }
   }
 
-  // Calculate health scores based on metrics
+  // Calculate average metrics
   const avgComplexity = totalComplexity / files.length;
   const codeHealthScore = Math.max(0, Math.min(100, 100 - (avgComplexity * 5)));
   const maintainabilityScore = Math.max(0, Math.min(100, 100 - (highComplexityFiles.size / files.length * 100)));
+  const avgAccessibilityScore = totalAccessibilityScore / files.length;
+  const avgPerformanceScore = totalPerformanceScore / files.length;
+  const avgMedicalTermAccuracy = totalMedicalTermAccuracy / files.length;
+  const avgTestCoverage = totalTestCoverage / files.length;
 
   return {
     errors: errorCount,
@@ -351,11 +367,16 @@ async function calculateMetrics(files: string[]): Promise<CodeAnalysisResult> {
       totalFiles: files.length,
       codeHealthScore,
       maintainabilityScore,
-      testabilityScore: 75, // TODO: Implement actual test coverage analysis
+      testabilityScore: avgTestCoverage,
       avgComplexity,
       maxComplexity,
       totalLines,
-      testCoverage: 0 // TODO: Implement actual test coverage calculation
+      testCoverage: avgTestCoverage,
+      accessibilityScore: avgAccessibilityScore,
+      performanceScore: avgPerformanceScore,
+      medicalTermAccuracy: avgMedicalTermAccuracy,
+      duplicatePatterns: totalDuplicatePatterns,
+      importComplexity: totalImportComplexity / files.length
     },
     highComplexityFiles,
     unusedFiles: [] // TODO: Implement dead code detection

@@ -49,7 +49,8 @@ export class AIService {
       this.openai = new OpenAI({ apiKey: apiKey.trim() });
       console.info('AIService: OpenAI client initialized successfully');
     } catch (error) {
-      this.initializationError = error instanceof Error ? error : new Error('Failed to initialize OpenAI client');
+      this.initializationError =
+        error instanceof Error ? error : new Error('Failed to initialize OpenAI client');
       console.error('AIService: Initialization failed -', this.initializationError.message);
     }
   }
@@ -95,7 +96,9 @@ export class AIService {
   ): Promise<Question[]> {
     try {
       await this.ensureConnection();
-      console.info(`AIService: Generating ${count} questions about "${topic}" at ${difficulty} difficulty`);
+      console.info(
+        `AIService: Generating ${count} questions about "${topic}" at ${difficulty} difficulty`,
+      );
 
       const response = await this.openai!.chat.completions.create({
         model: 'gpt-4o',
@@ -109,7 +112,7 @@ export class AIService {
       });
 
       const result = JSON.parse(response.choices[0].message.content);
-      
+
       if (!Array.isArray(result.questions)) {
         throw new Error('Invalid response format: questions array not found');
       }
@@ -140,7 +143,7 @@ export class AIService {
       });
 
       const result = JSON.parse(response.choices[0].message.content);
-      
+
       if (!Array.isArray(result.flashcards)) {
         throw new Error('Invalid response format: flashcards array not found');
       }
@@ -173,10 +176,16 @@ export class AIService {
       });
 
       const result = JSON.parse(response.choices[0].message.content);
-      
-      if (!result.strengths || !result.weaknesses || !result.recommendations || 
-          !Array.isArray(result.strengths) || !Array.isArray(result.weaknesses) || 
-          !Array.isArray(result.recommendations) || typeof result.estimated_proficiency !== 'number') {
+
+      if (
+        !result.strengths ||
+        !result.weaknesses ||
+        !result.recommendations ||
+        !Array.isArray(result.strengths) ||
+        !Array.isArray(result.weaknesses) ||
+        !Array.isArray(result.recommendations) ||
+        typeof result.estimated_proficiency !== 'number'
+      ) {
         throw new Error('Invalid response format: missing required fields');
       }
 
