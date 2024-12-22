@@ -1,7 +1,8 @@
-import { drizzle } from 'drizzle-orm/neon-serverless';
 import { Pool } from '@neondatabase/serverless';
-import * as schema from './schema';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from 'ws';
+
+import * as schema from './schema';
 
 // Custom error types for better error handling
 class DatabaseError extends Error {
@@ -15,25 +16,100 @@ class DatabaseError extends Error {
   }
 }
 
+// Connection configuration with retry logic
+const CONNECTION_CONFIG = {
+  maxRetries: 3,
+  retryDelay: 1000,
+  connectionTimeout: 10000,
+};
+
 // Validate environment configuration
 if (!process.env.DATABASE_URL) {
   throw new DatabaseError('DATABASE_URL environment variable is required', 'CONFIG_ERROR');
 }
 
-// Initialize database connection
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Initialize WebSocket proxy with retry mechanism
+const wsProxy = {
+  webSocketFactory: async (url: string) => {
+    let lastError;
+    for (let attempt = 1; attempt <= CONNECTION_CONFIG.maxRetries; attempt++) {
+      try {
+        console.log(
+          `[Database] WebSocket connection attempt ${attempt}/${CONNECTION_CONFIG.maxRetries}`,
+        );
+        const wsClient = new ws(url, {
+          headers: {
+            Authorization: `Basic ${Buffer.from(
+              process.env.DATABASE_URL?.split('@')[0].split('//')[1] || '',
+            ).toString('base64')}`,
+          },
+          handshakeTimeout: CONNECTION_CONFIG.connectionTimeout,
+        });
 
-// Initialize Drizzle with the pool
-export const db = drizzle(pool, { schema });
+        // Set up event handlers
+        wsClient.on('error', (error) => {
+          console.error('[Database] WebSocket error:', error);
+        });
 
-// Health check function
+        wsClient.on('close', () => {
+          console.log('[Database] WebSocket connection closed');
+        });
+
+        wsClient.on('open', () => {
+          console.log('[Database] WebSocket connection established');
+        });
+
+        return wsClient;
+      } catch (error) {
+        lastError = error;
+        if (attempt < CONNECTION_CONFIG.maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, CONNECTION_CONFIG.retryDelay));
+        }
+      }
+    }
+    throw lastError;
+  },
+  keepalive: true,
+  keepaliveInterval: 10000,
+};
+
+// Initialize pool with optimized configuration
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: CONNECTION_CONFIG.connectionTimeout,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  maxUses: 7500,
+  maxLifetimeSeconds: 3600,
+  maxRetries: CONNECTION_CONFIG.maxRetries,
+  retryDelay: CONNECTION_CONFIG.retryDelay,
+  wsProxy,
+});
+
+// Initialize Drizzle with enhanced error handling
+export const db = drizzle(pool, {
+  schema,
+  logger: true,
+});
+
+// Enhanced health check function with connection verification
 export async function checkDatabaseHealth() {
   try {
+    const startTime = Date.now();
     const result = await pool.query('SELECT 1');
+    const duration = Date.now() - startTime;
+
     const status = {
       healthy: result.rows.length > 0,
       timestamp: new Date().toISOString(),
+      responseTime: duration,
+      connectionPoolStats: {
+        totalCount: pool.totalCount,
+        idleCount: pool.idleCount,
+        waitingCount: pool.waitingCount,
+      },
     };
+
     console.log('[Database] Health check passed:', status);
     return status;
   } catch (error) {
@@ -41,95 +117,27 @@ export async function checkDatabaseHealth() {
       healthy: false,
       error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString(),
+      details: error instanceof Error ? error.stack : undefined,
     };
     console.error('[Database] Health check failed:', status);
     return status;
   }
 }
 
-// Enhanced client initialization with connection management and retries
-async function createClient(): Promise<postgres.Sql<{}>> {
-  const now = Date.now();
-  if (_client && _isConnected) {
-    return _client;
-  }
-
-  // Prevent connection spam
-  if (now - _lastConnectionAttempt < CONNECTION_RETRY_INTERVAL) {
-    throw new ConnectionError('Too many connection attempts', {
-      lastAttempt: new Date(_lastConnectionAttempt).toISOString(),
-      nextAttemptIn: CONNECTION_RETRY_INTERVAL - (now - _lastConnectionAttempt),
-    });
-  }
-
-  try {
-    console.log('[Database] Initializing PostgreSQL client...');
-    _lastConnectionAttempt = now;
-
-    if (!process.env.DATABASE_URL) {
-      throw new ConfigurationError('DATABASE_URL environment variable is required');
-    }
-
-    const client = postgres(process.env.DATABASE_URL, getPostgresConfig());
-
-    // Verify connection
-    await client`SELECT 1`; // Simple connection test
-    _client = client;
-    _isConnected = true;
-
-    console.log('[Database] PostgreSQL client initialized successfully');
-    return client;
-  } catch (error) {
-    _isConnected = false;
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[Database] Failed to create PostgreSQL client:', {
-      error: errorMessage,
-      timestamp: new Date().toISOString(),
-    });
-
-    throw new ConnectionError('Failed to create PostgreSQL client', {
-      originalError: errorMessage,
-      timestamp: new Date().toISOString(),
-    });
-  }
-}
-
-// Enhanced Drizzle instance management
-async function createDrizzleInstance() {
-  if (_db && _isConnected) {
-    return _db;
-  }
-
-  try {
-    console.log('[Database] Creating Drizzle ORM instance...');
-    const client = await createClient();
-    _db = drizzle(client, { schema });
-
-    // Verify ORM connection
-    await _db.execute(sql`SELECT 1`);
-    console.log('[Database] Drizzle ORM instance created successfully');
-
-    return _db;
-  } catch (error) {
-    _isConnected = false;
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[Database] Failed to create Drizzle instance:', {
-      error: errorMessage,
-      timestamp: new Date().toISOString(),
-    });
-
-    throw new DatabaseError('Failed to create Drizzle instance', 'ORM_ERROR', {
-      originalError: errorMessage,
-      timestamp: new Date().toISOString(),
-    });
-  }
-}
-
-// Database cleanup function
+// Enhanced database cleanup with graceful shutdown
 export async function closeDatabase(): Promise<void> {
   try {
     console.log('[Database] Initiating graceful shutdown...');
-    await sql.end();
+
+    // Set a timeout for the shutdown process
+    const shutdownTimeout = setTimeout(() => {
+      console.error('[Database] Shutdown timed out after 5 seconds');
+      process.exit(1);
+    }, 5000);
+
+    await pool.end();
+    clearTimeout(shutdownTimeout);
+
     console.log('[Database] Database connections closed successfully');
   } catch (error) {
     console.error('[Database] Error during cleanup:', error);
@@ -137,7 +145,62 @@ export async function closeDatabase(): Promise<void> {
   }
 }
 
-// Cleanup handlers
-process.on('SIGINT', () => closeDatabase());
-process.on('SIGTERM', () => closeDatabase());
-process.on('beforeExit', () => closeDatabase());
+// Setup cleanup handlers with enhanced error handling
+process.on('SIGINT', async () => {
+  try {
+    await closeDatabase();
+    process.exit(0);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    console.error('[Database] Error during SIGINT cleanup:', error);
+    process.exit(1);
+  }
+});
+
+process.on('SIGTERM', async () => {
+  try {
+    await closeDatabase();
+    process.exit(0);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    console.error('[Database] Error during SIGTERM cleanup:', error);
+    process.exit(1);
+  }
+});
+
+process.on('beforeExit', async () => {
+  try {
+    await closeDatabase();
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    console.error('[Database] Error during beforeExit cleanup:', error);
+    process.exit(1);
+  }
+});

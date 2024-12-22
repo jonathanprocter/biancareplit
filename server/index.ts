@@ -211,7 +211,31 @@ async function startServer(): Promise<void> {
     try {
       await closeDatabase();
     } catch (cleanupError) {
-      console.error('Error during cleanup:', cleanupError);
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+      if (cleanupError instanceof Error) {
+        console.error('Error during database cleanup:', cleanupError.message);
+      } else {
+        console.error('Unknown error during database cleanup:', cleanupError);
+      }
     }
 
     process.exit(1);
