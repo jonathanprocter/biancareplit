@@ -11,16 +11,24 @@ if (!process.env.DATABASE_URL) {
 let _client: postgres.Sql<{}> | null = null;
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// PostgreSQL configuration
+// Enhanced PostgreSQL configuration with better connection handling
 const getPostgresConfig = () => ({
-  max: 10,
-  idle_timeout: 20,
-  connect_timeout: 10,
+  max: 20, // Increased pool size for better concurrency
+  idle_timeout: 30, // Increased idle timeout
+  connect_timeout: 20, // Increased connect timeout
   connection: {
     application_name: 'medical_education_platform',
-    ...(process.env.NODE_ENV === 'production' && {
-      ssl: { rejectUnauthorized: false }
-    })
+    // SSL configuration for all environments
+    ssl: {
+      rejectUnauthorized: process.env.NODE_ENV === 'production',
+      // In development, we're more permissive with SSL
+      ...(process.env.NODE_ENV !== 'production' && {
+        rejectUnauthorized: false
+      })
+    },
+    statement_timeout: 30000, // 30 seconds
+    query_timeout: 30000,     // 30 seconds
+    connectionTimeoutMillis: 30000,
   },
   types: {
     date: {
@@ -30,8 +38,19 @@ const getPostgresConfig = () => ({
       parse: (str: string) => new Date(str),
     },
   },
-  onnotice: () => {},
+  // Enhanced error handling
+  onnotice: (notice: any) => {
+    console.log('PostgreSQL Notice:', notice);
+  },
+  onerror: (err: Error) => {
+    console.error('PostgreSQL Error:', err);
+  },
   debug: process.env.NODE_ENV === 'development',
+  // Connection pool error handler
+  onConnectionError: (err: Error, client: any) => {
+    console.error('PostgreSQL Connection Error:', err);
+    console.error('Failed Client:', client?.processID);
+  },
 });
 
 // Get or create PostgreSQL client with proper error handling
@@ -69,41 +88,119 @@ function getDrizzle() {
 // Export database instance
 export const db = getDrizzle();
 
-// Initialize database with improved error handling and retries
+// Initialize database with comprehensive error handling, retries, and health checks
 export async function initializeDatabase(retries = 3, delay = 2000): Promise<void> {
   let lastError: Error | null = null;
+  let client: postgres.Sql<{}> | null = null;
   
+  // Configuration validation
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+
+  const validateConnection = async (client: postgres.Sql<{}>) => {
+    const results = await Promise.all([
+      client`SELECT current_timestamp`,
+      client`SELECT current_database()`,
+      client`SELECT version()`,
+    ]);
+    return {
+      timestamp: results[0][0].current_timestamp,
+      database: results[1][0].current_database,
+      version: results[2][0].version,
+    };
+  };
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`Database connection attempt ${attempt}/${retries}`);
       
-      // Test raw connection
-      const client = getClient();
+      // Step 1: Establish raw connection
       const startTime = Date.now();
-      await client`SELECT current_timestamp`;
+      client = getClient();
+      
+      // Step 2: Validate connection with timeout
+      const connectionTimeout = 30000; // 30 seconds
+      const connectionInfo = await Promise.race([
+        validateConnection(client),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Connection validation timeout')), connectionTimeout)
+        )
+      ]) as { timestamp: Date; database: string; version: string };
+      
       const connectionTime = Date.now() - startTime;
       console.log(`Raw connection successful (${connectionTime}ms)`);
+      console.log('Connection Info:', {
+        database: connectionInfo.database,
+        serverTime: connectionInfo.timestamp,
+        postgresVersion: connectionInfo.version,
+      });
       
-      // Verify ORM connection
+      // Step 3: Verify ORM connection
       const ormStartTime = Date.now();
-      await db.execute(sql`SELECT 1`);
+      await db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM pg_tables 
+          WHERE schemaname = 'public'
+        ) as has_tables
+      `);
       const ormTime = Date.now() - ormStartTime;
       console.log(`ORM connection verified (${ormTime}ms)`);
       
-      console.log('Database initialization completed successfully');
+      // Step 4: Verify connection pool
+      const poolStartTime = Date.now();
+      const poolPromises = Array.from({ length: 5 }, () => 
+        db.execute(sql`SELECT 1`)
+      );
+      await Promise.all(poolPromises);
+      const poolTime = Date.now() - poolStartTime;
+      console.log(`Connection pool verified (${poolTime}ms)`);
+      
+      console.log('Database initialization completed successfully', {
+        totalTime: Date.now() - startTime,
+        connectionTime,
+        ormTime,
+        poolTime,
+      });
       return;
+      
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Enhanced error logging
       console.error(`Database connection attempt ${attempt} failed:`, {
+        attempt,
         error: lastError.message,
         stack: lastError.stack,
         timestamp: new Date().toISOString(),
+        retryDelay: delay * attempt,
       });
 
+      // Check if error is fatal
+      const isFatalError = error instanceof Error && (
+        error.message.includes('password authentication failed') ||
+        error.message.includes('role does not exist') ||
+        error.message.includes('database does not exist')
+      );
+
+      if (isFatalError) {
+        console.error('Fatal database error detected, stopping retry attempts');
+        throw lastError;
+      }
+
       if (attempt < retries) {
-        const nextDelay = delay * attempt; // Exponential backoff
+        const nextDelay = delay * Math.pow(2, attempt - 1); // Exponential backoff
         console.log(`Retrying in ${nextDelay}ms...`);
         await new Promise(resolve => setTimeout(resolve, nextDelay));
+      }
+    } finally {
+      // Cleanup if needed
+      if (client && lastError) {
+        try {
+          await client.end();
+        } catch (cleanupError) {
+          console.error('Error during cleanup:', cleanupError);
+        }
       }
     }
   }

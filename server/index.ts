@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from 'express';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic, log } from './vite';
 import { db, initializeDatabase, closeDatabase } from '../db';
+import type { DatabaseError } from '../db';
 import { sql } from 'drizzle-orm';
 import session from 'express-session';
 import fileUpload from 'express-fileupload';
@@ -215,20 +216,45 @@ async function startServer(): Promise<void> {
   try {
     log('Starting server initialization...');
 
-    // Step 1: Initialize database with retries
+    // Step 1: Initialize database with enhanced error handling and retries
     log('Step 1: Database initialization');
-    try {
-      await initializeDatabase(3); // 3 retries
-      await db.execute(sql`SELECT 1`);
-      log('Database connection verified successfully');
-    } catch (dbError) {
-      const errorDetails = {
-        error: dbError instanceof Error ? dbError.message : String(dbError),
-        stack: dbError instanceof Error ? dbError.stack : undefined,
-        timestamp: new Date().toISOString()
-      };
-      console.error('Fatal error during database initialization:', errorDetails);
-      throw new Error('Database initialization failed');
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 5000; // 5 seconds between retries
+    
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        log(`Database connection attempt ${attempt}/${MAX_RETRIES}`);
+        await initializeDatabase();
+        
+        // Verify connection with timeout
+        const connectionTimeout = 10000; // 10 seconds
+        await Promise.race([
+          db.execute(sql`SELECT 1`),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout')), connectionTimeout)
+          )
+        ]);
+        
+        log('Database connection verified successfully');
+        break; // Connection successful, exit retry loop
+        
+      } catch (dbError) {
+        const errorDetails = {
+          attempt,
+          error: dbError instanceof Error ? dbError.message : String(dbError),
+          stack: dbError instanceof Error ? dbError.stack : undefined,
+          timestamp: new Date().toISOString()
+        };
+        
+        if (attempt === MAX_RETRIES) {
+          console.error('Fatal error during database initialization:', errorDetails);
+          throw new Error(`Database initialization failed after ${MAX_RETRIES} attempts`);
+        }
+        
+        console.warn(`Database connection attempt ${attempt} failed:`, errorDetails);
+        log(`Retrying in ${RETRY_DELAY/1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      }
     }
 
     // Step 2: Create HTTP server and configure WebSocket

@@ -113,30 +113,46 @@ class CodeReviewSystem:
             logger.error(f"Error saving fixes to {file_path}: {str(e)}")
             return False
 
-    async def process_directory(self, directory: str, batch_size: int = 2) -> Dict[str, List[str]]:
-        """Process all supported files in the directory recursively."""
+    async def process_directory(self, directory: str) -> Dict[str, List[str]]:
+        """Process all supported files in the directory recursively with improved prioritization.
+        Files are processed one at a time with priority-based timeouts and delays."""
         results = {
             "fixed": [],
             "failed": [],
-            "skipped": []
+            "skipped": [],
+            "timeout": [],
+            "in_progress": []
         }
 
         # Priority paths to process first - critical application files
         priority_paths = {
-            'highest': [
+            'critical': [  # Most critical core functionality files
+                'backend/core/middleware_integration.py',
+                'backend/core/config_manager.py',
+                'backend/middleware/request_handler.py',
+                'backend/config/base_config.py',
+                'server/index.ts',
+                'server/routes.ts'
+            ],
+            'highest': [  # Core system files
                 'backend/core/',
                 'backend/middleware/',
                 'backend/config/',
-                'backend/routes/',
-                'server/index.ts',
+                'backend/routes/'
             ],
-            'high': [
+            'high': [  # Main application files
                 'src/App.',
                 'src/main.',
-                'server/routes.ts',
                 'static/js/flashcard-system.js',
+                'static/js/study-system.js'
             ],
-            'medium': [
+            'medium': [  # Supporting functionality
+                'backend/services/',
+                'backend/utils/',
+                'src/components/',
+                'src/hooks/'
+            ],
+            'low': [  # Non-critical files
                 'backend/',
                 'server/',
                 'src/',
@@ -168,15 +184,38 @@ class CodeReviewSystem:
         
         # Files to exclude
         exclude_files = {
+            # Configuration files
             'migrations.py',
             'alembic.ini',
             'setup.py',
             'conftest.py',
+            'jest.config.ts',
+            'babel.config.js',
+            'tsconfig.json',
+            'vite.config.ts',
+            'postcss.config.js',
+            'tailwind.config.ts',
+            'package.json',
+            'package-lock.json',
+            # Empty or boilerplate files
             '__init__.py',
+            'index.d.ts',
+            # Test files
             'test_*.py',
             '*_test.py',
             '*.test.ts',
-            '*.spec.ts'
+            '*.spec.ts',
+            '*.test.tsx',
+            '*.spec.tsx',
+            # Generated files
+            '*.min.js',
+            '*.min.css',
+            '*.map',
+            # Temporary files
+            '*.tmp',
+            '*.temp',
+            '*.bak',
+            '*.swp'
         }
 
         # Collect all eligible files first
@@ -209,40 +248,47 @@ class CodeReviewSystem:
 
                 language = self.detect_language(file_path)
                 if language:
-                    # Check priority level (0 highest, 3 lowest)
-                    priority = 3  # Default lowest priority
+                    # Check priority level (0-4, where 0 is critical and 4 is lowest)
+                    priority = 4  # Default lowest priority
                     
-                    # Check priority patterns from highest to lowest
-                    for p_level, patterns in [
-                        (0, priority_paths['highest']), 
-                        (1, priority_paths['high']),
-                        (2, priority_paths['medium'])
-                    ]:
-                        if any(pattern in file_path for pattern in patterns):
-                            priority = p_level
-                            break
-                            
+                    # First check exact matches for critical files
+                    if file_path in priority_paths['critical']:
+                        priority = 0
+                    else:
+                        # Then check patterns from highest to lowest
+                        for p_level, (category, patterns) in enumerate([
+                            ('highest', priority_paths['highest']),
+                            ('high', priority_paths['high']),
+                            ('medium', priority_paths['medium']),
+                            ('low', priority_paths['low'])
+                        ], 1):  # Start from 1 since 0 is reserved for critical
+                            if any(pattern in file_path for pattern in patterns):
+                                priority = p_level
+                                break
+                    
                     # Only append if priority is not lowest
-                    if priority < 3:
+                    if priority < 4:
                         files_to_process.append((file_path, language, priority))
+                        logger.info(f"Queued {file_path} with priority {priority}")
                     else:
                         skipped_files['excluded'].append(file_path)
+                        logger.debug(f"Skipped low priority file: {file_path}")
                 else:
                     results["skipped"].append(file_path)
         
-        # Sort files with priority paths first
-        files_to_process.sort(key=lambda x: (not x[2], x[0]))
-        files_to_process = [(path, lang) for path, lang, _ in files_to_process]
+        # Sort files with priority paths first, keeping priority info
+        files_to_process.sort(key=lambda x: (x[2], x[0]))
 
-        # Process files in batches with rate limiting
-        for i in range(0, len(files_to_process), batch_size):
-            batch = files_to_process[i:i + batch_size]
-            
-            for file_path, language in batch:
+        # Process files one at a time with careful error handling
+        total_files = len(files_to_process)
+        for index, (file_path, language, priority) in enumerate(files_to_process):
+            results['in_progress'].append(file_path)
+            logger.info(f"\nProcessing file {index + 1}/{total_files} ({(index + 1)/total_files*100:.1f}%)")
+            logger.info(f"Current file: {file_path} (Priority: {priority})")
                 logger.info(f"Processing {file_path} ({language})")
-                try:
-                    # Add delay between API calls to avoid rate limits
-                    await asyncio.sleep(1)
+            try:
+                # Add delay between API calls to avoid rate limits
+                await asyncio.sleep(1)
                     
                     # Step 1: Fix code
                     fixed_code = await self.fix_code(file_path, language)
@@ -265,31 +311,97 @@ class CodeReviewSystem:
                     logger.error(f"Error processing {file_path}: {str(e)}")
                     results["failed"].append(file_path)
                     
-                # Adjust delay based on priority
-                priority = 3 # Default lowest priority
-                for p_level, patterns in [(0, priority_paths['highest']), (1, priority_paths['high']), (2, priority_paths['medium'])]:
-                    if any(pattern in file_path for pattern in patterns):
-                        priority = p_level
-                        break
-                delay = 1 if priority == 0 else (2 if priority == 1 else 3)
-                await asyncio.sleep(delay)
+                try:
+                    # Set timeout based on priority level
+                    timeout = {
+                        0: 20,  # Critical files get shortest timeout
+                        1: 30,  # Highest priority
+                        2: 45,  # High priority
+                        3: 60   # Medium priority
+                    }.get(priority, 90)  # Default longer timeout for other files
+                    
+                    # Use asyncio.wait_for for the entire file processing
+                    async with asyncio.timeout(timeout):
+                        fixed_code = await self.fix_code(file_path, language)
+                        if not fixed_code:
+                            results["failed"].append(file_path)
+                            continue
+                            
+                        if self.save_fixed_code(file_path, fixed_code):
+                            if self.apply_linters(file_path, language):
+                                results["fixed"].append(file_path)
+                                logger.info(f"Successfully processed {file_path}")
+                            else:
+                                results["failed"].append(file_path)
+                        else:
+                            results["failed"].append(file_path)
+                    
+                    # Adaptive delay based on priority and file size
+                    file_size = os.path.getsize(file_path)
+                    base_delay = {
+                        0: 1,   # Critical files
+                        1: 2,   # Highest priority
+                        2: 3,   # High priority
+                        3: 4    # Medium priority
+                    }.get(priority, 5)  # Default longer delay for other files
+                    
+                    size_factor = min(file_size / (500 * 1024), 2)  # Cap at 2x for files larger than 500KB
+                    delay = base_delay * size_factor
+                    
+                    await asyncio.sleep(delay)
+                    
+                except asyncio.TimeoutError:
+                    logger.warning(f"Timeout processing {file_path}")
+                    results["timeout"].append(file_path)
+                    results["in_progress"].remove(file_path)
+                    await asyncio.sleep(8)  # Longer delay after timeout
+                    continue
+                except Exception as e:
+                    logger.error(f"Error processing {file_path}: {str(e)}")
+                    results["failed"].append(file_path)
+                    results["in_progress"].remove(file_path)
+                    await asyncio.sleep(5)
+                    continue
+                
+                results["in_progress"].remove(file_path)
+                
+                # Progress update after each file
+                logger.info(f"\nProgress Update:")
+                logger.info(f"Fixed: {len(results['fixed'])} files")
+                logger.info(f"Failed: {len(results['failed'])} files")
+                logger.info(f"Timeout: {len(results['timeout'])} files")
+                logger.info(f"In Progress: {len(results['in_progress'])} files")
+                logger.info(f"Remaining: {total_files - (index + 1)} files")
             
-            # Add longer delay between batches
-            await asyncio.sleep(5)
-            total_processed = i + len(batch)
-            percent_complete = (total_processed / len(files_to_process)) * 100
-            logger.info(f"Progress: {percent_complete:.1f}% ({total_processed}/{len(files_to_process)} files)")
+            # Add periodic progress update
+                if (index + 1) % 5 == 0:  # Update every 5 files
+                    await asyncio.sleep(3)
+                    percent_complete = ((index + 1) / total_files) * 100
+                    logger.info(f"Progress: {percent_complete:.1f}% ({index + 1}/{total_files} files)")
+                    logger.info(f"Status: Fixed={len(results['fixed'])}, Failed={len(results['failed'])}, Timeout={len(results['timeout'])}")
             
 
-        # Log processing summary
+        # Log comprehensive processing summary
         logger.info("\nCode Review Summary:")
-        logger.info(f"Total files found: {total_files}")
-        logger.info(f"Files processed: {len(results['fixed'])}")
-        logger.info(f"Failed files: {len(results['failed'])}")
-        logger.info(f"Skipped files:")
-        logger.info(f"  - Size limit exceeded: {len(skipped_files['size'])}")
-        logger.info(f"  - Excluded patterns: {len(skipped_files['excluded'])}")
-        logger.info(f"  - Unsupported types: {len(skipped_files['unsupported'])}")
+        logger.info("=" * 50)
+        logger.info("Processing Statistics:")
+        logger.info(f"Total files scanned: {total_files}")
+        logger.info(f"Successfully fixed: {len(results['fixed'])} files")
+        logger.info(f"Failed to process: {len(results['failed'])} files")
+        logger.info(f"Timed out: {len(results['timeout'])} files")
+        
+        logger.info("\nSkipped Files:")
+        logger.info(f"Size limit exceeded: {len(skipped_files['size'])}")
+        logger.info(f"Excluded patterns: {len(skipped_files['excluded'])}")
+        logger.info(f"Unsupported types: {len(skipped_files['unsupported'])}")
+        
+        # Calculate success rate
+        processed_files = len(results['fixed']) + len(results['failed']) + len(results['timeout'])
+        if processed_files > 0:
+            success_rate = (len(results['fixed']) / processed_files) * 100
+            logger.info(f"\nSuccess Rate: {success_rate:.1f}%")
+        
+        logger.info("=" * 50)
         
         if results['failed']:
             logger.error("\nFailed files:")
