@@ -1,9 +1,4 @@
-import { compare, hash } from 'bcrypt';
-import { and, asc, desc, eq, gte, sql } from 'drizzle-orm';
-import type { Express, NextFunction, Request, Response } from 'express';
-import { type Server, createServer } from 'http';
-
-import { db } from '../db/index.js';
+import { db } from '@db/index.js';
 import {
   badges,
   courses,
@@ -14,7 +9,12 @@ import {
   learningStyleQuestions,
   userBadges,
   users,
-} from '../db/schema.js';
+} from '@db/schema.js';
+import { compare, hash } from 'bcrypt';
+import { and, asc, desc, eq, gte, sql } from 'drizzle-orm';
+import type { Express, NextFunction, Request, Response } from 'express';
+import { type Server, createServer } from 'http';
+
 import { AIService } from './services/AIService.js';
 import { CodeReviewService } from './services/code-review.js';
 import { submitQuizResponses } from './services/learning-style-assessment.js';

@@ -4,7 +4,7 @@ import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
 
-import { Navigation } from '@/components/Navigation';
+import Navigation from '@/components/Navigation';
 
 const App: React.FC = () => {
   return (
