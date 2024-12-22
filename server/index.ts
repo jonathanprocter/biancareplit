@@ -301,7 +301,9 @@ async function startServer(): Promise<void> {
     }
 
     // Step 5: Start server
-    const PORT = 5000; // Fixed port for Replit
+    // ALWAYS serve the app on port 5000
+    // this serves both the API and the client
+    const PORT = 5000;
     await new Promise<void>((resolve, reject) => {
       server
         .listen(PORT, '0.0.0.0')
