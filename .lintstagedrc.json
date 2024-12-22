@@ -2,17 +2,18 @@
   "*.{js,jsx,ts,tsx}": [
     "prettier --write",
     "eslint --fix --max-warnings=0",
-    "jest --bail --findRelatedTests --passWithNoTests --verbose",
+    "jest --bail --findRelatedTests --passWithNoTests --coverage --verbose",
     "tsc --noEmit --pretty"
   ],
   "*.py": [
-    "black",
-    "flake8"
+    "black --check",
+    "flake8 --max-complexity=10",
+    "python -m pytest --doctest-modules"
   ],
   "*.{css,scss}": ["prettier --write", "stylelint --fix"],
   "*.{json,md,yml,yaml,html}": ["prettier --write"],
   "*.test.{ts,tsx}": [
-    "jest --bail --findRelatedTests --passWithNoTests --verbose"
+    "jest --bail --findRelatedTests --passWithNoTests --coverage --verbose"
   ],
   "*.{ts,tsx}": ["tsc --noEmit --pretty"]
 }

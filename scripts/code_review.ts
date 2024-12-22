@@ -12,10 +12,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const HIGH_PRIORITY_PATHS = [
-  '/home/runner/AI-bot-template-1/src/components',
-  '/home/runner/AI-bot-template-1/server/services',
-  '/home/runner/AI-bot-template-1/server/routes.ts',
-  '/home/runner/AI-bot-template-1/db/schema.ts'
+  'client/src/components',
+  'server/services',
+  'server/routes.ts',
+  'db/schema.ts',
+  'server/index.ts',
+  'client/src/pages'
 ];
 
 const CORE_PATHS = [
@@ -150,54 +152,184 @@ async function applyAutoFixes(files: string[]): Promise<void> {
   console.log('🎉 Automatic fixes complete\n');
 }
 
+interface CodeIssue {
+  type: 'error' | 'warning';
+  message: string;
+  file: string;
+  line?: number;
+  column?: number;
+  source: string;
+}
+
+interface ComplexityMetrics {
+  cyclomaticComplexity: number;
+  functions: number;
+  dependencies: number;
+  lines: number;
+}
+
+interface CodeAnalysisResult {
+  errors: number;
+  warnings: number;
+  details: {
+    [key: string]: CodeIssue[];
+  };
+  metrics: {
+    totalFiles: number;
+    codeHealthScore: number;
+    maintainabilityScore: number;
+    testabilityScore: number;
+    avgComplexity: number;
+    maxComplexity: number;
+    totalLines: number;
+    testCoverage: number;
+  };
+  highComplexityFiles: Map<string, ComplexityMetrics>;
+  unusedFiles: string[];
+}
+
+async function analyzeComplexity(filePath: string): Promise<ComplexityMetrics | null> {
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    const lines = content.split('\n').length;
+    const functionMatches = content.match(/function\s+\w+\s*\(|\w+\s*:\s*function\s*\(|\(\s*\)\s*=>/g);
+    const dependencies = content.match(/import\s+.*?from/g);
+    
+    // Basic cyclomatic complexity calculation
+    const controlFlows = content.match(/if|else|for|while|switch|catch|&&|\|\||\?/g);
+    
+    return {
+      cyclomaticComplexity: (controlFlows?.length || 0) + 1,
+      functions: functionMatches?.length || 0,
+      dependencies: dependencies?.length || 0,
+      lines
+    };
+  } catch (error) {
+    console.error(`Error analyzing complexity for ${filePath}:`, error);
+    return null;
+  }
+}
+
+async function calculateMetrics(files: string[]): Promise<CodeAnalysisResult> {
+  const issues: { [key: string]: CodeIssue[] } = {};
+  const highComplexityFiles = new Map<string, ComplexityMetrics>();
+  let totalComplexity = 0;
+  let maxComplexity = 0;
+  let totalLines = 0;
+  let errorCount = 0;
+  let warningCount = 0;
+
+  for (const file of files) {
+    const metrics = await analyzeComplexity(file);
+    if (metrics) {
+      totalComplexity += metrics.cyclomaticComplexity;
+      maxComplexity = Math.max(maxComplexity, metrics.cyclomaticComplexity);
+      totalLines += metrics.lines;
+
+      if (metrics.cyclomaticComplexity > 10) {
+        highComplexityFiles.set(file, metrics);
+      }
+    }
+  }
+
+  // Calculate health scores based on metrics
+  const avgComplexity = totalComplexity / files.length;
+  const codeHealthScore = Math.max(0, Math.min(100, 100 - (avgComplexity * 5)));
+  const maintainabilityScore = Math.max(0, Math.min(100, 100 - (highComplexityFiles.size / files.length * 100)));
+
+  return {
+    errors: errorCount,
+    warnings: warningCount,
+    details: issues,
+    metrics: {
+      totalFiles: files.length,
+      codeHealthScore,
+      maintainabilityScore,
+      testabilityScore: 75, // TODO: Implement actual test coverage analysis
+      avgComplexity,
+      maxComplexity,
+      totalLines,
+      testCoverage: 0 // TODO: Implement actual test coverage calculation
+    },
+    highComplexityFiles,
+    unusedFiles: [] // TODO: Implement dead code detection
+  };
+}
+
 async function generateReport(files: string[]): Promise<void> {
   try {
-    console.log('Generating comprehensive code quality report...\n');
+    console.log('\n📊 Generating Comprehensive Code Quality Report...');
+    console.log('═════════════════════════════════════════════\n');
 
-    // Simulate analysis results
-    const issues = {
-      errors: 0,
-      warnings: 35,
-      details: {}
-    };
+    const analysis = await calculateMetrics(files);
+    const { metrics, highComplexityFiles } = analysis;
 
-    const highComplexityFiles = [
-      ['client/src/components/AITutorAvatar.tsx', { cyclomaticComplexity: 15, functions: 8 }],
-      ['server/services/AIService.ts', { cyclomaticComplexity: 12, functions: 6 }]
-    ];
+    // Health Score Section
+    console.log('🏥 Health Metrics');
+    console.log('───────────────');
+    console.log(`• Overall Health Score: ${metrics.codeHealthScore.toFixed(1)}/100`);
+    console.log(`• Maintainability Score: ${metrics.maintainabilityScore.toFixed(1)}/100`);
+    console.log(`• Test Coverage: ${metrics.testCoverage.toFixed(1)}%\n`);
 
-    const unusedFiles = ['src/deprecated/oldComponent.tsx'];
+    // Codebase Statistics
+    console.log('📈 Codebase Statistics');
+    console.log('───────────────────');
+    console.log(`• Total Files: ${metrics.totalFiles}`);
+    console.log(`• Total Lines of Code: ${metrics.totalLines.toLocaleString()}`);
+    console.log(`• Average Complexity: ${metrics.avgComplexity.toFixed(2)}`);
+    console.log(`• Maximum Complexity: ${metrics.maxComplexity}\n`);
 
-    // Calculate metrics
-    const result = {
-      totalFiles: files.length,
-      codeHealthScore: 85,
-      maintainabilityScore: 80,
-      testabilityScore: 75,
-      avgComplexity: 8.5,
-      maxComplexity: 15
-    };
+    // Issues Overview
+    console.log('⚠️ Issues Overview');
+    console.log('────────────────');
+    console.log(`• Critical Errors: ${analysis.errors}`);
+    console.log(`• Warnings: ${analysis.warnings}`);
+    console.log(`• High Complexity Files: ${highComplexityFiles.size}`);
+    console.log(`• Files Needing Review: ${highComplexityFiles.size + analysis.unusedFiles.length}\n`);
 
-    // Print report sections
-    console.log('📊 Code Quality Dashboard');
-    console.log('══════════════════════════════');
-    console.log(`\n🏥 Health Metrics:`);
-    console.log(`• Overall Health: ${result.codeHealthScore}/100`);
-    console.log(`• Maintainability: ${result.maintainabilityScore}/100`);
-    console.log(`• Testability: ${result.testabilityScore}/100`);
+    // Complex Files Analysis
+    if (highComplexityFiles.size > 0) {
+      console.log('🔍 High Complexity Files');
+      console.log('─────────────────────');
+      for (const [file, metrics] of highComplexityFiles.entries()) {
+        console.log(`\n${file}:`);
+        console.log(`  • Cyclomatic Complexity: ${metrics.cyclomaticComplexity}`);
+        console.log(`  • Number of Functions: ${metrics.functions}`);
+        console.log(`  • Dependencies: ${metrics.dependencies}`);
+        console.log(`  • Lines of Code: ${metrics.lines}`);
+      }
+      console.log();
+    }
 
-    console.log('\n🔍 Code Analysis:');
-    console.log(`• Average Complexity: ${result.avgComplexity.toFixed(2)}`);
-    console.log(`• Maximum Complexity: ${result.maxComplexity}`);
+    // Recommendations
+    console.log('💡 Recommendations');
+    console.log('────────────────');
+    if (metrics.codeHealthScore < 80) {
+      console.log('• Consider refactoring high complexity files into smaller components');
+      console.log('• Implement additional unit tests to improve coverage');
+      console.log('• Review and simplify complex functions');
+    }
+    if (metrics.maintainabilityScore < 80) {
+      console.log('• Break down large files into more manageable pieces');
+      console.log('• Reduce function complexity through composition');
+      console.log('• Document complex business logic');
+    }
+    if (metrics.testCoverage < 70) {
+      console.log('• Increase test coverage for critical components');
+      console.log('• Add integration tests for complex workflows');
+      console.log('• Implement end-to-end tests for critical paths');
+    }
 
-    console.log('\n⚠️ Issues Overview:');
-    console.log(`• Critical Errors: ${issues.errors}`);
-    console.log(`• Warnings: ${issues.warnings}`);
-    console.log(`• Complex Files: ${highComplexityFiles.length}`);
-    console.log(`• Dead Code Files: ${unusedFiles.length}`);
+    console.log('\n✨ Next Steps');
+    console.log('──────────');
+    console.log('1. Review and address critical errors');
+    console.log('2. Refactor files with high complexity');
+    console.log('3. Improve test coverage in critical areas');
+    console.log('4. Update documentation for complex components');
 
   } catch (error) {
     console.error('Error generating report:', error);
+    throw error;
   }
 }
 

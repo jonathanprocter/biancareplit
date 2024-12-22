@@ -43,6 +43,10 @@ npx pretty-quick --staged
 step_status "Prettier formatting" "Run 'npx prettier --write .' to fix formatting issues"
 
 # ESLint
+echo "Running code quality checks..."
+npx tsx scripts/code_review.ts
+step_status "Code quality checks" "Review and address the issues reported by the code review tool"
+
 echo "Running ESLint..."
 git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | xargs npx eslint --fix
 step_status "ESLint" "Fix the linting issues reported by ESLint"

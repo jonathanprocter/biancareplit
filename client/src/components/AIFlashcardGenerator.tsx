@@ -1,115 +1,21 @@
-import { RefreshCw, Upload } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
-import { useState } from 'react';
-
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
-import { useToast } from '@/hooks/use-toast';
-
-interface Flashcard {
-  id: string;
-  front: string;
-  back: string;
-  category: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  lastReviewed: Date | null;
-  nextReview: Date | null;
-  repetitionCount: number;
-}
+import { DifficultySelector } from '@/components/flashcard/DifficultySelector';
+import { FileUploadInput } from '@/components/flashcard/FileUploadInput';
+import { FlashcardGenerationButton } from '@/components/flashcard/FlashcardGenerationButton';
+import { useFlashcardGeneration } from '@/components/flashcard/useFlashcardGeneration';
 
 export function AIFlashcardGenerator() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('medium');
-  const { toast } = useToast();
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const generateFlashcards = async () => {
-    if (!selectedFile) {
-      toast({
-        title: 'No File Selected',
-        description: 'Please select a file to generate flashcards.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsGenerating(true);
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('difficulty', selectedDifficulty);
-
-    try {
-      // Simulate API call for now
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Mock response data
-      const mockFlashcards = [
-        {
-          id: '1',
-          front: 'What is the primary function of the cardiovascular system?',
-          back: 'To transport oxygen, nutrients, and other essential substances throughout the body while removing waste products.',
-          category: 'Physiological Integrity',
-          difficulty: selectedDifficulty,
-          lastReviewed: null,
-          nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          repetitionCount: 0,
-        },
-        // Add more mock flashcards as needed
-      ];
-
-      toast({
-        title: 'Success!',
-        description: `Generated ${mockFlashcards.length} flashcards from your material.`,
-      });
-
-      // Schedule mock spaced repetition
-      const schedule = mockFlashcards.map((card) => ({
-        ...card,
-        nextReview: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000),
-      }));
-
-      console.log('Generated flashcards:', schedule);
-    } catch (error) {
-      console.error('Error generating flashcards:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to generate flashcards. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const scheduleSpacedRepetition = async (flashcards: Flashcard[]) => {
-    try {
-      await fetch('/api/flashcards/schedule', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ flashcards }),
-      });
-    } catch (error) {
-      console.error('Failed to schedule spaced repetition:', error);
-    }
-  };
+  const {
+    selectedFile,
+    setSelectedFile,
+    isGenerating,
+    selectedDifficulty,
+    setSelectedDifficulty,
+    generateFlashcards,
+  } = useFlashcardGeneration();
 
   return (
     <Card>
@@ -122,41 +28,22 @@ export function AIFlashcardGenerator() {
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <Input
-              type="file"
-              onChange={handleFileChange}
-              accept=".pdf,.doc,.docx,.txt"
-              className="flex-1"
+            <FileUploadInput
+              onFileChange={setSelectedFile}
+              disabled={isGenerating}
             />
-            <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select difficulty" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="easy">Easy</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="hard">Hard</SelectItem>
-              </SelectContent>
-            </Select>
+            <DifficultySelector
+              value={selectedDifficulty}
+              onValueChange={setSelectedDifficulty}
+              disabled={isGenerating}
+            />
           </div>
 
-          <Button
+          <FlashcardGenerationButton
             onClick={generateFlashcards}
-            disabled={isGenerating || !selectedFile}
-            className="w-full"
-          >
-            {isGenerating ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Generating Flashcards...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Generate Flashcards
-              </>
-            )}
-          </Button>
+            isGenerating={isGenerating}
+            disabled={!selectedFile}
+          />
 
           <p className="text-sm text-gray-500 mt-4">
             Upload your study materials and our AI will generate smart flashcards with spaced
