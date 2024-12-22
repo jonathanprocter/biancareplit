@@ -115,6 +115,57 @@ async function generateReport(files: string[]): Promise<void> {
       console.log(lintOutput);
     }
     
+    // Code complexity analysis
+    console.log('\nCode Complexity Analysis:');
+    const complexityResults: Record<string, { cyclomaticComplexity: number; dependencies: string[] }> = {};
+    
+    for (const file of files) {
+      if (file.endsWith('.ts') || file.endsWith('.tsx')) {
+        const { stdout: fileContent } = await execAsync(`cat ${file}`);
+        // Calculate cyclomatic complexity (simplified)
+        const complexity = (fileContent.match(/(if|while|for|switch|catch|\?)/g) || []).length;
+        // Find imports
+        const imports = fileContent.match(/import .+ from ['"][@\w\/\-\.]+['"]/g) || [];
+        
+        complexityResults[file] = {
+          cyclomaticComplexity: complexity,
+          dependencies: imports.map(imp => imp.match(/from ['"](.+)['"]/)?.[1] || ''),
+        };
+      }
+    }
+    
+    // Report high complexity files
+    const highComplexityThreshold = 10;
+    const highComplexityFiles = Object.entries(complexityResults)
+      .filter(([_, data]) => data.cyclomaticComplexity > highComplexityThreshold)
+      .sort(([_, a], [__, b]) => b.cyclomaticComplexity - a.cyclomaticComplexity);
+    
+    if (highComplexityFiles.length > 0) {
+      console.log('\nHigh Complexity Files:');
+      highComplexityFiles.forEach(([file, data]) => {
+        console.log(`- ${file}: Complexity score ${data.cyclomaticComplexity}`);
+      });
+    }
+    
+    // Dependency analysis
+    console.log('\nDependency Analysis:');
+    const dependencyUsage = new Map<string, number>();
+    Object.values(complexityResults).forEach(({ dependencies }) => {
+      dependencies.forEach(dep => {
+        dependencyUsage.set(dep, (dependencyUsage.get(dep) || 0) + 1);
+      });
+    });
+    
+    // Find potential dead code (files with no imports)
+    const unusedFiles = Object.entries(complexityResults)
+      .filter(([file, _]) => !Array.from(dependencyUsage.keys()).some(dep => dep.includes(file)))
+      .map(([file, _]) => file);
+    
+    if (unusedFiles.length > 0) {
+      console.log('\nPotentially Unused Files:');
+      unusedFiles.forEach(file => console.log(`- ${file}`));
+    }
+    
     // File statistics
     console.log('\nFile Statistics:');
     console.log(`Total Files Processed: ${files.length}`);
@@ -128,6 +179,27 @@ async function generateReport(files: string[]): Promise<void> {
     Object.entries(typeStats).forEach(([ext, count]) => {
       console.log(`${ext} files: ${count}`);
     });
+    
+    // Performance considerations
+    console.log('\nPerformance Analysis:');
+    const largeFileThreshold = 100 * 1024; // 100KB
+    const largeFiles = await Promise.all(
+      files.map(async file => {
+        const stats = await fs.stat(file);
+        return { file, size: stats.size };
+      })
+    );
+    
+    const filesToReview = largeFiles
+      .filter(({ size }) => size > largeFileThreshold)
+      .sort((a, b) => b.size - a.size);
+    
+    if (filesToReview.length > 0) {
+      console.log('\nLarge Files to Review:');
+      filesToReview.forEach(({ file, size }) => {
+        console.log(`- ${file}: ${(size / 1024).toFixed(2)}KB`);
+      });
+    }
     
   } catch (error) {
     console.error('Error generating report:', error);
