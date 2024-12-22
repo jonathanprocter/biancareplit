@@ -59,7 +59,7 @@ export async function setupVite(app: Express, server: Server) {
         hmr: {
           server,
           host: '0.0.0.0',
-          port: 5174,
+          port: 443,
           protocol: 'wss',
         },
       },
