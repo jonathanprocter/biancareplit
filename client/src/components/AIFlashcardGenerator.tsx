@@ -28,10 +28,7 @@ export function AIFlashcardGenerator() {
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <FileUploadInput
-              onFileChange={setSelectedFile}
-              disabled={isGenerating}
-            />
+            <FileUploadInput onFileChange={setSelectedFile} disabled={isGenerating} />
             <DifficultySelector
               value={selectedDifficulty}
               onValueChange={setSelectedDifficulty}

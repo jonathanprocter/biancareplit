@@ -409,7 +409,17 @@ async function main() {
 
 // Run if called directly
 if (import.meta.url === new URL(process.argv[1], 'file:').href) {
-  main().catch(console.error);
-}
+      console.log('\n🔍 Starting Comprehensive Code Review...');
+      console.log('════════════════════════════════════════\n');
+      main()
+        .then(() => {
+          console.log('\n✨ Code review completed successfully!');
+          process.exit(0);
+        })
+        .catch((error) => {
+          console.error('\n❌ Code review failed:', error);
+          process.exit(1);
+        });
+    }
 
 export { formatFiles, lintFiles, generateReport, applyAutoFixes };

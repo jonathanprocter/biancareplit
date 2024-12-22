@@ -14,7 +14,11 @@ interface DifficultySelectorProps {
   disabled?: boolean;
 }
 
-export function DifficultySelector({ value, onValueChange, disabled = false }: DifficultySelectorProps) {
+export function DifficultySelector({
+  value,
+  onValueChange,
+  disabled = false,
+}: DifficultySelectorProps) {
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger className="w-[180px]">
