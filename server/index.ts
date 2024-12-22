@@ -11,10 +11,6 @@ import { checkDatabaseHealth, closeDatabase } from '../db/index.js';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-// Maximum number of database connection retries
-const MAX_DB_RETRIES = 3;
-const RETRY_DELAY = 5000; // 5 seconds
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -29,13 +25,13 @@ const sessionStore = new MemoryStoreConstructor({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// CORS configuration for development
+// CORS configuration
 app.use(
   cors({
     origin:
       process.env.NODE_ENV === 'production'
         ? 'http://localhost:5000'
-        : ['http://localhost:5000', 'http://localhost:5173', 'http://0.0.0.0:5173'],
+        : ['http://localhost:5000', 'http://0.0.0.0:5000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   }),
@@ -78,36 +74,13 @@ app.use((req, res, next) => {
 });
 
 async function startServer() {
-  let retries = 0;
-
-  async function attemptDatabaseConnection(): Promise<boolean> {
-    try {
-      const dbHealth = await checkDatabaseHealth();
-      if (!dbHealth.healthy) {
-        throw new Error(`Database health check failed: ${dbHealth.error}`);
-      }
-      log('Database connection established successfully');
-      return true;
-    } catch (error) {
-      console.error(`Database connection attempt ${retries + 1}/${MAX_DB_RETRIES} failed:`, error);
-      return false;
-    }
-  }
-
   try {
-    // Attempt to connect to the database with retries
-    while (retries < MAX_DB_RETRIES) {
-      if (await attemptDatabaseConnection()) {
-        break;
-      }
-      retries++;
-      if (retries < MAX_DB_RETRIES) {
-        log(`Retrying database connection in ${RETRY_DELAY}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-      } else {
-        throw new Error('Failed to connect to database after maximum retry attempts');
-      }
+    // Check database health
+    const dbHealth = await checkDatabaseHealth();
+    if (!dbHealth.healthy) {
+      throw new Error(`Database health check failed: ${dbHealth.error}`);
     }
+    log('Database connection established successfully');
 
     // Create HTTP server
     const server = createServer(app);
@@ -133,35 +106,32 @@ async function startServer() {
     });
 
     // Start server with port retry logic
-    // Try to use port 5000 first, then fall back to other ports if needed
-    const startServer = async (port: number = 5000): Promise<void> => {
-      try {
-        await new Promise<void>((resolve, reject) => {
-          server
-            .listen(port, '0.0.0.0', () => {
-              log(`Server started successfully on port ${port}`);
-              log(`API and client both available at http://0.0.0.0:${port}`);
-              resolve();
-            })
-            .on('error', (err: NodeJS.ErrnoException) => {
-              if (err.code === 'EADDRINUSE') {
-                log(`Port ${port} is in use, trying port ${port + 1}`);
-                server.close();
-                startServer(port + 1)
-                  .then(resolve)
-                  .catch(reject);
-              } else {
-                reject(err);
-              }
-            });
-        });
-      } catch (error) {
-        console.error('Failed to start server:', error);
-        process.exit(1);
-      }
+    const findAvailablePort = async (startPort: number = 5000): Promise<number> => {
+      return new Promise((resolve, reject) => {
+        const tryPort = (port: number) => {
+          server.once('error', (err: NodeJS.ErrnoException) => {
+            if (err.code === 'EADDRINUSE') {
+              log(`Port ${port} is in use, trying port ${port + 1}`);
+              server.close();
+              tryPort(port + 1);
+            } else {
+              reject(err);
+            }
+          });
+
+          server.listen(port, '0.0.0.0', () => {
+            server.removeAllListeners('error');
+            resolve(port);
+          });
+        };
+
+        tryPort(startPort);
+      });
     };
 
-    await startServer();
+    const port = await findAvailablePort();
+    log(`Server started successfully on port ${port}`);
+    log(`API and client both available at http://0.0.0.0:${port}`);
 
     // Graceful shutdown
     const cleanup = async (signal: string) => {
@@ -187,4 +157,7 @@ async function startServer() {
   }
 }
 
-startServer();
+startServer().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
