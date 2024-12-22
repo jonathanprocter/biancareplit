@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { db } from '@db';
+import dbExports from '../../db/index.js';
+const { db } = dbExports;
 import { learningStyleQuestions, learningStyleResponses, learningStyleResults } from '@db/schema';
 import { desc, eq } from 'drizzle-orm';
 

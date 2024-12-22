@@ -210,6 +210,12 @@ dbPromise
 process.on('SIGINT', () => void closeDatabase());
 process.on('SIGTERM', () => void closeDatabase());
 
-// Export database instance and utilities
-export { db, checkDatabaseHealth, closeDatabase };
-export type { Pool };
+// Export database instance and utilities as a single object
+const dbExports = {
+  db,
+  checkDatabaseHealth,
+  closeDatabase,
+};
+
+export { Pool };
+export default dbExports;

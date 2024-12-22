@@ -4,7 +4,7 @@ import type { Express, NextFunction, Request, Response } from 'express';
 import { type Server, createServer } from 'http';
 import { PythonShell } from 'python-shell';
 
-import { db } from '../db/index.js';
+import dbExports from '../db/index.js';
 import {
   badges,
   courses,
@@ -21,6 +21,8 @@ import { CodeReviewService } from './services/code-review';
 import { submitQuizResponses } from './services/learning-style-assessment';
 import { generatePersonalizedPath } from './services/recommendations';
 import { sanitizeMedicalData } from './utils/sanitize';
+
+const { db } = dbExports;
 
 interface ErrorResponse {
   message: string;

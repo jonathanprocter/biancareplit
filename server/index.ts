@@ -7,7 +7,8 @@ import MemoryStore from 'memorystore';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { checkDatabaseHealth, closeDatabase } from '../db';
+import dbExports from '../db/index.js';
+const { checkDatabaseHealth, closeDatabase } = dbExports;
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
