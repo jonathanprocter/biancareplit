@@ -37,7 +37,7 @@ export async function checkDatabaseHealth() {
   } catch (error) {
     console.error(
       '[Database] Health check failed:',
-      error instanceof Error ? error.message : error,
+      error instanceof Error ? error.message : 'Unknown error',
     );
     return {
       healthy: false,
