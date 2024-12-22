@@ -23,11 +23,6 @@ const Navigation = () => {
       localStorage.removeItem('username');
       window.location.href = '/';
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
       toast({
         variant: 'destructive',
@@ -46,18 +41,14 @@ const Navigation = () => {
           <div className="flex items-center space-x-4">
             <Link href="/dashboard">
               <a
-                className={`text-lg font-semibold ${
-                  location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'
-                }`}
+                className={`text-lg font-semibold ${location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
               >
                 Dashboard
               </a>
             </Link>
             <Link href="/progress">
               <a
-                className={`text-lg font-semibold ${
-                  location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'
-                }`}
+                className={`text-lg font-semibold ${location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
               >
                 My Progress
               </a>
