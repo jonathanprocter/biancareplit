@@ -2,9 +2,8 @@ import redis
 from redis.exceptions import ConnectionError, TimeoutError
 import logging
 import time
-from typing import Optional, Any, Dict
+from typing import Optional, Any
 import json
-from datetime import datetime
 
 
 class RedisManager:
@@ -27,7 +26,7 @@ class RedisManager:
             redis_url = app.config.get("REDIS_URL")
             if not redis_url:
                 # Try to construct URL from individual settings
-                redis_host = app.config.get("REDIS_HOST", "0.0.0.0")
+                redis_host = app.config.get("REDIS_HOST", "localhost")
                 redis_port = app.config.get("REDIS_PORT", 6379)
                 redis_db = app.config.get("REDIS_DB", 0)
                 redis_password = app.config.get("REDIS_PASSWORD", "")
@@ -38,7 +37,7 @@ class RedisManager:
                     redis_url = f"redis://{redis_host}:{redis_port}/{redis_db}"
 
             # Initialize Redis connection with retries
-            for attempt in range(self.max_retries):
+            for _ in range(self.max_retries):
                 try:
                     self.redis_client = redis.from_url(
                         redis_url,
@@ -49,7 +48,7 @@ class RedisManager:
                     self.redis_client.ping()
                     self.connected = True
                     self.logger.info("Redis connection established")
-                    return
+                    break
                 except (ConnectionError, TimeoutError) as e:
                     self.connection_attempts += 1
                     if self.connection_attempts >= self.max_retries:
@@ -96,7 +95,10 @@ class RedisManager:
         try:
             if self.connected and self.redis_client:
                 return bool(self.redis_client.delete(key))
-            return bool(self.fallback_cache.pop(key, None))
+            if key in self.fallback_cache:
+                del self.fallback_cache[key]
+                return True
+            return False
         except Exception as e:
             self.logger.error(f"Cache delete error: {str(e)}")
             return False

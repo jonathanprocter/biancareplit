@@ -13,9 +13,7 @@ class AdaptiveLearningSystem:
         self.db = db_connection
 
     def analyze_student_patterns(self, user_id):
-        """Analyze learning patterns for a student"""
         try:
-            # Get recent reviews
             reviews = (
                 Review.query.filter_by(user_id=user_id)
                 .order_by(Review.created_at.desc())
@@ -23,7 +21,6 @@ class AdaptiveLearningSystem:
                 .all()
             )
 
-            # Analyze patterns
             pattern_data = {
                 "accuracy_rate": self._calculate_accuracy(reviews),
                 "study_time_distribution": self._analyze_study_times(reviews),
@@ -37,16 +34,13 @@ class AdaptiveLearningSystem:
             raise
 
     def generate_adaptive_content(self, user_id, topic=None):
-        """Generate personalized content based on learning patterns"""
         try:
-            # Get user's learning patterns
             patterns = (
                 AdaptivePattern.query.filter_by(user_id=user_id)
                 .order_by(AdaptivePattern.created_at.desc())
                 .first()
             )
 
-            # Select appropriate content
             content = self._select_content(patterns, topic)
             return content
         except Exception as e:
@@ -54,7 +48,6 @@ class AdaptiveLearningSystem:
             raise
 
     def track_response_patterns(self, user_id, response_data):
-        """Track and analyze student response patterns"""
         try:
             pattern_data = {
                 "response_time": response_data.get("time_taken"),
@@ -63,7 +56,6 @@ class AdaptiveLearningSystem:
                 "timestamp": datetime.utcnow(),
             }
 
-            # Store pattern
             AdaptivePattern.store_pattern(user_id, "response", pattern_data)
             return True
         except Exception as e:
@@ -71,14 +63,12 @@ class AdaptiveLearningSystem:
             raise
 
     def _calculate_accuracy(self, reviews):
-        """Calculate student's accuracy rate with detailed analytics"""
         if not reviews:
             return {"overall": 0.0, "by_category": {}, "trend": []}
 
         correct = sum(1 for r in reviews if r.is_correct)
         overall = (correct / len(reviews)) * 100
 
-        # Calculate accuracy by category
         category_stats = {}
         for review in reviews:
             if review.content and review.content.category:
@@ -94,7 +84,6 @@ class AdaptiveLearningSystem:
             for category, stats in category_stats.items()
         }
 
-        # Calculate trend
         trend = []
         for i in range(0, len(reviews), 5):
             batch = reviews[i : i + 5]
@@ -104,7 +93,6 @@ class AdaptiveLearningSystem:
         return {"overall": overall, "by_category": by_category, "trend": trend}
 
     def _analyze_study_times(self, reviews):
-        """Analyze study time patterns with detailed breakdown"""
         if not reviews:
             return {
                 "average_time": 0,
@@ -117,7 +105,6 @@ class AdaptiveLearningSystem:
         total_time = sum(r.time_taken for r in reviews)
         avg_time = total_time / len(reviews)
 
-        # Analyze by difficulty level
         difficulty_times = {}
         for review in reviews:
             if review.content and review.content.difficulty:
@@ -130,7 +117,6 @@ class AdaptiveLearningSystem:
             diff: sum(times) / len(times) for diff, times in difficulty_times.items()
         }
 
-        # Analyze by time of day
         time_of_day = {"morning": [], "afternoon": [], "evening": [], "night": []}
 
         for review in reviews:
@@ -149,7 +135,6 @@ class AdaptiveLearningSystem:
             for period, times in time_of_day.items()
         }
 
-        # Calculate session lengths
         session_lengths = []
         current_session = 0
         last_time = None
@@ -177,7 +162,6 @@ class AdaptiveLearningSystem:
         }
 
     def _evaluate_topic_mastery(self, reviews):
-        """Evaluate mastery level for different topics"""
         if not reviews:
             return {
                 "mastery_levels": {},
@@ -187,7 +171,6 @@ class AdaptiveLearningSystem:
                 "mastery_timeline": {},
             }
 
-        # Calculate basic mastery levels
         topic_stats = {}
         for review in reviews:
             if review.content and review.content.category:
@@ -216,12 +199,10 @@ class AdaptiveLearningSystem:
                 else:
                     stats["streak"] = 0
 
-                # Track recent performance (last 5 attempts)
                 stats["recent_performance"].append(review.is_correct)
                 if len(stats["recent_performance"]) > 5:
                     stats["recent_performance"].pop(0)
 
-                # Track performance by difficulty
                 if review.content.difficulty:
                     diff_level = review.content.difficulty.value.lower()
                     if diff_level in stats["difficulty_performance"]:
@@ -229,7 +210,6 @@ class AdaptiveLearningSystem:
                             review.is_correct
                         )
 
-        # Calculate mastery levels with detailed metrics
         mastery_levels = {}
         weak_areas = []
         strong_areas = []
@@ -242,7 +222,6 @@ class AdaptiveLearningSystem:
                 sum(stats["recent_performance"]) / len(stats["recent_performance"])
             ) * 100
 
-            # Calculate difficulty progression
             difficulty_mastery = {}
             for diff, results in stats["difficulty_performance"].items():
                 if results:
@@ -282,7 +261,6 @@ class AdaptiveLearningSystem:
                     }
                 )
 
-        # Generate recommended focus areas
         recommended_focus = []
         for area in weak_areas:
             topic = area["topic"]
@@ -313,7 +291,6 @@ class AdaptiveLearningSystem:
         }
 
     def _determine_learning_style(self, reviews):
-        """Determine student's learning style based on performance patterns"""
         if not reviews:
             return {
                 "primary_style": "visual",
@@ -321,7 +298,6 @@ class AdaptiveLearningSystem:
                 "recommendations": [],
             }
 
-        # Analyze performance on different content types
         content_performance = {
             "visual": {"correct": 0, "total": 0, "avg_time": []},
             "verbal": {"correct": 0, "total": 0, "avg_time": []},
@@ -332,7 +308,6 @@ class AdaptiveLearningSystem:
             if not review.content:
                 continue
 
-            # Categorize content type based on keywords and structure
             content_type = self._categorize_content_type(review.content)
 
             if content_type in content_performance:
@@ -342,7 +317,6 @@ class AdaptiveLearningSystem:
                     stats["correct"] += 1
                 stats["avg_time"].append(review.time_taken)
 
-        # Calculate effectiveness scores
         style_effectiveness = {}
         for style, stats in content_performance.items():
             if stats["total"] > 0:
@@ -352,20 +326,17 @@ class AdaptiveLearningSystem:
                     if stats["avg_time"]
                     else 0
                 )
-                # Higher accuracy and lower time means more effective
                 effectiveness = (accuracy * 0.7) + (
                     (1000 - min(avg_time, 1000)) * 0.3 / 10
                 )
                 style_effectiveness[style] = effectiveness
 
-        # Determine primary style
         primary_style = (
             max(style_effectiveness.items(), key=lambda x: x[1])[0]
             if style_effectiveness
             else "visual"
         )
 
-        # Generate recommendations
         recommendations = []
         if primary_style == "visual":
             recommendations.extend(
@@ -399,7 +370,6 @@ class AdaptiveLearningSystem:
         }
 
     def _select_content(self, patterns, topic=None):
-        """Select appropriate content based on learning patterns"""
         try:
             query = Content.query
 
@@ -407,19 +377,15 @@ class AdaptiveLearningSystem:
                 query = query.filter_by(category=topic)
 
             if patterns and patterns.pattern_data:
-                # Adjust difficulty based on performance and mastery
                 accuracy = patterns.pattern_data.get("accuracy_rate", 0)
                 mastery_data = patterns.pattern_data.get("topic_mastery", {})
 
-                # Get topic mastery level if available
                 topic_mastery = mastery_data.get(topic, 0) if topic else 0
 
-                # Combine accuracy and mastery for difficulty selection
                 performance_score = (accuracy * 0.7) + (topic_mastery * 0.3)
 
                 if performance_score > 80:
                     query = query.filter_by(difficulty="ADVANCED")
-                    # Include some intermediate questions for reinforcement
                     query = query.union(
                         Content.query.filter_by(difficulty="INTERMEDIATE")
                         .order_by(func.random())
@@ -427,7 +393,6 @@ class AdaptiveLearningSystem:
                     )
                 elif performance_score > 50:
                     query = query.filter_by(difficulty="INTERMEDIATE")
-                    # Mix in some beginner and advanced questions
                     query = query.union(
                         Content.query.filter(
                             Content.difficulty.in_(["BEGINNER", "ADVANCED"])
@@ -437,14 +402,12 @@ class AdaptiveLearningSystem:
                     )
                 else:
                     query = query.filter_by(difficulty="BEGINNER")
-                    # Include some intermediate questions for progression
                     query = query.union(
                         Content.query.filter_by(difficulty="INTERMEDIATE")
                         .order_by(func.random())
                         .limit(1)
                     )
 
-            # Order by student's historical performance on similar questions
             query = query.order_by(func.random())
             return query.first()
         except Exception as e:
@@ -452,7 +415,6 @@ class AdaptiveLearningSystem:
             raise
 
     def _categorize_content_type(self, content):
-        """Helper method to categorize content type based on its characteristics"""
         if not content:
             return "verbal"
 

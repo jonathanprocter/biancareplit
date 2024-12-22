@@ -23,7 +23,7 @@ def create_app(env: str = None) -> Flask:
     try:
         # Create required directories
         for directory in ["instance", "logs", "config"]:
-            Path(directory).mkdir(exist_ok=True)
+            Path(directory).mkdir(parents=True, exist_ok=True)
 
         # Load environment variables
         load_dotenv()

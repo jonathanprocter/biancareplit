@@ -1,6 +1,7 @@
 from flask_caching import Cache
 from datetime import datetime
 import logging
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,10 @@ def cached_response(timeout=300):
 
     def decorator(f):
         def wrapper(*args, **kwargs):
-            cache_key = f"{f.__name__}:{str(args)}:{str(kwargs)}"
+            # Create a unique cache key using the function name and arguments
+            cache_key = hashlib.sha256(
+                (f"{f.__name__}:{str(args)}:{str(kwargs)}").encode()
+            ).hexdigest()
             response = cache.get(cache_key)
             if response is None:
                 response = f(*args, **kwargs)

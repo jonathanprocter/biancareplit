@@ -113,7 +113,7 @@ class CodeReviewSystem:
             logger.error(f"Error saving fixes to {file_path}: {str(e)}")
             return False
 
-    async def process_directory(self, directory: str, batch_size: int = 5) -> Dict[str, List[str]]:
+    async def process_directory(self, directory: str, batch_size: int = 2) -> Dict[str, List[str]]:
         """Process all supported files in the directory recursively."""
         results = {
             "fixed": [],
@@ -121,16 +121,118 @@ class CodeReviewSystem:
             "skipped": []
         }
 
+        # Priority paths to process first - critical application files
+        priority_paths = {
+            'highest': [
+                'backend/core/',
+                'backend/middleware/',
+                'backend/config/',
+                'backend/routes/',
+                'server/index.ts',
+            ],
+            'high': [
+                'src/App.',
+                'src/main.',
+                'server/routes.ts',
+                'static/js/flashcard-system.js',
+            ],
+            'medium': [
+                'backend/',
+                'server/',
+                'src/',
+                'static/js/'
+            ]
+        }
+        
+        # Directories to exclude
+        exclude_dirs = {
+            '.git',
+            '.pythonlibs',
+            'node_modules',
+            'venv',
+            '__pycache__',
+            'migrations',
+            'dist',
+            'build',
+            'coverage',
+            'tests',
+            '.pytest_cache',
+            'logs',
+            'temp',
+            'tmp',
+            '.venv'
+        }
+
+        # Maximum file size to process (1MB)
+        MAX_FILE_SIZE = 1024 * 1024
+        
+        # Files to exclude
+        exclude_files = {
+            'migrations.py',
+            'alembic.ini',
+            'setup.py',
+            'conftest.py',
+            '__init__.py',
+            'test_*.py',
+            '*_test.py',
+            '*.test.ts',
+            '*.spec.ts'
+        }
+
         # Collect all eligible files first
         files_to_process = []
-        for root, _, files in os.walk(directory):
+        total_files = 0
+        skipped_files = {'size': [], 'excluded': [], 'unsupported': []}
+        
+        for root, dirs, files in os.walk(directory):
+            # Skip excluded directories
+            dirs[:] = [d for d in dirs if d not in exclude_dirs]
+            
             for file_name in files:
+                total_files += 1
                 file_path = os.path.join(root, file_name)
+                
+                # Check for excluded files
+                if any(file_name.endswith(exc) or file_name == exc for exc in exclude_files):
+                    skipped_files['excluded'].append(file_path)
+                    continue
+                
+                # Skip files that are too large
+                try:
+                    if os.path.getsize(file_path) > MAX_FILE_SIZE:
+                        logger.info(f"Skipping large file: {file_path}")
+                        skipped_files['size'].append(file_path)
+                        continue
+                except OSError:
+                    logger.warning(f"Could not check size of {file_path}")
+                    continue
+
                 language = self.detect_language(file_path)
                 if language:
-                    files_to_process.append((file_path, language))
+                    # Check priority level (0 highest, 3 lowest)
+                    priority = 3  # Default lowest priority
+                    
+                    # Check priority patterns from highest to lowest
+                    for p_level, patterns in [
+                        (0, priority_paths['highest']), 
+                        (1, priority_paths['high']),
+                        (2, priority_paths['medium'])
+                    ]:
+                        if any(pattern in file_path for pattern in patterns):
+                            priority = p_level
+                            break
+                            
+                    # Only append if priority is not lowest
+                    if priority < 3:
+                        files_to_process.append((file_path, language, priority))
+                    else:
+                        skipped_files['excluded'].append(file_path)
                 else:
                     results["skipped"].append(file_path)
+        
+        # Sort files with priority paths first
+        files_to_process.sort(key=lambda x: (not x[2], x[0]))
+        files_to_process = [(path, lang) for path, lang, _ in files_to_process]
 
         # Process files in batches with rate limiting
         for i in range(0, len(files_to_process), batch_size):
@@ -163,13 +265,37 @@ class CodeReviewSystem:
                     logger.error(f"Error processing {file_path}: {str(e)}")
                     results["failed"].append(file_path)
                     
-                # Add delay between files in batch
-                await asyncio.sleep(0.5)
+                # Adjust delay based on priority
+                priority = 3 # Default lowest priority
+                for p_level, patterns in [(0, priority_paths['highest']), (1, priority_paths['high']), (2, priority_paths['medium'])]:
+                    if any(pattern in file_path for pattern in patterns):
+                        priority = p_level
+                        break
+                delay = 1 if priority == 0 else (2 if priority == 1 else 3)
+                await asyncio.sleep(delay)
             
-            # Add delay between batches
-            await asyncio.sleep(2)
-            logger.info(f"Completed batch {i//batch_size + 1} of {(len(files_to_process) + batch_size - 1)//batch_size}")
+            # Add longer delay between batches
+            await asyncio.sleep(5)
+            total_processed = i + len(batch)
+            percent_complete = (total_processed / len(files_to_process)) * 100
+            logger.info(f"Progress: {percent_complete:.1f}% ({total_processed}/{len(files_to_process)} files)")
+            
 
+        # Log processing summary
+        logger.info("\nCode Review Summary:")
+        logger.info(f"Total files found: {total_files}")
+        logger.info(f"Files processed: {len(results['fixed'])}")
+        logger.info(f"Failed files: {len(results['failed'])}")
+        logger.info(f"Skipped files:")
+        logger.info(f"  - Size limit exceeded: {len(skipped_files['size'])}")
+        logger.info(f"  - Excluded patterns: {len(skipped_files['excluded'])}")
+        logger.info(f"  - Unsupported types: {len(skipped_files['unsupported'])}")
+        
+        if results['failed']:
+            logger.error("\nFailed files:")
+            for file in results['failed']:
+                logger.error(f"- {file}")
+        
         return results
 
 async def main():

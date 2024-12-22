@@ -5,7 +5,6 @@ from models import Content, SubjectCategory, DifficultyLevel, ContentType
 from typing import List, Dict, Any, Optional
 import json
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -18,9 +17,7 @@ class QuestionGenerator:
         openai.api_key = self.api_key
 
     def _validate_question(self, question: Dict[str, Any]) -> bool:
-        """Validate that a question has all required fields and proper format."""
         try:
-            # Check required fields
             if (
                 not question.get("question")
                 or len(question.get("question", "").strip()) < 10
@@ -45,12 +42,10 @@ class QuestionGenerator:
                 logger.error("Rationale missing or too short")
                 return False
 
-            # Validate option content
             if any(not opt or len(str(opt).strip()) < 3 for opt in question["options"]):
                 logger.error("One or more options are empty or too short")
                 return False
 
-            # Check for duplicate options
             if len(set(question["options"])) != len(question["options"]):
                 logger.error("Duplicate options found")
                 return False
@@ -62,7 +57,6 @@ class QuestionGenerator:
             return False
 
     def generate_prompt(self, category: str, difficulty: str, count: int = 5) -> str:
-        """Generate a prompt for creating NCLEX-style questions."""
         return f"""Create {count} high-cognitive level NCLEX-style questions focusing on analysis, synthesis, or evaluation with the following criteria:
     Difficulty: {difficulty}
     Topic: {category}
@@ -97,20 +91,18 @@ class QuestionGenerator:
     async def generate_questions(
         self, category: str, difficulty: str, count: int = 5
     ) -> List[Dict[str, Any]]:
-        """Generate NCLEX-style questions using OpenAI API."""
         try:
             logger.info(
                 f"Starting question generation for category: {category}, difficulty: {difficulty}"
             )
 
-            # Validate inputs
             if not category or not difficulty:
                 raise ValueError("Category and difficulty are required")
 
             prompt = self.generate_prompt(category, difficulty, count)
 
             try:
-                response = await openai.ChatCompletion.acreate(
+                response = await openai.ChatCompletion.create(
                     model="gpt-4",
                     messages=[
                         {
@@ -127,13 +119,12 @@ class QuestionGenerator:
                     logger.error("No response from OpenAI API")
                     return []
 
-                content = response.choices[0].message.content
+                content = response.choices[0].message["content"]
 
             except Exception as e:
                 logger.error(f"OpenAI API error: {str(e)}")
                 return []
 
-            # Parse questions
             questions = []
             current_question = None
 
@@ -179,7 +170,6 @@ class QuestionGenerator:
                     logger.error(f"Error parsing line: {str(e)}")
                     continue
 
-            # Add the last question if valid
             if current_question and self._validate_question(current_question):
                 questions.append(current_question)
 
@@ -193,7 +183,6 @@ class QuestionGenerator:
             return []
 
     def create_content_objects(self, questions, category, difficulty):
-        """Convert generated questions into Content objects"""
         content_objects = []
 
         try:
@@ -202,7 +191,6 @@ class QuestionGenerator:
             )
             logger.info(f"Using category: {category}, difficulty: {difficulty}")
 
-            # Validate category and difficulty before processing
             try:
                 category_enum = SubjectCategory[category.upper()]
                 difficulty_enum = DifficultyLevel[difficulty.upper()]
@@ -217,7 +205,6 @@ class QuestionGenerator:
                         f"Creating content object for question: {question_text[:50]}..."
                     )
 
-                    # Validate required fields
                     required_fields = ["question", "options", "correct", "rationale"]
                     missing_fields = [
                         field for field in required_fields if field not in q
@@ -228,7 +215,7 @@ class QuestionGenerator:
 
                     try:
                         content = Content(
-                            type=ContentType.QUIZ,  # Using the proper enum value
+                            type=ContentType.QUIZ,
                             category=category_enum,
                             difficulty=difficulty_enum,
                             question=question_text,
@@ -247,7 +234,6 @@ class QuestionGenerator:
                         logger.error(f"Error creating content object: {str(e)}")
                         continue
 
-                    # Validate content object before adding
                     if content.question and content.options:
                         content_objects.append(content)
                         logger.info(

@@ -97,7 +97,7 @@ class BaseConfig:
     def get_logging_config() -> Dict[str, Any]:
         """Get logging configuration dictionary."""
         log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-        log_file = Path("logs") / "application.log"
+        log_file = BaseConfig.LOGS_DIR / "application.log"
 
         return {
             "version": 1,

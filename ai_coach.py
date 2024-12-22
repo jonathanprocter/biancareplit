@@ -1,4 +1,3 @@
-```python
 import os
 import re
 import requests
@@ -11,12 +10,13 @@ ORDERED_LIST_RE = re.compile(r"^\d+\.\s")
 UNORDERED_LIST_RE = re.compile(r"^[-*•]\s")
 HASH_RE = re.compile(r"^#+")
 
+
 class AICoach:
     def __init__(self, api_key):
         """Initialize the AI coach with configuration"""
-        self.api_key = api_key
-        if not self.api_key:
+        if not api_key:
             raise ValueError("OpenAI API key not provided")
+        self.api_key = api_key
 
     def format_inline_markup(self, text):
         text = BOLD_ASTERISKS_RE.sub(r"<strong>\1</strong>", text)
@@ -33,9 +33,14 @@ class AICoach:
 
     # Continue with other methods...
 
-# When creating the AICoach, provide the API key
-api_key = os.environ.get("OPENAI_API_KEY")
-if not api_key:
-    raise ValueError("OpenAI API key not found in environment variables")
-ai_coach = AICoach(api_key)
-```
+
+def main():
+    # When creating the AICoach, provide the API key
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OpenAI API key not found in environment variables")
+    ai_coach = AICoach(api_key)
+
+
+if __name__ == "__main__":
+    main()

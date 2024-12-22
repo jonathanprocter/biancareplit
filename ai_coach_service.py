@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from openai import AsyncOpenAI, OpenAIError
+from openai import OpenAI, OpenAIError
 import json
 from datetime import datetime
 import logging
@@ -7,29 +7,20 @@ import os
 from extensions import db
 from models import Flashcard, DifficultyLevel
 from functools import wraps
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Create blueprint
-ai_coach_blueprint = Blueprint("ai_coach", __name__)
-
-# Add CORS support
 from flask_cors import CORS
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+ai_coach_blueprint = Blueprint("ai_coach", __name__)
 CORS(ai_coach_blueprint)
 
 
 def handle_openai_error(func):
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         try:
-            return await func(*args, **kwargs)
+            return func(*args, **kwargs)
         except OpenAIError as e:
             logger.error(f"OpenAI API Error: {str(e)}")
             raise
@@ -42,7 +33,6 @@ def handle_openai_error(func):
 
 class AICoachService:
     def __init__(self, api_key=None, app=None):
-        """Initialize the AI Coach Service with proper API key validation."""
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.app = app
         self.study_patterns = {}
@@ -51,12 +41,9 @@ class AICoachService:
             logger.error("OpenAI API key not found")
             raise ValueError("OpenAI API key not configured")
 
-        # Initialize OpenAI client
         try:
-            # Initialize the OpenAI client
-            self.client = AsyncOpenAI(api_key=self.api_key)
+            self.client = OpenAI(api_key=self.api_key)
 
-            # Verify the client initialization
             if not self.client:
                 raise ValueError("Failed to initialize OpenAI client")
 
@@ -65,67 +52,16 @@ class AICoachService:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise
 
-    async def generate_motivational_insights(self, user_patterns):
-        """Generate personalized motivational insights based on study patterns."""
-        try:
-            prompt = f"""As a supportive AI study companion, provide personalized motivational insights based on these study patterns:
-            - Study streak: {user_patterns.get('studyStreak', 0)} days
-            - Topics focused: {', '.join(user_patterns.get('topicsFocused', []))}
-            - Strengths: {', '.join(user_patterns.get('strengths', []))}
-            - Areas for improvement: {', '.join(user_patterns.get('areasForImprovement', []))}
-
-            Generate a response that includes:
-            1. A personalized motivational message
-            2. Recognition of achievements
-            3. Gentle encouragement for improvement areas
-            4. A specific actionable tip
-
-            Format the response as JSON:
-            {{
-                "message": "Main motivational message",
-                "achievements": ["achievement 1", "achievement 2"],
-                "encouragement": "Encouraging message for improvement areas",
-                "actionable_tip": "Specific study tip for today",
-                "study_streak_message": "Message about the study streak"
-            }}
-            """
-
-            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-            response = await self.client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an empathetic and encouraging study companion focused on medical education.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.7,
-                response_format={"type": "json_object"},
-                max_tokens=1000,
-            )
-
-            return json.loads(response.choices[0].message.content)
-
-        except Exception as e:
-            logger.error(f"Error generating motivational insights: {str(e)}")
-            raise
-
-        # Set up application context if app is provided
         if app is not None:
             self.init_app(app)
 
     def init_app(self, app):
-        """Initialize the service with Flask application context."""
         self.app = app
 
-        # Register extension with the app
         with self.app.app_context():
             try:
-                # Verify database connection
                 db.engine.connect().execute(db.text("SELECT 1"))
                 logger.info("Database connection verified successfully")
-                # Initialize required database models
                 db.create_all()
                 logger.info("Database tables created successfully")
             except Exception as e:
@@ -135,8 +71,7 @@ class AICoachService:
                 raise
 
     @handle_openai_error
-    async def create_flashcard(self, topic, difficulty=None):
-        """Generate a flashcard for a given topic using OpenAI."""
+    def create_flashcard(self, topic, difficulty=None):
         try:
             prompt = f"""Create a comprehensive NCLEX-style flashcard about {topic} at {difficulty if difficulty else 'intermediate'} level. Include:
             1. A clear, concise question that tests {topic} knowledge
@@ -180,8 +115,8 @@ class AICoachService:
             }}
             """
 
-            response = await self.client.chat.completions.create(
-                model="gpt-4o",  # Using the latest model
+            response = self.client.ChatCompletion.create(
+                model="gpt-4",
                 messages=[
                     {
                         "role": "system",
@@ -190,13 +125,11 @@ class AICoachService:
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.7,
-                response_format={"type": "json_object"},  # Ensure JSON response
             )
 
             content = response.choices[0].message.content
             flashcard_data = json.loads(content)
 
-            # Format the back content for storage
             back_content = (
                 f"Answer: {flashcard_data['answer']}\n\nKey Points:\n"
                 + "\n".join([f"- {point}" for point in flashcard_data["key_points"]])
@@ -210,7 +143,6 @@ class AICoachService:
                 )
             )
 
-            # Format clinical notes
             clinical_notes = []
             if "clinical_notes" in flashcard_data:
                 cn = flashcard_data["clinical_notes"]
@@ -225,11 +157,10 @@ class AICoachService:
                     if points:
                         clinical_notes.append(f"{title}:")
                         clinical_notes.extend([f"• {point}" for point in points])
-                        clinical_notes.append("")  # Add spacing between sections
+                        clinical_notes.append("")
 
                 clinical_notes = "\n".join(clinical_notes).strip()
 
-            # Create new flashcard in database
             flashcard = Flashcard(
                 front=flashcard_data["question"],
                 back=back_content,
@@ -243,7 +174,6 @@ class AICoachService:
                 db.session.commit()
                 logger.info(f"Created flashcard with ID: {flashcard.id}")
 
-                # Return the data in the format expected by frontend
                 return {
                     "question": flashcard_data["question"],
                     "answer": flashcard_data["answer"],
@@ -272,7 +202,6 @@ class AICoachService:
             raise
 
     def generate_study_tip(self, topic):
-        """Generate a study tip for a specific topic."""
         try:
             prompt = f"""Create a helpful study tip for understanding {topic} in nursing. Include:
             1. The main tip
@@ -289,7 +218,7 @@ class AICoachService:
             }}
             """
 
-            response = openai.ChatCompletion.create(
+            response = self.client.ChatCompletion.create(
                 model="gpt-4",
                 messages=[
                     {
@@ -317,18 +246,16 @@ class AICoachService:
             raise
 
 
-# Create service instance but don't initialize yet
 ai_coach_service = AICoachService()
 
 
 def init_app(app):
-    """Initialize the service with the Flask app"""
     ai_coach_service.init_app(app)
 
 
 @ai_coach_blueprint.route("/flashcard", methods=["POST"])
-async def create_flashcard_endpoint():
-    """Create a flashcard endpoint that matches frontend expectations."""
+@handle_openai_error
+def create_flashcard_endpoint():
     logger.info("Received flashcard creation request")
     try:
         data = request.get_json()
@@ -341,7 +268,7 @@ async def create_flashcard_endpoint():
             return jsonify({"error": "Topic is required"}), 400
 
         logger.info(f"Creating flashcard for topic: {data['topic']}")
-        flashcard_data = await ai_coach_service.create_flashcard(data["topic"])
+        flashcard_data = ai_coach_service.create_flashcard(data["topic"])
 
         if not flashcard_data:
             logger.error("Failed to create flashcard")
@@ -366,7 +293,6 @@ async def create_flashcard_endpoint():
 
 @ai_coach_blueprint.route("/study-tip", methods=["POST"])
 def generate_study_tip():
-    """Generate a study tip for a given topic."""
     try:
         data = request.get_json()
         if not data or "topic" not in data:
@@ -380,42 +306,13 @@ def generate_study_tip():
         return jsonify({"error": str(e)}), 500
 
 
-@ai_coach_blueprint.route("/motivation", methods=["POST"])
-async def get_motivational_insights():
-    """Get personalized motivational insights based on study patterns."""
-    try:
-        logger.info("Received request for motivational insights")
-        data = request.get_json()
-        if not data or "patterns" not in data:
-            logger.error("Missing study patterns in request")
-            return jsonify({"error": "Study patterns are required"}), 400
-
-        logger.info(f"Generating insights for patterns: {data['patterns']}")
-        insights = await ai_coach_service.generate_motivational_insights(
-            data["patterns"]
-        )
-        logger.info("Successfully generated motivational insights")
-        return jsonify(insights)
-
-    except OpenAIError as e:
-        logger.error(f"OpenAI API error in motivational insights: {str(e)}")
-        return jsonify({"error": "AI service error", "details": str(e)}), 503
-    except Exception as e:
-        logger.error(
-            f"Unexpected error in get_motivational_insights endpoint: {str(e)}"
-        )
-        return jsonify({"error": "Internal server error", "details": str(e)}), 500
-
-
 @ai_coach_blueprint.route("/progress", methods=["POST"])
 def update_study_progress():
-    """Update and track study patterns."""
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "Study session data is required"}), 400
 
-        # Update study patterns in the service
         ai_coach_service.study_patterns[request.remote_addr] = {
             "lastStudyTime": data.get("timestamp", datetime.utcnow().isoformat()),
             "studyStreak": data.get("studyStreak", 0),
@@ -431,7 +328,6 @@ def update_study_progress():
         return jsonify({"error": str(e)}), 500
 
 
-# Error handlers
 @ai_coach_blueprint.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Resource not found"}), 404
@@ -440,11 +336,3 @@ def not_found(error):
 @ai_coach_blueprint.errorhandler(500)
 def server_error(error):
     return jsonify({"error": "Internal server error"}), 500
-
-
-#  The following features need to be implemented to fully address the user's request:
-#  - Daily welcome card generation and delivery
-#  - Instructor daily email report generation and sending
-#  - Adaptive learning algorithm integration
-#  - Quiz generation and integration with flashcard creation
-#  - Frontend integration for all new features

@@ -28,7 +28,7 @@ def handle_openai_errors(f):
             try:
                 return f(*args, **kwargs)
 
-            except openai.RateLimitError as e:
+            except RateLimitError as e:
                 retry_count += 1
                 if retry_count == max_retries:
                     logger.error(f"Rate limit exceeded after {max_retries} retries")
@@ -47,7 +47,7 @@ def handle_openai_errors(f):
                 wait_time = (2**retry_count) + random.uniform(0, 1)
                 time.sleep(wait_time)
 
-            except openai.APIError as e:
+            except APIError as e:
                 retry_count += 1
                 if retry_count == max_retries:
                     logger.error(
@@ -81,10 +81,11 @@ def handle_openai_errors(f):
     return decorated_function
 
 
+@handle_openai_errors
 def generate_single_question(difficulty, topic, subtopic):
     prompt = create_question_prompt(difficulty, topic, subtopic)
 
-    response = client.chat.completions.create(
+    response = client.chat.models.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are an expert NCLEX question writer."},

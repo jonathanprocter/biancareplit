@@ -102,7 +102,7 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_config():
     """Get configuration based on environment"""
     env = os.getenv("FLASK_ENV", "development")

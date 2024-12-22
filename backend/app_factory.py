@@ -53,15 +53,13 @@ def create_app(env_path=None):
         from backend.middleware.registry import middleware_registry
         from backend.middleware.auth_middleware import AuthMiddleware
         from backend.middleware.error_middleware import ErrorMiddleware
-        from backend.middleware.metrics_middleware import (
-            MetricsMiddleware,
-        )  # Added MetricsMiddleware import
+        from backend.middleware.metrics_middleware import MetricsMiddleware
 
         middleware_registry.initialize_all(app)
         AuthMiddleware(app)
         ErrorMiddleware(app)
-        metrics_middleware = MetricsMiddleware()  # Initialize MetricsMiddleware
-        metrics_middleware.init_app(app)  # Initialize MetricsMiddleware with app
+        metrics_middleware = MetricsMiddleware()
+        metrics_middleware.init_app(app)
 
         # Initialize database
         init_db(app)
