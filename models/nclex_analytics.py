@@ -1,7 +1,7 @@
 from datetime import datetime
+from typing import Dict, Any, List
+import logging
 from extensions import db
-import json
-
 
 class NCLEXAnalytics(db.Model):
     __tablename__ = "nclex_analytics"
@@ -47,6 +47,7 @@ class NCLEXAnalytics(db.Model):
             return {"error": "Failed to calculate prediction"}
 
     def calculate_mastery_level(self, score: float) -> str:
+        """Calculate mastery level based on score"""
         if score >= 0.85:
             return "Advanced"
         elif score >= 0.65:
@@ -56,13 +57,15 @@ class NCLEXAnalytics(db.Model):
         return "Needs Improvement"
 
     def get_focus_areas(self, topic_data: Dict[str, Any]) -> List[str]:
+        """Get areas that need focus based on performance"""
         weak_areas = []
         for subtopic, stats in topic_data.get("subtopic_stats", {}).items():
             if stats.get("success_rate", 0) < 0.65:
                 weak_areas.append(subtopic)
         return weak_areas
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert analytics to dictionary representation"""
         return {
             "id": self.id,
             "user_id": self.user_id,

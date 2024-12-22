@@ -1,7 +1,6 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from 'ws';
-
 import * as schema from './schema';
 
 // Configure Neon database settings
@@ -24,7 +23,6 @@ const DB_CONFIG = {
 let pool: Pool | null = null;
 let retryCount = 0;
 let isConnecting = false;
-let db: ReturnType<typeof drizzle> | undefined;
 
 // Convert postgres:// to postgresql://
 function normalizeDbUrl(url: string): string {
@@ -83,14 +81,12 @@ async function initializePool(): Promise<void> {
 
     const dbUrl = normalizeDbUrl(process.env.DATABASE_URL);
 
-    // Parse and validate the database URL
     try {
       new URL(dbUrl);
     } catch (e) {
       throw new Error('Invalid DATABASE_URL format');
     }
 
-    // Configure pool with optimized settings for Neon
     pool = new Pool({
       connectionString: dbUrl,
       connectionTimeoutMillis: DB_CONFIG.CONNECTION_TIMEOUT,
@@ -105,7 +101,6 @@ async function initializePool(): Promise<void> {
       },
     });
 
-    // Test the connection with a timeout
     const connectionTest = Promise.race([
       pool.query('SELECT 1'),
       new Promise((_, reject) =>
@@ -117,13 +112,16 @@ async function initializePool(): Promise<void> {
     console.info('[Database] Connection established successfully');
     retryCount = 0;
 
-    // Initialize Drizzle ORM
-    db = drizzle(pool, { schema });
+    const db = drizzle(pool, { schema });
+    return db;
   } catch (error) {
-    console.error('[Database] Connection attempt failed:', error instanceof Error ? error.message : error);
+    console.error(
+      '[Database] Connection attempt failed:',
+      error instanceof Error ? error.message : error,
+    );
     retryCount++;
     pool = null;
-    await initializePool();
+    throw error;
   } finally {
     isConnecting = false;
   }
@@ -146,7 +144,7 @@ async function reconnect(): Promise<void> {
 }
 
 // Health check function
-export async function checkDatabaseHealth() {
+async function checkDatabaseHealth() {
   if (!pool) {
     return {
       healthy: false,
@@ -171,7 +169,10 @@ export async function checkDatabaseHealth() {
       },
     };
   } catch (error) {
-    console.error('[Database] Health check failed:', error instanceof Error ? error.message : error);
+    console.error(
+      '[Database] Health check failed:',
+      error instanceof Error ? error.message : error,
+    );
     return {
       healthy: false,
       error: error instanceof Error ? error.message : String(error),
@@ -180,14 +181,8 @@ export async function checkDatabaseHealth() {
   }
 }
 
-// Initialize the database connection
-await initializePool();
-
-// Export the initialized database instance
-export { db };
-
 // Cleanup function
-export async function closeDatabase(): Promise<void> {
+async function closeDatabase(): Promise<void> {
   if (pool) {
     try {
       await pool.end();
@@ -202,6 +197,12 @@ export async function closeDatabase(): Promise<void> {
   }
 }
 
+// Initialize the database connection
+const db = await initializePool();
+
 // Register cleanup handlers
 process.on('SIGINT', () => void closeDatabase());
 process.on('SIGTERM', () => void closeDatabase());
+
+// Export the initialized database instance and utilities
+export { db, checkDatabaseHealth, closeDatabase };
