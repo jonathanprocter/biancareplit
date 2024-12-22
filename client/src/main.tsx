@@ -9,28 +9,17 @@ import App from './App';
 import './index.css';
 import { queryClient } from './lib/queryClient';
 
-function initializeApp() {
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    throw new Error('Root element not found in the DOM');
-  }
-
-  const root = createRoot(rootElement);
-  root.render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <App />
-        <Toaster />
-      </QueryClientProvider>
-    </StrictMode>,
-  );
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Root element not found in the DOM');
 }
 
-try {
-  initializeApp();
-} catch (error) {
-  console.error(
-    'Error initializing application:',
-    error instanceof Error ? error.message : 'Unknown error',
-  );
-}
+const root = createRoot(rootElement);
+root.render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+      <Toaster />
+    </QueryClientProvider>
+  </StrictMode>,
+);
