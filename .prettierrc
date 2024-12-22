@@ -1,7 +1,7 @@
 {
   "semi": true,
   "tabWidth": 2,
-  "printWidth": 80,
+  "printWidth": 100,
   "singleQuote": true,
   "trailingComma": "all",
   "bracketSpacing": true,
@@ -27,12 +27,20 @@
   "quoteProps": "as-needed",
   "jsxBracketSameLine": false,
   "htmlWhitespaceSensitivity": "css",
-  "vueIndentScriptAndStyle": true,
+  "proseWrap": "always",
   "overrides": [
     {
       "files": "*.{ts,tsx}",
       "options": {
-        "parser": "typescript"
+        "parser": "typescript",
+        "importOrderParserPlugins": ["typescript", "jsx", "decorators-legacy"]
+      }
+    },
+    {
+      "files": "*.{js,jsx}",
+      "options": {
+        "parser": "babel",
+        "importOrderParserPlugins": ["jsx", "decorators-legacy"]
       }
     },
     {
@@ -45,6 +53,13 @@
       "files": "*.{css,scss}",
       "options": {
         "parser": "css"
+      }
+    },
+    {
+      "files": "*.md",
+      "options": {
+        "proseWrap": "always",
+        "printWidth": 80
       }
     }
   ]
