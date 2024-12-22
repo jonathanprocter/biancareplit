@@ -1,7 +1,5 @@
 import { OpenAI } from 'openai';
 
-import { config } from '../config';
-
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
 // do not change this unless explicitly requested by the user
 
@@ -29,28 +27,30 @@ interface StudyProgress {
 }
 
 export class AIService {
-  private openai: OpenAI;
-  private static instance: AIService;
-  private initialized: boolean = false;
+  private openai: OpenAI | null = null;
+  private static instance: AIService | null = null;
+  private connectionValidated: boolean = false;
+  private initializationError: Error | null = null;
 
   private constructor() {
+    this.initializeOpenAI();
+  }
+
+  private initializeOpenAI(): void {
     const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
 
-    if (!apiKey || apiKey.trim() === '') {
-      console.warn('AIService: Missing API key in environment variables');
-      this.initialized = false;
+    if (!apiKey?.trim()) {
+      this.initializationError = new Error('Missing OpenAI API key in environment variables');
+      console.error('AIService:', this.initializationError.message);
       return;
     }
 
     try {
-      this.openai = new OpenAI({
-        apiKey: apiKey.trim(),
-      });
-      this.initialized = true;
-      console.log('AIService: OpenAI client initialized with API key');
+      this.openai = new OpenAI({ apiKey: apiKey.trim() });
+      console.info('AIService: OpenAI client initialized successfully');
     } catch (error) {
-      console.warn('AIService: Failed to initialize client:', error);
-      this.initialized = false;
+      this.initializationError = error instanceof Error ? error : new Error('Failed to initialize OpenAI client');
+      console.error('AIService: Initialization failed -', this.initializationError.message);
     }
   }
 
@@ -61,11 +61,13 @@ export class AIService {
     return AIService.instance;
   }
 
-  private async validateConnection(): Promise<void> {
-    if (this.initialized) return;
+  private async ensureConnection(): Promise<void> {
+    if (this.connectionValidated) return;
+    if (this.initializationError) throw this.initializationError;
+    if (!this.openai) throw new Error('OpenAI client not initialized');
 
     try {
-      console.log('AIService: Validating OpenAI connection...');
+      console.info('AIService: Validating OpenAI connection...');
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [{ role: 'system', content: 'Connection test' }],
@@ -73,15 +75,16 @@ export class AIService {
         response_format: { type: 'json_object' },
       });
 
-      if (response.choices && response.choices.length > 0) {
-        this.initialized = true;
-        console.log('AIService: Successfully validated OpenAI connection');
+      if (!response.choices?.[0]?.message?.content) {
+        throw new Error('Invalid response format from OpenAI API');
       }
+
+      this.connectionValidated = true;
+      console.info('AIService: Connection validated successfully');
     } catch (error) {
-      console.error('AIService: Connection validation failed:', error);
-      throw new Error(
-        `Failed to validate OpenAI connection: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('AIService: Connection validation failed -', errorMessage);
+      throw new Error(`OpenAI connection validation failed: ${errorMessage}`);
     }
   }
 
@@ -90,13 +93,11 @@ export class AIService {
     difficulty: string = 'intermediate',
     count: number = 5,
   ): Promise<Question[]> {
-    if (!this.initialized) {
-      await this.validateConnection();
-    }
-
     try {
-      console.log(`Generating ${count} questions about ${topic} at ${difficulty} difficulty`);
-      const response = await this.openai.chat.completions.create({
+      await this.ensureConnection();
+      console.info(`AIService: Generating ${count} questions about "${topic}" at ${difficulty} difficulty`);
+
+      const response = await this.openai!.chat.completions.create({
         model: 'gpt-4o',
         messages: [
           {
@@ -108,22 +109,26 @@ export class AIService {
       });
 
       const result = JSON.parse(response.choices[0].message.content);
-      console.log(`Successfully generated ${result.questions?.length || 0} questions`);
-      return result.questions || [];
+      
+      if (!Array.isArray(result.questions)) {
+        throw new Error('Invalid response format: questions array not found');
+      }
+
+      console.info(`AIService: Successfully generated ${result.questions.length} questions`);
+      return result.questions;
     } catch (error) {
-      console.error('Error generating questions:', error);
-      return [];
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('AIService: Failed to generate questions -', errorMessage);
+      throw new Error(`Failed to generate questions: ${errorMessage}`);
     }
   }
 
   async generate_flashcards(topic: string, count: number = 5): Promise<Flashcard[]> {
-    if (!this.initialized) {
-      await this.validateConnection();
-    }
-
     try {
-      console.log(`Generating ${count} flashcards about ${topic}`);
-      const response = await this.openai.chat.completions.create({
+      await this.ensureConnection();
+      console.info(`AIService: Generating ${count} flashcards about "${topic}"`);
+
+      const response = await this.openai!.chat.completions.create({
         model: 'gpt-4o',
         messages: [
           {
@@ -135,22 +140,26 @@ export class AIService {
       });
 
       const result = JSON.parse(response.choices[0].message.content);
-      console.log(`Successfully generated ${result.flashcards?.length || 0} flashcards`);
-      return result.flashcards || [];
+      
+      if (!Array.isArray(result.flashcards)) {
+        throw new Error('Invalid response format: flashcards array not found');
+      }
+
+      console.info(`AIService: Successfully generated ${result.flashcards.length} flashcards`);
+      return result.flashcards;
     } catch (error) {
-      console.error('Error generating flashcards:', error);
-      return [];
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('AIService: Failed to generate flashcards -', errorMessage);
+      throw new Error(`Failed to generate flashcards: ${errorMessage}`);
     }
   }
 
   async analyze_study_progress(userData: Record<string, unknown>): Promise<StudyProgress> {
-    if (!this.initialized) {
-      await this.validateConnection();
-    }
-
     try {
-      console.log('Analyzing study progress data');
-      const response = await this.openai.chat.completions.create({
+      await this.ensureConnection();
+      console.info('AIService: Analyzing study progress data');
+
+      const response = await this.openai!.chat.completions.create({
         model: 'gpt-4o',
         messages: [
           {
@@ -164,16 +173,19 @@ export class AIService {
       });
 
       const result = JSON.parse(response.choices[0].message.content);
-      console.log('Successfully analyzed study progress');
+      
+      if (!result.strengths || !result.weaknesses || !result.recommendations || 
+          !Array.isArray(result.strengths) || !Array.isArray(result.weaknesses) || 
+          !Array.isArray(result.recommendations) || typeof result.estimated_proficiency !== 'number') {
+        throw new Error('Invalid response format: missing required fields');
+      }
+
+      console.info('AIService: Successfully analyzed study progress');
       return result;
     } catch (error) {
-      console.error('Error analyzing study progress:', error);
-      return {
-        strengths: [],
-        weaknesses: [],
-        recommendations: ['Error analyzing progress. Please try again later.'],
-        estimated_proficiency: 0,
-      };
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('AIService: Failed to analyze study progress -', errorMessage);
+      throw new Error(`Failed to analyze study progress: ${errorMessage}`);
     }
   }
 }
