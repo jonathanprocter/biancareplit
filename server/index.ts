@@ -8,8 +8,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { checkDatabaseHealth, closeDatabase } from '../db/index.js';
-import { registerRoutes } from './routes';
-import { log, serveStatic, setupVite } from './vite';
+import { registerRoutes } from './routes.js';
+import { log, serveStatic, setupVite } from './vite.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,10 +28,7 @@ app.use(express.urlencoded({ extended: false }));
 // CORS configuration
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? 'http://localhost:5000'
-        : ['http://localhost:5000', 'http://0.0.0.0:5000'],
+    origin: ['http://localhost:5000', 'http://0.0.0.0:5000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   }),
@@ -105,7 +102,7 @@ async function startServer() {
       });
     });
 
-    // Start server with port retry logic
+    // Port retry logic
     const findAvailablePort = async (startPort: number = 5000): Promise<number> => {
       return new Promise((resolve, reject) => {
         const tryPort = (port: number) => {
