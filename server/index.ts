@@ -8,9 +8,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import dbExports from '../db/index.js';
-const { checkDatabaseHealth, closeDatabase } = dbExports;
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
+
+const { checkDatabaseHealth, closeDatabase } = dbExports;
 
 // Maximum number of database connection retries
 const MAX_DB_RETRIES = 3;
@@ -134,11 +135,31 @@ async function startServer() {
     });
 
     // Start server with port retry logic
-    // Port configuration is fixed to 5000 as per development guidelines
-    const PORT = 5000;
-    server.listen(PORT, '0.0.0.0', () => {
-      log(`Server started successfully on port ${PORT}`);
-      log('API and client both available at http://0.0.0.0:5000');
+    // Try to use port 5000 first, then fall back to other ports if needed
+    const tryPort = (port: number): Promise<number> => {
+      return new Promise((resolve, reject) => {
+        server
+          .listen(port, '0.0.0.0')
+          .on('listening', () => {
+            log(`Server started successfully on port ${port}`);
+            log(`API and client both available at http://0.0.0.0:${port}`);
+            resolve(port);
+          })
+          .on('error', (err: NodeJS.ErrnoException) => {
+            if (err.code === 'EADDRINUSE') {
+              log(`Port ${port} is in use, trying port ${port + 1}`);
+              server.close();
+              resolve(tryPort(port + 1));
+            } else {
+              reject(err);
+            }
+          });
+      });
+    };
+
+    tryPort(5000).catch((error) => {
+      console.error('Failed to start server:', error);
+      process.exit(1);
     });
 
     // Graceful shutdown

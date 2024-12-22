@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
-import dbExports from '../../db/index.js';
-const { db } = dbExports;
 import { learningStyleQuestions, learningStyleResponses, learningStyleResults } from '@db/schema';
 import { desc, eq } from 'drizzle-orm';
+
+import dbExports from '../../db/index.js';
+
+const { db } = dbExports;
 
 // the newest Anthropic model is "claude-3-5-sonnet-20241022" which was released October 22, 2024
 const anthropic = new Anthropic({
