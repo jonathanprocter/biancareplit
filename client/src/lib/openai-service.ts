@@ -86,6 +86,11 @@ const getOpenAI = async (): Promise<OpenAI> => {
   try {
     return await initializeOpenAI();
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error('Failed to get OpenAI instance:', error);
     throw error instanceof OpenAIServiceError
       ? error

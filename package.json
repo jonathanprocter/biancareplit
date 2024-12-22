@@ -5,12 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "concurrently -k -p \"[{name}]\" -n \"VITE,SERVER\" -c \"green,blue\" \"vite --port 5173 --host 0.0.0.0\" \"tsx watch server/index.ts\"",
-    "build": "vite build && tsc && tsx scripts/code_review.ts",
-    "start": "NODE_ENV=production node dist/server/index.js",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "prepare": "husky install"

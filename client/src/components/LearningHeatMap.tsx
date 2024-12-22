@@ -26,7 +26,9 @@ export const LearningHeatMap = () => {
         const response = await fetch('/api/learning-activities');
         if (!response.ok) throw new Error('Failed to fetch activities');
         const data = await response.json();
-        setActivities(data.map((activity: any) => ({ ...activity, date: new Date(activity.date) })));
+        setActivities(
+          data.map((activity: any) => ({ ...activity, date: new Date(activity.date) })),
+        );
       } catch (error) {
         console.error(error);
         toast({
@@ -53,9 +55,7 @@ export const LearningHeatMap = () => {
     const cells = Array.from({ length: 30 }, (_, i) => {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const activity = activities.find(
-        (a) => a.date.toDateString() === date.toDateString(),
-      );
+      const activity = activities.find((a) => a.date.toDateString() === date.toDateString());
 
       return (
         <motion.div
@@ -104,7 +104,7 @@ export const LearningHeatMap = () => {
           </div>
         </div>
 
-        {loading ? (<p>Loading...</p>) : renderHeatMap()}
+        {loading ? <p>Loading...</p> : renderHeatMap()}
 
         <AnimatePresence>
           {selectedCell && (
@@ -117,9 +117,7 @@ export const LearningHeatMap = () => {
               <div className="flex items-start gap-3">
                 <Brain className="w-5 h-5 text-primary" />
                 <div>
-                  <h4 className="font-medium">
-                    {selectedCell.date.toLocaleDateString()}
-                  </h4>
+                  <h4 className="font-medium">{selectedCell.date.toLocaleDateString()}</h4>
                   <p className="text-sm text-muted-foreground mt-1">
                     Learning Intensity: {Math.round(selectedCell.intensity * 100)}%
                   </p>
@@ -146,4 +144,4 @@ export const LearningHeatMap = () => {
   );
 };
 
-export default LearningHeatMap; 
+export default LearningHeatMap;

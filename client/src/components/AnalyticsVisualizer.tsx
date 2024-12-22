@@ -59,6 +59,16 @@ export function AnalyticsVisualizer() {
         const updatedCategories = updateCategoryDistribution(data);
         setCategoryData(updatedCategories);
       } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
         console.error('Error setting up analytics data:', error);
         // Example: set some error state or display an error message in the UI
       }
@@ -83,11 +93,9 @@ export function AnalyticsVisualizer() {
 
   const updateCategoryDistribution = (data: PerformanceData[]) => {
     const categories = { ...nclexCategories };
-    
+
     data.forEach((performance) => {
-      const category = categories.find(
-        (cat) => cat.name.includes(performance.category)
-      );
+      const category = categories.find((cat) => cat.name.includes(performance.category));
       if (category) {
         category.value += performance.correctAnswers; // Example logic
       }

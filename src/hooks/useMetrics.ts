@@ -21,6 +21,11 @@ export function useMetrics() {
         const data = JSON.parse(lastMessage);
         setMetrics(data);
       } catch (err) {
+    if (err instanceof Error) {
+      console.error(`Error: ${err.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', err); {
         console.error('Error parsing metrics:', err);
       }
     }

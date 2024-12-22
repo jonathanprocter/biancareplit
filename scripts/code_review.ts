@@ -131,13 +131,41 @@ async function applyAutoFixes(files: string[]): Promise<void> {
         }
       }
 
-      // Fix type-only imports
-      const typeOnlyMatches = content.matchAll(/import\s*{\s*(\w+)\s*}\s*from\s*['"].*?['"]\s*;.*?\/\/ @typescript-eslint\/no-unused-vars/g);
-      for (const match of Array.from(typeOnlyMatches)) {
-        const newImport = `import type { ${match[1]} } from`;
-        modified = modified.replace(match[0], match[0].replace('import {', newImport));
+      // Enhanced type safety fixes
+      const typeAssertions = content.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*([^;]+)\s+as\s+any;/g);
+      for (const match of Array.from(typeAssertions)) {
+        const [fullMatch, varName, expression] = match;
+        // Try to infer type from usage
+        const varUsages = content.match(new RegExp(`${varName}\\.(\\w+)`, 'g'));
+        if (varUsages) {
+          const properties = [...new Set(varUsages.map(u => u.split('.')[1]))];
+          const typeDefinition = `type ${varName}Type = { ${properties.join(': any; ')}: any };`;
+          modified = modified.replace(fullMatch, `${typeDefinition}\nconst ${varName}: ${varName}Type = ${expression};`);
+          hasChanges = true;
+          console.log(`📝 Added type definition for: ${varName} in ${file}`);
+        }
+      }
+
+      // Fix async/await consistency
+      const asyncPromiseMatches = content.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*(?:await\s+)?(\w+\.?\w*\([^)]*\))(?!\s*\))\s*\.then/g);
+      for (const match of Array.from(asyncPromiseMatches)) {
+        const [fullMatch, varName, promiseCall] = match;
+        modified = modified.replace(fullMatch, `const ${varName} = await ${promiseCall}`);
         hasChanges = true;
-        console.log(`📝 Converted to type-only import: ${match[1]} in ${file}`);
+        console.log(`📝 Fixed promise chain to async/await: ${varName} in ${file}`);
+      }
+
+      // Fix error handling patterns
+      const tryCatchMatches = content.matchAll(/try\s*{[^}]*}\s*catch\s*\((\w+)\)\s*{[^}]*console\.error/g);
+      for (const match of Array.from(tryCatchMatches)) {
+        const [fullMatch, errorVar] = match;
+        const enhanced = fullMatch.replace(
+          `catch (${errorVar})`,
+          `catch (${errorVar}) {\n    if (${errorVar} instanceof Error) {\n      console.error(\`Error: \${${errorVar}.message}\`);\n      // Add proper error handling here\n    } else {\n      console.error('An unknown error occurred:', ${errorVar});`
+        );
+        modified = modified.replace(fullMatch, enhanced);
+        hasChanges = true;
+        console.log(`📝 Enhanced error handling in try-catch block in ${file}`);
       }
 
       if (hasChanges) {
@@ -205,12 +233,34 @@ async function analyzeComplexity(filePath: string): Promise<ComplexityMetrics | 
     const dependencies = content.match(/import\s+.*?from/g);
     const controlFlows = content.match(/if|else|for|while|switch|catch|&&|\|\||\?/g);
     
-    // Educational patterns analysis
-    const educationalPatterns = {
+    // Educational and medical patterns analysis
+    const patterns = {
+      // UI Interaction patterns
       interactiveElements: (content.match(/onClick|onSubmit|onChange|addEventListener/g) || []).length,
+      
+      // Educational feedback patterns
       feedbackElements: (content.match(/feedback|response|answer|explanation|hint/g) || []).length,
       progressTracking: (content.match(/progress|completion|score|grade|achievement/g) || []).length,
       adaptiveLearning: (content.match(/difficulty|level|adaptive|personalized|recommendation/g) || []).length,
+      
+      // Medical domain patterns
+      medicalComponents: (content.match(/patient|diagnosis|treatment|clinical|symptom|condition/g) || []).length,
+      medicalTerminology: (content.match(/etiology|pathology|anatomy|physiology|prognosis/g) || []).length,
+      
+      // Accessibility patterns
+      ariaLabels: (content.match(/aria-label/g) || []).length,
+      roleAttributes: (content.match(/role=/g) || []).length,
+      altTexts: (content.match(/alt=/g) || []).length,
+      ariaDescribedby: (content.match(/aria-describedby/g) || []).length,
+      keyboardNav: (content.match(/onKeyDown|onKeyPress|onKeyUp/g) || []).length,
+    };
+    
+    // Import complexity analysis with medical package detection
+    const importComplexityAnalysis = {
+      statements: content.match(/import\s+{[^}]+}/g) || [],
+      medicalPackages: (content.match(/import.*from.*[@\/]medical[-\/][^'"]*/g) || []).length,
+      complexity: (content.match(/import\s+{([^}]+)}/g) || [])
+        .reduce((acc, imp) => acc + (imp.match(/,/g)?.length || 0) + 1, 0)
     };
     
     // Import complexity analysis with medical package detection

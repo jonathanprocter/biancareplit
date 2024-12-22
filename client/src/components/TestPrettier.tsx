@@ -45,10 +45,7 @@ export const TestPrettier = ({ title, items }: TestProps): JSX.Element => {
                 <div className="flex items-center gap-2">
                   {/* Consider using a span or div as the input is not editable */}
                   <span className="text-input">{item.name}</span>
-                  <Button
-                    onClick={() => handleItemClick(item.id)}
-                    size="sm"
-                  >
+                  <Button onClick={() => handleItemClick(item.id)} size="sm">
                     Click Me
                   </Button>
                 </div>

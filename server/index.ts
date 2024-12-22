@@ -80,9 +80,10 @@ app.use(session(sessionConfig));
 
 // Enhanced CORS configuration for development
 const corsOptions: CorsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? process.env.FRONTEND_URL || 'http://localhost:5000'
-    : ['http://localhost:5000', 'http://localhost:5173', 'http://0.0.0.0:5173'],
+  origin:
+    process.env.NODE_ENV === 'production'
+      ? process.env.FRONTEND_URL || 'http://localhost:5000'
+      : ['http://localhost:5000', 'http://localhost:5173', 'http://0.0.0.0:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
@@ -291,19 +292,51 @@ async function startServer(): Promise<void> {
     wss = new WebSocketServer({
       server,
       path: '/ws',
-      host: '0.0.0.0',
       clientTracking: true,
-      perMessageDeflate: false,
-      noServer: true
+      perMessageDeflate: {
+        threshold: 1024, // Only compress messages larger than 1KB
+      },
+    });
+
+    // Handle WebSocket upgrade requests
+    server.on('upgrade', (request, socket, head) => {
+      if (request.url === '/ws') {
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          wss.emit('connection', ws, request);
+        });
+      }
     });
 
     wss.on('connection', (ws) => {
       log('WebSocket client connected');
+
+      // Setup ping-pong for connection health monitoring
+      const pingInterval = setInterval(() => {
+        if (ws.readyState === ws.OPEN) {
+          ws.ping();
+        }
+      }, 30000);
+
       ws.on('message', (message) => {
-        log('WebSocket message received: %s', message);
+        try {
+          log('WebSocket message received: %s', message);
+          // Handle incoming messages
+          const data = JSON.parse(message.toString());
+          if (data.type === 'ping') {
+            ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
+        }
       });
+
       ws.on('error', (error) => {
         console.error('WebSocket error:', error);
+      });
+
+      ws.on('close', () => {
+        clearInterval(pingInterval);
+        log('WebSocket client disconnected');
       });
     });
 
@@ -357,7 +390,9 @@ async function startServer(): Promise<void> {
             log(`Server started successfully on port ${PORT}`);
             log(`Environment: ${process.env.NODE_ENV || 'development'}`);
             log(`Database: Connected`);
-            log(`Frontend: ${app.get('env') === 'development' ? 'Vite Dev Server' : 'Static Files'}`);
+            log(
+              `Frontend: ${app.get('env') === 'development' ? 'Vite Dev Server' : 'Static Files'}`,
+            );
             log('=================================');
             resolve();
           })
@@ -372,7 +407,9 @@ async function startServer(): Promise<void> {
         await closeDatabase();
         log('Database connections closed');
       } catch (cleanupError) {
-        log(`Error closing database: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown error'}`);
+        log(
+          `Error closing database: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown error'}`,
+        );
       }
       process.exit(1);
     }
@@ -424,6 +461,16 @@ async function startServer(): Promise<void> {
     try {
       await closeDatabase();
     } catch (cleanupError) {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
       console.error('Error during cleanup after startup failure:', cleanupError);
     }
 

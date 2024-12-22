@@ -1,10 +1,12 @@
+import DOMPurify from 'dompurify';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Brain, CheckCircle, Lock } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
 import seedrandom from 'seedrandom';
+
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import DOMPurify from 'dompurify';
 
 interface Skill {
   id: string;
@@ -139,36 +141,35 @@ export function SkillTreeVisualization({
   }, [simulateForces]);
 
   const renderConnections = useCallback(() => {
-    return nodes
-      .reduce((acc: JSX.Element[], node) => {
-        node.prerequisites.forEach((prereqId) => {
-          const prereq = nodes.find((n) => n.id === prereqId);
-          if (prereq) {
-            const key = `${node.id}-${prereqId}`;
-            const strokeColor = node.mastered ? '#22c55e' : '#94a3b8';
+    return nodes.reduce((acc: JSX.Element[], node) => {
+      node.prerequisites.forEach((prereqId) => {
+        const prereq = nodes.find((n) => n.id === prereqId);
+        if (prereq) {
+          const key = `${node.id}-${prereqId}`;
+          const strokeColor = node.mastered ? '#22c55e' : '#94a3b8';
 
-            acc.push(
-              <motion.line
-                key={key}
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{
-                  pathLength: 1,
-                  opacity: 1,
-                  x1: prereq.x,
-                  y1: prereq.y,
-                  x2: node.x,
-                  y2: node.y,
-                }}
-                transition={{ duration: 0.6, ease: 'easeInOut' }}
-                stroke={strokeColor}
-                strokeWidth={2}
-                strokeDasharray="4"
-              />
-            );
-          }
-        });
-        return acc;
-      }, []);
+          acc.push(
+            <motion.line
+              key={key}
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{
+                pathLength: 1,
+                opacity: 1,
+                x1: prereq.x,
+                y1: prereq.y,
+                x2: node.x,
+                y2: node.y,
+              }}
+              transition={{ duration: 0.6, ease: 'easeInOut' }}
+              stroke={strokeColor}
+              strokeWidth={2}
+              strokeDasharray="4"
+            />,
+          );
+        }
+      });
+      return acc;
+    }, []);
   }, [nodes]);
 
   return (
@@ -212,12 +213,8 @@ export function SkillTreeVisualization({
             <Card className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">
-                    {sanitizeText(selectedSkill.name)}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {sanitizeText(selectedSkill.description)}
-                  </p>
+                  <h3 className="text-lg font-semibold">{sanitizeText(selectedSkill.name)}</h3>
+                  <p className="text-sm text-gray-500">{sanitizeText(selectedSkill.description)}</p>
                 </div>
                 <button
                   onClick={() => setSelectedSkill(null)}

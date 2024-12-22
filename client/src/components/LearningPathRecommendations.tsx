@@ -1,4 +1,5 @@
 import { BookOpen, Brain, Clock, Target } from 'lucide-react';
+
 import React, { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +34,8 @@ export function LearningPathRecommendations() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error instanceof Error && error.message || 'Failed to generate learning path',
+        description:
+          (error instanceof Error && error.message) || 'Failed to generate learning path',
       });
     }
   };

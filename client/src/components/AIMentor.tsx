@@ -43,11 +43,13 @@ export function AIMentor() {
         };
         setMentorContext(mockContext);
 
-        setMessages([{
-          role: 'assistant',
-          content: `Hello! I'm your AI learning mentor. I see you're studying ${mockContext.currentTopic}. How can I help you today?`,
-          timestamp: new Date(),
-        }]);
+        setMessages([
+          {
+            role: 'assistant',
+            content: `Hello! I'm your AI learning mentor. I see you're studying ${mockContext.currentTopic}. How can I help you today?`,
+            timestamp: new Date(),
+          },
+        ]);
       } catch (error) {
         console.error('Error fetching mentor context:', error);
       }
@@ -89,11 +91,14 @@ export function AIMentor() {
         return;
       }
 
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        content: sanitizeOutput(content),
-        timestamp: new Date(),
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: sanitizeOutput(content),
+          timestamp: new Date(),
+        },
+      ]);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -117,35 +122,35 @@ export function AIMentor() {
   };
 
   return (
-    <Card className='h-[600px] flex flex-col'>
+    <Card className="h-[600px] flex flex-col">
       <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <Bot className='h-6 w-6' />
+        <CardTitle className="flex items-center gap-2">
+          <Bot className="h-6 w-6" />
           AI Learning Mentor
         </CardTitle>
       </CardHeader>
-      <CardContent className='flex-1 flex flex-col'>
-        <div className='flex gap-4 mb-4'>
-          <Card className='flex-1 p-4 bg-muted/50'>
-            <div className='flex items-center gap-2'>
-              <BookOpen className='h-4 w-4' />
-              <span className='text-sm font-medium'>
+      <CardContent className="flex-1 flex flex-col">
+        <div className="flex gap-4 mb-4">
+          <Card className="flex-1 p-4 bg-muted/50">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              <span className="text-sm font-medium">
                 Current Topic: {mentorContext.currentTopic}
               </span>
             </div>
           </Card>
-          <Card className='flex-1 p-4 bg-muted/50'>
-            <div className='flex items-center gap-2'>
-              <Target className='h-4 w-4' />
-              <span className='text-sm font-medium'>
+          <Card className="flex-1 p-4 bg-muted/50">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              <span className="text-sm font-medium">
                 Performance: {mentorContext.recentPerformance}%
               </span>
             </div>
           </Card>
         </div>
 
-        <ScrollArea className='flex-1 pr-4' ref={scrollRef}>
-          <div className='space-y-4'>
+        <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
+          <div className="space-y-4">
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${message.timestamp.getTime()}`}
@@ -154,8 +159,8 @@ export function AIMentor() {
                 <div
                   className={`max-w-[80%] rounded-lg p-3 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                 >
-                  <p className='text-sm'>{message.content}</p>
-                  <span className='text-xs opacity-70'>
+                  <p className="text-sm">{message.content}</p>
+                  <span className="text-xs opacity-70">
                     {message.timestamp.toLocaleTimeString()}
                   </span>
                 </div>
@@ -164,9 +169,9 @@ export function AIMentor() {
           </div>
         </ScrollArea>
 
-        <div className='flex gap-2 mt-4'>
+        <div className="flex gap-2 mt-4">
           <Input
-            placeholder='Ask your AI mentor...'
+            placeholder="Ask your AI mentor..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
@@ -174,9 +179,9 @@ export function AIMentor() {
           />
           <Button onClick={sendMessage} disabled={isLoading}>
             {isLoading ? (
-              <Loader2 className='h-4 w-4 animate-spin' />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className='h-4 w-4' />
+              <Send className="h-4 w-4" />
             )}
           </Button>
         </div>

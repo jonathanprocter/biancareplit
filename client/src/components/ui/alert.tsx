@@ -1,5 +1,7 @@
 import { type VariantProps, cva } from 'class-variance-authority';
+
 import * as React from 'react';
+
 import { cn } from '@/lib/utils';
 
 // Ensure cva and cn utility functions are correctly handling user inputs
@@ -29,11 +31,7 @@ const sanitizeClassName = (className) => {
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({
-  className,
-  variant,
-  ...props
-}, ref) => {
+>(({ className, variant, ...props }, ref) => {
   const combinedClassName = cn(alertVariants({ variant }), sanitizeClassName(className));
   return <div ref={ref} role="alert" className={combinedClassName} {...props} />;
 });

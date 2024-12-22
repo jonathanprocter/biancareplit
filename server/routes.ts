@@ -74,22 +74,22 @@ export function registerRoutes(app: Express): Server {
     try {
       const aiService = AIService.getInstance();
       const startTime = Date.now();
-      
+
       await aiService.ensureConnection();
-      
-      res.json({ 
+
+      res.json({
         status: 'healthy',
         message: 'AI Service connection validated successfully',
         timestamp: new Date().toISOString(),
         responseTime: Date.now() - startTime,
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       res.status(503).json({
         status: 'unhealthy',
         message: errorMessage,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   });
@@ -890,8 +890,12 @@ export function registerRoutes(app: Express): Server {
         args: [
           directory,
           '--format=json',
-          ...(userOptions?.excludePatterns ? [`--exclude=${userOptions.excludePatterns.join(',')}`] : []),
-          ...(userOptions?.includeOnly ? [`--include-only=${userOptions.includeOnly.join(',')}`] : []),
+          ...(userOptions?.excludePatterns
+            ? [`--exclude=${userOptions.excludePatterns.join(',')}`]
+            : []),
+          ...(userOptions?.includeOnly
+            ? [`--include-only=${userOptions.includeOnly.join(',')}`]
+            : []),
           ...(userOptions?.maxFileSize ? [`--max-file-size=${userOptions.maxFileSize}`] : []),
           ...(userOptions?.minConfidence ? [`--min-confidence=${userOptions.minConfidence}`] : []),
         ],
@@ -913,19 +917,19 @@ export function registerRoutes(app: Express): Server {
 
         const validFiles = fileStats.filter((stat) => stat && stat.isFile);
         const totalSize = validFiles.reduce((sum, stat) => sum + (stat?.size || 0), 0);
-        
+
         // Calculate timeout: base time + additional time based on file count and size
         const baseTimeout = 30000; // 30 seconds base
         const timePerFile = 1000; // 1 second per file
         const timePerMB = 2000; // 2 seconds per MB
         const calculatedTimeout = Math.floor(
-          baseTimeout + 
-          (validFiles.length * timePerFile) + 
-          (totalSize / (1024 * 1024) * timePerMB)
+          baseTimeout + validFiles.length * timePerFile + (totalSize / (1024 * 1024)) * timePerMB,
         );
         const totalTimeout = Math.min(calculatedTimeout, 300000); // Max 5 minutes
 
-        console.log(`[API] Processing ${validFiles.length} files (${totalSize / (1024 * 1024)}MB) with ${totalTimeout}ms timeout`);
+        console.log(
+          `[API] Processing ${validFiles.length} files (${totalSize / (1024 * 1024)}MB) with ${totalTimeout}ms timeout`,
+        );
 
         const results = await new Promise((resolve, reject) => {
           const shell = new PythonShell('code_review_service.py', {
@@ -1066,8 +1070,12 @@ export function registerRoutes(app: Express): Server {
               args: [
                 path,
                 '--format=json',
-                ...(options?.excludePatterns ? [`--exclude=${options.excludePatterns.join(',')}`] : []),
-                ...(options?.includeOnly ? [`--include-only=${options.includeOnly.join(',')}`] : []),
+                ...(options?.excludePatterns
+                  ? [`--exclude=${options.excludePatterns.join(',')}`]
+                  : []),
+                ...(options?.includeOnly
+                  ? [`--include-only=${options.includeOnly.join(',')}`]
+                  : []),
               ],
             });
 

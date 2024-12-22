@@ -1,6 +1,9 @@
 import { Link, useLocation } from 'wouter';
+
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+
 import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
@@ -13,11 +16,13 @@ export function Navigation() {
     return null;
   }
 
-  const linkClass = React.useCallback((path: string) =>
-    `text-lg font-semibold ${
-      location === path ? 'text-primary' : 'text-foreground hover:text-primary'
-    }`
-  , [location]);
+  const linkClass = React.useCallback(
+    (path: string) =>
+      `text-lg font-semibold ${
+        location === path ? 'text-primary' : 'text-foreground hover:text-primary'
+      }`,
+    [location],
+  );
 
   const handleLogout = async () => {
     try {
@@ -28,6 +33,16 @@ export function Navigation() {
       // Use context or router hook instead of direct window manipulation
       window.location.href = '/';
     } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       // Use a logging service instead
       console.error('Logout error:', error);
       toast({

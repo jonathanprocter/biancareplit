@@ -124,16 +124,18 @@ export class AIService {
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        console.info(`AIService: Validating OpenAI connection (attempt ${attempt}/${MAX_RETRIES})...`);
-        
+        console.info(
+          `AIService: Validating OpenAI connection (attempt ${attempt}/${MAX_RETRIES})...`,
+        );
+
         // Simple validation test
         const response = await this.openai.chat.completions.create({
           model: 'gpt-4o',
           messages: [
-            { 
-              role: 'system', 
-              content: 'Respond with a simple "ok" to validate the connection.' 
-            }
+            {
+              role: 'system',
+              content: 'Respond with a simple "ok" to validate the connection.',
+            },
           ],
           max_tokens: 10,
         });
@@ -145,24 +147,25 @@ export class AIService {
         this.connectionValidated = true;
         console.info('AIService: Connection and model validated successfully');
         return;
-
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         console.error(`AIService: Connection validation attempt ${attempt} failed -`, {
           error: errorMessage,
           timestamp: new Date().toISOString(),
           attempt,
-          remainingRetries: MAX_RETRIES - attempt
+          remainingRetries: MAX_RETRIES - attempt,
         });
 
         if (attempt === MAX_RETRIES) {
-          throw new Error(`OpenAI connection validation failed after ${MAX_RETRIES} attempts: ${errorMessage}`);
+          throw new Error(
+            `OpenAI connection validation failed after ${MAX_RETRIES} attempts: ${errorMessage}`,
+          );
         }
 
         // Exponential backoff
         const delay = RETRY_DELAY * Math.pow(2, attempt - 1);
         console.info(`AIService: Retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }

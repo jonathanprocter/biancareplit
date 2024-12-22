@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Award, Book, Brain, Shield, Star, Target, Trophy, Zap } from 'lucide-react';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -58,10 +58,19 @@ const getTierIcon = (tier: string, category: string) => {
   }
 };
 
-const BadgeCard = ({ badge, progress, isNew }: { badge: Badge; progress?: UserProgress; isNew: boolean }) => {
-  const percent = progress?.totalPoints && badge.requiredPoints
-    ? Math.min(100, Math.round((progress.totalPoints / badge.requiredPoints) * 100))
-    : 0;
+const BadgeCard = ({
+  badge,
+  progress,
+  isNew,
+}: {
+  badge: Badge;
+  progress?: UserProgress;
+  isNew: boolean;
+}) => {
+  const percent =
+    progress?.totalPoints && badge.requiredPoints
+      ? Math.min(100, Math.round((progress.totalPoints / badge.requiredPoints) * 100))
+      : 0;
 
   return (
     <motion.div
@@ -138,10 +147,11 @@ export const Achievements = () => {
 
   const notifyNewBadges = useCallback(() => {
     const newBadges = progress?.badges.filter(
-      badge => badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000
+      (badge) =>
+        badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
     );
 
-    newBadges?.forEach(badge => {
+    newBadges?.forEach((badge) => {
       toast({
         title: 'New Badge Earned!',
         description: `Congratulations! You've earned the "${badge.name}" badge!`,
@@ -202,7 +212,8 @@ export const Achievements = () => {
   }
 
   const hasNewBadges = progress.badges.some(
-    badge => badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000
+    (badge) =>
+      badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
   );
 
   return (
@@ -300,7 +311,7 @@ export const Achievements = () => {
               progress={progress}
               isNew={Boolean(
                 badge.earnedAt &&
-                  new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000
+                  new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
               )}
             />
           ))}

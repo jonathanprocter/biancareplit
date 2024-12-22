@@ -58,23 +58,28 @@ export function LearningPathVisualizer() {
           currentTopic: 'Fundamentals of Nursing',
           recentPerformance: 75,
           strugglingAreas: ['Pharmacology', 'Critical Care'],
-          learningStyle: 'Visual'
+          learningStyle: 'Visual',
         };
 
         if (process.env.NODE_ENV !== 'production') {
-          console.log('LearningPathVisualizer: Calling generateLearningPath with context:', context);
+          console.log(
+            'LearningPathVisualizer: Calling generateLearningPath with context:',
+            context,
+          );
         }
 
-        const defaultMilestones: Milestone[] = [{
-          id: 1,
-          title: 'Loading your personalized path...',
-          description: 'Please wait while we analyze your learning profile',
-          category: 'General',
-          difficulty: 'beginner',
-          completed: false,
-          aiRecommended: true,
-          xpPoints: 100
-        }];
+        const defaultMilestones: Milestone[] = [
+          {
+            id: 1,
+            title: 'Loading your personalized path...',
+            description: 'Please wait while we analyze your learning profile',
+            category: 'General',
+            difficulty: 'beginner',
+            completed: false,
+            aiRecommended: true,
+            xpPoints: 100,
+          },
+        ];
 
         setMilestones(defaultMilestones);
 
@@ -87,7 +92,7 @@ export function LearningPathVisualizer() {
         const mappedMilestones = result.milestones.map((milestone, index) => ({
           id: index + 1,
           ...milestone,
-          completed: false
+          completed: false,
         }));
 
         setMilestones(mappedMilestones);
@@ -98,24 +103,27 @@ export function LearningPathVisualizer() {
         }
       } catch (err) {
         console.error('LearningPathVisualizer: Error loading data', err);
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load learning path data';
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to load learning path data';
         setError(errorMessage);
         toast({
           title: 'Error',
           description: errorMessage,
-          variant: 'destructive'
+          variant: 'destructive',
         });
 
-        const fallbackMilestones: Milestone[] = [{
-          id: 1,
-          title: 'Getting Started',
-          description: 'Begin with foundational concepts',
-          category: 'Fundamentals',
-          difficulty: 'beginner',
-          completed: false,
-          aiRecommended: true,
-          xpPoints: 100
-        }];
+        const fallbackMilestones: Milestone[] = [
+          {
+            id: 1,
+            title: 'Getting Started',
+            description: 'Begin with foundational concepts',
+            category: 'Fundamentals',
+            difficulty: 'beginner',
+            completed: false,
+            aiRecommended: true,
+            xpPoints: 100,
+          },
+        ];
 
         setMilestones(fallbackMilestones);
       } finally {
