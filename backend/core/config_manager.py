@@ -1,6 +1,7 @@
 """Core configuration manager."""
 
 import os
+from typing import Dict, Any
 import logging
 from flask import Flask
 
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class CoreConfigManager:
     def __init__(self):
-        self.config = {}
+        self.config: Dict[str, Any] = {}
         self.env = os.getenv("FLASK_ENV", "development")
         self._initialized = False
 
