@@ -7,9 +7,13 @@ import MemoryStore from 'memorystore';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { checkDatabaseHealth } from '../db';
+import { checkDatabaseHealth, closeDatabase } from '../db';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
+
+// Maximum number of database connection retries
+const MAX_DB_RETRIES = 3;
+const RETRY_DELAY = 5000; // 5 seconds
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,11 +78,35 @@ app.use((req, res, next) => {
 });
 
 async function startServer() {
+  let retries = 0;
+
+  async function attemptDatabaseConnection(): Promise<boolean> {
+    try {
+      const dbHealth = await checkDatabaseHealth();
+      if (!dbHealth.healthy) {
+        throw new Error(`Database health check failed: ${dbHealth.error}`);
+      }
+      log('Database connection established successfully');
+      return true;
+    } catch (error) {
+      console.error(`Database connection attempt ${retries + 1}/${MAX_DB_RETRIES} failed:`, error);
+      return false;
+    }
+  }
+
   try {
-    // Check database health
-    const dbHealth = await checkDatabaseHealth();
-    if (!dbHealth.healthy) {
-      throw new Error(`Database health check failed: ${dbHealth.error}`);
+    // Attempt to connect to the database with retries
+    while (retries < MAX_DB_RETRIES) {
+      if (await attemptDatabaseConnection()) {
+        break;
+      }
+      retries++;
+      if (retries < MAX_DB_RETRIES) {
+        log(`Retrying database connection in ${RETRY_DELAY}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      } else {
+        throw new Error('Failed to connect to database after maximum retry attempts');
+      }
     }
 
     // Create HTTP server
@@ -94,32 +122,72 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Error handling middleware
+    // Enhanced error handling middleware
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       console.error('[Server] Error:', err);
-      res.status(500).json({
-        message: 'Internal Server Error',
+      const statusCode = err instanceof URIError ? 400 : 500;
+      res.status(statusCode).json({
+        message: statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined,
       });
     });
 
-    // Start server
-    const port = process.env.PORT || 5000;
+    // Start server with port retry logic
+    const startPort = Number(process.env.PORT) || 5000;
+    const maxPort = startPort + 10;
+    let currentPort = startPort;
+
+    const findAvailablePort = async (startPort: number, endPort: number): Promise<number> => {
+      for (let port = startPort; port <= endPort; port++) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const tempServer = createServer();
+            tempServer
+              .listen(port, '0.0.0.0')
+              .once('listening', () => {
+                tempServer.close(() => resolve());
+              })
+              .once('error', (err: NodeJS.ErrnoException) => {
+                if (err.code === 'EADDRINUSE') {
+                  reject(err);
+                }
+              });
+          });
+          return port;
+        } catch (err) {
+          if (port === endPort) {
+            throw new Error(`No available ports in range ${startPort}-${endPort}`);
+          }
+          continue;
+        }
+      }
+      throw new Error('No available ports found');
+    };
+
+    // Find and start on an available port
+    const port = await findAvailablePort(startPort, maxPort);
     server.listen(port, '0.0.0.0', () => {
-      log(`Server started on port ${port}`);
+      log(`Server started successfully on port ${port}`);
     });
 
     // Graceful shutdown
-    const cleanup = (signal: string) => {
+    const cleanup = async (signal: string) => {
       log(`Received ${signal}, shutting down...`);
-      server.close(() => {
-        log('Server closed');
-        process.exit(0);
-      });
+      try {
+        await closeDatabase();
+        log('Database connections closed');
+        server.close(() => {
+          log('Server closed');
+          process.exit(0);
+        });
+      } catch (error) {
+        console.error('Error during shutdown:', error);
+        process.exit(1);
+      }
     };
 
-    process.on('SIGTERM', () => cleanup('SIGTERM'));
-    process.on('SIGINT', () => cleanup('SIGINT'));
+    process.on('SIGTERM', () => void cleanup('SIGTERM'));
+    process.on('SIGINT', () => void cleanup('SIGINT'));
   } catch (error) {
     console.error('Fatal error during server startup:', error);
     process.exit(1);
