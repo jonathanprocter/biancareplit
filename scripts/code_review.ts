@@ -14,17 +14,19 @@ const __dirname = dirname(__filename);
 const HIGH_PRIORITY_PATHS = [
   'client/src/components',
   'server/services',
-  'server/routes.ts',
+  'server/routes.ts', 
   'db/schema.ts',
   'server/index.ts',
-  'client/src/pages'
+  'client/src/pages',
+  'db/index.ts',
+  'client/src/main.tsx'
 ];
 
 const CORE_PATHS = [
-  '/home/runner/AI-bot-template-1/src',
-  '/home/runner/AI-bot-template-1/server',
-  '/home/runner/AI-bot-template-1/client',
-  '/home/runner/AI-bot-template-1/db'
+  'src',
+  'server',
+  'client',
+  'db'
 ];
 
 const IGNORE_PATTERNS = [
@@ -671,6 +673,10 @@ function getColorForImportComplexity(complexity: number): string {
     throw error;
   }
 }
+// Configure workflow settings
+process.env.WORKFLOW_NAME = 'Code Review';
+process.env.PORT = '5000';
+
 
 async function main() {
   try {

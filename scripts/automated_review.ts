@@ -119,10 +119,40 @@ async function lintFiles(files: string[]): Promise<void> {
 async function typeCheck(files: string[]): Promise<void> {
   console.log('📝 Running TypeScript type check...');
   try {
-    await execAsync('npx tsc --noEmit');
+    // Use --pretty for better error formatting
+    // Use --incremental and --noEmit for faster checks
+    const result = await execAsync(`npx tsc --noEmit --pretty --incremental ${files.join(' ')}`);
     console.log('✅ TypeScript check complete');
+    return result;
   } catch (error) {
-    console.error('❌ Type check errors found:', error);
+    if (error instanceof Error) {
+      // Parse and format TypeScript errors
+      const errorLines = error.message.split('\n');
+      const formattedErrors = errorLines
+        .filter(line => line.includes('.ts') || line.includes('.tsx'))
+        .map(line => {
+          const matches = line.match(/(.+)\((\d+),(\d+)\): (.+)/);
+          if (matches) {
+            return {
+              file: matches[1].trim(),
+              line: parseInt(matches[2]),
+              column: parseInt(matches[3]),
+              message: matches[4].trim()
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      if (formattedErrors.length > 0) {
+        console.error('TypeScript Errors:');
+        formattedErrors.forEach(err => {
+          if (err) {
+            console.error(`${err.file}:${err.line}:${err.column} - ${err.message}`);
+          }
+        });
+      }
+    }
     throw error;
   }
 }
@@ -135,33 +165,95 @@ async function checkAccessibility(files: string[]): Promise<CodeIssue[]> {
     if (file.endsWith('.tsx')) {
       const content = await fs.readFile(file, 'utf-8');
       
-      // Check for missing aria labels
-      const imgWithoutAlt = content.match(/<img[^>]+(?!alt=)[^>]*>/g);
-      if (imgWithoutAlt) {
-        issues.push({
-          type: 'error',
+      // Enhanced accessibility checks
+      const checks = [
+        {
+          pattern: /<img[^>]+(?!alt=)[^>]*>/g,
           message: 'Image missing alt text',
-          file,
-          source: 'accessibility'
-        });
+          type: 'error'
+        },
+        {
+          pattern: /<button[^>]+(?!aria-label=)[^>]*>(?!\s*[^<]*[^\s])[^<]*<\/button>/g,
+          message: 'Empty button missing aria-label',
+          type: 'error'
+        },
+        {
+          pattern: /<div[^>]+(?:onclick|onkeyup|onkeydown|onkeypress)[^>]*(?!role=)[^>]*>/g,
+          message: 'Interactive div missing role attribute',
+          type: 'warning'
+        },
+        {
+          pattern: /<a[^>]+href="#"[^>]*>/g,
+          message: 'Anchor with hash href might cause accessibility issues',
+          type: 'warning'
+        },
+        {
+          pattern: /<input[^>]+(?!id=)[^>]*>[\s\S]*?<label[^>]*>/g,
+          message: 'Input field missing associated label',
+          type: 'error'
+        }
+      ];
+
+      for (const check of checks) {
+        const matches = content.match(check.pattern);
+        if (matches) {
+          issues.push({
+            type: check.type as 'error' | 'warning',
+            message: check.message,
+            file,
+            source: 'accessibility'
+          });
+        }
       }
 
       // Check for proper heading hierarchy
-      const headings = content.match(/<h[1-6][^>]*>/g);
-      if (headings) {
+      const headings = Array.from(content.matchAll(/<h([1-6])[^>]*>/g));
+      if (headings.length > 0) {
         let prevLevel = 0;
-        headings.forEach(heading => {
-          const level = parseInt(heading[2]);
-          if (level > prevLevel + 1) {
+        let lineNumber = 1;
+        
+        for (const heading of headings) {
+          // Count lines up to this heading to get line number
+          lineNumber += content.slice(0, heading.index).split('\n').length - 1;
+          
+          const level = parseInt(heading[1]);
+          if (prevLevel > 0 && level > prevLevel + 1) {
             issues.push({
               type: 'warning',
               message: `Skipped heading level: h${prevLevel} to h${level}`,
               file,
+              line: lineNumber,
               source: 'accessibility'
             });
           }
           prevLevel = level;
-        });
+        }
+      }
+
+      // Check for ARIA attributes
+      const ariaChecks = [
+        {
+          pattern: /aria-[a-z]+=""/g,
+          message: 'Empty ARIA attribute',
+          type: 'warning'
+        },
+        {
+          pattern: /role="presentation"[\s\S]*?(?:aria-[a-z]+)/g,
+          message: 'Presentation role with ARIA attributes',
+          type: 'warning'
+        }
+      ];
+
+      for (const check of ariaChecks) {
+        const matches = content.match(check.pattern);
+        if (matches) {
+          issues.push({
+            type: check.type as 'error' | 'warning',
+            message: check.message,
+            file,
+            source: 'accessibility'
+          });
+        }
       }
     }
   }
@@ -214,6 +306,7 @@ async function reviewCode(): Promise<ReviewResult> {
   const issues: CodeIssue[] = [];
   let filesChecked = 0;
   let fixesApplied = 0;
+  const BATCH_SIZE = 20;
 
   try {
     console.log('\n🔍 Starting Medical Education Platform Code Review');
@@ -221,29 +314,76 @@ async function reviewCode(): Promise<ReviewResult> {
 
     // Get all TypeScript files
     const files: string[] = [];
-    for (const dir of CORE_PATHS) {
-      files.push(...await getTypeScriptFiles(dir));
+    for (const dir of HIGH_PRIORITY_PATHS) {
+      try {
+        const highPriorityFiles = await getTypeScriptFiles(dir);
+        files.push(...highPriorityFiles);
+      } catch (error) {
+        console.warn(`⚠️ Warning: Could not process high-priority directory ${dir}:`, error);
+      }
     }
+
+    for (const dir of CORE_PATHS) {
+      if (!HIGH_PRIORITY_PATHS.includes(dir)) {
+        try {
+          const coreFiles = await getTypeScriptFiles(dir);
+          files.push(...coreFiles);
+        } catch (error) {
+          console.warn(`⚠️ Warning: Could not process core directory ${dir}:`, error);
+        }
+      }
+    }
+
     filesChecked = files.length;
+    console.log(`📁 Found ${filesChecked} files to review\n`);
 
-    // Format and lint
-    await formatFiles(files);
-    fixesApplied++;
-    await lintFiles(files);
-    fixesApplied++;
+    // Process files in batches
+    const totalBatches = Math.ceil(files.length / BATCH_SIZE);
+    for (let i = 0; i < files.length; i += BATCH_SIZE) {
+      const batch = files.slice(i, i + BATCH_SIZE);
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+      const progress = Math.round((batchNumber / totalBatches) * 100);
+      
+      console.log(`\n📦 Processing Batch ${batchNumber}/${totalBatches} (${progress}% complete)`);
+      console.log(`   Processing ${batch.length} files in this batch...`);
 
-    // Type check
-    await typeCheck(files);
+      try {
+        // Format files in batch
+        await formatFiles(batch);
+        fixesApplied++;
+        
+        // Lint files in batch
+        await lintFiles(batch);
+        fixesApplied++;
+        
+        // Type check each file individually to avoid terminating on single file error
+        for (const file of batch) {
+          try {
+            await typeCheck([file]);
+          } catch (error) {
+            issues.push({
+              type: 'error',
+              message: error instanceof Error ? error.message : String(error),
+              file,
+              source: 'typescript'
+            });
+          }
+        }
 
-    // Additional checks
-    const accessibilityIssues = await checkAccessibility(files);
-    const securityIssues = await checkSecurityIssues(files);
-
-    issues.push(...accessibilityIssues, ...securityIssues);
+        // Run additional checks
+        const accessibilityIssues = await checkAccessibility(batch);
+        const securityIssues = await checkSecurityIssues(batch);
+        
+        issues.push(...accessibilityIssues, ...securityIssues);
+      } catch (error) {
+        console.error(`❌ Error processing batch ${batchNumber}:`, error);
+        // Continue with next batch instead of terminating
+      }
+    }
 
     const duration = Date.now() - startTime;
 
-    // Generate report
+    // Generate detailed report
     console.log('\n📊 Code Review Summary');
     console.log('═══════════════════');
     console.log(`Files checked: ${filesChecked}`);
@@ -253,12 +393,27 @@ async function reviewCode(): Promise<ReviewResult> {
 
     if (issues.length > 0) {
       console.log('\n⚠️ Issues Found:');
-      issues.forEach(issue => {
-        console.log(`\n${issue.type.toUpperCase()}: ${issue.file}`);
-        console.log(`Message: ${issue.message}`);
-        if (issue.line) {
-          console.log(`Location: Line ${issue.line}${issue.column ? `, Column ${issue.column}` : ''}`);
-        }
+      // Group issues by type
+      const groupedIssues = issues.reduce((acc, issue) => {
+        const key = issue.type;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(issue);
+        return acc;
+      }, {} as Record<string, CodeIssue[]>);
+
+      // Print issues grouped by type
+      Object.entries(groupedIssues).forEach(([type, typeIssues]) => {
+        console.log(`\n${type.toUpperCase()} ISSUES (${typeIssues.length}):`);
+        typeIssues.forEach(issue => {
+          console.log(`\n  File: ${issue.file}`);
+          console.log(`  Message: ${issue.message}`);
+          if (issue.line) {
+            console.log(`  Location: Line ${issue.line}${issue.column ? `, Column ${issue.column}` : ''}`);
+          }
+          if (issue.source) {
+            console.log(`  Source: ${issue.source}`);
+          }
+        });
       });
     }
 
@@ -274,7 +429,20 @@ async function reviewCode(): Promise<ReviewResult> {
 
   } catch (error) {
     console.error('❌ Error during code review:', error);
-    throw error;
+    return {
+      issues: [{
+        type: 'error',
+        message: error instanceof Error ? error.message : String(error),
+        file: 'code-review',
+        source: 'system'
+      }],
+      stats: {
+        filesChecked,
+        issuesFound: 1,
+        fixesApplied,
+        duration: Date.now() - startTime
+      }
+    };
   }
 }
 

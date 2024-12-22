@@ -1,6 +1,7 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from 'ws';
+
 import * as schema from './schema';
 
 // Configure Neon database settings
@@ -16,7 +17,7 @@ const DB_CONFIG = {
   BACKOFF_FACTOR: 1.5,
   CONNECTION_TIMEOUT: 10000,
   MAX_POOL_SIZE: 10,
-  IDLE_TIMEOUT: 30000
+  IDLE_TIMEOUT: 30000,
 };
 
 // Initialize state
@@ -31,33 +32,29 @@ function normalizeDbUrl(url: string): string {
 }
 
 // Create WebSocket proxy with enhanced error handling
-const createWebSocketProxy = () => {
-  const proxy = {
-    webSocketConstructor: ws,
-    onClose: async (event: { code: number; reason: string }) => {
-      console.info(`[Database] WebSocket closed (${event.code}): ${event.reason}`);
-      if (!isConnecting && pool) {
-        await reconnect();
-      }
-    },
-    onError: (err: Error) => {
-      console.error('[Database] WebSocket error:', err);
-      if (!isConnecting && pool) {
-        void reconnect();
-      }
-    },
-    onOpen: () => {
-      console.info('[Database] WebSocket connection established');
-    },
-    onMessage: (data: unknown) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.debug('[Database] WebSocket message:', data);
-      }
+const createWebSocketProxy = () => ({
+  webSocketConstructor: ws,
+  onClose: async (event: { code: number; reason: string }) => {
+    console.info(`[Database] WebSocket closed (${event.code}): ${event.reason}`);
+    if (!isConnecting && pool) {
+      await reconnect();
     }
-  };
-
-  return proxy;
-};
+  },
+  onError: (err: Error) => {
+    console.error('[Database] WebSocket error:', err.message);
+    if (!isConnecting && pool) {
+      void reconnect();
+    }
+  },
+  onOpen: () => {
+    console.info('[Database] WebSocket connection established');
+  },
+  onMessage: (data: unknown) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[Database] WebSocket message:', data);
+    }
+  },
+});
 
 // Initialize database pool with retry mechanism
 async function initializePool(): Promise<void> {
@@ -72,8 +69,12 @@ async function initializePool(): Promise<void> {
 
     const delay = DB_CONFIG.INITIAL_RETRY_DELAY * Math.pow(DB_CONFIG.BACKOFF_FACTOR, retryCount);
     if (retryCount > 0) {
-      console.info(`[Database] Attempting reconnection in ${delay}ms (attempt ${retryCount + 1}/${DB_CONFIG.MAX_RETRIES})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      console.info(
+        `[Database] Attempting reconnection in ${delay}ms (attempt ${retryCount + 1}/${
+          DB_CONFIG.MAX_RETRIES
+        })`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
     if (!process.env.DATABASE_URL) {
@@ -107,22 +108,19 @@ async function initializePool(): Promise<void> {
     // Test the connection with a timeout
     const connectionTest = Promise.race([
       pool.query('SELECT 1'),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), DB_CONFIG.CONNECTION_TIMEOUT)
-      )
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Connection timeout')), DB_CONFIG.CONNECTION_TIMEOUT),
+      ),
     ]);
 
     await connectionTest;
-
-    // Verify connection
-    await pool.query('SELECT 1');
     console.info('[Database] Connection established successfully');
     retryCount = 0;
 
     // Initialize Drizzle ORM
     db = drizzle(pool, { schema });
   } catch (error) {
-    console.error('[Database] Connection attempt failed:', error);
+    console.error('[Database] Connection attempt failed:', error instanceof Error ? error.message : error);
     retryCount++;
     pool = null;
     await initializePool();
@@ -137,7 +135,10 @@ async function reconnect(): Promise<void> {
     try {
       await pool.end();
     } catch (error) {
-      console.error('[Database] Error closing pool during reconnect:', error);
+      console.error(
+        '[Database] Error closing pool during reconnect:',
+        error instanceof Error ? error.message : error,
+      );
     }
     pool = null;
   }
@@ -150,7 +151,7 @@ export async function checkDatabaseHealth() {
     return {
       healthy: false,
       error: 'Database pool not initialized',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -167,14 +168,14 @@ export async function checkDatabaseHealth() {
         totalCount: pool.totalCount,
         idleCount: pool.idleCount,
         waitingCount: pool.waitingCount,
-      }
+      },
     };
   } catch (error) {
-    console.error('[Database] Health check failed:', error);
+    console.error('[Database] Health check failed:', error instanceof Error ? error.message : error);
     return {
       healthy: false,
       error: error instanceof Error ? error.message : String(error),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }
@@ -192,7 +193,10 @@ export async function closeDatabase(): Promise<void> {
       await pool.end();
       console.info('[Database] Connection pool closed successfully');
     } catch (error) {
-      console.error('[Database] Error during cleanup:', error);
+      console.error(
+        '[Database] Error during cleanup:',
+        error instanceof Error ? error.message : error,
+      );
       throw error;
     }
   }
