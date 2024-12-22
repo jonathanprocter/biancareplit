@@ -40,15 +40,39 @@ class CodeReviewService:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise
 
-        # Supported file extensions and their languages
+        # Enhanced supported file extensions and their languages
         self.supported_languages = {
+            # JavaScript ecosystem
             ".js": "JavaScript",
             ".ts": "TypeScript",
             ".tsx": "TypeScript React",
             ".jsx": "JavaScript React",
+            ".vue": "Vue.js",
+            ".svelte": "Svelte",
+            # Python ecosystem
             ".py": "Python",
+            ".pyi": "Python Interface",
+            ".pyx": "Cython",
+            # Web technologies
             ".css": "CSS",
+            ".scss": "SCSS",
+            ".sass": "Sass",
+            ".less": "Less",
             ".html": "HTML",
+            ".json": "JSON",
+            ".graphql": "GraphQL",
+            # Documentation
+            ".md": "Markdown",
+            ".rst": "reStructuredText",
+            # Configuration
+            ".yaml": "YAML",
+            ".yml": "YAML",
+            ".toml": "TOML",
+            ".ini": "INI",
+            # Shell scripts
+            ".sh": "Shell",
+            ".bash": "Bash",
+            ".zsh": "Zsh",
         }
 
     def review_file(self, file_path: Path) -> Dict:
@@ -77,18 +101,58 @@ class CodeReviewService:
                 logger.warning(f"Empty file: {file_path}")
                 return {"error": "File is empty"}
 
-            # Create prompt for code review - even more focused
-            prompt = f"""Review this {language} code for critical issues only. Focus on:
-1. Major bugs
-2. Security issues
-3. Performance concerns
+            # Create comprehensive prompt for code review
+            prompt = f"""Perform a thorough code review of this {language} code. Analyze for:
+1. Code Quality:
+   - Maintainability
+   - Readability
+   - Documentation
+   - Naming conventions
+2. Performance:
+   - Time complexity
+   - Space complexity
+   - Resource usage
+3. Security:
+   - Vulnerabilities
+   - Data handling
+   - Input validation
+4. Best Practices:
+   - Design patterns
+   - Error handling
+   - Testing considerations
+5. Technical Debt:
+   - Code duplication
+   - Complexity issues
+   - Deprecated patterns
 
-Return concise JSON:
-- issues: list max 2 critical problems
-- fixes: list key solutions
-- severity: string (high/medium/low)
+Return detailed JSON with the following structure:
+{{
+    "summary": {{
+        "score": float,  // Overall quality score (0-10)
+        "severity": "high/medium/low",
+        "file_type": string,
+        "loc": number,  // Lines of code
+        "complexity": number  // Cyclomatic complexity estimate
+    }},
+    "issues": [{{
+        "type": string,  // "security", "performance", "quality", "best-practice"
+        "severity": "high/medium/low",
+        "description": string,
+        "line_numbers": [int],  // Affected lines
+        "suggestion": string
+    }}],
+    "metrics": {{
+        "maintainability": float,  // 0-10
+        "testability": float,      // 0-10
+        "security": float,         // 0-10
+        "performance": float       // 0-10
+    }},
+    "recommendations": [string],  // List of actionable improvements
+    "best_practices_followed": [string],  // List of good practices found
+    "optimization_opportunities": [string]  // Potential improvements
+}}
 
-Code:
+Code to review:
 {code}
 """
             try:
