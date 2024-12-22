@@ -79,12 +79,38 @@ app.use((req, res, next) => {
 
 async function startServer() {
   try {
-    // Check database health
-    const dbHealth = await checkDatabaseHealth();
-    if (!dbHealth.healthy) {
-      throw new Error(`Database health check failed: ${dbHealth.error}`);
+    // Check database health with retries
+    let dbConnected = false;
+    let retries = 0;
+    const maxRetries = 3;
+
+    while (!dbConnected && retries < maxRetries) {
+      try {
+        const dbHealth = await checkDatabaseHealth();
+        if (dbHealth.healthy) {
+          dbConnected = true;
+          log('Database connection established successfully');
+        } else {
+          retries++;
+          log(`Database health check attempt ${retries} failed: ${dbHealth.error}`);
+          if (retries < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, 2000 * retries));
+          }
+        }
+      } catch (error) {
+        retries++;
+        log(
+          `Database connection attempt ${retries} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+        if (retries < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 2000 * retries));
+        }
+      }
     }
-    log('Database connection established successfully');
+
+    if (!dbConnected) {
+      throw new Error('Failed to establish database connection after multiple attempts');
+    }
 
     // Create HTTP server
     const server = createServer(app);
