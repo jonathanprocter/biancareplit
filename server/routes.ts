@@ -186,15 +186,53 @@ export function registerRoutes(app: Express): Server {
   // Code review endpoints
   app.post('/api/code-review', async (req, res) => {
     try {
-      const codeReviewService = new CodeReviewService(process.cwd());
+      const rootDir = process.cwd();
+      const codeReviewService = new CodeReviewService(rootDir);
+
+      console.log('[Code Review] Starting code review process...');
       const results = await codeReviewService.reviewCode();
+
+      // Log and categorize issues for monitoring
+      const issuesByType: Record<string, typeof results.issues> = {};
+      for (const issue of results.issues) {
+        if (!issuesByType[issue.type]) {
+          issuesByType[issue.type] = [];
+        }
+        issuesByType[issue.type].push(issue);
+      }
+
+      const summary = {
+        totalIssues: results.issues.length,
+        criticalIssues: issuesByType['error']?.length || 0,
+        warnings: issuesByType['warning']?.length || 0,
+        suggestions: results.suggestions.length,
+      };
+
+      console.log('[Code Review] Analysis complete:', {
+        summary,
+        issueTypes: Object.keys(issuesByType).map((type) => ({
+          type,
+          count: issuesByType[type].length,
+        })),
+        metrics: results.metrics,
+      });
+
       res.json({
         success: true,
-        data: results,
+        data: {
+          ...results,
+          summary,
+        },
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      handleError(error as RequestError, res);
+      console.error('[Code Review] Error during review:', error);
+      const errorResponse = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        timestamp: new Date().toISOString(),
+      };
+      res.status(500).json(errorResponse);
     }
   });
 
@@ -205,6 +243,35 @@ export function registerRoutes(app: Express): Server {
       res.json({
         success: true,
         metrics: results.metrics,
+        suggestions: results.suggestions,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      handleError(error as RequestError, res);
+    }
+  });
+
+  app.get('/api/code-review/health-compliance', async (req, res) => {
+    try {
+      const codeReviewService = new CodeReviewService(process.cwd());
+      const results = await codeReviewService.reviewCode();
+
+      const healthSpecificIssues = results.issues.filter(
+        (issue) =>
+          issue.message.toLowerCase().includes('medical') ||
+          issue.message.toLowerCase().includes('health') ||
+          issue.message.toLowerCase().includes('hipaa'),
+      );
+
+      res.json({
+        success: true,
+        healthCompliance: {
+          score: results.metrics.medicalComplianceScore,
+          issues: healthSpecificIssues,
+          suggestions: results.suggestions.filter(
+            (s) => s.toLowerCase().includes('medical') || s.toLowerCase().includes('health'),
+          ),
+        },
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

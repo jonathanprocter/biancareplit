@@ -46,7 +46,7 @@ export function Navigation() {
   };
 
   return (
-    <nav className="bg-background border-b border-border">
+    <nav className="border-b border-border bg-background">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">

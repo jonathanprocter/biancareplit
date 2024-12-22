@@ -130,17 +130,12 @@ async function reconnect() {
     try {
       await pool.end();
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       console.error(
         '[Database] Error closing pool during reconnect:',
         error instanceof Error ? error.message : error,
       );
-      pool = null;
     }
+    pool = null;
   }
   return initializePool();
 }
@@ -190,11 +185,6 @@ async function closeDatabase() {
       await pool.end();
       console.info('[Database] Connection pool closed successfully');
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       console.error(
         '[Database] Error during cleanup:',
         error instanceof Error ? error.message : error,
