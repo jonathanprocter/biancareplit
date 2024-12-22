@@ -1,22 +1,26 @@
-import express, { type Request, Response, NextFunction } from 'express';
-import { registerRoutes } from './routes';
-import { setupVite, serveStatic, log } from './vite';
-import { db, initializeDatabase, closeDatabase } from '../db';
-import type { DatabaseError } from '../db';
-import { sql } from 'drizzle-orm';
-import session from 'express-session';
-import fileUpload from 'express-fileupload';
-import type { SessionOptions } from 'express-session';
-import MemoryStore from 'memorystore';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import cors from 'cors';
-import type { CorsOptions } from 'cors'; // Added cors package import
-import http from 'http'; // Added http import
-import { WebSocketServer } from 'ws'; // Added ws import with correct named import
+import type { CorsOptions } from 'cors';
+import { sql } from 'drizzle-orm';
+import express, { NextFunction, type Request, Response } from 'express';
+import fileUpload from 'express-fileupload';
+import session from 'express-session';
+import type { SessionOptions } from 'express-session';
+// Added cors package import
+import http from 'http';
+// Added ws import with correct named import
 
 // Import types
 import type { Server } from 'http';
+import MemoryStore from 'memorystore';
+import path from 'path';
+import { fileURLToPath } from 'url';
+// Added http import
+import { WebSocketServer } from 'ws';
+
+import { closeDatabase, db, initializeDatabase } from '../db';
+import type { DatabaseError } from '../db';
+import { registerRoutes } from './routes';
+import { log, serveStatic, setupVite } from './vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,14 +34,14 @@ declare module 'express-session' {
 
 // Custom error type with enhanced properties
 interface AppError extends Error {
-    status?: number;
-    statusCode?: number;
-    code?: string;
-    details?: Record<string, unknown>;
-    path?: string;
-    timestamp?: string;
-    requestId?: string;
-  }
+  status?: number;
+  statusCode?: number;
+  code?: string;
+  details?: Record<string, unknown>;
+  path?: string;
+  timestamp?: string;
+  requestId?: string;
+}
 
 const app = express();
 
@@ -73,7 +77,7 @@ const corsOptions: CorsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
   exposedHeaders: ['set-cookie'],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
@@ -91,25 +95,27 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // File upload middleware
-app.use(fileUpload({
-  createParentPath: true,
-  limits: { 
-    fileSize: 10 * 1024 * 1024 // 10MB max file size
-  },
-  abortOnLimit: true,
-  useTempFiles: true,
-  tempFileDir: '/tmp/',
-  debug: process.env.NODE_ENV === 'development',
-  safeFileNames: true,
-  preserveExtension: true,
-}));
+app.use(
+  fileUpload({
+    createParentPath: true,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB max file size
+    },
+    abortOnLimit: true,
+    useTempFiles: true,
+    tempFileDir: '/tmp/',
+    debug: process.env.NODE_ENV === 'development',
+    safeFileNames: true,
+    preserveExtension: true,
+  }),
+);
 
 // Enhanced request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   const requestId = Math.random().toString(36).substring(7);
-  
+
   log(`[${requestId}] Incoming ${req.method} ${path}`);
   if (Object.keys(req.query).length > 0) {
     log(`[${requestId}] Query params: ${JSON.stringify(req.query)}`);
@@ -129,7 +135,7 @@ app.use((req, res, next) => {
   res.on('finish', () => {
     const duration = Date.now() - start;
     const logLine = `[${requestId}] ${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-    
+
     if (res.statusCode >= 400) {
       console.error(`${logLine} - Error occurred`);
       if (capturedJsonResponse) {
@@ -139,7 +145,9 @@ app.use((req, res, next) => {
       log(logLine);
       if (path.startsWith('/api') && capturedJsonResponse) {
         const responseStr = JSON.stringify(capturedJsonResponse);
-        log(`[${requestId}] Response: ${responseStr.length > 100 ? responseStr.slice(0, 97) + '...' : responseStr}`);
+        log(
+          `[${requestId}] Response: ${responseStr.length > 100 ? responseStr.slice(0, 97) + '...' : responseStr}`,
+        );
       }
     }
   });
@@ -169,14 +177,14 @@ const errorHandler = (err: AppError, req: Request, res: Response, _next: NextFun
       headers: {
         'user-agent': req.headers['user-agent'],
         'content-type': req.headers['content-type'],
-        'accept': req.headers['accept']
-      }
+        accept: req.headers['accept'],
+      },
     };
 
     // Log full error details for debugging
     console.error(`[${requestId}] Error occurred while processing request:`, {
       ...errorDetails,
-      stack: err.stack // Always log stack trace in server logs
+      stack: err.stack, // Always log stack trace in server logs
     });
 
     // Client response with appropriate level of detail
@@ -189,10 +197,10 @@ const errorHandler = (err: AppError, req: Request, res: Response, _next: NextFun
       path: req.path,
       timestamp,
       details: err.details,
-      ...(process.env.NODE_ENV === 'development' && { 
+      ...(process.env.NODE_ENV === 'development' && {
         stack: err.stack,
-        debug: errorDetails 
-      })
+        debug: errorDetails,
+      }),
     };
 
     res.status(status).json(errorResponse);
@@ -203,7 +211,7 @@ const errorHandler = (err: AppError, req: Request, res: Response, _next: NextFun
     res.status(500).json({
       success: false,
       message: 'Internal Server Error',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 };
@@ -212,7 +220,7 @@ const errorHandler = (err: AppError, req: Request, res: Response, _next: NextFun
 async function startServer(): Promise<void> {
   let server: Server;
   let wss: WebSocketServer;
-  
+
   try {
     log('Starting server initialization...');
 
@@ -220,51 +228,50 @@ async function startServer(): Promise<void> {
     log('Step 1: Database initialization');
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 5000; // 5 seconds between retries
-    
+
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         log(`Database connection attempt ${attempt}/${MAX_RETRIES}`);
         await initializeDatabase();
-        
+
         // Verify connection with timeout
         const connectionTimeout = 10000; // 10 seconds
         await Promise.race([
           db.execute(sql`SELECT 1`),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Connection timeout')), connectionTimeout)
-          )
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Connection timeout')), connectionTimeout),
+          ),
         ]);
-        
+
         log('Database connection verified successfully');
         break; // Connection successful, exit retry loop
-        
       } catch (dbError) {
         const errorDetails = {
           attempt,
           error: dbError instanceof Error ? dbError.message : String(dbError),
           stack: dbError instanceof Error ? dbError.stack : undefined,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
-        
+
         if (attempt === MAX_RETRIES) {
           console.error('Fatal error during database initialization:', errorDetails);
           throw new Error(`Database initialization failed after ${MAX_RETRIES} attempts`);
         }
-        
+
         console.warn(`Database connection attempt ${attempt} failed:`, errorDetails);
-        log(`Retrying in ${RETRY_DELAY/1000} seconds...`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        log(`Retrying in ${RETRY_DELAY / 1000} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
       }
     }
 
     // Step 2: Create HTTP server and configure WebSocket
     log('Step 2: Creating HTTP server');
     server = http.createServer(app);
-    
+
     // Initialize WebSocket server
-    wss = new WebSocketServer({ 
+    wss = new WebSocketServer({
       server,
-      path: '/ws'
+      path: '/ws',
     });
 
     wss.on('connection', (ws) => {
@@ -296,7 +303,8 @@ async function startServer(): Promise<void> {
     // Step 5: Start server
     const PORT = 5000; // Fixed port for Replit
     await new Promise<void>((resolve, reject) => {
-      server.listen(PORT, '0.0.0.0')
+      server
+        .listen(PORT, '0.0.0.0')
         .once('listening', () => {
           server.keepAliveTimeout = 65000;
           server.headersTimeout = 66000;
@@ -320,7 +328,7 @@ async function startServer(): Promise<void> {
         // Close database connections first
         await closeDatabase();
         log('Database connections closed');
-        
+
         // Close WebSocket server
         await new Promise<void>((resolve) => {
           wss.close(() => {
@@ -348,22 +356,21 @@ async function startServer(): Promise<void> {
     // Register cleanup handlers
     process.on('SIGTERM', () => cleanup('SIGTERM'));
     process.on('SIGINT', () => cleanup('SIGINT'));
-
   } catch (error) {
     const errorDetails = {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
     console.error('Fatal error during server startup:', errorDetails);
-    
+
     // Attempt cleanup before exiting
     try {
       await closeDatabase();
     } catch (cleanupError) {
       console.error('Error during cleanup after startup failure:', cleanupError);
     }
-    
+
     process.exit(1);
   }
 }

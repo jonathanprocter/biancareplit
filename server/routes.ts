@@ -1,23 +1,24 @@
-import type { Express, Request, Response, NextFunction } from 'express';
-import { createServer, type Server } from 'http';
+import { compare, hash } from 'bcrypt';
+import { lt } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, sql } from 'drizzle-orm';
+import type { Express, NextFunction, Request, Response } from 'express';
+import { type Server, createServer } from 'http';
+
 import { db } from '../db/index.js';
 import {
-  users,
+  badges,
   courses,
   enrollments,
-  badges,
-  userBadges,
   extendedInsertUserSchema,
-  learningPaths,
   learningPathCourses,
+  learningPaths,
   learningStyleQuestions,
+  userBadges,
+  users,
 } from '../db/schema.js';
-import { lt } from 'drizzle-orm';
+import { AIService } from './services/AIService';
 import { submitQuizResponses } from './services/learning-style-assessment';
-import { eq, and, sql, desc, asc, gte } from 'drizzle-orm';
 import { generatePersonalizedPath } from './services/recommendations';
-import { hash, compare } from 'bcrypt';
-import { AIService } from "./services/AIService";
 
 interface ErrorResponse {
   message: string;
@@ -61,7 +62,7 @@ export function registerRoutes(app: Express): Server {
     const errorResponse: ErrorResponse = {
       message,
       ...(err.details && { details: err.details }),
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     };
     console.error('[API] Sending error response:', errorResponse);
     res.status(status).json(errorResponse);
@@ -222,9 +223,9 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('[API] Error fetching course:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ 
+      res.status(500).json({
         message: 'Failed to fetch course',
-        error: errorMessage
+        error: errorMessage,
       });
     }
   });
@@ -325,13 +326,16 @@ export function registerRoutes(app: Express): Server {
         }, 0) / Math.max(userEnrollments.length, 1);
 
       // Format recent achievements with more detailed information
-      const recentAchievements = userEnrollments.map(enrollment => ({
+      const recentAchievements = userEnrollments.map((enrollment) => ({
         topic: enrollment.course.title,
-        score: Math.round((enrollment.correctAnswers / Math.max(enrollment.totalAttempts, 1)) * 100),
+        score: Math.round(
+          (enrollment.correctAnswers / Math.max(enrollment.totalAttempts, 1)) * 100,
+        ),
         date: enrollment.updatedAt,
         timeSpent: enrollment.timeSpent || 0,
-        progress: enrollment.completed ? 100 : 
-          Math.round((enrollment.correctAnswers / Math.max(enrollment.totalAttempts, 1)) * 100),
+        progress: enrollment.completed
+          ? 100
+          : Math.round((enrollment.correctAnswers / Math.max(enrollment.totalAttempts, 1)) * 100),
       }));
 
       // Get all available badges to show locked ones too
@@ -340,10 +344,11 @@ export function registerRoutes(app: Express): Server {
       });
 
       // Enhanced badge status mapping with progress tracking
-      const badgesWithStatus = allBadges.map(badge => {
-        const earned = earnedBadges.find(eb => eb.badge.id === badge.id);
-        const progress = earned ? 100 : 
-          Math.min(100, Math.round((user.totalPoints / badge.requiredPoints) * 100));
+      const badgesWithStatus = allBadges.map((badge) => {
+        const earned = earnedBadges.find((eb) => eb.badge.id === badge.id);
+        const progress = earned
+          ? 100
+          : Math.min(100, Math.round((user.totalPoints / badge.requiredPoints) * 100));
 
         return {
           ...badge,
@@ -366,14 +371,14 @@ export function registerRoutes(app: Express): Server {
         nextLevelProgress: {
           current: user.totalPoints % 1000,
           required: 1000,
-          percentage: Math.round((user.totalPoints % 1000) / 10)
-        }
+          percentage: Math.round((user.totalPoints % 1000) / 10),
+        },
       });
     } catch (error) {
       console.error('[API] Error fetching achievements:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: 'Failed to fetch achievements',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -466,9 +471,9 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[API] Failed to generate learning path:', errorMessage);
-      res.status(500).json({ 
+      res.status(500).json({
         message: 'Failed to generate learning path',
-        error: errorMessage 
+        error: errorMessage,
       });
     }
   });
@@ -589,8 +594,8 @@ export function registerRoutes(app: Express): Server {
       });
 
       // Calculate performance metrics
-      const pastPerformance = recentQuizzes.map(quiz => ({
-        accuracy: quiz.correctAnswers / Math.max(quiz.totalAttempts, 1) * 100,
+      const pastPerformance = recentQuizzes.map((quiz) => ({
+        accuracy: (quiz.correctAnswers / Math.max(quiz.totalAttempts, 1)) * 100,
         date: quiz.updatedAt,
       }));
 
@@ -600,7 +605,8 @@ export function registerRoutes(app: Express): Server {
 
       // Predict future performance using simple linear regression
       const predictedPerformance = pastPerformance.map((perf, index) => ({
-        accuracy: currentPerformance + (index + 1) * ((targetPerformance - currentPerformance) / 10),
+        accuracy:
+          currentPerformance + (index + 1) * ((targetPerformance - currentPerformance) / 10),
         date: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000),
       }));
 
@@ -641,20 +647,25 @@ export function registerRoutes(app: Express): Server {
         correctAnswers: recentQuizzes.reduce((sum, q) => sum + q.correctAnswers, 0),
         flashcardsReviewed: recentQuizzes.length,
         timeSpent: 0, // TODO: Implement time tracking in future iteration
-        strengthAreas: strengthAreas.map(e => e.course.name),
-        weakAreas: weakAreas.map(e => e.course.name),
+        strengthAreas: strengthAreas.map((e) => e.course.name),
+        weakAreas: weakAreas.map((e) => e.course.name),
         trends: {
-          pastPerformance: pastPerformance.map(p => p.accuracy),
-          predictedPerformance: predictedPerformance.map(p => p.accuracy),
+          pastPerformance: pastPerformance.map((p) => p.accuracy),
+          predictedPerformance: predictedPerformance.map((p) => p.accuracy),
           targetPerformance,
-          dates: [...pastPerformance.map(p => p.date), ...predictedPerformance.map(p => p.date)],
+          dates: [
+            ...pastPerformance.map((p) => p.date),
+            ...predictedPerformance.map((p) => p.date),
+          ],
         },
-        learningPath: learningPath ? {
-          currentTopic: learningPath.courses[0]?.course.name || '',
-          nextTopics: learningPath.courses.slice(1, 4).map(c => c.course.name),
-          completionRate: (learningPath.completedCourses / learningPath.totalCourses) * 100,
-          estimatedTimeToTarget: Math.ceil((targetPerformance - currentPerformance) / 2), // Assuming 2% improvement per day
-        } : null,
+        learningPath: learningPath
+          ? {
+              currentTopic: learningPath.courses[0]?.course.name || '',
+              nextTopics: learningPath.courses.slice(1, 4).map((c) => c.course.name),
+              completionRate: (learningPath.completedCourses / learningPath.totalCourses) * 100,
+              estimatedTimeToTarget: Math.ceil((targetPerformance - currentPerformance) / 2), // Assuming 2% improvement per day
+            }
+          : null,
       };
 
       res.json(response);
@@ -678,9 +689,9 @@ export function registerRoutes(app: Express): Server {
         uptime: process.uptime(),
         memoryUsage: {
           heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + 'MB',
-          heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + 'MB'
+          heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + 'MB',
         },
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
       });
     } catch (error) {
       console.error('Health check failed:', error);
@@ -688,11 +699,10 @@ export function registerRoutes(app: Express): Server {
       res.status(503).json({
         status: 'unhealthy',
         error: errorMessage,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   });
-
 
   // Content Upload and Processing Routes
   // File upload and content analysis route
@@ -703,7 +713,7 @@ export function registerRoutes(app: Express): Server {
       if (!req.files || !req.files.file) {
         return res.status(400).json({
           success: false,
-          message: 'No file was uploaded'
+          message: 'No file was uploaded',
         });
       }
 
@@ -711,7 +721,7 @@ export function registerRoutes(app: Express): Server {
       if (Array.isArray(uploadedFile)) {
         return res.status(400).json({
           success: false,
-          message: 'Please upload a single file'
+          message: 'Please upload a single file',
         });
       }
 
@@ -720,7 +730,7 @@ export function registerRoutes(app: Express): Server {
       const allowedTypes = [
         'application/pdf',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
+        'text/plain',
       ];
 
       console.log('[API] Uploaded file:', uploadedFile.name, 'Type:', uploadedFile.mimetype);
@@ -728,14 +738,15 @@ export function registerRoutes(app: Express): Server {
       if (!allowedTypes.includes(uploadedFile.mimetype)) {
         return res.status(400).json({
           success: false,
-          message: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`
+          message: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`,
         });
       }
 
-      if (uploadedFile.size > 10 * 1024 * 1024) { // 10MB limit
+      if (uploadedFile.size > 10 * 1024 * 1024) {
+        // 10MB limit
         return res.status(400).json({
           success: false,
-          message: 'File size exceeds 10MB limit'
+          message: 'File size exceeds 10MB limit',
         });
       }
 
@@ -747,7 +758,7 @@ export function registerRoutes(app: Express): Server {
         contentType: req.body.type || 'general',
         topic: req.body.topic,
         mimeType: uploadedFile.mimetype,
-        size: uploadedFile.size
+        size: uploadedFile.size,
       };
 
       // Initialize content parser with proper error handling
@@ -759,13 +770,13 @@ export function registerRoutes(app: Express): Server {
         res.json({
           success: true,
           analysis: result.analysis,
-          message: 'Content processed successfully'
+          message: 'Content processed successfully',
         });
       } catch (processingError) {
         console.error('[API] Content processing error:', processingError);
         res.status(500).json({
           success: false,
-          message: `Failed to process content: ${processingError.message}`
+          message: `Failed to process content: ${processingError.message}`,
         });
       }
     } catch (error) {
@@ -773,7 +784,7 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({
         success: false,
         message: 'Failed to process uploaded content',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -787,7 +798,7 @@ export function registerRoutes(app: Express): Server {
       if (!directory) {
         return res.status(400).json({
           success: false,
-          message: 'Directory path is required'
+          message: 'Directory path is required',
         });
       }
 
@@ -799,7 +810,7 @@ export function registerRoutes(app: Express): Server {
           pythonPath: 'python3',
           pythonOptions: ['-u'], // unbuffered output
           scriptPath: './services/',
-          args: [directory]
+          args: [directory],
         };
 
         const results = await new Promise((resolve, reject) => {
@@ -816,14 +827,14 @@ export function registerRoutes(app: Express): Server {
 
         res.json({
           success: true,
-          results: results[0] // Python script returns results as JSON
+          results: results[0], // Python script returns results as JSON
         });
       } catch (error) {
         console.error('[API] Code review handler error:', error);
         res.status(500).json({
           success: false,
           message: 'Failed to process code review',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     } finally {

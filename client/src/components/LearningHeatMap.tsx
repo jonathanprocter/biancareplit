@@ -67,9 +67,7 @@ export const LearningHeatMap = () => {
               : 'rgb(243, 244, 246)',
           }}
         >
-          {activity?.achievements.length > 0 && (
-            <Sparkles className="w-4 h-4 text-white" />
-          )}
+          {activity?.achievements.length > 0 && <Sparkles className="w-4 h-4 text-white" />}
         </motion.div>
       );
     });
@@ -117,8 +115,7 @@ export const LearningHeatMap = () => {
                     {new Date(selectedCell.date).toLocaleDateString()}
                   </h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Learning Intensity:{' '}
-                    {Math.round(selectedCell.intensity * 100)}%
+                    Learning Intensity: {Math.round(selectedCell.intensity * 100)}%
                   </p>
                   {selectedCell.achievements.length > 0 && (
                     <div className="mt-2">

@@ -77,9 +77,7 @@ export const StudyTimer = () => {
     };
   }, [timer.isActive, timer.minutes, timer.seconds]);
 
-  const calculateOptimalDuration = (
-    sessionHistory: TimerState['sessionHistory'],
-  ) => {
+  const calculateOptimalDuration = (sessionHistory: TimerState['sessionHistory']) => {
     if (sessionHistory.length < 2) return 25; // Default Pomodoro duration
 
     const recentSessions = sessionHistory.slice(-5);
@@ -88,16 +86,12 @@ export const StudyTimer = () => {
       recentSessions.length;
 
     // Adjust duration based on productivity trends
-    if (averageProductivity > 0.8)
-      return Math.min(timer.optimalDuration + 5, 45);
-    if (averageProductivity < 0.6)
-      return Math.max(timer.optimalDuration - 5, 15);
+    if (averageProductivity > 0.8) return Math.min(timer.optimalDuration + 5, 45);
+    if (averageProductivity < 0.6) return Math.max(timer.optimalDuration - 5, 15);
     return timer.optimalDuration;
   };
 
-  const calculateFocusScore = (
-    sessionHistory: TimerState['sessionHistory'],
-  ) => {
+  const calculateFocusScore = (sessionHistory: TimerState['sessionHistory']) => {
     if (sessionHistory.length === 0) return 0;
     const recentSessions = sessionHistory.slice(-3);
     return (
@@ -117,11 +111,7 @@ export const StudyTimer = () => {
     const newSessionHistory = [
       ...timer.sessionHistory,
       {
-        duration: timer.isBreak
-          ? newCompletedSessions % 4 === 0
-            ? 15
-            : 5
-          : timer.optimalDuration,
+        duration: timer.isBreak ? (newCompletedSessions % 4 === 0 ? 15 : 5) : timer.optimalDuration,
         type: timer.isBreak ? 'break' : 'work',
         completedAt: new Date().toISOString(),
         productivity: Math.random() * 0.4 + 0.6, // Simulated productivity score between 0.6 and 1.0
@@ -172,11 +162,7 @@ export const StudyTimer = () => {
     }
 
     // Set new motivational message
-    setMotivation(
-      motivationalMessages[
-        Math.floor(Math.random() * motivationalMessages.length)
-      ],
-    );
+    setMotivation(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
   };
 
   const toggleTimer = () => {
@@ -231,17 +217,11 @@ export const StudyTimer = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-primary/5 p-3 rounded-lg">
               <div className="text-sm text-muted-foreground">Focus Score</div>
-              <div className="text-2xl font-semibold">
-                {Math.round(timer.focusScore)}%
-              </div>
+              <div className="text-2xl font-semibold">{Math.round(timer.focusScore)}%</div>
             </div>
             <div className="bg-primary/5 p-3 rounded-lg">
-              <div className="text-sm text-muted-foreground">
-                Optimal Duration
-              </div>
-              <div className="text-2xl font-semibold">
-                {timer.optimalDuration}min
-              </div>
+              <div className="text-sm text-muted-foreground">Optimal Duration</div>
+              <div className="text-2xl font-semibold">{timer.optimalDuration}min</div>
             </div>
           </div>
         </div>
@@ -257,8 +237,7 @@ export const StudyTimer = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="text-4xl font-bold"
           >
-            {String(timer.minutes).padStart(2, '0')}:
-            {String(timer.seconds).padStart(2, '0')}
+            {String(timer.minutes).padStart(2, '0')}:{String(timer.seconds).padStart(2, '0')}
           </motion.div>
 
           <div className="flex gap-4">
@@ -300,11 +279,7 @@ export const StudyTimer = () => {
                 className="text-center"
               >
                 <p className="text-sm text-muted-foreground flex items-center gap-2 justify-center">
-                  {timer.isBreak ? (
-                    <Coffee className="w-4 h-4" />
-                  ) : (
-                    <Brain className="w-4 h-4" />
-                  )}
+                  {timer.isBreak ? <Coffee className="w-4 h-4" /> : <Brain className="w-4 h-4" />}
                   {motivation}
                 </p>
               </motion.div>

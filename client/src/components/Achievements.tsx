@@ -1,15 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Award,
-  Book,
-  Brain,
-  Shield,
-  Star,
-  Target,
-  Trophy,
-  Zap,
-} from 'lucide-react';
+import { Award, Book, Brain, Shield, Star, Target, Trophy, Zap } from 'lucide-react';
 
 import React, { useEffect } from 'react';
 
@@ -88,9 +79,7 @@ const BadgeCard = ({ badge, isNew }: { badge: Badge; isNew: boolean }) => {
           {getTierIcon(badge.tier, badge.category)}
         </motion.div>
         <div className="flex-1">
-          <h3 className="font-semibold group-hover:text-primary transition-colors">
-            {badge.name}
-          </h3>
+          <h3 className="font-semibold group-hover:text-primary transition-colors">{badge.name}</h3>
           <p className="text-sm text-muted-foreground">{badge.description}</p>
           {badge.earnedAt && (
             <div className="mt-2 space-y-2">
@@ -113,11 +102,7 @@ const BadgeCard = ({ badge, isNew }: { badge: Badge; isNew: boolean }) => {
                       ? '100%'
                       : Math.min(
                           100,
-                          Math.round(
-                            ((progress?.totalPoints || 0) /
-                              badge.requiredPoints) *
-                              100,
-                          ),
+                          Math.round(((progress?.totalPoints || 0) / badge.requiredPoints) * 100),
                         )}
                     %
                   </span>
@@ -169,8 +154,7 @@ export const Achievements = () => {
     if (progress?.badges) {
       const newBadges = progress.badges.filter(
         (badge) =>
-          badge.earnedAt &&
-          new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
+          badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
       );
 
       if (newBadges.length > 0) {
@@ -234,16 +218,13 @@ export const Achievements = () => {
 
   const hasNewBadges = progress.badges.some(
     (badge) =>
-      badge.earnedAt &&
-      new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
+      badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
   );
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">
-          Your Learning Journey
-        </CardTitle>
+        <CardTitle className="text-2xl font-bold">Your Learning Journey</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         {/* Progress Overview */}
@@ -253,9 +234,7 @@ export const Achievements = () => {
               <div className="text-center">
                 <Trophy className="h-8 w-8 mx-auto mb-2 text-primary" />
                 <h3 className="font-semibold">Total Points</h3>
-                <p className="text-2xl font-bold text-primary">
-                  {progress.totalPoints}
-                </p>
+                <p className="text-2xl font-bold text-primary">{progress.totalPoints}</p>
               </div>
             </CardContent>
           </Card>
@@ -264,9 +243,7 @@ export const Achievements = () => {
               <div className="text-center">
                 <Zap className="h-8 w-8 mx-auto mb-2 text-amber-500" />
                 <h3 className="font-semibold">Day Streak</h3>
-                <p className="text-2xl font-bold text-amber-500">
-                  {progress.streakCount}
-                </p>
+                <p className="text-2xl font-bold text-amber-500">{progress.streakCount}</p>
               </div>
             </CardContent>
           </Card>
@@ -275,9 +252,7 @@ export const Achievements = () => {
               <div className="text-center">
                 <Brain className="h-8 w-8 mx-auto mb-2 text-indigo-500" />
                 <h3 className="font-semibold">Current Level</h3>
-                <p className="text-2xl font-bold text-indigo-500">
-                  {progress.level}
-                </p>
+                <p className="text-2xl font-bold text-indigo-500">{progress.level}</p>
               </div>
             </CardContent>
           </Card>
@@ -287,64 +262,48 @@ export const Achievements = () => {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium">Level Progress</span>
-            <span className="text-sm font-medium">
-              {progress.totalPoints % 1000} / 1000 XP
-            </span>
+            <span className="text-sm font-medium">{progress.totalPoints % 1000} / 1000 XP</span>
           </div>
-          <Progress
-            value={Math.min((progress.totalPoints % 1000) / 10, 100)}
-            className="h-2"
-          />
+          <Progress value={Math.min((progress.totalPoints % 1000) / 10, 100)} className="h-2" />
         </div>
 
         {/* Recent Achievements */}
-        {progress.recentAchievements &&
-          progress.recentAchievements.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-3">
-                Recent Achievements
-              </h3>
-              <div className="space-y-2">
-                {progress.recentAchievements.map((achievement, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center p-2 bg-secondary/10 rounded"
-                  >
-                    <span>{achievement.topic}</span>
-                    <span className="font-medium">{achievement.score}%</span>
-                  </div>
-                ))}
-              </div>
+        {progress.recentAchievements && progress.recentAchievements.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3">Recent Achievements</h3>
+            <div className="space-y-2">
+              {progress.recentAchievements.map((achievement, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-2 bg-secondary/10 rounded"
+                >
+                  <span>{achievement.topic}</span>
+                  <span className="font-medium">{achievement.score}%</span>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
         {/* Achievement Categories */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3">Achievement Categories</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {['learning', 'mastery', 'streak', 'achievement'].map(
-              (category) => {
-                const categoryBadges = progress.badges.filter(
-                  (b) => b.category === category,
-                );
-                const earnedCount = categoryBadges.filter(
-                  (b) => b.earnedAt,
-                ).length;
-                return (
-                  <Card key={category} className="p-4">
-                    <div className="text-center">
-                      {getTierIcon('gold', category)}
-                      <h4 className="font-medium mt-2 capitalize">
-                        {category}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {earnedCount}/{categoryBadges.length}
-                      </p>
-                    </div>
-                  </Card>
-                );
-              },
-            )}
+            {['learning', 'mastery', 'streak', 'achievement'].map((category) => {
+              const categoryBadges = progress.badges.filter((b) => b.category === category);
+              const earnedCount = categoryBadges.filter((b) => b.earnedAt).length;
+              return (
+                <Card key={category} className="p-4">
+                  <div className="text-center">
+                    {getTierIcon('gold', category)}
+                    <h4 className="font-medium mt-2 capitalize">{category}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {earnedCount}/{categoryBadges.length}
+                    </p>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
@@ -356,8 +315,7 @@ export const Achievements = () => {
               badge={badge}
               isNew={Boolean(
                 badge.earnedAt &&
-                  new Date(badge.earnedAt).getTime() >
-                    Date.now() - 24 * 60 * 60 * 1000,
+                  new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
               )}
             />
           ))}
@@ -372,15 +330,12 @@ export const Achievements = () => {
           >
             <h3 className="font-semibold mb-2">Next Achievement</h3>
             <p className="text-sm text-muted-foreground">
-              Complete more lessons and maintain a high accuracy rate to unlock
-              more badges!
+              Complete more lessons and maintain a high accuracy rate to unlock more badges!
             </p>
             <div className="mt-2">
               <div className="flex justify-between items-center mb-1">
                 <span className="text-xs text-muted-foreground">Accuracy</span>
-                <span className="text-xs font-medium">
-                  {progress.accuracy}%
-                </span>
+                <span className="text-xs font-medium">{progress.accuracy}%</span>
               </div>
               <Progress value={progress.accuracy} className="h-1" />
             </div>

@@ -88,11 +88,7 @@ export const useLogin = () => {
 
 export const useRegister = () => {
   return useMutation({
-    mutationFn: async (userData: {
-      username: string;
-      password: string;
-      email: string;
-    }) => {
+    mutationFn: async (userData: { username: string; password: string; email: string }) => {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

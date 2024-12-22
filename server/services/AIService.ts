@@ -1,4 +1,5 @@
 import { OpenAI } from 'openai';
+
 import { config } from '../config';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
@@ -34,7 +35,7 @@ export class AIService {
 
   private constructor() {
     const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
-    
+
     if (!apiKey || apiKey.trim() === '') {
       console.warn('AIService: Missing API key in environment variables');
       this.initialized = false;
@@ -66,10 +67,10 @@ export class AIService {
     try {
       console.log('AIService: Validating OpenAI connection...');
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "system", content: "Connection test" }],
+        model: 'gpt-4o',
+        messages: [{ role: 'system', content: 'Connection test' }],
         max_tokens: 5,
-        response_format: { type: "json_object" }
+        response_format: { type: 'json_object' },
       });
 
       if (response.choices && response.choices.length > 0) {
@@ -78,11 +79,17 @@ export class AIService {
       }
     } catch (error) {
       console.error('AIService: Connection validation failed:', error);
-      throw new Error(`Failed to validate OpenAI connection: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to validate OpenAI connection: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
-  async generate_questions(topic: string, difficulty: string = 'intermediate', count: number = 5): Promise<Question[]> {
+  async generate_questions(
+    topic: string,
+    difficulty: string = 'intermediate',
+    count: number = 5,
+  ): Promise<Question[]> {
     if (!this.initialized) {
       await this.validateConnection();
     }
@@ -90,12 +97,14 @@ export class AIService {
     try {
       console.log(`Generating ${count} questions about ${topic} at ${difficulty} difficulty`);
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{
-          role: "system",
-          content: `Generate ${count} ${difficulty}-level NCLEX-style questions about ${topic}. Format as JSON array with objects containing: question, options (array of 4 strings), correct_answer (0-3 index), explanation, topic, difficulty.`
-        }],
-        response_format: { type: "json_object" }
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `Generate ${count} ${difficulty}-level NCLEX-style questions about ${topic}. Format as JSON array with objects containing: question, options (array of 4 strings), correct_answer (0-3 index), explanation, topic, difficulty.`,
+          },
+        ],
+        response_format: { type: 'json_object' },
       });
 
       const result = JSON.parse(response.choices[0].message.content);
@@ -115,12 +124,14 @@ export class AIService {
     try {
       console.log(`Generating ${count} flashcards about ${topic}`);
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{
-          role: "system",
-          content: `Create ${count} flashcards for studying ${topic}. Format as JSON array with objects containing: front (question/term), back (answer/definition), topic, category.`
-        }],
-        response_format: { type: "json_object" }
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `Create ${count} flashcards for studying ${topic}. Format as JSON array with objects containing: front (question/term), back (answer/definition), topic, category.`,
+          },
+        ],
+        response_format: { type: 'json_object' },
       });
 
       const result = JSON.parse(response.choices[0].message.content);
@@ -140,14 +151,16 @@ export class AIService {
     try {
       console.log('Analyzing study progress data');
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{
-          role: "system",
-          content: `Analyze this study progress data and provide insights. Format response as JSON with: strengths (array), weaknesses (array), recommendations (array), estimated_proficiency (0-100).
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `Analyze this study progress data and provide insights. Format response as JSON with: strengths (array), weaknesses (array), recommendations (array), estimated_proficiency (0-100).
 
-          User Data: ${JSON.stringify(userData)}`
-        }],
-        response_format: { type: "json_object" }
+          User Data: ${JSON.stringify(userData)}`,
+          },
+        ],
+        response_format: { type: 'json_object' },
       });
 
       const result = JSON.parse(response.choices[0].message.content);
@@ -159,7 +172,7 @@ export class AIService {
         strengths: [],
         weaknesses: [],
         recommendations: ['Error analyzing progress. Please try again later.'],
-        estimated_proficiency: 0
+        estimated_proficiency: 0,
       };
     }
   }

@@ -1,7 +1,7 @@
-import { pgTable, text, serial, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import { boolean, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
-import { relations } from 'drizzle-orm';
 
 // Base tables
 export const users = pgTable('users', {
@@ -188,7 +188,9 @@ export const nclexQuestions = pgTable('nclex_questions', {
 
 export const flashcards = pgTable('flashcards', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
   front: text('front').notNull(),
   back: text('back').notNull(),
   difficulty: text('difficulty').notNull(),
@@ -206,8 +208,12 @@ export const flashcards = pgTable('flashcards', {
 
 export const quizAttempts = pgTable('quiz_attempts', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
-  questionId: integer('question_id').references(() => nclexQuestions.id).notNull(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  questionId: integer('question_id')
+    .references(() => nclexQuestions.id)
+    .notNull(),
   selectedAnswer: integer('selected_answer').notNull(),
   isCorrect: boolean('is_correct').notNull(),
   timeTaken: integer('time_taken').notNull(), // in seconds
@@ -217,7 +223,9 @@ export const quizAttempts = pgTable('quiz_attempts', {
 
 export const dailyProgress = pgTable('daily_progress', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
   date: timestamp('date').defaultNow().notNull(),
   questionsAttempted: integer('questions_attempted').default(0),
   correctAnswers: integer('correct_answers').default(0),
@@ -230,7 +238,9 @@ export const dailyProgress = pgTable('daily_progress', {
 
 export const instructorPreferences = pgTable('instructor_preferences', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
   emailReports: boolean('email_reports').default(true),
   emailFrequency: text('email_frequency').default('daily'),
   reportPreferences: text('report_preferences').default('{}'), // JSON object

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
+
 import { type ReactNode } from 'react';
 
 import { Toaster } from '@/components/ui/toaster';
@@ -26,7 +27,7 @@ const Providers = ({ children }: Props): JSX.Element => {
   );
 };
 
-const customRender = (ui: React.ReactElement, options = {}) => 
+const customRender = (ui: React.ReactElement, options = {}) =>
   render(ui, { wrapper: Providers, ...options });
 
 export * from '@testing-library/react';

@@ -31,10 +31,7 @@ export function LearningPathRecommendations() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Failed to generate learning path',
+        description: error instanceof Error ? error.message : 'Failed to generate learning path',
       });
     }
   };
@@ -56,9 +53,7 @@ export function LearningPathRecommendations() {
     return (
       <Card className="bg-red-50">
         <CardContent className="pt-6">
-          <div className="text-red-600">
-            Failed to load learning paths: {error.message}
-          </div>
+          <div className="text-red-600">Failed to load learning paths: {error.message}</div>
         </CardContent>
       </Card>
     );
@@ -96,9 +91,7 @@ export function LearningPathRecommendations() {
                   <Target className="h-5 w-5" />
                   {path.name}
                 </span>
-                <Badge className={getDifficultyColor(path.difficulty)}>
-                  {path.difficulty}
-                </Badge>
+                <Badge className={getDifficultyColor(path.difficulty)}>{path.difficulty}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -107,10 +100,7 @@ export function LearningPathRecommendations() {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-gray-500" />
-                  <span>
-                    {Math.round(path.estimatedCompletionTime / 60)} hours
-                    estimated
-                  </span>
+                  <span>{Math.round(path.estimatedCompletionTime / 60)} hours estimated</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-gray-500" />
@@ -129,48 +119,30 @@ export function LearningPathRecommendations() {
                         <span className="text-sm text-gray-500">#{order}</span>
                         {course.title}
                       </h3>
-                      {isRequired && (
-                        <Badge variant="secondary">Required</Badge>
-                      )}
+                      {isRequired && <Badge variant="secondary">Required</Badge>}
                     </div>
 
                     {course.matchDetails && (
                       <div className="mt-4 space-y-2">
-                        <h4 className="text-sm font-medium text-gray-700">
-                          Match Details:
-                        </h4>
+                        <h4 className="text-sm font-medium text-gray-700">Match Details:</h4>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <div className="text-sm text-gray-600">
-                              Topic Match
-                            </div>
-                            <Progress
-                              value={course.matchDetails.topicMatch * 10}
-                              className="h-2"
-                            />
+                            <div className="text-sm text-gray-600">Topic Match</div>
+                            <Progress value={course.matchDetails.topicMatch * 10} className="h-2" />
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600">
-                              Time Fit
-                            </div>
-                            <Progress
-                              value={course.matchDetails.timeMatch * 10}
-                              className="h-2"
-                            />
+                            <div className="text-sm text-gray-600">Time Fit</div>
+                            <Progress value={course.matchDetails.timeMatch * 10} className="h-2" />
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600">
-                              Difficulty Match
-                            </div>
+                            <div className="text-sm text-gray-600">Difficulty Match</div>
                             <Progress
                               value={course.matchDetails.difficultyMatch * 10}
                               className="h-2"
                             />
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600">
-                              Learning Pace
-                            </div>
+                            <div className="text-sm text-gray-600">Learning Pace</div>
                             <Progress
                               value={course.matchDetails.learningPace * 10}
                               className="h-2"

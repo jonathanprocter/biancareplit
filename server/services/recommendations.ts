@@ -1,6 +1,6 @@
 import { db } from '@db';
-import { users, courses, enrollments, learningPaths, learningPathCourses } from '@db/schema';
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { courses, enrollments, learningPathCourses, learningPaths, users } from '@db/schema';
+import { and, desc, eq, sql } from 'drizzle-orm';
 
 interface RecommendationFactors {
   userId: number;

@@ -16,8 +16,8 @@ interface Config {
 
 // Check for required environment variables
 const requiredEnvVars = {
-  'OPENAI_API_KEY': process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY, // Fallback to VITE_ prefix if needed
-  'DATABASE_URL': process.env.DATABASE_URL
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY, // Fallback to VITE_ prefix if needed
+  DATABASE_URL: process.env.DATABASE_URL,
 };
 
 // Check all required environment variables
@@ -38,9 +38,9 @@ export const config: Config = {
     timeout: 120000,
     keepAliveTimeout: 65000,
     headers: {
-      'Connection': 'keep-alive',
-      'Keep-Alive': 'timeout=65'
-    }
+      Connection: 'keep-alive',
+      'Keep-Alive': 'timeout=65',
+    },
   },
   session: {
     secret: process.env.SESSION_SECRET || 'development-secret-key',

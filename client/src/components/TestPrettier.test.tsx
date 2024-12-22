@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { cleanup, screen } from '@testing-library/react';
-import { render } from '@/lib/test-utils';
 import userEvent from '@testing-library/user-event';
+
+import { render } from '@/lib/test-utils';
 
 import { TestItem, TestPrettier } from './TestPrettier';
 

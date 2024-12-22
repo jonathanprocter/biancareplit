@@ -41,8 +41,7 @@ const nclexCategories: NCLEXCategory[] = [
 
 export function AnalyticsVisualizer() {
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
-  const [categoryData, setCategoryData] =
-    useState<NCLEXCategory[]>(nclexCategories);
+  const [categoryData, setCategoryData] = useState<NCLEXCategory[]>(nclexCategories);
   const [predictiveIndex, setPredictiveIndex] = useState<number>(0);
 
   useEffect(() => {
@@ -97,10 +96,8 @@ export function AnalyticsVisualizer() {
     // Calculate trend based on recent performance
     const recentScores = data.slice(-5);
     const averageScore =
-      recentScores.reduce((acc, curr) => acc + curr.score, 0) /
-      recentScores.length;
-    const trend =
-      recentScores[recentScores.length - 1].score - recentScores[0].score;
+      recentScores.reduce((acc, curr) => acc + curr.score, 0) / recentScores.length;
+    const trend = recentScores[recentScores.length - 1].score - recentScores[0].score;
 
     // Predictive index formula: (average * 0.7) + (trend * 0.3)
     const index = averageScore * 0.7 + trend * 0.3;

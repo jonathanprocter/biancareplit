@@ -1,6 +1,7 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
 import { sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+
 import * as schema from './schema';
 
 if (!process.env.DATABASE_URL) {
@@ -23,11 +24,11 @@ const getPostgresConfig = () => ({
       rejectUnauthorized: process.env.NODE_ENV === 'production',
       // In development, we're more permissive with SSL
       ...(process.env.NODE_ENV !== 'production' && {
-        rejectUnauthorized: false
-      })
+        rejectUnauthorized: false,
+      }),
     },
     statement_timeout: 30000, // 30 seconds
-    query_timeout: 30000,     // 30 seconds
+    query_timeout: 30000, // 30 seconds
     connectionTimeoutMillis: 30000,
   },
   types: {
@@ -92,7 +93,7 @@ export const db = getDrizzle();
 export async function initializeDatabase(retries = 3, delay = 2000): Promise<void> {
   let lastError: Error | null = null;
   let client: postgres.Sql<{}> | null = null;
-  
+
   // Configuration validation
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is required');
@@ -114,20 +115,20 @@ export async function initializeDatabase(retries = 3, delay = 2000): Promise<voi
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`Database connection attempt ${attempt}/${retries}`);
-      
+
       // Step 1: Establish raw connection
       const startTime = Date.now();
       client = getClient();
-      
+
       // Step 2: Validate connection with timeout
       const connectionTimeout = 30000; // 30 seconds
-      const connectionInfo = await Promise.race([
+      const connectionInfo = (await Promise.race([
         validateConnection(client),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Connection validation timeout')), connectionTimeout)
-        )
-      ]) as { timestamp: Date; database: string; version: string };
-      
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection validation timeout')), connectionTimeout),
+        ),
+      ])) as { timestamp: Date; database: string; version: string };
+
       const connectionTime = Date.now() - startTime;
       console.log(`Raw connection successful (${connectionTime}ms)`);
       console.log('Connection Info:', {
@@ -135,7 +136,7 @@ export async function initializeDatabase(retries = 3, delay = 2000): Promise<voi
         serverTime: connectionInfo.timestamp,
         postgresVersion: connectionInfo.version,
       });
-      
+
       // Step 3: Verify ORM connection
       const ormStartTime = Date.now();
       await db.execute(sql`
@@ -146,16 +147,14 @@ export async function initializeDatabase(retries = 3, delay = 2000): Promise<voi
       `);
       const ormTime = Date.now() - ormStartTime;
       console.log(`ORM connection verified (${ormTime}ms)`);
-      
+
       // Step 4: Verify connection pool
       const poolStartTime = Date.now();
-      const poolPromises = Array.from({ length: 5 }, () => 
-        db.execute(sql`SELECT 1`)
-      );
+      const poolPromises = Array.from({ length: 5 }, () => db.execute(sql`SELECT 1`));
       await Promise.all(poolPromises);
       const poolTime = Date.now() - poolStartTime;
       console.log(`Connection pool verified (${poolTime}ms)`);
-      
+
       console.log('Database initialization completed successfully', {
         totalTime: Date.now() - startTime,
         connectionTime,
@@ -163,10 +162,9 @@ export async function initializeDatabase(retries = 3, delay = 2000): Promise<voi
         poolTime,
       });
       return;
-      
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       // Enhanced error logging
       console.error(`Database connection attempt ${attempt} failed:`, {
         attempt,
@@ -177,11 +175,11 @@ export async function initializeDatabase(retries = 3, delay = 2000): Promise<voi
       });
 
       // Check if error is fatal
-      const isFatalError = error instanceof Error && (
-        error.message.includes('password authentication failed') ||
-        error.message.includes('role does not exist') ||
-        error.message.includes('database does not exist')
-      );
+      const isFatalError =
+        error instanceof Error &&
+        (error.message.includes('password authentication failed') ||
+          error.message.includes('role does not exist') ||
+          error.message.includes('database does not exist'));
 
       if (isFatalError) {
         console.error('Fatal database error detected, stopping retry attempts');
@@ -191,7 +189,7 @@ export async function initializeDatabase(retries = 3, delay = 2000): Promise<voi
       if (attempt < retries) {
         const nextDelay = delay * Math.pow(2, attempt - 1); // Exponential backoff
         console.log(`Retrying in ${nextDelay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, nextDelay));
+        await new Promise((resolve) => setTimeout(resolve, nextDelay));
       }
     } finally {
       // Cleanup if needed

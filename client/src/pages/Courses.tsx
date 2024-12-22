@@ -38,10 +38,7 @@ export function Course({ params }: { params: { id: string } }) {
       toast({
         variant: 'destructive',
         title: 'Failed to enroll',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'An unexpected error occurred',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
       });
     }
   }, [enroll, courseId, toast]);

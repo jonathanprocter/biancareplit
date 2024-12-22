@@ -71,9 +71,7 @@ const AITutorAvatar = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="mb-4">
-          Your personal AI tutor is ready to assist you with any questions.
-        </p>
+        <p className="mb-4">Your personal AI tutor is ready to assist you with any questions.</p>
         <Button
           onClick={handleAskQuestion}
           variant="secondary"
@@ -119,14 +117,8 @@ const StudyTimer = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-mono text-center mb-4">
-          {formatTime(time)}
-        </div>
-        <Button
-          onClick={() => setIsActive(!isActive)}
-          variant="secondary"
-          className="w-full"
-        >
+        <div className="text-4xl font-mono text-center mb-4">{formatTime(time)}</div>
+        <Button onClick={() => setIsActive(!isActive)} variant="secondary" className="w-full">
           {isActive ? 'Pause' : 'Start'} Study Session
         </Button>
       </CardContent>
@@ -148,10 +140,7 @@ const LearningHeatMap = () => {
       <CardContent>
         <div className="space-y-4">
           <Progress value={progress} className="h-2 bg-orange-300" />
-          <p>
-            You're making great progress! {progress}% of your daily goal
-            completed.
-          </p>
+          <p>You're making great progress! {progress}% of your daily goal completed.</p>
         </div>
       </CardContent>
     </Card>
@@ -177,9 +166,7 @@ const Achievements = () => {
         <div className="space-y-2">
           {achievements.map(({ title, completed }) => (
             <div key={title} className="flex items-center gap-2">
-              <div
-                className={`h-2 w-2 rounded-full ${completed ? 'bg-white' : 'bg-yellow-300'}`}
-              />
+              <div className={`h-2 w-2 rounded-full ${completed ? 'bg-white' : 'bg-yellow-300'}`} />
               <span>{title}</span>
             </div>
           ))}
@@ -209,8 +196,7 @@ const FileUploadWizard = () => {
       </CardHeader>
       <CardContent>
         <p className="mb-4">
-          Upload your study materials for AI-powered analysis and flashcard
-          generation.
+          Upload your study materials for AI-powered analysis and flashcard generation.
         </p>
         <Button onClick={handleUpload} variant="secondary" className="w-full">
           Select Files to Upload

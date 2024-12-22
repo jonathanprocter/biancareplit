@@ -29,8 +29,7 @@ export const AITutorAvatar = () => {
       setMood({
         expression: '🌟',
         color: 'bg-green-500',
-        message:
-          "Outstanding progress! You're really mastering these concepts!",
+        message: "Outstanding progress! You're really mastering these concepts!",
       });
     } else if (progress >= 60) {
       setMood({

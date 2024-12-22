@@ -34,9 +34,7 @@ export const FileUploadWizard = () => {
       for (const upload of newUploads) {
         try {
           setUploads((prev) =>
-            prev.map((u) =>
-              u.file === upload.file ? { ...u, status: 'uploading' } : u,
-            ),
+            prev.map((u) => (u.file === upload.file ? { ...u, status: 'uploading' } : u)),
           );
 
           const formData = new FormData();
@@ -54,9 +52,7 @@ export const FileUploadWizard = () => {
           const result = await response.json();
 
           setUploads((prev) =>
-            prev.map((u) =>
-              u.file === upload.file ? { ...u, status: 'complete', result } : u,
-            ),
+            prev.map((u) => (u.file === upload.file ? { ...u, status: 'complete', result } : u)),
           );
 
           toast({
@@ -66,9 +62,7 @@ export const FileUploadWizard = () => {
         } catch (error) {
           setUploads((prev) =>
             prev.map((u) =>
-              u.file === upload.file
-                ? { ...u, status: 'error', error: error.message }
-                : u,
+              u.file === upload.file ? { ...u, status: 'error', error: error.message } : u,
             ),
           );
 
@@ -87,8 +81,7 @@ export const FileUploadWizard = () => {
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        ['.docx'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'text/plain': ['.txt'],
     },
     multiple: true,
@@ -110,9 +103,7 @@ export const FileUploadWizard = () => {
           <p className="mt-2 text-sm text-gray-600">
             Drag and drop your files here, or click to select files
           </p>
-          <p className="text-xs text-gray-500">
-            Supported formats: PDF, DOCX, TXT
-          </p>
+          <p className="text-xs text-gray-500">Supported formats: PDF, DOCX, TXT</p>
         </div>
 
         {uploads.length > 0 && (
@@ -127,9 +118,7 @@ export const FileUploadWizard = () => {
                   {upload.status === 'complete' && (
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   )}
-                  {upload.status === 'error' && (
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                  )}
+                  {upload.status === 'error' && <AlertCircle className="h-5 w-5 text-red-500" />}
                 </div>
 
                 {upload.status === 'uploading' && (
@@ -143,14 +132,8 @@ export const FileUploadWizard = () => {
                 {upload.status === 'complete' && upload.result && (
                   <div className="mt-2 text-sm text-gray-600">
                     <p>Extracted {upload.result.topics?.length || 0} topics</p>
-                    <p>
-                      Generated {upload.result.flashcards?.length || 0}{' '}
-                      flashcards
-                    </p>
-                    <p>
-                      Created {upload.result.quiz_questions?.length || 0} quiz
-                      questions
-                    </p>
+                    <p>Generated {upload.result.flashcards?.length || 0} flashcards</p>
+                    <p>Created {upload.result.quiz_questions?.length || 0} quiz questions</p>
                   </div>
                 )}
               </div>

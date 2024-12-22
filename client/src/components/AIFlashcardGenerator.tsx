@@ -29,8 +29,7 @@ interface Flashcard {
 export function AIFlashcardGenerator() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedDifficulty, setSelectedDifficulty] =
-    useState<string>('medium');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('medium');
   const { toast } = useToast();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,9 +81,7 @@ export function AIFlashcardGenerator() {
       // Schedule mock spaced repetition
       const schedule = mockFlashcards.map((card) => ({
         ...card,
-        nextReview: new Date(
-          Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000,
-        ),
+        nextReview: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000),
       }));
 
       console.log('Generated flashcards:', schedule);
@@ -131,10 +128,7 @@ export function AIFlashcardGenerator() {
               accept=".pdf,.doc,.docx,.txt"
               className="flex-1"
             />
-            <Select
-              value={selectedDifficulty}
-              onValueChange={setSelectedDifficulty}
-            >
+            <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select difficulty" />
               </SelectTrigger>
@@ -165,9 +159,9 @@ export function AIFlashcardGenerator() {
           </Button>
 
           <p className="text-sm text-gray-500 mt-4">
-            Upload your study materials and our AI will generate smart
-            flashcards with spaced repetition scheduling. Missed quiz questions
-            will automatically be converted into flashcards.
+            Upload your study materials and our AI will generate smart flashcards with spaced
+            repetition scheduling. Missed quiz questions will automatically be converted into
+            flashcards.
           </p>
         </div>
       </CardContent>

@@ -1,7 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 export class AppError extends Error {
-  constructor(public message: string, public status: number = 500, public code?: string) {
+  constructor(
+    public message: string,
+    public status: number = 500,
+    public code?: string,
+  ) {
     super(message);
     this.name = 'AppError';
   }

@@ -23,9 +23,7 @@ export function UserProgress() {
     return progress.enrollments.map((enrollment) => ({
       id: enrollment.course.id.toString(),
       name: enrollment.course.title,
-      level: Math.ceil(
-        (enrollment.correctAnswers / enrollment.totalAttempts) * 3,
-      ),
+      level: Math.ceil((enrollment.correctAnswers / enrollment.totalAttempts) * 3),
       mastered: enrollment.correctAnswers / enrollment.totalAttempts > 0.8,
       prerequisites: [], // Default to empty array if no prerequisites
       category: enrollment.course.category || 'uncategorized',
@@ -102,21 +100,15 @@ export function UserProgress() {
                   <div>
                     <div className="flex justify-between mb-2">
                       <span className="text-sm font-medium">Total Points</span>
-                      <span className="text-sm font-medium">
-                        {progress?.totalPoints}
-                      </span>
+                      <span className="text-sm font-medium">{progress?.totalPoints}</span>
                     </div>
-                    <Progress
-                      value={Math.min((progress?.totalPoints || 0) / 10, 100)}
-                    />
+                    <Progress value={Math.min((progress?.totalPoints || 0) / 10, 100)} />
                   </div>
 
                   <div>
                     <div className="flex justify-between mb-2">
                       <span className="text-sm font-medium">Accuracy</span>
-                      <span className="text-sm font-medium">
-                        {progress?.accuracy}%
-                      </span>
+                      <span className="text-sm font-medium">{progress?.accuracy}%</span>
                     </div>
                     <Progress value={progress?.accuracy || 0} />
                   </div>
@@ -138,12 +130,9 @@ export function UserProgress() {
                       <Badge className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                       <div>
                         <h3 className="font-medium">{badge.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {badge.description}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{badge.description}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Earned on{' '}
-                          {new Date(badge.earnedAt!).toLocaleDateString()}
+                          Earned on {new Date(badge.earnedAt!).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
@@ -165,17 +154,13 @@ export function UserProgress() {
                 {progress?.enrollments.map((enrollment) => (
                   <div key={enrollment.id}>
                     <div className="flex justify-between mb-2">
-                      <span className="font-medium">
-                        {enrollment.course.title}
-                      </span>
+                      <span className="font-medium">{enrollment.course.title}</span>
                       <div className="text-right">
                         <span className="text-sm text-muted-foreground">
-                          {enrollment.correctAnswers} /{' '}
-                          {enrollment.totalAttempts} correct
+                          {enrollment.correctAnswers} / {enrollment.totalAttempts} correct
                         </span>
                         <div className="text-xs text-muted-foreground">
-                          Predicted Completion: {enrollment.predictedCompletion}
-                          %
+                          Predicted Completion: {enrollment.predictedCompletion}%
                         </div>
                       </div>
                     </div>
@@ -183,9 +168,7 @@ export function UserProgress() {
                       <Progress
                         value={
                           enrollment.totalAttempts > 0
-                            ? (enrollment.correctAnswers /
-                                enrollment.totalAttempts) *
-                              100
+                            ? (enrollment.correctAnswers / enrollment.totalAttempts) * 100
                             : 0
                         }
                         className="h-2"

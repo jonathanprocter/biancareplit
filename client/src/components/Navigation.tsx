@@ -52,11 +52,7 @@ export function Navigation() {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
+            <Button variant="ghost" onClick={handleLogout} disabled={isLoggingOut}>
               {isLoggingOut ? 'Logging out...' : 'Logout'}
             </Button>
           </div>

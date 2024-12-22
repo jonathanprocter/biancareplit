@@ -101,9 +101,7 @@ export function ProgressAnimation() {
               className="text-center"
             >
               <p className="text-3xl font-bold mb-2">{currentProgress}%</p>
-              <p className="text-sm opacity-80">
-                Keep going! You're making great progress!
-              </p>
+              <p className="text-sm opacity-80">Keep going! You're making great progress!</p>
             </motion.div>
 
             {/* Milestone List */}
@@ -121,9 +119,7 @@ export function ProgressAnimation() {
                   <IconComponent icon={milestone.icon} />
                   <div>
                     <p className="font-semibold">{milestone.title}</p>
-                    <p className="text-sm opacity-80">
-                      {milestone.description}
-                    </p>
+                    <p className="text-sm opacity-80">{milestone.description}</p>
                   </div>
                 </motion.div>
               ))}

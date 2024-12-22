@@ -31,9 +31,7 @@ interface CategoryProgress {
 
 export function LearningPathVisualizer() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [categoryProgress, setCategoryProgress] = useState<CategoryProgress[]>(
-    [],
-  );
+  const [categoryProgress, setCategoryProgress] = useState<CategoryProgress[]>([]);
   const [currentLevel, setCurrentLevel] = useState(1);
   const [xpPoints, setXpPoints] = useState(0);
   const [nextLevelXP, setNextLevelXP] = useState(100);
@@ -59,10 +57,7 @@ export function LearningPathVisualizer() {
           learningStyle: 'Visual',
         };
 
-        console.log(
-          'LearningPathVisualizer: Calling generateLearningPath with context:',
-          context,
-        );
+        console.log('LearningPathVisualizer: Calling generateLearningPath with context:', context);
 
         // First set some default milestones while waiting for AI response
         const defaultMilestones: Milestone[] = [
@@ -80,10 +75,8 @@ export function LearningPathVisualizer() {
 
         setMilestones(defaultMilestones);
 
-        const {
-          milestones: aiMilestones,
-          categoryProgress: aiCategoryProgress,
-        } = await generateLearningPath(context);
+        const { milestones: aiMilestones, categoryProgress: aiCategoryProgress } =
+          await generateLearningPath(context);
 
         console.log('LearningPathVisualizer: Received AI response:', {
           aiMilestones,
@@ -106,9 +99,7 @@ export function LearningPathVisualizer() {
       } catch (err) {
         console.error('LearningPathVisualizer: Error loading data', err);
         const errorMessage =
-          err instanceof Error
-            ? err.message
-            : 'Failed to load learning path data';
+          err instanceof Error ? err.message : 'Failed to load learning path data';
         setError(errorMessage);
         toast({
           title: 'Error',
@@ -162,9 +153,7 @@ export function LearningPathVisualizer() {
     return (
       <Card className="bg-destructive/10">
         <CardHeader>
-          <CardTitle className="text-destructive">
-            Error Loading Learning Path
-          </CardTitle>
+          <CardTitle className="text-destructive">Error Loading Learning Path</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-destructive">{error}</p>
@@ -210,9 +199,7 @@ export function LearningPathVisualizer() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Card
-              className={`transition-all ${milestone.completed ? 'bg-green-50' : ''}`}
-            >
+            <Card className={`transition-all ${milestone.completed ? 'bg-green-50' : ''}`}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex gap-4">
@@ -221,27 +208,18 @@ export function LearningPathVisualizer() {
                       <h3 className="font-semibold flex items-center gap-2">
                         {milestone.title}
                         {milestone.aiRecommended && (
-                          <Badge
-                            variant="secondary"
-                            className="flex items-center gap-1"
-                          >
+                          <Badge variant="secondary" className="flex items-center gap-1">
                             <Zap className="h-3 w-3" />
                             AI Recommended
                           </Badge>
                         )}
                       </h3>
-                      <p className="text-sm text-gray-500">
-                        {milestone.description}
-                      </p>
+                      <p className="text-sm text-gray-500">{milestone.description}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <Badge
-                      variant={milestone.completed ? 'success' : 'secondary'}
-                    >
-                      {milestone.completed
-                        ? 'Completed'
-                        : `+${milestone.xpPoints} XP`}
+                    <Badge variant={milestone.completed ? 'success' : 'secondary'}>
+                      {milestone.completed ? 'Completed' : `+${milestone.xpPoints} XP`}
                     </Badge>
                   </div>
                 </div>
@@ -263,8 +241,7 @@ export function LearningPathVisualizer() {
                 <div className="flex justify-between text-sm">
                   <span>{category.category}</span>
                   <span className="text-gray-500">
-                    {category.correctAnswers}/{category.totalQuestions}{' '}
-                    Questions
+                    {category.correctAnswers}/{category.totalQuestions} Questions
                   </span>
                 </div>
                 <Progress value={category.progress} className="h-2" />

@@ -1,13 +1,16 @@
 import express, { type Express } from 'express';
 import fs from 'fs';
+import { type Server } from 'http';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { createServer as createViteServer, createLogger } from 'vite';
-import type { ViteDevServer } from 'vite'; // Added for type safety
+import { createLogger, createServer as createViteServer } from 'vite';
+import type { ViteDevServer } from 'vite';
+
+import viteConfig from '../vite.config';
+
+// Added for type safety
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-import { type Server } from 'http';
-import viteConfig from '../vite.config';
 
 const viteLogger = createLogger();
 
@@ -57,7 +60,7 @@ export async function setupVite(app: Express, server: Server) {
           server,
           host: '0.0.0.0',
           port: 5173,
-          protocol: 'ws'
+          protocol: 'ws',
         },
       },
       appType: 'custom',
@@ -80,7 +83,7 @@ export async function setupVite(app: Express, server: Server) {
       }
     });
   } catch (error) {
-    console.error("Error setting up Vite:", error);
+    console.error('Error setting up Vite:', error);
     process.exit(1);
   }
 }

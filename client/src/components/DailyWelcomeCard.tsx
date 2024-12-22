@@ -1,20 +1,6 @@
 import { motion } from 'framer-motion';
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  BookOpenIcon,
-  Calendar,
-  Clock,
-  Target,
-} from 'lucide-react';
-import {
-  Line,
-  LineChart,
-  ReferenceLine,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { ArrowDownIcon, ArrowUpIcon, BookOpenIcon, Calendar, Clock, Target } from 'lucide-react';
+import { Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { useEffect, useState } from 'react';
 
@@ -127,9 +113,7 @@ export const DailyWelcomeCard = () => {
 
   const accuracyRate =
     progress.questionsAttempted > 0
-      ? ((progress.correctAnswers / progress.questionsAttempted) * 100).toFixed(
-          1,
-        )
+      ? ((progress.correctAnswers / progress.questionsAttempted) * 100).toFixed(1)
       : 0;
 
   return (
@@ -230,23 +214,15 @@ export const DailyWelcomeCard = () => {
               <h3 className="font-semibold mb-4">Your Learning Journey</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Current Performance:
-                  </span>
+                  <span className="text-sm text-muted-foreground">Current Performance:</span>
                   <span className="font-medium">{accuracyRate}%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Target Performance:
-                  </span>
-                  <span className="font-medium">
-                    {progress.trends.targetPerformance}%
-                  </span>
+                  <span className="text-sm text-muted-foreground">Target Performance:</span>
+                  <span className="font-medium">{progress.trends.targetPerformance}%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Estimated Time to Target:
-                  </span>
+                  <span className="text-sm text-muted-foreground">Estimated Time to Target:</span>
                   <span className="font-medium">
                     {progress.learningPath.estimatedTimeToTarget} days
                   </span>

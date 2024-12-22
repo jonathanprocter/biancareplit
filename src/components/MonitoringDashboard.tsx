@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+
+import React, { useEffect, useState } from 'react';
 
 interface MetricsData {
   cpu_usage: number;
