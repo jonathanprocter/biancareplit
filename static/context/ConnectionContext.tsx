@@ -29,7 +29,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     lastError: null,
   });
 
-  const { isConnected: wsConnected, sendMessage } = useWebSocket('ws://localhost:8082/ws', {
+  const { isConnected: wsConnected, sendMessage } = useWebSocket('/ws', {
     onMessage: (data) => handleWebSocketMessage(data),
     reconnectAttempts: 5,
     reconnectInterval: 3000,
