@@ -34,3 +34,7 @@ black
 black
 pre-commit
 isort
+aiohttp
+black
+flake8
+requests
