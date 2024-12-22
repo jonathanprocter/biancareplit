@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Award, Star, Trophy } from 'lucide-react';
 
@@ -47,11 +48,13 @@ const IconComponent = ({ icon }: { icon: Milestone['icon'] }) => {
       return <Star className="h-6 w-6" />;
     case 'award':
       return <Award className="h-6 w-6" />;
+    default:
+      return null; // Handle unexpected icon type gracefully
   }
 };
 
 export function ProgressAnimation() {
-  const currentProgress = 35; // This will be connected to actual progress later
+  const [currentProgress, setCurrentProgress] = useState(35); // Using state for dynamic UI
 
   return (
     <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white overflow-hidden">

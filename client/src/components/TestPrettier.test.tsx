@@ -17,7 +17,9 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  portalRoot.remove();
+  if (document.body.contains(portalRoot)) {
+    portalRoot.remove();
+  }
 });
 
 // Mock the toast hook
@@ -37,20 +39,19 @@ describe('TestPrettier', () => {
     render(<TestPrettier title="Test Title" items={mockItems} />);
 
     // Check title is rendered
-    expect(screen.getByText('Test Title')).toBeInTheDocument();
+    const titleElement = screen.getByText('Test Title');
+    expect(titleElement).toBeInTheDocument();
 
     // Check items are rendered in the main view (not in dialog)
-    expect(screen.getByText(/Test Title/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /open dialog/i })).toBeInTheDocument();
   });
 
   it('opens dialog when button is clicked', async () => {
-    const user = userEvent.setup();
     render(<TestPrettier title="Test" items={mockItems} />);
 
     // Click open button
     const openButton = screen.getByRole('button', { name: /open dialog/i });
-    await user.click(openButton);
+    await userEvent.click(openButton);
 
     // Wait for and check if dialog content is visible
     expect(await screen.findByRole('dialog')).toBeInTheDocument();

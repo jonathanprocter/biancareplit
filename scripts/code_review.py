@@ -286,9 +286,9 @@ class CodeReviewSystem:
             logger.info(f"\nProcessing file {index + 1}/{total_files} ({(index + 1)/total_files*100:.1f}%)")
             logger.info(f"Current file: {file_path} (Priority: {priority})")
                 logger.info(f"Processing {file_path} ({language})")
-            try:
-                # Add delay between API calls to avoid rate limits
-                await asyncio.sleep(1)
+                try:
+                    # Add delay between API calls to avoid rate limits
+                    await asyncio.sleep(1)
                     
                     # Step 1: Fix code
                     fixed_code = await self.fix_code(file_path, language)

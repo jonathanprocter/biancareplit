@@ -33,6 +33,48 @@ export const FileUploadWizard = () => {
   const [uploads, setUploads] = useState<UploadStatus[]>([]);
   const { toast } = useToast();
 
+  const processFileUpload = async (upload: UploadStatus) => {
+    try {
+      setUploads((prev) =>
+        prev.map((u) => u.file.name === upload.file.name && u.file.size === upload.file.size ? { ...u, status: 'uploading' } : u),
+      );
+
+      const formData = new FormData();
+      formData.append('file', upload.file);
+
+      const response = await fetch(process.env.REACT_APP_UPLOAD_ENDPOINT || '/api/content/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const result = await response.json();
+
+      setUploads((prev) =>
+        prev.map((u) => u.file.name === upload.file.name && u.file.size === upload.file.size ? { ...u, status: 'complete', result } : u),
+      );
+
+      toast({
+        title: 'Upload Successful',
+        description: `${upload.file.name} has been processed and integrated into the learning system.`,
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      setUploads((prev) =>
+        prev.map((u) => u.file.name === upload.file.name && u.file.size === upload.file.size ? { ...u, status: 'error', error: errorMessage } : u),
+      );
+
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description: `Failed to process ${upload.file.name}. Please try again.`,
+      });
+    }
+  };
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       const newUploads = acceptedFiles.map((file) => ({
@@ -43,48 +85,7 @@ export const FileUploadWizard = () => {
 
       setUploads((prev) => [...prev, ...newUploads]);
 
-      for (const upload of newUploads) {
-        try {
-          setUploads((prev) =>
-            prev.map((u) => (u.file === upload.file ? { ...u, status: 'uploading' } : u)),
-          );
-
-          const formData = new FormData();
-          formData.append('file', upload.file);
-
-          const response = await fetch('/api/content/upload', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!response.ok) {
-            throw new Error(await response.text());
-          }
-
-          const result = await response.json();
-
-          setUploads((prev) =>
-            prev.map((u) => (u.file === upload.file ? { ...u, status: 'complete', result } : u)),
-          );
-
-          toast({
-            title: 'Upload Successful',
-            description: `${upload.file.name} has been processed and integrated into the learning system.`,
-          });
-        } catch (error) {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.file === upload.file ? { ...u, status: 'error', error: error.message } : u,
-            ),
-          );
-
-          toast({
-            variant: 'destructive',
-            title: 'Upload Failed',
-            description: `Failed to process ${upload.file.name}. Please try again.`,
-          });
-        }
-      }
+      await Promise.all(newUploads.map(processFileUpload));
     },
     [toast],
   );
@@ -104,11 +105,13 @@ export const FileUploadWizard = () => {
       <CardContent className="p-6">
         <div
           {...getRootProps()}
-          className={`
+          className={
+            `
             border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
             transition-colors duration-200 ease-in-out
             ${isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300'}
-          `}
+          `
+          }
         >
           <input {...getInputProps()} />
           <Upload className="mx-auto h-12 w-12 text-gray-400" />
@@ -120,8 +123,8 @@ export const FileUploadWizard = () => {
 
         {uploads.length > 0 && (
           <div className="mt-6 space-y-4">
-            {uploads.map((upload, index) => (
-              <div key={index} className="border rounded-lg p-4">
+            {uploads.map((upload) => (
+              <div key={`${upload.file.name}-${upload.file.size}`} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-5 w-5 text-gray-500" />

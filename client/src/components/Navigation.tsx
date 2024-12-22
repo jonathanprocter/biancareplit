@@ -1,9 +1,6 @@
 import { Link, useLocation } from 'wouter';
-
 import { useState } from 'react';
-
 import { Button } from '@/components/ui/button';
-
 import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
@@ -16,18 +13,22 @@ export function Navigation() {
     return null;
   }
 
-  const linkClass = (path: string) =>
+  const linkClass = React.useCallback((path: string) =>
     `text-lg font-semibold ${
       location === path ? 'text-primary' : 'text-foreground hover:text-primary'
-    }`;
+    }`
+  , [location]);
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
+      // Ideally add secure logic here for logging out, e.g., API call
       localStorage.removeItem('userId');
       localStorage.removeItem('username');
+      // Use context or router hook instead of direct window manipulation
       window.location.href = '/';
     } catch (error) {
+      // Use a logging service instead
       console.error('Logout error:', error);
       toast({
         variant: 'destructive',

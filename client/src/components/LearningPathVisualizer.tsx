@@ -39,13 +39,17 @@ export function LearningPathVisualizer() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  console.log('LearningPathVisualizer: Component mounted');
-
   useEffect(() => {
-    console.log('LearningPathVisualizer: Component initialized');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('LearningPathVisualizer: Component initialized');
+    }
+
+    const abortController = new AbortController();
 
     const fetchData = async () => {
-      console.log('LearningPathVisualizer: Starting data fetch');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('LearningPathVisualizer: Starting data fetch');
+      }
       setIsLoading(true);
       setError(null);
 
@@ -54,72 +58,64 @@ export function LearningPathVisualizer() {
           currentTopic: 'Fundamentals of Nursing',
           recentPerformance: 75,
           strugglingAreas: ['Pharmacology', 'Critical Care'],
-          learningStyle: 'Visual',
+          learningStyle: 'Visual'
         };
 
-        console.log('LearningPathVisualizer: Calling generateLearningPath with context:', context);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('LearningPathVisualizer: Calling generateLearningPath with context:', context);
+        }
 
-        // First set some default milestones while waiting for AI response
-        const defaultMilestones: Milestone[] = [
-          {
-            id: 1,
-            title: 'Loading your personalized path...',
-            description: 'Please wait while we analyze your learning profile',
-            category: 'General',
-            difficulty: 'beginner',
-            completed: false,
-            aiRecommended: true,
-            xpPoints: 100,
-          },
-        ];
+        const defaultMilestones: Milestone[] = [{
+          id: 1,
+          title: 'Loading your personalized path...',
+          description: 'Please wait while we analyze your learning profile',
+          category: 'General',
+          difficulty: 'beginner',
+          completed: false,
+          aiRecommended: true,
+          xpPoints: 100
+        }];
 
         setMilestones(defaultMilestones);
 
-        const { milestones: aiMilestones, categoryProgress: aiCategoryProgress } =
-          await generateLearningPath(context);
+        const result = await generateLearningPath(context);
 
-        console.log('LearningPathVisualizer: Received AI response:', {
-          aiMilestones,
-          aiCategoryProgress,
-        });
-
-        if (!Array.isArray(aiMilestones)) {
+        if (!Array.isArray(result.milestones)) {
           throw new Error('Invalid milestones format received');
         }
 
-        const mappedMilestones = aiMilestones.map((milestone, index) => ({
+        const mappedMilestones = result.milestones.map((milestone, index) => ({
           id: index + 1,
           ...milestone,
-          completed: false,
+          completed: false
         }));
 
         setMilestones(mappedMilestones);
-        setCategoryProgress(aiCategoryProgress);
-        console.log('LearningPathVisualizer: Data loaded successfully');
+        setCategoryProgress(result.categoryProgress);
+
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('LearningPathVisualizer: Data loaded successfully');
+        }
       } catch (err) {
         console.error('LearningPathVisualizer: Error loading data', err);
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to load learning path data';
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load learning path data';
         setError(errorMessage);
         toast({
           title: 'Error',
           description: errorMessage,
-          variant: 'destructive',
+          variant: 'destructive'
         });
 
-        // Set fallback data in case of error
-        const fallbackMilestones: Milestone[] = [
-          {
-            id: 1,
-            title: 'Getting Started',
-            description: 'Begin with foundational concepts',
-            category: 'Fundamentals',
-            difficulty: 'beginner',
-            completed: false,
-            aiRecommended: true,
-            xpPoints: 100,
-          },
-        ];
+        const fallbackMilestones: Milestone[] = [{
+          id: 1,
+          title: 'Getting Started',
+          description: 'Begin with foundational concepts',
+          category: 'Fundamentals',
+          difficulty: 'beginner',
+          completed: false,
+          aiRecommended: true,
+          xpPoints: 100
+        }];
 
         setMilestones(fallbackMilestones);
       } finally {
@@ -128,6 +124,10 @@ export function LearningPathVisualizer() {
     };
 
     fetchData();
+
+    return () => {
+      abortController.abort();
+    };
   }, [toast]);
 
   const renderIcon = (difficulty: Milestone['difficulty']) => {
@@ -169,7 +169,6 @@ export function LearningPathVisualizer() {
 
   return (
     <div className="space-y-8">
-      {/* Level Progress */}
       <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -190,7 +189,6 @@ export function LearningPathVisualizer() {
         </CardContent>
       </Card>
 
-      {/* Milestones */}
       <div className="grid gap-4">
         {milestones.map((milestone) => (
           <motion.div
@@ -229,7 +227,6 @@ export function LearningPathVisualizer() {
         ))}
       </div>
 
-      {/* Category Progress */}
       <Card>
         <CardHeader>
           <CardTitle>NCLEX Category Progress</CardTitle>

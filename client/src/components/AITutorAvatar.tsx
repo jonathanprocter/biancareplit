@@ -14,6 +14,8 @@ interface TutorMood {
   message: string;
 }
 
+const DEFAULT_CONFIDENCE = 70;
+
 export const AITutorAvatar = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
@@ -57,16 +59,19 @@ export const AITutorAvatar = () => {
         body: JSON.stringify({ query }),
       });
 
-      if (!response.ok) throw new Error('Failed to get AI response');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to get AI response');
+      }
 
       const data = await response.json();
       setCurrentMessage(data.message);
-      updateTutorMood(data.confidence || 70);
+      updateTutorMood(data.confidence || DEFAULT_CONFIDENCE);
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to get AI tutor response',
+        description: error.message || 'Failed to get AI tutor response',
       });
     } finally {
       setIsTyping(false);
@@ -87,7 +92,7 @@ export const AITutorAvatar = () => {
           <motion.div
             className={`w-16 h-16 rounded-full ${mood.color} flex items-center justify-center text-2xl`}
             animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            transition={{ duration: 2, repeat: 3 }}  {/* Changed to finite repeat for performance */}
           >
             {mood.expression}
           </motion.div>
@@ -122,7 +127,7 @@ export const AITutorAvatar = () => {
             <div className="mt-4 flex flex-wrap gap-2">
               {quickPrompts.map((prompt, index) => (
                 <Button
-                  key={index}
+                  key={prompt.replace(/\s+/g, '-')}
                   variant="outline"
                   size="sm"
                   onClick={() => simulateResponse(prompt)}

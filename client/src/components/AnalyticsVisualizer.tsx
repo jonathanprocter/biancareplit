@@ -48,42 +48,19 @@ export function AnalyticsVisualizer() {
     // Fetch performance data
     const fetchData = async () => {
       try {
-        // Use mock data for initial implementation
-        const mockData = [
-          {
-            category: 'Safe Care',
-            score: 85,
-            timestamp: '2024-01-01',
-            totalQuestions: 20,
-            correctAnswers: 17,
-          },
-          {
-            category: 'Health Promotion',
-            score: 78,
-            timestamp: '2024-01-02',
-            totalQuestions: 15,
-            correctAnswers: 12,
-          },
-          {
-            category: 'Psychosocial',
-            score: 92,
-            timestamp: '2024-01-03',
-            totalQuestions: 25,
-            correctAnswers: 23,
-          },
-        ];
+        // Fetch real data or replace with actual fetch logic
+        const response = await fetch('/api/performanceData'); // Example endpoint
+        const data: PerformanceData[] = await response.json();
 
-        setPerformanceData(mockData);
-        calculatePredictiveIndex(mockData);
+        setPerformanceData(data);
+        calculatePredictiveIndex(data);
 
-        // Initialize category distribution with mock data
-        const updatedCategories = nclexCategories.map((category, index) => ({
-          ...category,
-          value: Math.floor(Math.random() * 40) + 60, // Random scores between 60-100
-        }));
+        // Update category distribution based on fetched data
+        const updatedCategories = updateCategoryDistribution(data);
         setCategoryData(updatedCategories);
       } catch (error) {
         console.error('Error setting up analytics data:', error);
+        // Example: set some error state or display an error message in the UI
       }
     };
 
@@ -105,10 +82,17 @@ export function AnalyticsVisualizer() {
   };
 
   const updateCategoryDistribution = (data: PerformanceData[]) => {
-    // Update category distribution based on performance data
-    const updatedCategories = [...nclexCategories];
-    // Calculate values based on performance data
-    setCategoryData(updatedCategories);
+    const categories = { ...nclexCategories };
+    
+    data.forEach((performance) => {
+      const category = categories.find(
+        (cat) => cat.name.includes(performance.category)
+      );
+      if (category) {
+        category.value += performance.correctAnswers; // Example logic
+      }
+    });
+    return categories;
   };
 
   return (
@@ -119,7 +103,7 @@ export function AnalyticsVisualizer() {
       <CardContent>
         <div className="space-y-8">
           {/* Performance Trend Chart */}
-          <div className="h-[300px]">
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={performanceData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -138,7 +122,7 @@ export function AnalyticsVisualizer() {
           </div>
 
           {/* NCLEX Category Distribution */}
-          <div className="h-[300px]">
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

@@ -1,6 +1,6 @@
 import { BookOpen, Brain, Clock, Target, TrendingUp } from 'lucide-react';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,11 +14,22 @@ import { useToast } from '@/hooks/use-toast';
 import { Course } from '@/types/course';
 import { MatchDetails } from '@/types/match';
 
+// Using React hook to store userId safely
+function getUserId() {
+  const id = localStorage.getItem('userId');
+  return id ? parseInt(id) : null;
+}
+
 export function LearningPathRecommendations() {
   const { toast } = useToast();
-  const userId = parseInt(localStorage.getItem('userId') || '0');
+  const [userId, setUserId] = useState(() => getUserId());
   const generatePath = useGenerateLearningPath();
   const { data: learningPaths, isLoading, error } = useLearningPaths(userId);
+
+  useEffect(() => {
+    // Sync userId changes
+    setUserId(getUserId());
+  }, []);
 
   const handleGeneratePath = async () => {
     try {
@@ -31,12 +42,13 @@ export function LearningPathRecommendations() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to generate learning path',
+        description: error instanceof Error && error.message || 'Failed to generate learning path',
       });
     }
   };
 
   const getDifficultyColor = (difficulty: string) => {
+    // Consider dynamic classes or use a proper theme/context approach
     switch (difficulty.toLowerCase()) {
       case 'beginner':
         return 'bg-green-100 text-green-800';
@@ -83,8 +95,8 @@ export function LearningPathRecommendations() {
           </CardContent>
         </Card>
       ) : learningPaths?.length ? (
-        learningPaths.map((path) => (
-          <Card key={path.id} className="hover:shadow-lg transition-shadow">
+        learningPaths.map((path, pIndex) => (
+          <Card key={`path-${path.id}`} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -111,7 +123,7 @@ export function LearningPathRecommendations() {
               <div className="space-y-4">
                 {path.courses.map(({ course, order, isRequired }, index) => (
                   <div
-                    key={course.id}
+                    key={`course-${course.id}-${index}`}
                     className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-2">

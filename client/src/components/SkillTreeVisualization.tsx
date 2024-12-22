@@ -45,10 +45,11 @@ export function SkillTreeVisualization({
 
   // Initialize nodes with random positions
   useEffect(() => {
+    const rng = seedrandom('skillTree');
     const initialNodes = skills.map((skill) => ({
       ...skill,
-      x: Math.random() * width,
-      y: Math.random() * height,
+      x: rng() * width,
+      y: rng() * height,
       velocity: { x: 0, y: 0 },
     }));
     setNodes(initialNodes);
@@ -62,6 +63,8 @@ export function SkillTreeVisualization({
         velocity: node.velocity || { x: 0, y: 0 },
       }));
 
+      const epsilon = 0.0001;
+
       // Apply forces
       for (let i = 0; i < newNodes.length; i++) {
         const node = newNodes[i];
@@ -72,8 +75,7 @@ export function SkillTreeVisualization({
           const other = newNodes[j];
           const dx = other.x - node.x;
           const dy = other.y - node.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 1) continue;
+          const distance = Math.sqrt(dx * dx + dy * dy) + epsilon;
 
           const force = Math.min(2000, 1000 / (distance * distance));
           node.velocity.x -= (dx / distance) * force * 0.05;
@@ -86,7 +88,7 @@ export function SkillTreeVisualization({
           if (prereq) {
             const dx = prereq.x - node.x;
             const dy = prereq.y - node.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = Math.sqrt(dx * dx + dy * dy) + epsilon;
             const targetDistance = 150; // Desired distance between connected nodes
             const strength = (distance - targetDistance) * 0.03;
             node.velocity.x += dx * strength;
@@ -210,8 +212,12 @@ export function SkillTreeVisualization({
             <Card className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">{selectedSkill.name}</h3>
-                  <p className="text-sm text-gray-500">{selectedSkill.description}</p>
+                  <h3 className="text-lg font-semibold">
+                    {sanitizeText(selectedSkill.name)}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {sanitizeText(selectedSkill.description)}
+                  </p>
                 </div>
                 <button
                   onClick={() => setSelectedSkill(null)}
@@ -264,4 +270,10 @@ export function SkillTreeVisualization({
       </AnimatePresence>
     </div>
   );
+}
+
+function sanitizeText(text: string): string {
+  const div = document.createElement('div');
+  div.innerText = text;
+  return div.innerHTML;
 }

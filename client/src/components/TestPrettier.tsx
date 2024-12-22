@@ -20,10 +20,19 @@ export const TestPrettier = ({ title, items }: TestProps): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
+  const handleOpenDialog = () => setIsOpen(true);
+
+  const handleItemClick = (itemId: number) => {
+    toast({
+      title: 'Clicked',
+      description: `Clicked item ${itemId}`,
+    });
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">{title}</h1>
-      <Button onClick={() => setIsOpen(true)} variant="secondary">
+      <Button onClick={handleOpenDialog} variant="secondary">
         Open Dialog
       </Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -34,14 +43,10 @@ export const TestPrettier = ({ title, items }: TestProps): JSX.Element => {
               <div key={item.id} className="space-y-2">
                 <div className="text-sm font-medium">{item.name}</div>
                 <div className="flex items-center gap-2">
-                  <Input value={item.name} readOnly />
+                  {/* Consider using a span or div as the input is not editable */}
+                  <span className="text-input">{item.name}</span>
                   <Button
-                    onClick={() =>
-                      toast({
-                        title: 'Clicked',
-                        description: `Clicked item ${item.id}`,
-                      })
-                    }
+                    onClick={() => handleItemClick(item.id)}
                     size="sm"
                   >
                     Click Me
@@ -55,5 +60,3 @@ export const TestPrettier = ({ title, items }: TestProps): JSX.Element => {
     </div>
   );
 };
-
-export default TestPrettier;

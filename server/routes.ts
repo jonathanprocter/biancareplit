@@ -827,41 +827,79 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
+      // Validate directory exists
+      const fs = await import('fs/promises');
       try {
-        // Initialize Python code review service
-        const { PythonShell } = await import('python-shell');
-        const options = {
-          mode: 'json',
-          pythonPath: 'python3',
-          pythonOptions: ['-u'], // unbuffered output
-          scriptPath: './services/',
-          args: [directory],
-        };
+        await fs.access(directory);
+      } catch {
+        return res.status(400).json({
+          success: false,
+          message: 'Directory does not exist or is not accessible',
+        });
+      }
 
+      // Initialize Python code review service with proper error handling
+      const { PythonShell } = await import('python-shell');
+      const options = {
+        mode: 'json',
+        pythonPath: 'python3',
+        pythonOptions: ['-u'], // unbuffered output
+        scriptPath: './services/',
+        args: [directory],
+        timeout: 60000, // 60 second timeout
+      };
+
+      try {
         const results = await new Promise((resolve, reject) => {
-          PythonShell.run('code_review_service.py', options, (err, results) => {
-            if (err) {
-              console.error('[API] Code review error:', err);
-              reject(err);
-            } else {
-              console.log('[API] Code review completed successfully');
-              resolve(results);
+          const shell = new PythonShell('code_review_service.py', options);
+          let output = '';
+
+          shell.on('message', (message) => {
+            output = message;
+          });
+
+          shell.on('error', (err) => {
+            console.error('[API] Code review process error:', err);
+            reject(err);
+          });
+
+          shell.on('close', () => {
+            try {
+              const parsedOutput = JSON.parse(output);
+              resolve(parsedOutput);
+            } catch (err) {
+              console.error('[API] Failed to parse code review output:', err);
+              reject(new Error('Failed to parse code review results'));
             }
           });
+
+          // Handle timeout
+          setTimeout(() => {
+            shell.terminate();
+            reject(new Error('Code review process timed out'));
+          }, options.timeout);
         });
 
+        console.log('[API] Code review completed successfully');
         res.json({
           success: true,
-          results: results[0], // Python script returns results as JSON
+          results
         });
       } catch (error) {
-        console.error('[API] Code review handler error:', error);
+        console.error('[API] Code review execution error:', error);
         res.status(500).json({
           success: false,
-          message: 'Failed to process code review',
+          message: 'Failed to execute code review',
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
+    } catch (error) {
+      console.error('[API] Code review handler error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process code review request',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     } finally {
       console.log('[API] Code review request completed');
     }

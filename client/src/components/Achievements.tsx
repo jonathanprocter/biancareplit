@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Award, Book, Brain, Shield, Star, Target, Trophy, Zap } from 'lucide-react';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -58,7 +58,11 @@ const getTierIcon = (tier: string, category: string) => {
   }
 };
 
-const BadgeCard = ({ badge, isNew }: { badge: Badge; isNew: boolean }) => {
+const BadgeCard = ({ badge, progress, isNew }: { badge: Badge; progress?: UserProgress; isNew: boolean }) => {
+  const percent = progress?.totalPoints && badge.requiredPoints
+    ? Math.min(100, Math.round((progress.totalPoints / badge.requiredPoints) * 100))
+    : 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -84,38 +88,20 @@ const BadgeCard = ({ badge, isNew }: { badge: Badge; isNew: boolean }) => {
           {badge.earnedAt && (
             <div className="mt-2 space-y-2">
               <div className="flex justify-between items-center">
-                {badge.earnedAt ? (
-                  <p className="text-xs text-primary font-medium">
-                    Earned on {new Date(badge.earnedAt).toLocaleDateString()}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    {badge.requiredPoints} points needed
-                  </p>
-                )}
+                <p className="text-xs text-primary font-medium">
+                  Earned on {new Date(badge.earnedAt).toLocaleDateString()}
+                </p>
               </div>
               <div className="mt-1">
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium">
-                    {badge.earnedAt
-                      ? '100%'
-                      : Math.min(
-                          100,
-                          Math.round(((progress?.totalPoints || 0) / badge.requiredPoints) * 100),
-                        )}
-                    %
-                  </span>
+                  <span className="font-medium">{badge.earnedAt ? '100%' : `${percent}%`}</span>
                 </div>
                 <div className="h-1.5 bg-primary/20 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-primary rounded-full"
                     initial={{ width: 0 }}
-                    animate={{
-                      width: badge.earnedAt
-                        ? '100%'
-                        : `${Math.min(100, Math.round(((progress?.totalPoints || 0) / badge.requiredPoints) * 100))}%`,
-                    }}
+                    animate={{ width: badge.earnedAt ? '100%' : `${percent}%` }}
                     transition={{ duration: 1, ease: 'easeOut' }}
                   />
                 </div>
@@ -150,24 +136,23 @@ export const Achievements = () => {
     queryKey: ['/api/users/progress/achievements'],
   });
 
-  useEffect(() => {
-    if (progress?.badges) {
-      const newBadges = progress.badges.filter(
-        (badge) =>
-          badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
-      );
+  const notifyNewBadges = useCallback(() => {
+    const newBadges = progress?.badges.filter(
+      badge => badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000
+    );
 
-      if (newBadges.length > 0) {
-        newBadges.forEach((badge) => {
-          toast({
-            title: 'New Badge Earned!',
-            description: `Congratulations! You've earned the "${badge.name}" badge!`,
-            duration: 5000,
-          });
-        });
-      }
-    }
+    newBadges?.forEach(badge => {
+      toast({
+        title: 'New Badge Earned!',
+        description: `Congratulations! You've earned the "${badge.name}" badge!`,
+        duration: 5000,
+      });
+    });
   }, [progress?.badges, toast]);
+
+  useEffect(() => {
+    notifyNewBadges();
+  }, [progress?.badges, notifyNewBadges]);
 
   if (isLoading) {
     return (
@@ -217,8 +202,7 @@ export const Achievements = () => {
   }
 
   const hasNewBadges = progress.badges.some(
-    (badge) =>
-      badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
+    badge => badge.earnedAt && new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000
   );
 
   return (
@@ -313,9 +297,10 @@ export const Achievements = () => {
             <BadgeCard
               key={badge.id}
               badge={badge}
+              progress={progress}
               isNew={Boolean(
                 badge.earnedAt &&
-                  new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000,
+                  new Date(badge.earnedAt).getTime() > Date.now() - 24 * 60 * 60 * 1000
               )}
             />
           ))}

@@ -1,13 +1,12 @@
 import { RefreshCw } from 'lucide-react';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
 import { DifficultySelector } from '@/components/flashcard/DifficultySelector';
 import { FileUploadInput } from '@/components/flashcard/FileUploadInput';
 import { FlashcardGenerationButton } from '@/components/flashcard/FlashcardGenerationButton';
 import { useFlashcardGeneration } from '@/components/flashcard/useFlashcardGeneration';
+import React from 'react';
 
-export function AIFlashcardGenerator() {
+export const AIFlashcardGenerator: React.FC = () => {
   const {
     selectedFile,
     setSelectedFile,
@@ -16,6 +15,9 @@ export function AIFlashcardGenerator() {
     setSelectedDifficulty,
     generateFlashcards,
   } = useFlashcardGeneration();
+
+  // Add feedback mechanism for guiding user actions
+  const isButtonDisabled = !selectedFile || isGenerating;
 
   return (
     <Card>
@@ -39,7 +41,7 @@ export function AIFlashcardGenerator() {
           <FlashcardGenerationButton
             onClick={generateFlashcards}
             isGenerating={isGenerating}
-            disabled={!selectedFile}
+            disabled={isButtonDisabled}
           />
 
           <p className="text-sm text-gray-500 mt-4">

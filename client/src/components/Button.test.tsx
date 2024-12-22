@@ -1,10 +1,12 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import React from 'react';
-
 import { Button } from './Button';
 
+/**
+ * Button component test cases
+ */
 describe('Button Component', () => {
   it('renders without crashing', () => {
     render(<Button>Test Button</Button>);
@@ -27,7 +29,8 @@ describe('Button Component', () => {
     const handleClick = jest.fn();
     render(<Button onClick={handleClick}>Clickable Button</Button>);
 
-    await userEvent.click(screen.getByText('Clickable Button'));
+    // Use findBy instead of getBy for better async handling if needed
+    await userEvent.click(await screen.findByText('Clickable Button'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 });

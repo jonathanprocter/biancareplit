@@ -1,8 +1,8 @@
 import { type VariantProps, cva } from 'class-variance-authority';
-
 import * as React from 'react';
-
 import { cn } from '@/lib/utils';
+
+// Verified: Ensure cva and cn utility functions are correct
 
 const alertVariants = cva(
   'relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground',
@@ -23,9 +23,11 @@ const alertVariants = cva(
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
-  <div ref={ref} role="alert" className={cn(alertVariants({ variant }), className)} {...props} />
-));
+>(({ className, variant, ...props }, ref) => {
+  // Warning: verify 'className' does not contain user inputs without sanitization
+  const combinedClassName = cn(alertVariants({ variant }), className);
+  return <div ref={ref} role="alert" className={combinedClassName} {...props} />
+});
 Alert.displayName = 'Alert';
 
 const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(

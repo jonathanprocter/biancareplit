@@ -29,33 +29,19 @@ interface ProgressData {
   };
 }
 
-export const DailyWelcomeCard = () => {
+const useProgressFetch = (url: string) => {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<ProgressData | null>(null);
-  const [greeting, setGreeting] = useState('');
-  const [currentTime, setCurrentTime] = useState(new Date());
   const { toast } = useToast();
 
   useEffect(() => {
-    const updateTimeAndGreeting = () => {
-      const now = new Date();
-      setCurrentTime(now);
-      const hour = now.getHours();
-      if (hour < 12) setGreeting('Good Morning');
-      else if (hour < 18) setGreeting('Good Afternoon');
-      else setGreeting('Good Evening');
-    };
-
-    updateTimeAndGreeting();
-    const timer = setInterval(updateTimeAndGreeting, 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const fetchDailyProgress = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/progress/daily');
-        if (!response.ok) throw new Error('Failed to fetch daily progress');
+        const response = await fetch(url);
+        if (!response.ok) {
+          if (response.status === 404) throw new Error('Data not found');
+          throw new Error('Failed to fetch daily progress');
+        }
 
         const data = await response.json();
         setProgress(data);
@@ -63,15 +49,42 @@ export const DailyWelcomeCard = () => {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to load your daily progress',
+          description: error.message || 'Failed to load your daily progress',
         });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDailyProgress();
-  }, [toast]);
+    fetchData();
+  }, [url, toast]);
+
+  return { loading, progress };
+};
+
+export const DailyWelcomeCard = () => {
+  const [greeting, setGreeting] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  const { loading, progress } = useProgressFetch('/api/progress/daily');
+
+  useEffect(() => {
+    const updateTimeAndGreeting = () => {
+      const now = new Date();
+      setCurrentTime(now);
+    };
+
+    const updateGreeting = () => {
+      const hour = currentTime.getHours();
+      if (hour < 12) setGreeting('Good Morning');
+      else if (hour < 18) setGreeting('Good Afternoon');
+      else setGreeting('Good Evening');
+    };
+
+    updateGreeting();
+    const timer = setInterval(updateTimeAndGreeting, 60000);
+    return () => clearInterval(timer);
+  }, [currentTime]);
 
   if (loading) {
     return (
@@ -114,7 +127,7 @@ export const DailyWelcomeCard = () => {
   const accuracyRate =
     progress.questionsAttempted > 0
       ? ((progress.correctAnswers / progress.questionsAttempted) * 100).toFixed(1)
-      : 0;
+      : 'No questions attempted';
 
   return (
     <motion.div
@@ -190,8 +203,8 @@ export const DailyWelcomeCard = () => {
                 Strength Areas
               </h3>
               <ul className="list-disc list-inside text-sm space-y-1">
-                {progress.strengthAreas.map((area, index) => (
-                  <li key={index}>{area}</li>
+                {progress.strengthAreas.map((area) => (
+                  <li key={area}>{area}</li>
                 ))}
               </ul>
             </div>
@@ -202,8 +215,8 @@ export const DailyWelcomeCard = () => {
                 Areas for Improvement
               </h3>
               <ul className="list-disc list-inside text-sm space-y-1">
-                {progress.weakAreas.map((area, index) => (
-                  <li key={index}>{area}</li>
+                {progress.weakAreas.map((area) => (
+                  <li key={area}>{area}</li>
                 ))}
               </ul>
             </div>
@@ -280,8 +293,8 @@ export const DailyWelcomeCard = () => {
                 <div>
                   <p className="text-sm font-medium">Coming Up Next:</p>
                   <ul className="list-disc list-inside text-sm text-muted-foreground">
-                    {progress.learningPath.nextTopics.map((topic, index) => (
-                      <li key={index}>{topic}</li>
+                    {progress.learningPath.nextTopics.map((topic) => (
+                      <li key={topic}>{topic}</li>
                     ))}
                   </ul>
                 </div>
