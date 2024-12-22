@@ -200,24 +200,35 @@ async function analyzeComplexity(filePath: string): Promise<ComplexityMetrics | 
     const lines = content.split('\n');
     const totalLines = lines.length;
     
-    // Basic metrics
+    // Basic metrics with enhanced medical education focus
     const functionMatches = content.match(/function\s+\w+\s*\(|\w+\s*:\s*function\s*\(|\(\s*\)\s*=>/g);
     const dependencies = content.match(/import\s+.*?from/g);
     const controlFlows = content.match(/if|else|for|while|switch|catch|&&|\|\||\?/g);
     
-    // Import complexity analysis
+    // Educational patterns analysis
+    const educationalPatterns = {
+      interactiveElements: (content.match(/onClick|onSubmit|onChange|addEventListener/g) || []).length,
+      feedbackElements: (content.match(/feedback|response|answer|explanation|hint/g) || []).length,
+      progressTracking: (content.match(/progress|completion|score|grade|achievement/g) || []).length,
+      adaptiveLearning: (content.match(/difficulty|level|adaptive|personalized|recommendation/g) || []).length,
+    };
+    
+    // Import complexity analysis with medical package detection
     const importStatements = content.match(/import\s+{[^}]+}/g) || [];
+    const medicalPackages = importStatements.filter(imp => 
+      /medical|health|clinical|diagnosis|treatment/i.test(imp)
+    ).length;
     const importComplexity = importStatements.reduce((acc, imp) => 
       acc + (imp.match(/,/g)?.length || 0) + 1, 0);
     
-    // Duplicate code detection
+    // Duplicate code detection with context awareness
     const codeBlocks = new Map<string, number>();
-    const minBlockSize = 4; // Minimum lines to consider as a duplicate block
+    const minBlockSize = 4;
     let duplicatePatterns = 0;
     
     for (let i = 0; i < lines.length - minBlockSize; i++) {
       const block = lines.slice(i, i + minBlockSize).join('\n').trim();
-      if (block.length > 50) { // Ignore very short blocks
+      if (block.length > 50) {
         codeBlocks.set(block, (codeBlocks.get(block) || 0) + 1);
         if (codeBlocks.get(block)! > 1) {
           duplicatePatterns++;
@@ -225,30 +236,39 @@ async function analyzeComplexity(filePath: string): Promise<ComplexityMetrics | 
       }
     }
     
-    // Accessibility analysis
+    // Enhanced accessibility analysis for educational content
     const accessibilityPatterns = {
       ariaLabels: (content.match(/aria-label/g) || []).length,
       roleAttributes: (content.match(/role=/g) || []).length,
       altTexts: (content.match(/alt=/g) || []).length,
+      ariaDescribedby: (content.match(/aria-describedby/g) || []).length,
+      ariaLive: (content.match(/aria-live/g) || []).length,
+      tabIndex: (content.match(/tabIndex/g) || []).length,
+      keyboardNav: (content.match(/onKeyDown|onKeyPress|onKeyUp/g) || []).length,
     };
     const accessibilityScore = calculateAccessibilityScore(accessibilityPatterns, totalLines);
     
-    // Performance patterns analysis
+    // Performance patterns analysis with educational content focus
     const performanceIssues = {
       largeLoops: (content.match(/for\s*\([^)]+\)\s*{[\s\S]{1000,}?}/g) || []).length,
       nestedLoops: (content.match(/for\s*\([^)]+\)\s*{[^}]*for\s*\([^)]+\)/g) || []).length,
       heavyOperations: (content.match(/\.forEach|\.map|\.filter|\.reduce/g) || []).length,
+      mediaLoading: (content.match(/new\s+(Image|Audio|Video)/g) || []).length,
+      largeDataStructures: (content.match(/new\s+(Array|Object|Map|Set)/g) || []).length,
     };
     const performanceScore = calculatePerformanceScore(performanceIssues, totalLines);
     
-    // Medical terminology accuracy
-    const medicalTerms = content.match(/patient|diagnosis|treatment|medication|clinical|medical|health|care|provider|physician|nurse|symptom|condition|therapy/g) || [];
-    const medicalTermAccuracy = calculateMedicalTermAccuracy(medicalTerms, content);
+    // Enhanced medical terminology and educational content accuracy
+    const medicalTerms = content.match(/patient|diagnosis|treatment|medication|clinical|medical|health|care|provider|physician|nurse|symptom|condition|therapy|prognosis|etiology|pathology|anatomy|physiology/g) || [];
+    const educationalTerms = content.match(/learn|teach|study|practice|exercise|quiz|test|exam|module|lesson|course|curriculum|objective|assessment|evaluation/g) || [];
+    const medicalTermAccuracy = calculateMedicalTermAccuracy([...medicalTerms, ...educationalTerms], content);
     
-    // Test coverage estimation
+    // Enhanced test coverage with educational scenarios
     const testPatterns = {
       testCases: (content.match(/test\(|it\(|describe\(/g) || []).length,
       assertions: (content.match(/expect\(|assert\./g) || []).length,
+      scenarioTests: (content.match(/scenario\(|feature\(|given\(|when\(|then\(/g) || []).length,
+      accessibilityTests: (content.match(/getByRole|getByLabelText|getByAltText/g) || []).length,
     };
     const testCoverage = calculateTestCoverage(testPatterns, functionMatches?.length || 0);
     
@@ -294,19 +314,50 @@ function calculatePerformanceScore(issues: { largeLoops: number, nestedLoops: nu
 }
 
 function calculateMedicalTermAccuracy(terms: string[], content: string): number {
-  if (terms.length === 0) return 100; // If no medical terms, assume perfect accuracy
-  
-  // Check for common medical term patterns and context
+  if (terms.length === 0) return 100;
+
+  // Enhanced context patterns for medical education
   const contextPatterns = {
     properCapitalization: terms.filter(term => /[A-Z]/.test(term[0])).length,
-    properContext: terms.filter(term => {
+    properDefinition: terms.filter(term => {
       const termIndex = content.indexOf(term);
-      const surroundingContext = content.slice(Math.max(0, termIndex - 50), termIndex + 50);
-      return /\b(is|are|was|were|has|have|had|may|might|could|would|should|must)\b/.test(surroundingContext);
+      const surroundingContext = content.slice(Math.max(0, termIndex - 100), termIndex + 100);
+      return /\b(is|are|refers to|defined as|means|describes|represents|indicates|involves)\b/.test(surroundingContext);
     }).length,
+    educationalContext: terms.filter(term => {
+      const termIndex = content.indexOf(term);
+      const surroundingContext = content.slice(Math.max(0, termIndex - 100), termIndex + 100);
+      return /\b(learn|study|understand|explain|teach|practice|demonstrate|example|concept)\b/.test(surroundingContext);
+    }).length,
+    clinicalContext: terms.filter(term => {
+      const termIndex = content.indexOf(term);
+      const surroundingContext = content.slice(Math.max(0, termIndex - 100), termIndex + 100);
+      return /\b(diagnosis|treatment|symptoms|clinical|patient|medical|healthcare|condition)\b/.test(surroundingContext);
+    }).length,
+    scientificAccuracy: terms.filter(term => {
+      const termIndex = content.indexOf(term);
+      const surroundingContext = content.slice(Math.max(0, termIndex - 150), termIndex + 150);
+      return /\b(research|evidence|study|data|analysis|results|findings|literature|published)\b/.test(surroundingContext);
+    }).length
   };
-  
-  return Math.min(100, ((contextPatterns.properCapitalization + contextPatterns.properContext) / (terms.length * 2)) * 100);
+
+  // Calculate weighted score based on different context patterns
+  const weights = {
+    properCapitalization: 0.15,
+    properDefinition: 0.25,
+    educationalContext: 0.25,
+    clinicalContext: 0.20,
+    scientificAccuracy: 0.15
+  };
+
+  const weightedScore = 
+    (contextPatterns.properCapitalization * weights.properCapitalization +
+     contextPatterns.properDefinition * weights.properDefinition +
+     contextPatterns.educationalContext * weights.educationalContext +
+     contextPatterns.clinicalContext * weights.clinicalContext +
+     contextPatterns.scientificAccuracy * weights.scientificAccuracy) / terms.length;
+
+  return Math.min(100, weightedScore * 200); // Scale to 0-100
 }
 
 function calculateTestCoverage(patterns: { testCases: number, assertions: number }, functionCount: number): number {
