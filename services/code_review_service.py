@@ -19,10 +19,23 @@ class CodeReviewService:
             raise ValueError("OpenAI API key not found in environment variables")
 
         try:
+            if not self.api_key:
+                logger.error("OpenAI API key is missing")
+                raise ValueError("OpenAI API key is required")
+                
             # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
             # do not change this unless explicitly requested by the user
             self.client = OpenAI(api_key=self.api_key)
             logger.info("OpenAI client initialized successfully")
+            
+            # Verify API key is valid by making a test call
+            try:
+                self.client.models.list()
+                logger.info("OpenAI API key verified successfully")
+            except Exception as api_error:
+                logger.error(f"OpenAI API key verification failed: {str(api_error)}")
+                raise ValueError("Invalid OpenAI API key") from api_error
+                
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise

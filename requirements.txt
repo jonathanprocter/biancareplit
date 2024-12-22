@@ -38,3 +38,5 @@ aiohttp
 black
 flake8
 requests
+openai
+validate-email
