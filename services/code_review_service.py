@@ -5,6 +5,7 @@ import sys
 from typing import Dict, Optional, List
 from pathlib import Path
 from openai import AsyncOpenAI, OpenAI
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -22,12 +23,12 @@ class CodeReviewService:
             if not self.api_key:
                 logger.error("OpenAI API key is missing")
                 raise ValueError("OpenAI API key is required")
-                
+
             # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
             # do not change this unless explicitly requested by the user
             self.client = OpenAI(api_key=self.api_key)
             logger.info("OpenAI client initialized successfully")
-            
+
             # Verify API key is valid by making a test call
             try:
                 self.client.models.list()
@@ -35,7 +36,7 @@ class CodeReviewService:
             except Exception as api_error:
                 logger.error(f"OpenAI API key verification failed: {str(api_error)}")
                 raise ValueError("Invalid OpenAI API key") from api_error
-                
+
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise
@@ -156,7 +157,11 @@ Code to review:
 {code}
 """
             try:
-                try:
+                # Log start of code review
+                logger.info(f"Starting code review for {file_path}")
+                logger.info(f"File size: {file_path.stat().st_size / 1024:.2f}KB")
+
+                start_time = time.time()
                 response = self.client.chat.completions.create(
                     model="gpt-4o",
                     messages=[
@@ -167,26 +172,35 @@ Code to review:
                         {"role": "user", "content": prompt},
                     ],
                     response_format={"type": "json_object"},
-                    max_tokens=500  # Limit response size
+                    max_tokens=500,  # Limit response size
+                    timeout=60 #Added timeout to prevent indefinite hanging
                 )
-            except Exception as api_error:
-                logger.error(f"OpenAI API call failed: {str(api_error)}")
-                return {
-                    "error": "Failed to analyze code",
-                    "details": str(api_error)
-                }
-
+                end_time = time.time()
+                logger.info(f"Code review completed in {end_time-start_time:.2f} seconds")
                 result = json.loads(response.choices[0].message.content)
                 logger.info(f"Successfully reviewed {file_path}")
                 return result
 
+            except json.JSONDecodeError as json_err:
+                error_msg = f"Failed to parse OpenAI response: {str(json_err)}"
+                logger.error(error_msg)
+                return {
+                    "error": "Invalid response format",
+                    "details": error_msg
+                }
+
             except Exception as api_error:
-                logger.error(f"OpenAI API error for {file_path}: {str(api_error)}")
-                return {"error": f"OpenAI API error: {str(api_error)}"}
+                error_msg = f"OpenAI API error for {file_path}: {str(api_error)}"
+                logger.error(error_msg)
+                return {
+                    "error": "Failed to analyze code",
+                    "details": error_msg
+                }
 
         except Exception as e:
-            logger.error(f"Error reviewing file {file_path}: {str(e)}")
-            return {"error": str(e)}
+            error_msg = f"Error reviewing file {file_path}: {str(e)}"
+            logger.error(error_msg)
+            return {"error": error_msg}
 
     def apply_fixes(self, file_path: Path, improved_code: str) -> bool:
         """Apply the suggested fixes to the file"""
@@ -207,17 +221,62 @@ Code to review:
             if not dir_path.exists():
                 raise FileNotFoundError(f"Directory not found: {directory}")
 
-            for file_path in dir_path.rglob("*"):
+            files = list(dir_path.rglob("*"))
+            file_stats = []
+            total_size = 0
+
+            for file in files:
+                try:
+                    if file.is_file():
+                        stats = file.stat()
+                        file_stats.append({
+                            "file": str(file),
+                            "size": stats.st_size,
+                            "is_file": True
+                        })
+                        total_size += stats.st_size
+                except Exception as e:
+                    logger.warning(f"Could not stat file {file}: {str(e)}")
+                    continue
+
+            # Calculate timeout: base time + additional time based on file count and size
+            base_timeout = 30  # 30 seconds base
+            time_per_file = 1  # 1 second per file
+            time_per_mb = 2  # 2 seconds per MB
+            calculated_timeout = int(
+                base_timeout +
+                (len(file_stats) * time_per_file) +
+                (total_size / (1024 * 1024) * time_per_mb)
+            )
+            total_timeout = min(calculated_timeout, 300)  # Max 5 minutes
+
+            logger.info(f"Processing {len(file_stats)} files ({total_size / (1024 * 1024):.2f}MB) with {total_timeout}s timeout")
+
+
+            processed_count = 0
+            total_files = len([f for f in files if f.is_file() and f.suffix in self.supported_languages])
+            
+            for file_path in files:
                 if file_path.is_file() and file_path.suffix in self.supported_languages:
                     if not any(
                         exclude in str(file_path)
                         for exclude in ["node_modules", "__pycache__", "venv", ".git"]
                     ):
                         logger.info(f"Reviewing {file_path}")
+                        # Print progress as JSON for the Node.js process to parse
+                        print(json.dumps({
+                            "type": "progress",
+                            "data": {
+                                "processed": processed_count,
+                                "total": total_files,
+                                "current_file": str(file_path)
+                            }
+                        }))
                         result = self.review_file(file_path)
                         if result and "improved_code" in result:
                             self.apply_fixes(file_path, result["improved_code"])
                         results[str(file_path)] = result
+                        processed_count += 1
 
             logger.info(f"Completed review of directory: {directory}")
             return results
@@ -233,56 +292,85 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Code Review Service')
     parser.add_argument('path', nargs='?', help='Path to file or directory to review')
     parser.add_argument('--format', choices=['json', 'text'], default='json',
-                      help='Output format')
+                        help='Output format')
     parser.add_argument('--exclude', help='Comma-separated patterns to exclude')
     parser.add_argument('--include-only', help='Comma-separated patterns to include')
     parser.add_argument('--max-file-size', type=int, default=100,
-                      help='Maximum file size in KB')
+                        help='Maximum file size in KB')
     parser.add_argument('--min-confidence', type=float, default=0.7,
-                      help='Minimum confidence score for issues')
+                        help='Minimum confidence score for issues')
     parser.add_argument('--list-supported-types', action='store_true',
-                      help='List supported file types')
-    return parser.parse_args()
+                        help='List supported file types')
+
+    args = parser.parse_args()
+    logger.info(f"Parsed arguments: {vars(args)}")
+    return args
 
 
 def main():
     """Main function to handle command line execution"""
     try:
+        logger.info("Starting code review service")
         args = parse_args()
-        service = CodeReviewService()
+
+        try:
+            service = CodeReviewService()
+            logger.info("CodeReviewService initialized successfully")
+        except Exception as init_error:
+            logger.error(f"Failed to initialize CodeReviewService: {str(init_error)}")
+            print(json.dumps({
+                "error": "Service initialization failed",
+                "details": str(init_error)
+            }))
+            sys.exit(1)
 
         if args.list_supported_types:
-            print(json.dumps(service.supported_languages))
+            logger.info("Listing supported file types")
+            print(json.dumps({
+                "success": True,
+                "supportedTypes": service.supported_languages
+            }))
             return
 
         if not args.path:
-            print(json.dumps({"error": "Please provide a path"}))
+            logger.error("No path provided")
+            print(json.dumps({
+                "error": "Please provide a path",
+                "success": False
+            }))
             sys.exit(1)
 
         # Convert exclude and include patterns to lists
         exclude_patterns = args.exclude.split(',') if args.exclude else []
         include_patterns = args.include_only.split(',') if args.include_only else []
 
+        logger.info(f"Processing path: {args.path}")
+        logger.info(f"Exclude patterns: {exclude_patterns}")
+        logger.info(f"Include patterns: {include_patterns}")
+
         path = Path(args.path)
+        if not path.exists():
+            logger.error(f"Path does not exist: {args.path}")
+            print(json.dumps({
+                "error": f"Path does not exist: {args.path}",
+                "success": False
+            }))
+            sys.exit(1)
+
+        logger.info(f"Reviewing {'file' if path.is_file() else 'directory'}: {args.path}")
         if path.is_file():
-            results = service.review_file(
-                path,
-                max_size_kb=args.max_file_size,
-                min_confidence=args.min_confidence
-            )
+            results = service.review_file(path)
         else:
-            results = service.review_directory(
-                args.path,
-                exclude_patterns=exclude_patterns,
-                include_patterns=include_patterns,
-                max_size_kb=args.max_file_size,
-                min_confidence=args.min_confidence
-            )
+            results = service.review_directory(str(path))
 
         if args.format == 'json':
-            print(json.dumps(results))
+            logger.info("Outputting results in JSON format")
+            print(json.dumps({
+                "success": True,
+                "results": results
+            }))
         else:
-            # Format results as human-readable text
+            logger.info("Outputting results in text format")
             print(f"Code Review Results for {args.path}")
             print("=" * 50)
             if isinstance(results, dict) and 'error' in results:
@@ -304,7 +392,12 @@ def main():
                     print("\n")
 
     except Exception as e:
-        print(json.dumps({"error": str(e)}))
+        logger.error(f"Unhandled error in main: {str(e)}")
+        print(json.dumps({
+            "success": False,
+            "error": str(e),
+            "type": "unhandled_error"
+        }))
         sys.exit(1)
 
 

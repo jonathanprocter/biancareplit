@@ -44,3 +44,5 @@ black
 flake8
 openai
 python-dotenv
+openai
+python-shell
