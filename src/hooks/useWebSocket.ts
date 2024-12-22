@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 
+interface WebSocketMetrics {
+  cpu: number;
+  memory: number;
+  activeConnections: number;
+  requestsPerSecond: number;
+}
+
 interface WebSocketOptions {
   reconnectAttempts?: number;
   reconnectInterval?: number;
-  onMessage?: (data: any) => void;
-  onMetricsUpdate?: (metrics: any) => void;
+  onMessage?: (data: WebSocketMessage) => void;
+  onMetricsUpdate?: (metrics: WebSocketMetrics) => void;
 }
 
 interface WebSocketMessage {
   type: 'metrics' | 'alert' | 'status';
-  data: any;
+  data: WebSocketMetrics | string;
   timestamp: string;
 }
 
@@ -17,7 +24,7 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [reconnectAttempts, setReconnectAttempts] = useState(options.reconnectAttempts || 3);
-  const [reconnectInterval, setReconnectInterval] = useState(options.reconnectInterval || 5000);
+  const reconnectInterval = options.reconnectInterval || 5000;
 
   const connect = useCallback(() => {
     const ws = new WebSocket(url);
@@ -28,20 +35,24 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
     };
 
     ws.onmessage = (event) => {
-      const message: WebSocketMessage = JSON.parse(event.data as string);
-      options.onMessage && options.onMessage(message);
-      if (message.type === 'metrics') {
-        options.onMetricsUpdate && options.onMetricsUpdate(message.data);
+      try {
+        const message: WebSocketMessage = JSON.parse(event.data as string);
+        options.onMessage?.(message);
+        if (message.type === 'metrics' && options.onMetricsUpdate) {
+          options.onMetricsUpdate(message.data as WebSocketMetrics);
+        }
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
       }
     };
 
-    ws.onclose = (event) => {
+    ws.onclose = (_event) => {
       setIsConnected(false);
       if (reconnectAttempts > 0) {
         setTimeout(() => {
           setReconnectAttempts(reconnectAttempts - 1);
           connect();
-        }, reconnectInterval);
+        }, options.reconnectInterval);
       } else {
         console.error('WebSocket connection failed.');
       }
@@ -53,7 +64,7 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
     };
 
     setSocket(ws);
-  }, [url, options, reconnectAttempts, reconnectInterval, connect]);
+  }, [url, options, reconnectAttempts]);
 
   useEffect(() => {
     connect();

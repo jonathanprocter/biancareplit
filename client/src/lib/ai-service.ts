@@ -28,7 +28,7 @@ class AIServiceError extends Error {
 }
 
 export const aiService = {
-  async makeRequest<T>(endpoint: string, data: any): Promise<T> {
+  async makeRequest<T>(endpoint: string, data: Record<string, unknown>): Promise<T> {
     try {
       console.log(`Making request to ${endpoint}`, {
         ...data,
@@ -144,9 +144,21 @@ export const aiService = {
     }
   },
 
-  async analyzeStudyProgress(userData: Record<string, any>): Promise<AIResponse<any>> {
+  async analyzeStudyProgress(userData: Record<string, unknown>): Promise<
+    AIResponse<{
+      strengths: string[];
+      weaknesses: string[];
+      recommendations: string[];
+      estimated_proficiency: number;
+    }>
+  > {
     try {
-      const data = await this.makeRequest<any>('progress/analyze', userData);
+      const data = await this.makeRequest<{
+        strengths: string[];
+        weaknesses: string[];
+        recommendations: string[];
+        estimated_proficiency: number;
+      }>('progress/analyze', userData);
 
       return {
         success: true,

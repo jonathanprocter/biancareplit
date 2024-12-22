@@ -143,7 +143,7 @@ export class AIService {
     }
   }
 
-  async analyze_study_progress(userData: any): Promise<StudyProgress> {
+  async analyze_study_progress(userData: Record<string, unknown>): Promise<StudyProgress> {
     if (!this.initialized) {
       await this.validateConnection();
     }

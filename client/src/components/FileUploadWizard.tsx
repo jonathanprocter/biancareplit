@@ -3,17 +3,29 @@ import { useDropzone } from 'react-dropzone';
 
 import React, { useCallback, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
 import { useToast } from '@/hooks/use-toast';
 
+interface UploadResult {
+  topics?: string[];
+  flashcards?: Array<{
+    front: string;
+    back: string;
+  }>;
+  quiz_questions?: Array<{
+    question: string;
+    options: string[];
+    correct_answer: number;
+  }>;
+}
+
 interface UploadStatus {
   file: File;
   progress: number;
   status: 'pending' | 'uploading' | 'processing' | 'complete' | 'error';
-  result?: any;
+  result?: UploadResult;
   error?: string;
 }
 
