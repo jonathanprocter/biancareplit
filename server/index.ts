@@ -51,6 +51,12 @@ const sessionStore = new MemoryStoreConstructor({
   checkPeriod: 86400000, // 24 hours
 });
 
+// API prefix middleware to ensure proper routing
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
 // Configure session middleware
 const sessionConfig: SessionOptions = {
   secret: process.env.SESSION_SECRET || 'development_secret',
