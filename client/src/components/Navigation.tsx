@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'wouter';
+import { Link } from 'wouter';
 
 import { useState } from 'react';
 
@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 
 import { useToast } from '@/hooks/use-toast';
 
-export function Navigation() {
-  const [location] = useLocation();
+function Navigation() {
   const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [location] = useState('/'); // Default location
   const publicRoutes = ['/', '/register'];
 
   if (publicRoutes.includes(location)) {
@@ -29,6 +29,11 @@ export function Navigation() {
       localStorage.removeItem('username');
       window.location.href = '/';
     } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
       toast({
         variant: 'destructive',

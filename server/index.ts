@@ -7,11 +7,9 @@ import MemoryStore from 'memorystore';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import dbExports from '../db/index.js';
+import { checkDatabaseHealth, closeDatabase } from '../db/index.js';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
-
-const { checkDatabaseHealth, closeDatabase } = dbExports;
 
 // Maximum number of database connection retries
 const MAX_DB_RETRIES = 3;

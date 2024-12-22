@@ -2,7 +2,6 @@ import { compare, hash } from 'bcrypt';
 import { and, asc, desc, eq, gte, sql } from 'drizzle-orm';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { type Server, createServer } from 'http';
-import { PythonShell } from 'python-shell';
 
 import { db } from '../db/index.js';
 import {
@@ -16,12 +15,11 @@ import {
   userBadges,
   users,
 } from '../db/schema.js';
-import { AIService } from './services/AIService';
-import { CodeReviewService } from './services/code-review';
-import { submitQuizResponses } from './services/learning-style-assessment';
-import { generatePersonalizedPath } from './services/recommendations';
-import { sanitizeMedicalData } from './utils/sanitize';
-
+import { AIService } from './services/AIService.js';
+import { CodeReviewService } from './services/code-review.js';
+import { submitQuizResponses } from './services/learning-style-assessment.js';
+import { generatePersonalizedPath } from './services/recommendations.js';
+import { sanitizeMedicalData } from './utils/sanitize.js';
 
 interface ErrorResponse {
   message: string;

@@ -1,7 +1,10 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
+
 import { StrictMode } from 'react';
+
 import { Toaster } from '@/components/ui/toaster';
+
 import App from './App';
 import './index.css';
 import { queryClient } from './lib/queryClient';
@@ -27,6 +30,11 @@ function initializeApp(): void {
 try {
   initializeApp();
 } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
   if (error instanceof Error) {
     console.error('Error initializing application:', error.message);
   } else {
