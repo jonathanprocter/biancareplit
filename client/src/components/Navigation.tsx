@@ -41,14 +41,18 @@ const Navigation = () => {
           <div className="flex items-center space-x-4">
             <Link href="/dashboard">
               <a
-                className={`text-lg font-semibold ${location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+                className={`text-lg font-semibold ${
+                  location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'
+                }`}
               >
                 Dashboard
               </a>
             </Link>
             <Link href="/progress">
               <a
-                className={`text-lg font-semibold ${location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+                className={`text-lg font-semibold ${
+                  location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'
+                }`}
               >
                 My Progress
               </a>
