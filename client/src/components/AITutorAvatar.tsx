@@ -1,11 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Brain, Lightbulb, MessageCircle, Sparkles, Timer } from 'lucide-react';
-
-import React, { useEffect, useState } from 'react';
-
+import { Brain, Lightbulb, MessageCircle, Timer } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-
 import { useToast } from '@/hooks/use-toast';
 
 interface TutorMood {
@@ -14,9 +11,14 @@ interface TutorMood {
   message: string;
 }
 
+interface AIResponse {
+  message: string;
+  confidence?: number;
+}
+
 const DEFAULT_CONFIDENCE = 70;
 
-export const AITutorAvatar = () => {
+export const AITutorAvatar: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
   const [mood, setMood] = useState<TutorMood>({
@@ -55,24 +57,28 @@ export const AITutorAvatar = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({ query }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to get AI response');
+        const errorData = await response.json().catch(() => ({ message: 'Network response was not ok' }));
+        throw new Error(errorData.message || `Failed to get AI response: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data: AIResponse = await response.json();
       setCurrentMessage(data.message);
-      updateTutorMood(data.confidence || DEFAULT_CONFIDENCE);
+      updateTutorMood(data.confidence ?? DEFAULT_CONFIDENCE);
     } catch (error) {
+      console.error('AI Tutor error:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to get AI tutor response',
+        description: error instanceof Error ? error.message : 'Failed to get AI tutor response',
       });
+      setCurrentMessage('I apologize, but I seem to be having trouble responding right now. Please try again in a moment.');
     } finally {
       setIsTyping(false);
     }
@@ -92,7 +98,7 @@ export const AITutorAvatar = () => {
           <motion.div
             className={`w-16 h-16 rounded-full ${mood.color} flex items-center justify-center text-2xl`}
             animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: 3 }}  {/* Changed to finite repeat for performance */}
+            transition={{ duration: 2, repeat: 3, ease: "easeInOut" }}  // Changed to finite repeat with easing
           >
             {mood.expression}
           </motion.div>
