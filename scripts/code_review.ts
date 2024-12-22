@@ -130,19 +130,194 @@ async function generateReport(files: string[]): Promise<void> {
     console.log('──────────────────────────────');
     
     if (issues.warnings > 0 || issues.errors > 0) {
-      console.log('\nDetailed ESLint Report:');
-      console.log(lintOutput);
+      // Process and clean ESLint output
+      const warnings = lintOutput
+        .replace(/\u001b\[\d+m/g, '')  // Remove ANSI color codes
+        .split('\n')
+        .filter(line => line.trim())    // Remove empty lines
+        .filter(line => !line.includes('✖'))  // Remove summary line
+        .map(line => {
+          // Extract file paths and warning messages
+          const match = line.match(/([^:]+):(\d+:\d+)?\s+(\w+)\s+(.+)/);
+          if (match) {
+            const [_, filePath, position, severity, message] = match;
+            // Extract the relative path from the full path
+            const file = filePath.split('/').slice(-2).join('/');
+            const category = message.includes('no-unused-vars') ? 'unused'
+              : message.includes('react-hooks') ? 'hooks'
+              : message.includes('@typescript-eslint') ? 'typescript'
+              : 'other';
+            
+            return {
+              file,
+              position: position || '',
+              severity,
+              message: message.trim(),
+              category
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      // Group warnings by category
+      const warningsByCategory = warnings.reduce((acc, warning) => {
+        if (!warning) return acc;
+        if (!acc[warning.category]) {
+          acc[warning.category] = [];
+        }
+        acc[warning.category].push(warning);
+        return acc;
+      }, {} as Record<string, typeof warnings[0][]>);
+
+      console.log('\n📊 Code Health Summary:');
+      console.log('──────────────────────────────');
+      
+      console.log('\n📈 Overall Metrics:');
+      console.log(`• Total Lines of Code: ${totalLOC}`);
+      console.log(`• Average Complexity: ${avgComplexity.toFixed(2)}`);
+      
+      console.log('\n🚨 Critical Issues:');
+      console.log(`• High Complexity Files: ${highComplexityFiles.length}`);
+      console.log(`• Lint Warnings: ${issues.warnings}`);
+      console.log(`• Lint Errors: ${issues.errors}`);
+      
+      console.log('\n🛠️  Maintenance Issues:');
+      console.log(`• Unused Variables/Imports: ${issues.unused}`);
+      console.log(`• Potential Dead Code Files: ${unusedFiles.length}`);
+      
+      const componentRatio = files.filter(f => f.includes('/components/')).length / files.length;
+      console.log('\n📁 Code Organization:');
+      console.log(`• Component to File Ratio: ${(componentRatio * 100).toFixed(1)}%`);
+      console.log(`• TypeScript Files: ${files.filter(f => f.endsWith('.ts')).length}`);
+      console.log(`• React Components: ${files.filter(f => f.endsWith('.tsx')).length}`);
+      console.log('──────────────────────────────');
+      
+      console.log('\n📋 Detailed Analysis');
+      console.log('──────────────────────────────');
+      
+      const categoryIcons = {
+        unused: '🧹',
+        hooks: '⚓',
+        typescript: '📘',
+        other: '📝'
+      };
+      
+      const categoryTitles = {
+        unused: 'Unused Variables and Imports',
+        hooks: 'React Hooks Issues',
+        typescript: 'TypeScript-specific Issues',
+        other: 'Other Warnings'
+      };
+      
+      Object.entries(warningsByCategory).forEach(([category, categoryWarnings]) => {
+        const icon = categoryIcons[category as keyof typeof categoryIcons] || '📝';
+        const title = categoryTitles[category as keyof typeof categoryTitles] || 'Other Warnings';
+        
+        console.log('\n' + '─'.repeat(50));
+        console.log(`${icon} ${title}`);
+        console.log(`Found ${categoryWarnings.length} issues in this category`);
+        console.log('─'.repeat(50));
+        
+        // Group warnings by file
+        const warningsByFile = categoryWarnings.reduce((acc, warning) => {
+          if (!acc[warning.file]) acc[warning.file] = [];
+          acc[warning.file].push(warning);
+          return acc;
+        }, {} as Record<string, typeof warnings[0][]>);
+        
+        Object.entries(warningsByFile).forEach(([file, fileWarnings]) => {
+          console.log(`\n📄 ${file}`);
+          fileWarnings.forEach(warning => {
+            const severityIcon = warning.severity === 'error' ? '❌' : '⚠️';
+            const positionInfo = warning.position ? ` (line ${warning.position})` : '';
+            console.log(`  ${severityIcon} ${warning.message}${positionInfo}`);
+          });
+        });
+      });
+      console.log('──────────────────────────────');
+      
+      console.log('\nRecommendations:');
+      if (unusedFiles.length > 0) {
+        console.log('\n1. Dead Code Removal:');
+        console.log('   Consider removing or refactoring these potentially unused files:');
+        unusedFiles.slice(0, 5).forEach(file => console.log(`   - ${file}`));
+        if (unusedFiles.length > 5) {
+          console.log(`   ... and ${unusedFiles.length - 5} more files`);
+        }
+      }
+      
+      if (highComplexityFiles.length > 0) {
+        console.log('\n2. Complexity Reduction:');
+        console.log('   These files need immediate refactoring:');
+        highComplexityFiles.slice(0, 5).forEach(([file, data]) => 
+          console.log(`   - ${file} (Complexity: ${data.cyclomaticComplexity}, Functions: ${data.functions})`)
+        );
+        if (highComplexityFiles.length > 5) {
+          console.log(`   ... and ${highComplexityFiles.length - 5} more files`);
+        }
+      }
+      
+      if (issues.warnings > 0 || issues.errors > 0) {
+        console.log('\n3. Code Quality Improvements:');
+        console.log('   - Fix all ESLint warnings and errors');
+        console.log('   - Remove unused variables and imports');
+        console.log('   - Consider adding more TypeScript type definitions');
+      }
+      
+      console.log('\nNext Steps:');
+      console.log('\nRecommended Actions:');
+      console.log('──────────────────────────────');
+
+      if (issues.warnings > 0 || issues.errors > 0) {
+        console.log('\n🔧 Immediate Actions (Next 24 Hours):');
+        console.log('1. Clean up unused variables in high-priority components:');
+        console.log('   • Remove unused imports in AITutorAvatar.tsx');
+        console.log('     - Sparkles, useEffect imports');
+        console.log('   • Clean up unused state variables in LearningPathVisualizer.tsx');
+        console.log('     - setCurrentLevel, setXpPoints, setNextLevelXP');
+        console.log('   • Address React Hook dependencies in StudyTimer.tsx');
+        console.log('     - Add handleTimerComplete to useEffect deps array');
+      }
+
+      console.log('\n📅 Short-term Improvements (Next Sprint):');
+      console.log('1. Remove or refactor dead code files');
+      console.log(`   • ${unusedFiles.length} files identified for cleanup`);
+      console.log('2. Consolidate UI components');
+      console.log(`   • Focus on ${files.filter(f => f.includes('/components/')).length} component files`);
+      console.log('3. Implement proper error handling');
+      console.log('   • Add error boundaries and logging');
+
+      console.log('\n🎯 Long-term Goals (Next Quarter):');
+      console.log('1. Test Coverage');
+      console.log('   • Write unit tests for components');
+      console.log('   • Add integration tests for critical paths');
+      console.log('2. Code Standards');
+      console.log('   • Document and enforce naming conventions');
+      console.log('   • Set up automated style checks');
+      console.log('3. Quality Assurance');
+      console.log('   • Schedule regular code reviews');
+      console.log('   • Implement automated quality gates');
+      
+      console.log('──────────────────────────────');
     }
     
-    // Code complexity analysis
-    console.log('\nCode Complexity Analysis:');
-    const complexityResults: Record<string, {
+    // Enhanced code complexity analysis
+    console.log('\n🔍 Code Complexity Analysis:');
+    console.log('──────────────────────────────');
+    
+    interface ComplexityMetrics {
       cyclomaticComplexity: number;
       dependencies: string[];
       loc: number;
       functions: number;
       classes: number;
-    }> = {};
+      cognitiveComplexity: number;
+      maintenanceIndex: number;
+      commentDensity: number;
+    }
+    
+    const complexityResults: Record<string, ComplexityMetrics> = {};
     
     for (const file of files) {
       if (file.endsWith('.ts') || file.endsWith('.tsx')) {
@@ -153,11 +328,32 @@ async function generateReport(files: string[]): Promise<void> {
           /(if|while|for|switch|catch|\?|&&|\|\||=>)/g
         ) || []).length;
         
-        // Count lines of code (excluding comments and blank lines)
-        const loc = fileContent
-          .split('\n')
-          .filter(line => line.trim() && !line.trim().startsWith('//'))
-          .length;
+        // Calculate cognitive complexity
+        const cognitivePatterns = [
+          /if.*&&.*\|\|/g,  // Complex conditions
+          /nested_if/g,      // Nested conditions
+          /switch.*default/g, // Switch with default
+          /try.*catch.*finally/g, // Complex error handling
+        ];
+        const cognitiveComplexity = cognitivePatterns.reduce(
+          (sum, pattern) => sum + (fileContent.match(pattern) || []).length,
+          0
+        );
+        
+        // Parse file content
+        const lines = fileContent.split('\n');
+        const nonEmptyLines = lines.filter(line => line.trim());
+        const commentLines = lines.filter(line => 
+          line.trim().startsWith('//') || 
+          line.trim().startsWith('/*') || 
+          line.trim().startsWith('*')
+        );
+        
+        // Calculate metrics
+        const loc = nonEmptyLines.length;
+        const commentDensity = commentLines.length / loc;
+        const halsteadMetrics = calculateHalsteadMetrics(fileContent);
+        const maintenanceIndex = calculateMaintenanceIndex(loc, complexity, commentDensity);
         
         // Count functions and classes
         const functions = (fileContent.match(
@@ -166,23 +362,72 @@ async function generateReport(files: string[]): Promise<void> {
         
         const classes = (fileContent.match(/\bclass\s+\w+/g) || []).length;
         
-        // Find imports
+        // Find imports and analyze dependencies
         const imports = fileContent.match(/import .+ from ['"][@\w\/\-\.]+['"]/g) || [];
+        const dependencies = imports.map(imp => imp.match(/from ['"](.+)['"]/)?.[1] || '');
         
         complexityResults[file] = {
           cyclomaticComplexity: complexity,
-          dependencies: imports.map(imp => imp.match(/from ['"](.+)['"]/)?.[1] || ''),
+          dependencies,
           loc,
           functions,
           classes,
+          cognitiveComplexity,
+          maintenanceIndex,
+          commentDensity,
         };
       }
     }
     
-    // Report high complexity files
-    const highComplexityThreshold = 15; // Increased threshold for more meaningful results
-    const highComplexityFiles = Object.entries(complexityResults)
-      .filter(([_, data]) => data.cyclomaticComplexity > highComplexityThreshold)
+    // Helper functions for complexity calculations
+    function calculateHalsteadMetrics(code: string): { difficulty: number, effort: number } {
+      const operators = (code.match(/[+\-*/%=<>!&|^~?:]+/g) || []).length;
+      const operands = (code.match(/\b(?!\b(if|else|while|for|return)\b)\w+\b/g) || []).length;
+      const difficulty = (operators / 2) * (operands / (operators + 1));
+      const effort = difficulty * (operators + operands);
+      return { difficulty, effort };
+    }
+    
+    function calculateMaintenanceIndex(loc: number, complexity: number, commentDensity: number): number {
+      // Maintenance Index formula: 171 - 5.2 * ln(avgLoc) - 0.23 * (complexity) - 16.2 * ln(commentDensity)
+      const mi = 171 - 5.2 * Math.log(loc) - 0.23 * complexity - 16.2 * Math.log(commentDensity + 1);
+      return Math.max(0, Math.min(100, mi)); // Normalize to 0-100
+    }
+    
+    // Advanced complexity analysis and reporting
+    const metrics = {
+      highComplexityThreshold: 15,
+      poorMaintenanceThreshold: 65,
+      lowCommentDensityThreshold: 0.1,
+      highCognitiveComplexityThreshold: 10
+    };
+
+    const complexityAnalysis = Object.entries(complexityResults).reduce(
+      (acc, [file, data]) => {
+        if (data.cyclomaticComplexity > metrics.highComplexityThreshold) {
+          acc.highComplexity.push([file, data]);
+        }
+        if (data.maintenanceIndex < metrics.poorMaintenanceThreshold) {
+          acc.poorMaintainability.push([file, data]);
+        }
+        if (data.commentDensity < metrics.lowCommentDensityThreshold) {
+          acc.lowCommentDensity.push([file, data]);
+        }
+        if (data.cognitiveComplexity > metrics.highCognitiveComplexityThreshold) {
+          acc.highCognitiveComplexity.push([file, data]);
+        }
+        return acc;
+      },
+      {
+        highComplexity: [] as [string, ComplexityMetrics][],
+        poorMaintainability: [] as [string, ComplexityMetrics][],
+        lowCommentDensity: [] as [string, ComplexityMetrics][],
+        highCognitiveComplexity: [] as [string, ComplexityMetrics][]
+      }
+    );
+
+    // Sort results by severity
+    const highComplexityFiles = complexityAnalysis.highComplexity
       .sort(([_, a], [__, b]) => b.cyclomaticComplexity - a.cyclomaticComplexity);
     
     if (highComplexityFiles.length > 0) {
@@ -193,6 +438,13 @@ async function generateReport(files: string[]): Promise<void> {
         console.log(`  Lines of Code: ${data.loc}`);
         console.log(`  Functions: ${data.functions}`);
         console.log(`  Classes: ${data.classes}`);
+        console.log(`  Cognitive Complexity: ${data.cognitiveComplexity}`);
+        console.log(`  Maintenance Index: ${data.maintenanceIndex.toFixed(2)}`);
+        console.log(`  Comment Density: ${(data.commentDensity * 100).toFixed(1)}%`);
+        if (data.dependencies.length > 0) {
+          console.log('  Dependencies:');
+          data.dependencies.forEach(dep => console.log(`    • ${dep}`));
+        }
       });
     }
     
@@ -232,7 +484,8 @@ async function generateReport(files: string[]): Promise<void> {
     }
     
     // Enhanced file statistics
-    console.log('\nFile Statistics:');
+    console.log('\n📁 File Statistics:');
+    console.log('──────────────────────────────');
     console.log(`Total Files Processed: ${files.length}`);
     
     const typeStats = files.reduce((acc: Record<string, number>, file: string) => {
@@ -241,9 +494,28 @@ async function generateReport(files: string[]): Promise<void> {
       return acc;
     }, {});
     
-    Object.entries(typeStats).forEach(([ext, count]) => {
-      console.log(`${ext} files: ${count}`);
-    });
+    console.log('\nFile Types:');
+    Object.entries(typeStats)
+      .sort(([_, a], [__, b]) => b - a)
+      .forEach(([ext, count]) => {
+        const percentage = ((count / files.length) * 100).toFixed(1);
+        console.log(`• ${ext || 'No extension'}: ${count} files (${percentage}%)`);
+      });
+    
+    // Directory statistics
+    const dirStats = files.reduce((acc: Record<string, number>, file: string) => {
+      const dir = path.dirname(file).split('/')[0];
+      acc[dir] = (acc[dir] || 0) + 1;
+      return acc;
+    }, {});
+    
+    console.log('\nDirectory Distribution:');
+    Object.entries(dirStats)
+      .sort(([_, a], [__, b]) => b - a)
+      .forEach(([dir, count]) => {
+        const percentage = ((count / files.length) * 100).toFixed(1);
+        console.log(`• ${dir}: ${count} files (${percentage}%)`);
+      });
     
     // Summary metrics with enhanced insights
     const totalLOC = Object.values(complexityResults).reduce((sum, data) => sum + data.loc, 0);
@@ -302,23 +574,40 @@ async function generateReport(files: string[]): Promise<void> {
     }
     
     console.log('\nNext Steps:');
+    console.log('\nRecommended Actions:');
+    console.log('──────────────────────────────');
+
     if (issues.warnings > 0 || issues.errors > 0) {
-      console.log('\nImmediate Actions:');
+      console.log('\n🔧 Immediate Actions (Next 24 Hours):');
       console.log('1. Clean up unused variables in high-priority components:');
-      console.log('   - Remove unused imports in AITutorAvatar.tsx (Sparkles, useEffect)');
-      console.log('   - Clean up unused state variables in LearningPathVisualizer.tsx');
-      console.log('   - Address React Hook dependencies in StudyTimer.tsx');
+      console.log('   • Remove unused imports in AITutorAvatar.tsx');
+      console.log('     - Sparkles, useEffect imports');
+      console.log('   • Clean up unused state variables in LearningPathVisualizer.tsx');
+      console.log('     - setCurrentLevel, setXpPoints, setNextLevelXP');
+      console.log('   • Address React Hook dependencies in StudyTimer.tsx');
+      console.log('     - Add handleTimerComplete to useEffect deps array');
     }
 
-    console.log('\nShort-term Improvements:');
-    console.log('1. Remove or refactor dead code files (27 files identified)');
-    console.log('2. Consolidate UI components and remove unused ones');
-    console.log('3. Add error handling for unused error variables');
+    console.log('\n📅 Short-term Improvements (Next Sprint):');
+    console.log('1. Remove or refactor dead code files');
+    console.log(`   • ${unusedFiles.length} files identified for cleanup`);
+    console.log('2. Consolidate UI components');
+    console.log(`   • Focus on ${files.filter(f => f.includes('/components/')).length} component files`);
+    console.log('3. Implement proper error handling');
+    console.log('   • Add error boundaries and logging');
 
-    console.log('\nLong-term Recommendations:');
-    console.log('1. Implement comprehensive test coverage for components');
-    console.log('2. Establish coding standards for variable naming and usage');
-    console.log('3. Regular code review and cleanup sprints');
+    console.log('\n🎯 Long-term Goals (Next Quarter):');
+    console.log('1. Test Coverage');
+    console.log('   • Write unit tests for components');
+    console.log('   • Add integration tests for critical paths');
+    console.log('2. Code Standards');
+    console.log('   • Document and enforce naming conventions');
+    console.log('   • Set up automated style checks');
+    console.log('3. Quality Assurance');
+    console.log('   • Schedule regular code reviews');
+    console.log('   • Implement automated quality gates');
+    
+    console.log('──────────────────────────────');
     
   } catch (error) {
     console.error('Error generating report:', error);
