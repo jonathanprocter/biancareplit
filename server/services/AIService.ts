@@ -114,7 +114,7 @@ export class AIService {
    * @private
    * @throws {Error} If connection validation fails after retries
    */
-  private async ensureConnection(): Promise<void> {
+  public async ensureConnection(): Promise<void> {
     if (this.connectionValidated) return;
     if (this.initializationError) throw this.initializationError;
     if (!this.openai) throw new Error('OpenAI client not initialized');
@@ -126,35 +126,20 @@ export class AIService {
       try {
         console.info(`AIService: Validating OpenAI connection (attempt ${attempt}/${MAX_RETRIES})...`);
         
-        // Enhanced validation with medical education specific test
+        // Simple validation test
         const response = await this.openai.chat.completions.create({
           model: 'gpt-4o',
           messages: [
             { 
               role: 'system', 
-              content: 'Validate medical education platform connection with a basic medical terminology test.' 
-            },
-            {
-              role: 'user',
-              content: 'Define the term "anatomy" in a short medical context.'
+              content: 'Respond with a simple "ok" to validate the connection.' 
             }
           ],
-          max_tokens: 50,
-          response_format: { type: 'json_object' },
+          max_tokens: 10,
         });
 
         if (!response.choices?.[0]?.message?.content) {
           throw new Error('Invalid response format from OpenAI API');
-        }
-
-        try {
-          // Verify JSON parsing and response structure
-          const content = JSON.parse(response.choices[0].message.content);
-          if (typeof content.definition !== 'string' || !content.definition.includes('anatomy')) {
-            throw new Error('Invalid response content structure');
-          }
-        } catch (parseError) {
-          throw new Error(`Response parsing failed: ${parseError.message}`);
         }
 
         this.connectionValidated = true;

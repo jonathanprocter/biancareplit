@@ -70,18 +70,28 @@ export function registerRoutes(app: Express): Server {
 
   // AI routes
   app.post('/api/ai/questions/generate', requireAuth, async (req, res) => {
-  // AI Service health check endpoint
-  app.get('/api/ai/health', requireAuth, async (req, res) => {
+  // AI Service health check endpoint - public for monitoring
+  app.get('/api/ai/health', async (req, res) => {
     try {
       const aiService = AIService.getInstance();
+      const startTime = Date.now();
+      
       await aiService.ensureConnection();
+      
       res.json({ 
         status: 'healthy',
         message: 'AI Service connection validated successfully',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        responseTime: Date.now() - startTime,
+        environment: process.env.NODE_ENV || 'development'
       });
     } catch (error) {
-      handleError(error, res);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      res.status(503).json({
+        status: 'unhealthy',
+        message: errorMessage,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
