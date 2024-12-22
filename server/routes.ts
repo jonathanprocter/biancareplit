@@ -1,5 +1,4 @@
 import { compare, hash } from 'bcrypt';
-import { lt } from 'drizzle-orm';
 import { and, asc, desc, eq, gte, sql } from 'drizzle-orm';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { type Server, createServer } from 'http';
@@ -18,6 +17,7 @@ import {
   users,
 } from '../db/schema.js';
 import { AIService } from './services/AIService';
+import { CodeReviewService } from './services/CodeReviewService';
 import { submitQuizResponses } from './services/learning-style-assessment';
 import { generatePersonalizedPath } from './services/recommendations';
 import { sanitizeMedicalData } from './utils/sanitize';
@@ -44,10 +44,6 @@ declare module 'express-session' {
 }
 
 export function registerRoutes(app: Express): Server {
-  // Register routes below
-  // prefix all routes with /api
-  // Session is configured in index.ts
-
   // Authentication middleware
   const requireAuth = (req: Request, res: Response, next: NextFunction) => {
     if (!req.session.userId) {
@@ -66,7 +62,6 @@ export function registerRoutes(app: Express): Server {
       ...(err.details && { details: err.details }),
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     };
-    console.error('[API] Sending error response:', errorResponse);
     res.status(status).json(errorResponse);
   };
 
@@ -188,10 +183,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Code review routes
+  // Code review endpoint
   app.post('/api/code-review', async (req, res) => {
     try {
-      const { directory, options = {} } = req.body;
+      const { directory, config } = req.body;
 
       if (!directory) {
         return res.status(400).json({
@@ -200,47 +195,18 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      const pythonOptions = {
-        mode: 'json',
-        pythonPath: 'python3',
-        pythonOptions: ['-u'],
-        scriptPath: './services/',
-        args: [
-          directory,
-          '--format=json',
-          ...(options.excludePatterns ? [`--exclude=${options.excludePatterns.join(',')}`] : []),
-          ...(options.includeOnly ? [`--include-only=${options.includeOnly.join(',')}`] : []),
-        ],
-      };
-
-      const results = await new Promise((resolve, reject) => {
-        const shell = new PythonShell('code_review_service.py', pythonOptions);
-        let output = '';
-
-        shell.on('message', (message) => {
-          try {
-            const parsed = JSON.parse(message);
-            output = parsed;
-          } catch (err) {
-            console.log('[API] Progress:', message);
-          }
-        });
-
-        shell.on('error', (err) => {
-          console.error('[API] Code review error:', err);
-          reject(err);
-        });
-
-        shell.on('close', () => {
-          resolve(output);
-        });
-
-        shell.end();
-      });
+      const codeReviewService = CodeReviewService.getInstance();
+      const issues = await codeReviewService.analyzeDirectory(directory, config);
 
       res.json({
         success: true,
-        analysis: results,
+        issues,
+        summary: {
+          totalIssues: issues.length,
+          errorCount: issues.filter((i) => i.severity === 'error').length,
+          warningCount: issues.filter((i) => i.severity === 'warning').length,
+          infoCount: issues.filter((i) => i.severity === 'info').length,
+        },
       });
     } catch (error) {
       handleError(error as RequestError, res);
