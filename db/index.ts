@@ -109,7 +109,8 @@ async function initializePool() {
     retryCount = 0;
 
     // Initialize Drizzle instance
-    return drizzle(pool, { schema });
+    db = drizzle(pool, { schema });
+    return db;
   } catch (error) {
     console.error(
       '[Database] Connection attempt failed:',
@@ -129,11 +130,17 @@ async function reconnect() {
     try {
       await pool.end();
     } catch (error) {
-    console.error(
-      '[Database] Error closing pool during reconnect:',
-      error instanceof Error ? error.message : error,
-    );
-    pool = null;
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+      console.error(
+        '[Database] Error closing pool during reconnect:',
+        error instanceof Error ? error.message : error,
+      );
+      pool = null;
+    }
   }
   return initializePool();
 }
@@ -183,6 +190,11 @@ async function closeDatabase() {
       await pool.end();
       console.info('[Database] Connection pool closed successfully');
     } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       console.error(
         '[Database] Error during cleanup:',
         error instanceof Error ? error.message : error,
@@ -195,7 +207,9 @@ async function closeDatabase() {
 const dbPromise = initializePool();
 dbPromise
   .then((drizzleInstance) => {
-    db = drizzleInstance;
+    if (drizzleInstance) {
+      db = drizzleInstance;
+    }
   })
   .catch((error) => {
     console.error('[Database] Failed to initialize database:', error);
@@ -207,6 +221,5 @@ process.on('SIGINT', () => void closeDatabase());
 process.on('SIGTERM', () => void closeDatabase());
 
 // Export database instance and utilities
-export type { Pool };
 export { db, checkDatabaseHealth, closeDatabase };
-export default db;
+export type { Pool };

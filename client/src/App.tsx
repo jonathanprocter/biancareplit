@@ -4,7 +4,7 @@ import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
 
-import { TestPrettier } from '@/components/TestPrettier';
+import { Navigation } from '@/components/Navigation';
 
 const App: React.FC = () => {
   return (
@@ -14,6 +14,7 @@ const App: React.FC = () => {
         <meta charSet="utf-8" />
         <meta name="description" content="An advanced AI-powered medical education platform" />
       </Helmet>
+      <Navigation />
       <main className="container mx-auto px-4 py-8">
         <Switch>
           <Route path="/">
@@ -27,12 +28,12 @@ const App: React.FC = () => {
 };
 
 const Dashboard: React.FC = () => {
-  const testItems = [
-    { id: 1, name: 'Item 1' },
-    { id: 2, name: 'Item 2' },
-  ];
-
-  return <TestPrettier title="Test Component" items={testItems} />;
+  return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Welcome to Medical Education Platform</h1>
+      <p className="text-muted-foreground">Your personalized learning experience starts here.</p>
+    </div>
+  );
 };
 
 function NotFound() {

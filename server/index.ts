@@ -133,55 +133,25 @@ async function startServer() {
     });
 
     // Start server with port retry logic
-    const startPort = Number(process.env.PORT) || 5000;
-    const maxPort = startPort + 10;
-    let currentPort = startPort;
-
-    const findAvailablePort = async (startPort: number, endPort: number): Promise<number> => {
-      for (let port = startPort; port <= endPort; port++) {
-        try {
-          await new Promise<void>((resolve, reject) => {
-            const tempServer = createServer();
-            tempServer
-              .listen(port, '0.0.0.0')
-              .once('listening', () => {
-                tempServer.close(() => resolve());
-              })
-              .once('error', (err: NodeJS.ErrnoException) => {
-                if (err.code === 'EADDRINUSE') {
-                  reject(err);
-                }
-              });
-          });
-          return port;
-        } catch (err) {
-          if (port === endPort) {
-            throw new Error(`No available ports in range ${startPort}-${endPort}`);
-          }
-          continue;
-        }
-      }
-      throw new Error('No available ports found');
-    };
-
-    // Find and start on an available port
-    const port = await findAvailablePort(startPort, maxPort);
-    server.listen(port, '0.0.0.0', () => {
-      log(`Server started successfully on port ${port}`);
+    // Port configuration is fixed to 5000 as per development guidelines
+    const PORT = 5000;
+    server.listen(PORT, '0.0.0.0', () => {
+      log(`Server started successfully on port ${PORT}`);
+      log('API and client both available at http://0.0.0.0:5000');
     });
 
     // Graceful shutdown
     const cleanup = async (signal: string) => {
-      log(`Received ${signal}, shutting down...`);
+      log(`Received ${signal}, initiating graceful shutdown...`);
       try {
         await closeDatabase();
-        log('Database connections closed');
+        log('Database connections closed successfully');
         server.close(() => {
-          log('Server closed');
+          log('HTTP server closed successfully');
           process.exit(0);
         });
       } catch (error) {
-        console.error('Error during shutdown:', error);
+        console.error('Error during shutdown:', error instanceof Error ? error.message : error);
         process.exit(1);
       }
     };
