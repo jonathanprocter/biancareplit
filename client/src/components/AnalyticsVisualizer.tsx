@@ -43,38 +43,42 @@ export function AnalyticsVisualizer() {
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
   const [categoryData, setCategoryData] = useState<NCLEXCategory[]>(nclexCategories);
   const [predictiveIndex, setPredictiveIndex] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch performance data
     const fetchData = async () => {
       try {
-        // Fetch real data or replace with actual fetch logic
-        const response = await fetch('/api/performanceData'); // Example endpoint
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch('/api/performanceData');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data: PerformanceData[] = await response.json();
 
-        setPerformanceData(data);
-        calculatePredictiveIndex(data);
+        if (Array.isArray(data)) {
+          setPerformanceData(data);
+          calculatePredictiveIndex(data);
 
-        // Update category distribution based on fetched data
-        const updatedCategories = updateCategoryDistribution(data);
-        setCategoryData(updatedCategories);
+          const updatedCategories = updateCategoryDistribution(data);
+          setCategoryData(updatedCategories);
+        } else {
+          throw new Error('Invalid data format received from API');
+        }
       } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-        console.error('Error setting up analytics data:', error);
-        // Example: set some error state or display an error message in the UI
+        console.error(
+          'Error fetching analytics data:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
+        setError(error instanceof Error ? error.message : 'Failed to load analytics data');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   const calculatePredictiveIndex = (data: PerformanceData[]) => {
@@ -91,17 +95,42 @@ export function AnalyticsVisualizer() {
     setPredictiveIndex(Math.round(index));
   };
 
-  const updateCategoryDistribution = (data: PerformanceData[]) => {
-    const categories = { ...nclexCategories };
+  const updateCategoryDistribution = (data: PerformanceData[]): NCLEXCategory[] => {
+    const updatedCategories = [...nclexCategories];
 
     data.forEach((performance) => {
-      const category = categories.find((cat) => cat.name.includes(performance.category));
-      if (category) {
-        category.value += performance.correctAnswers; // Example logic
+      const categoryIndex = updatedCategories.findIndex((cat) =>
+        cat.name.toLowerCase().includes(performance.category.toLowerCase()),
+      );
+      if (categoryIndex !== -1) {
+        updatedCategories[categoryIndex] = {
+          ...updatedCategories[categoryIndex],
+          value: (updatedCategories[categoryIndex].value || 0) + performance.correctAnswers,
+        };
       }
     });
-    return categories;
+    return updatedCategories;
   };
+
+  if (loading) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex items-center justify-center h-72">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex items-center justify-center h-72">
+          <div className="text-red-500">{error}</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full">

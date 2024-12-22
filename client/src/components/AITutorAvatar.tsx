@@ -1,8 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Brain, Lightbulb, MessageCircle, Timer } from 'lucide-react';
+
 import React, { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+
 import { useToast } from '@/hooks/use-toast';
 
 interface TutorMood {
@@ -57,14 +60,16 @@ export const AITutorAvatar: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({ query }),
         credentials: 'include',
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Network response was not ok' }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: 'Network response was not ok' }));
         throw new Error(errorData.message || `Failed to get AI response: ${response.status}`);
       }
 
@@ -78,7 +83,9 @@ export const AITutorAvatar: React.FC = () => {
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to get AI tutor response',
       });
-      setCurrentMessage('I apologize, but I seem to be having trouble responding right now. Please try again in a moment.');
+      setCurrentMessage(
+        'I apologize, but I seem to be having trouble responding right now. Please try again in a moment.',
+      );
     } finally {
       setIsTyping(false);
     }
@@ -98,7 +105,7 @@ export const AITutorAvatar: React.FC = () => {
           <motion.div
             className={`w-16 h-16 rounded-full ${mood.color} flex items-center justify-center text-2xl`}
             animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: 3, ease: "easeInOut" }}  // Changed to finite repeat with easing
+            transition={{ duration: 2, repeat: 3, ease: 'easeInOut' }} // Changed to finite repeat with easing
           >
             {mood.expression}
           </motion.div>

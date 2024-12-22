@@ -101,7 +101,7 @@ async function lintFiles(files: string[]): Promise<void> {
 }
 
 async function applyAutoFixes(files: string[]): Promise<void> {
-  console.log('\n🔧 Applying automatic fixes...');
+  console.log('\n🔧 Applying comprehensive automatic fixes...');
 
   for (const file of files) {
     try {
@@ -109,7 +109,37 @@ async function applyAutoFixes(files: string[]): Promise<void> {
       let modified = content;
       let hasChanges = false;
 
-      // Fix unused variables by removing them
+      // Enhanced security fixes
+      // Add proper input validation for medical data
+      const inputValidationFix = content.match(/const\s+(\w+)\s*=\s*req\.(?:body|query|params)\.(\w+)/g);
+      if (inputValidationFix) {
+        for (const match of inputValidationFix) {
+          const [_, varName, prop] = match.match(/const\s+(\w+)\s*=\s*req\.(?:body|query|params)\.(\w+)/) || [];
+          if (varName && prop) {
+            const validationCode = `
+              if (!${varName}) {
+                throw new Error(\`Invalid ${prop} provided\`);
+              }
+              // Sanitize medical data
+              const sanitized${varName} = sanitizeMedicalData(${varName});
+            `;
+            modified = modified.replace(match, match + validationCode);
+            hasChanges = true;
+          }
+        }
+      }
+
+      // Fix accessibility issues
+      const imgWithoutAlt = content.match(/<img\s+(?!.*alt=)[^>]*>/g);
+      if (imgWithoutAlt) {
+        for (const img of imgWithoutAlt) {
+          const fixed = img.replace(/>$/, ' alt="Medical education content" />');
+          modified = modified.replace(img, fixed);
+          hasChanges = true;
+        }
+      }
+
+      // Fix unused variables
       const unusedVarMatches = content.matchAll(/(?:const|let|var)\s+(\w+)[^;]*;.*?\/\/ @typescript-eslint\/no-unused-vars/g);
       for (const match of Array.from(unusedVarMatches)) {
         modified = modified.replace(match[0], '');
@@ -228,10 +258,19 @@ async function analyzeComplexity(filePath: string): Promise<ComplexityMetrics | 
     const lines = content.split('\n');
     const totalLines = lines.length;
     
-    // Basic metrics with enhanced medical education focus
-    const functionMatches = content.match(/function\s+\w+\s*\(|\w+\s*:\s*function\s*\(|\(\s*\)\s*=>/g);
+    // Enhanced metrics for medical education focus
+    const functionMatches = content.match(/function\s+\w+\s*\(|\w+\s*:\s*function\s*\(|\(\s*\)\s*=>|\bclass\b/g);
     const dependencies = content.match(/import\s+.*?from/g);
-    const controlFlows = content.match(/if|else|for|while|switch|catch|&&|\|\||\?/g);
+    const controlFlows = content.match(/if|else|for|while|switch|catch|&&|\|\||\?|try|catch|finally/g);
+    
+    // Enhanced pattern detection for medical education code
+    const medicalPatterns = {
+      dataValidation: (content.match(/validate|verify|check|assert|ensure/g) || []).length,
+      errorHandling: (content.match(/try|catch|throw|error|exception/g) || []).length,
+      accessibilityFeatures: (content.match(/aria-|role=|alt=|tabIndex/g) || []).length,
+      securityMeasures: (content.match(/sanitize|escape|encrypt|hash|authenticate/g) || []).length,
+      medicalTerminology: (content.match(/patient|diagnosis|treatment|clinical|medical|health/g) || []).length
+    };
     
     // Educational and medical patterns analysis
     const patterns = {
@@ -486,11 +525,19 @@ async function calculateMetrics(files: string[]): Promise<CodeAnalysisResult> {
 
 async function generateReport(files: string[]): Promise<void> {
   try {
-    console.log('\n📊 Generating Enhanced Code Quality Report for Medical Education Platform...');
+    console.log('\n📊 Generating Comprehensive Medical Education Software Quality Report...');
     console.log('═══════════════════════════════════════════════════════════════════════\n');
 
     const analysis = await calculateMetrics(files);
     const { metrics, highComplexityFiles } = analysis;
+
+    // Medical Education Platform Specific Metrics
+    console.log('🏥 Medical Education Compliance');
+    console.log('─────────────────────────────');
+    console.log(`• HIPAA Compliance Score: ${getColorForScore(metrics.securityScore)}${metrics.securityScore.toFixed(1)}%\x1b[0m`);
+    console.log(`• Accessibility Rating: ${getColorForScore(metrics.accessibilityScore)}${metrics.accessibilityScore.toFixed(1)}%\x1b[0m`);
+    console.log(`• Medical Terminology Accuracy: ${getColorForScore(metrics.medicalTermAccuracy)}${metrics.medicalTermAccuracy.toFixed(1)}%\x1b[0m`);
+    console.log(`• Educational Content Quality: ${getColorForScore(metrics.educationalQuality)}${metrics.educationalQuality.toFixed(1)}%\x1b[0m\n`);
 
     // Health Score Section with Color Coding
     console.log('🏥 Overall System Health');

@@ -343,7 +343,9 @@ async function startServer(): Promise<void> {
               log(`Server started successfully on port ${PORT}`);
               log(`Environment: ${process.env.NODE_ENV || 'development'}`);
               log(`Database: Connected`);
-              log(`Frontend: ${app.get('env') === 'development' ? 'Vite Dev Server' : 'Static Files'}`);
+              log(
+                `Frontend: ${app.get('env') === 'development' ? 'Vite Dev Server' : 'Static Files'}`,
+              );
               log('=================================');
 
               resolve();
@@ -398,7 +400,6 @@ async function startServer(): Promise<void> {
     // Register cleanup handlers
     process.on('SIGTERM', () => cleanup('SIGTERM'));
     process.on('SIGINT', () => cleanup('SIGINT'));
-
   } catch (error) {
     console.error('Fatal error during server startup:', {
       error: error instanceof Error ? error.message : String(error),
@@ -409,6 +410,46 @@ async function startServer(): Promise<void> {
     try {
       await closeDatabase();
     } catch (cleanupError) {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
       console.error('Error during final cleanup:', cleanupError);
     }
 

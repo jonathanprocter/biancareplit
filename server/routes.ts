@@ -71,25 +71,45 @@ export function registerRoutes(app: Express): Server {
   // AI routes
   // AI Service health check endpoint - public for monitoring
   app.get('/api/ai/health', async (req, res) => {
+    const startTime = Date.now();
     try {
       const aiService = AIService.getInstance();
-      const startTime = Date.now();
+      
+      // Add timeout for health check
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Health check timeout')), 5000)
+      );
+      
+      await Promise.race([
+        aiService.ensureConnection(),
+        timeoutPromise
+      ]);
 
-      await aiService.ensureConnection();
+      const responseTime = Date.now() - startTime;
+      
+      // Log slow responses
+      if (responseTime > 1000) {
+        console.warn(`[API] Slow health check response: ${responseTime}ms`);
+      }
 
       res.json({
         status: 'healthy',
         message: 'AI Service connection validated successfully',
         timestamp: new Date().toISOString(),
-        responseTime: Date.now() - startTime,
+        responseTime,
         environment: process.env.NODE_ENV || 'development',
+        version: process.env.npm_package_version || '1.0.0',
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('[API] Health check failed:', errorMessage);
+      
       res.status(503).json({
         status: 'unhealthy',
         message: errorMessage,
         timestamp: new Date().toISOString(),
+        responseTime: Date.now() - startTime,
+        details: error instanceof Error ? error.stack : undefined,
       });
     }
   });
@@ -586,7 +606,19 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/learning-style/submit', requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
-      const responses = req.body.responses;
+      const responses = req.body.responses
+              if (!responses || !Array.isArray(responses)) {
+        throw new Error('Invalid responses format: responses must be an array');
+      }
+
+      // Validate response format
+      if (responses.length === 0) {
+        throw new Error('No responses provided');
+      }
+
+      // Sanitize medical data
+      const sanitizedResponses = responses.map(response => sanitizeMedicalData(response));
+            ;
 
       if (!Array.isArray(responses) || responses.length === 0) {
         return res.status(400).json({ message: 'Invalid response format' });
@@ -938,6 +970,18 @@ export function registerRoutes(app: Express): Server {
           });
 
           let output = '';
+          let lastUpdate = Date.now();
+          let progress = { processed: 0, total: validFiles.length };
+
+          shell.on('message', (message) => {
+            lastUpdate = Date.now();
+            try {
+              // Try to parse progress updates or final results
+              const parsed = JSON.parse(message);
+              if (parsed.type === 'progress') {
+                progress = parsed.data;
+                console.log(`[API] Progress: ${progress.processed}/${progress.total} files`);
+              } else {
           let lastUpdate = Date.now();
           let progress = { processed: 0, total: validFiles.length };
 
