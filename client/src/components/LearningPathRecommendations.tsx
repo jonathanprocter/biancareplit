@@ -1,5 +1,4 @@
-import { BookOpen, Brain, Clock, Target, TrendingUp } from 'lucide-react';
-
+import { BookOpen, Brain, Clock, Target } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -10,34 +9,26 @@ import { Progress } from '@/components/ui/progress';
 import { useGenerateLearningPath, useLearningPaths } from '@/lib/api';
 
 import { useToast } from '@/hooks/use-toast';
+import { useUserId } from '@/hooks/use-user-id';
 
 import { Course } from '@/types/course';
 import { MatchDetails } from '@/types/match';
 
-// Using React hook to store userId safely
-function getUserId() {
-  const id = localStorage.getItem('userId');
-  return id ? parseInt(id) : null;
-}
-
 export function LearningPathRecommendations() {
   const { toast } = useToast();
-  const [userId, setUserId] = useState(() => getUserId());
+  const userId = useUserId();
   const generatePath = useGenerateLearningPath();
   const { data: learningPaths, isLoading, error } = useLearningPaths(userId);
 
-  useEffect(() => {
-    // Sync userId changes
-    setUserId(getUserId());
-  }, []);
-
   const handleGeneratePath = async () => {
+    if (!userId) {
+      toast({ title: 'Error', variant: 'destructive', description: 'User ID is required.' });
+      return;
+    }
+
     try {
       await generatePath.mutateAsync(userId);
-      toast({
-        title: 'Success',
-        description: 'New learning path generated successfully!',
-      });
+      toast({ title: 'Success', description: 'New learning path generated successfully!' });
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -48,7 +39,6 @@ export function LearningPathRecommendations() {
   };
 
   const getDifficultyColor = (difficulty: string) => {
-    // Consider dynamic classes or use a proper theme/context approach
     switch (difficulty.toLowerCase()) {
       case 'beginner':
         return 'bg-green-100 text-green-800';

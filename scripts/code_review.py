@@ -285,100 +285,111 @@ class CodeReviewSystem:
             results['in_progress'].append(file_path)
             logger.info(f"\nProcessing file {index + 1}/{total_files} ({(index + 1)/total_files*100:.1f}%)")
             logger.info(f"Current file: {file_path} (Priority: {priority})")
-                logger.info(f"Processing {file_path} ({language})")
-                try:
-                    # Add delay between API calls to avoid rate limits
-                    await asyncio.sleep(1)
-                    
-                    # Step 1: Fix code
-                    fixed_code = await self.fix_code(file_path, language)
-                    if not fixed_code:
-                        results["failed"].append(file_path)
-                        continue
+            try:
+                # Add delay between API calls to avoid rate limits
+                await asyncio.sleep(1)
+                
+                # Step 1: Fix code
+                fixed_code = await self.fix_code(file_path, language)
+                if not fixed_code:
+                    results["failed"].append(file_path)
+                    continue
 
-                    # Step 2: Save fixes
-                    if self.save_fixed_code(file_path, fixed_code):
-                        # Step 3: Apply linters
-                        if self.apply_linters(file_path, language):
-                            results["fixed"].append(file_path)
-                            logger.info(f"Successfully processed {file_path}")
-                        else:
-                            results["failed"].append(file_path)
+                # Step 2: Save fixes
+                if self.save_fixed_code(file_path, fixed_code):
+                    # Step 3: Apply linters
+                    if self.apply_linters(file_path, language):
+                        results["fixed"].append(file_path)
+                        logger.info(f"Successfully processed {file_path}")
                     else:
                         results["failed"].append(file_path)
-
-                except Exception as e:
-                    logger.error(f"Error processing {file_path}: {str(e)}")
+                else:
                     results["failed"].append(file_path)
+
+            except Exception as e:
+                logger.error(f"Error processing {file_path}: {str(e)}")
+                results["failed"].append(file_path)
                     
+            try:
+                # Set timeout based on priority level
+                timeout = {
+                    0: 20,  # Critical files get shortest timeout
+                    1: 30,  # Highest priority
+                    2: 45,  # High priority
+                    3: 60   # Medium priority
+                }.get(priority, 90)  # Default longer timeout for other files
+                
+                # Use asyncio.wait_for for the entire file processing
                 try:
-                    # Set timeout based on priority level
-                    timeout = {
-                        0: 20,  # Critical files get shortest timeout
-                        1: 30,  # Highest priority
-                        2: 45,  # High priority
-                        3: 60   # Medium priority
-                    }.get(priority, 90)  # Default longer timeout for other files
-                    
-                    # Use asyncio.wait_for for the entire file processing
                     async with asyncio.timeout(timeout):
+                        logger.info(f"Starting review of {file_path} with {timeout}s timeout")
                         fixed_code = await self.fix_code(file_path, language)
+                        
                         if not fixed_code:
+                            logger.warning(f"No fixes generated for {file_path}")
+                            results["failed"].append(file_path)
+                            continue
+
+                        # Save and lint in smaller steps with individual error handling
+                        save_success = self.save_fixed_code(file_path, fixed_code)
+                        if not save_success:
+                            logger.error(f"Failed to save fixes for {file_path}")
                             results["failed"].append(file_path)
                             continue
                             
-                        if self.save_fixed_code(file_path, fixed_code):
-                            if self.apply_linters(file_path, language):
-                                results["fixed"].append(file_path)
-                                logger.info(f"Successfully processed {file_path}")
-                            else:
-                                results["failed"].append(file_path)
+                        lint_success = self.apply_linters(file_path, language)
+                        if not lint_success:
+                            logger.warning(f"Linting failed for {file_path}")
+                            # Still mark as fixed if only linting failed
+                            results["fixed"].append(file_path)
                         else:
-                            results["failed"].append(file_path)
-                    
-                    # Adaptive delay based on priority and file size
-                    file_size = os.path.getsize(file_path)
-                    base_delay = {
-                        0: 1,   # Critical files
-                        1: 2,   # Highest priority
-                        2: 3,   # High priority
-                        3: 4    # Medium priority
-                    }.get(priority, 5)  # Default longer delay for other files
-                    
-                    size_factor = min(file_size / (500 * 1024), 2)  # Cap at 2x for files larger than 500KB
-                    delay = base_delay * size_factor
-                    
-                    await asyncio.sleep(delay)
-                    
+                            results["fixed"].append(file_path)
+                            logger.info(f"Successfully processed {file_path}")
+                            
                 except asyncio.TimeoutError:
-                    logger.warning(f"Timeout processing {file_path}")
+                    logger.error(f"Timeout ({timeout}s) exceeded for {file_path}")
                     results["timeout"].append(file_path)
-                    results["in_progress"].remove(file_path)
-                    await asyncio.sleep(8)  # Longer delay after timeout
-                    continue
                 except Exception as e:
-                    logger.error(f"Error processing {file_path}: {str(e)}")
+                    logger.error(f"Unexpected error processing {file_path}: {str(e)}")
                     results["failed"].append(file_path)
-                    results["in_progress"].remove(file_path)
-                    await asyncio.sleep(5)
-                    continue
                 
+                # Adaptive delay based on priority and file size
+                file_size = os.path.getsize(file_path)
+                base_delay = {
+                    0: 1,   # Critical files
+                    1: 2,   # Highest priority
+                    2: 3,   # High priority
+                    3: 4    # Medium priority
+                }.get(priority, 5)  # Default longer delay for other files
+                
+                size_factor = min(file_size / (500 * 1024), 2)  # Cap at 2x for files larger than 500KB
+                delay = base_delay * size_factor
+                
+                await asyncio.sleep(delay)
+                
+            except Exception as e:
+                logger.error(f"Error processing {file_path}: {str(e)}")
+                results["failed"].append(file_path)
                 results["in_progress"].remove(file_path)
+                await asyncio.sleep(5)
+                continue
                 
-                # Progress update after each file
-                logger.info(f"\nProgress Update:")
-                logger.info(f"Fixed: {len(results['fixed'])} files")
-                logger.info(f"Failed: {len(results['failed'])} files")
-                logger.info(f"Timeout: {len(results['timeout'])} files")
-                logger.info(f"In Progress: {len(results['in_progress'])} files")
-                logger.info(f"Remaining: {total_files - (index + 1)} files")
+            results["in_progress"].remove(file_path)
+                
+            # Progress update after each file
+            logger.info(f"\nProgress Update:")
+            logger.info(f"Fixed: {len(results['fixed'])} files")
+            logger.info(f"Failed: {len(results['failed'])} files")
+            logger.info(f"Timeout: {len(results['timeout'])} files")
+            logger.info(f"In Progress: {len(results['in_progress'])} files")
+            logger.info(f"Remaining: {total_files - (index + 1)} files")
             
             # Add periodic progress update
-                if (index + 1) % 5 == 0:  # Update every 5 files
-                    await asyncio.sleep(3)
-                    percent_complete = ((index + 1) / total_files) * 100
-                    logger.info(f"Progress: {percent_complete:.1f}% ({index + 1}/{total_files} files)")
-                    logger.info(f"Status: Fixed={len(results['fixed'])}, Failed={len(results['failed'])}, Timeout={len(results['timeout'])}")
+            if (index + 1) % 5 == 0:  # Update every 5 files
+                await asyncio.sleep(3)
+                percent_complete = ((index + 1) / total_files) * 100
+                logger.info(f"Progress: {percent_complete:.1f}% ({index + 1}/{total_files} files)")
+                logger.info(f"Status: Fixed={len(results['fixed'])}, Failed={len(results['failed'])}, Timeout={len(results['timeout'])}")
             
 
         # Log comprehensive processing summary

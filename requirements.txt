@@ -40,3 +40,7 @@ flake8
 requests
 openai
 validate-email
+black
+flake8
+openai
+python-dotenv

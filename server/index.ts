@@ -324,24 +324,53 @@ async function startServer(): Promise<void> {
     // ALWAYS serve the app on port 5000
     // this serves both the API and the client
     const PORT = 5000;
-    await new Promise<void>((resolve, reject) => {
-      server
-        .listen(PORT, '0.0.0.0')
-        .once('listening', () => {
-          server.keepAliveTimeout = 65000;
-          server.headersTimeout = 66000;
-          log('=================================');
-          log(`Server started successfully on port ${PORT}`);
-          log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-          log(`Database: Connected`);
-          log(`Frontend: ${app.get('env') === 'development' ? 'Vite Dev Server' : 'Static Files'}`);
-          log('=================================');
-          resolve();
-        })
-        .once('error', (err) => {
-          reject(new Error(`Failed to start server: ${err.message}`));
+    try {
+      // Check if port is in use
+      await new Promise((resolve, reject) => {
+        const testServer = http.createServer();
+        testServer.once('error', (err: any) => {
+          if (err.code === 'EADDRINUSE') {
+            reject(new Error(`Port ${PORT} is already in use`));
+          } else {
+            reject(err);
+          }
         });
-    });
+        testServer.once('listening', () => {
+          testServer.close(resolve);
+        });
+        testServer.listen(PORT, '0.0.0.0');
+      });
+
+      // Start the actual server
+      await new Promise<void>((resolve, reject) => {
+        server
+          .listen(PORT, '0.0.0.0')
+          .once('listening', () => {
+            server.keepAliveTimeout = 65000;
+            server.headersTimeout = 66000;
+            log('=================================');
+            log(`Server started successfully on port ${PORT}`);
+            log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+            log(`Database: Connected`);
+            log(`Frontend: ${app.get('env') === 'development' ? 'Vite Dev Server' : 'Static Files'}`);
+            log('=================================');
+            resolve();
+          })
+          .once('error', (err) => {
+            reject(new Error(`Failed to start server: ${err.message}`));
+          });
+      });
+    } catch (error) {
+      log(`Failed to start server: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Attempt to close any existing connections before exiting
+      try {
+        await closeDatabase();
+        log('Database connections closed');
+      } catch (cleanupError) {
+        log(`Error closing database: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown error'}`);
+      }
+      process.exit(1);
+    }
 
     // Setup cleanup handlers
     const cleanup = async (signal: string) => {

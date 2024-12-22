@@ -64,43 +64,55 @@ class CodeReviewService:
                 logger.warning(f"Unsupported file type: {extension}")
                 return {"error": f"Unsupported file type: {extension}"}
 
+            # Check file size before processing
+            file_size = file_path.stat().st_size
+            if file_size > 100 * 1024:  # 100KB limit
+                logger.warning(f"File too large: {file_path} ({file_size / 1024:.1f}KB)")
+                return {"error": "File too large for detailed review"}
+
             with open(file_path, "r", encoding="utf-8") as file:
-                code = file.read()
+                code = file.read().strip()
 
-            # Create prompt for code review
-            prompt = f"""Review this {language} code for:
-            1. Bugs and potential errors
-            2. Performance issues
-            3. Security vulnerabilities
-            4. Code style and best practices
-            5. Integration problems
-            6. Suggested improvements
+            if not code:
+                logger.warning(f"Empty file: {file_path}")
+                return {"error": "File is empty"}
 
-            Provide response as JSON with:
-            - issues: array of identified problems
-            - suggestions: array of specific fixes
-            - improved_code: complete fixed version
-            - severity: high/medium/low for each issue
+            # Create prompt for code review - even more focused
+            prompt = f"""Review this {language} code for critical issues only. Focus on:
+1. Major bugs
+2. Security issues
+3. Performance concerns
 
-            Code to review:
-            {code}
-            """
+Return concise JSON:
+- issues: list max 2 critical problems
+- fixes: list key solutions
+- severity: string (high/medium/low)
 
-            response = self.client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert code reviewer. Analyze code for issues and provide specific, actionable improvements.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                response_format={"type": "json_object"},
-            )
+Code:
+{code}
+"""
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a focused code reviewer. Find only critical issues.",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    response_format={"type": "json_object"},
+                    timeout=30,  # 30 second timeout for API call
+                    max_tokens=500  # Limit response size
+                )
 
-            result = json.loads(response.choices[0].message.content)
-            logger.info(f"Successfully reviewed {file_path}")
-            return result
+                result = json.loads(response.choices[0].message.content)
+                logger.info(f"Successfully reviewed {file_path}")
+                return result
+
+            except Exception as api_error:
+                logger.error(f"OpenAI API error for {file_path}: {str(api_error)}")
+                return {"error": f"OpenAI API error: {str(api_error)}"}
 
         except Exception as e:
             logger.error(f"Error reviewing file {file_path}: {str(e)}")

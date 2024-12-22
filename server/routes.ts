@@ -850,33 +850,69 @@ export function registerRoutes(app: Express): Server {
       };
 
       try {
+        // Set shorter timeout for smaller directories
+        const directorySize = await (async () => {
+          const files = await fs.readdir(directory, { recursive: true });
+          return files.length;
+        })();
+        
+        // Adjust timeout based on directory size
+        options.timeout = Math.min(30000 + (directorySize * 1000), 120000); // Between 30s and 120s
+        console.log(`[API] Processing ${directorySize} files with ${options.timeout}ms timeout`);
+
         const results = await new Promise((resolve, reject) => {
           const shell = new PythonShell('code_review_service.py', options);
           let output = '';
+          let lastUpdate = Date.now();
 
           shell.on('message', (message) => {
-            output = message;
+            lastUpdate = Date.now();
+            try {
+              // Try to parse each message as it comes in
+              const parsed = JSON.parse(message);
+              output = message;
+              console.log('[API] Received valid review output');
+            } catch (err) {
+              // If not valid JSON, treat as progress message
+              console.log('[API] Progress:', message);
+            }
           });
 
           shell.on('error', (err) => {
             console.error('[API] Code review process error:', err);
-            reject(err);
+            reject(new Error(`Code review failed: ${err.message}`));
           });
 
           shell.on('close', () => {
             try {
+              if (!output) {
+                reject(new Error('No output received from code review'));
+                return;
+              }
               const parsedOutput = JSON.parse(output);
+              console.log('[API] Successfully parsed review output');
               resolve(parsedOutput);
             } catch (err) {
               console.error('[API] Failed to parse code review output:', err);
-              reject(new Error('Failed to parse code review results'));
+              reject(new Error('Invalid code review results format'));
             }
           });
 
-          // Handle timeout
+          // Progressive timeout checking
+          const checkProgress = setInterval(() => {
+            const timeSinceUpdate = Date.now() - lastUpdate;
+            if (timeSinceUpdate > options.timeout / 2) {
+              clearInterval(checkProgress);
+              shell.terminate();
+              reject(new Error('Code review process stalled'));
+            }
+          }, 5000);
+
+          // Final timeout
           setTimeout(() => {
+            clearInterval(checkProgress);
             shell.terminate();
-            reject(new Error('Code review process timed out'));
+            reject(new Error(`Code review timed out after ${options.timeout}ms`));
           }, options.timeout);
         });
 

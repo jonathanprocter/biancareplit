@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Brain, CheckCircle, Lock } from 'lucide-react';
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-
+import seedrandom from 'seedrandom';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import DOMPurify from 'dompurify';
 
 interface Skill {
   id: string;
@@ -64,6 +64,7 @@ export function SkillTreeVisualization({
       }));
 
       const epsilon = 0.0001;
+      const padding = 50;
 
       // Apply forces
       for (let i = 0; i < newNodes.length; i++) {
@@ -101,7 +102,7 @@ export function SkillTreeVisualization({
         node.velocity.x += (width / 2 - node.x) * centerForce;
         node.velocity.y += (height / 2 - node.y) * centerForce;
 
-        // Apply velocity with damping
+        // Apply velocity with damping measure
         const damping = 0.7;
         node.x += node.velocity.x * damping;
         node.y += node.velocity.y * damping;
@@ -109,7 +110,6 @@ export function SkillTreeVisualization({
         node.velocity.y *= damping;
 
         // Boundary constraints with padding
-        const padding = 50;
         node.x = Math.max(padding, Math.min(width - padding, node.x));
         node.y = Math.max(padding, Math.min(height - padding, node.y));
       }
@@ -140,35 +140,35 @@ export function SkillTreeVisualization({
 
   const renderConnections = useCallback(() => {
     return nodes
-      .flatMap((node) =>
-        node.prerequisites.map((prereqId) => {
+      .reduce((acc: JSX.Element[], node) => {
+        node.prerequisites.forEach((prereqId) => {
           const prereq = nodes.find((n) => n.id === prereqId);
-          if (!prereq) return null;
+          if (prereq) {
+            const key = `${node.id}-${prereqId}`;
+            const strokeColor = node.mastered ? '#22c55e' : '#94a3b8';
 
-          const key = `${node.id}-${prereqId}`;
-          const strokeColor = node.mastered ? '#22c55e' : '#94a3b8';
-
-          return (
-            <motion.line
-              key={key}
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{
-                pathLength: 1,
-                opacity: 1,
-                x1: prereq.x,
-                y1: prereq.y,
-                x2: node.x,
-                y2: node.y,
-              }}
-              transition={{ duration: 0.6, ease: 'easeInOut' }}
-              stroke={strokeColor}
-              strokeWidth={2}
-              strokeDasharray="4"
-            />
-          );
-        }),
-      )
-      .filter(Boolean);
+            acc.push(
+              <motion.line
+                key={key}
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{
+                  pathLength: 1,
+                  opacity: 1,
+                  x1: prereq.x,
+                  y1: prereq.y,
+                  x2: node.x,
+                  y2: node.y,
+                }}
+                transition={{ duration: 0.6, ease: 'easeInOut' }}
+                stroke={strokeColor}
+                strokeWidth={2}
+                strokeDasharray="4"
+              />
+            );
+          }
+        });
+        return acc;
+      }, []);
   }, [nodes]);
 
   return (
@@ -273,7 +273,5 @@ export function SkillTreeVisualization({
 }
 
 function sanitizeText(text: string): string {
-  const div = document.createElement('div');
-  div.innerText = text;
-  return div.innerHTML;
+  return DOMPurify.sanitize(text);
 }
