@@ -342,7 +342,7 @@ class SystemIntegration {
       this.wsUrl =
         initialConfig.wsUrl ||
         process.env.REACT_APP_WS_URL ||
-        `ws://${window.location.hostname}:81/ws`;
+        `wss://${window.location.hostname}/ws`;
       this.wsConfig = {
         maxReconnectAttempts: initialConfig.websocket?.reconnectAttempts || 5,
         reconnectDelay: initialConfig.websocket?.reconnectDelay || 2000,
