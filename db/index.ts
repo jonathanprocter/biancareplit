@@ -65,11 +65,17 @@ export async function closeDatabase() {
 process.on('SIGINT', () => {
   closeDatabase()
     .then(() => process.exit(0))
-    .catch(() => process.exit(1));
+    .catch((err) => {
+      console.error('[Database] Failed to close database:', err);
+      process.exit(1);
+    });
 });
 
 process.on('SIGTERM', () => {
   closeDatabase()
     .then(() => process.exit(0))
-    .catch(() => process.exit(1));
+    .catch((err) => {
+      console.error('[Database] Failed to close database:', err);
+      process.exit(1);
+    });
 });
