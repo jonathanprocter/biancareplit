@@ -57,7 +57,7 @@ export async function closeDatabase() {
       '[Database] Error during cleanup:',
       error instanceof Error ? error.message : 'Unknown error',
     );
-    throw error; // Re-throw to ensure proper process termination
+    throw error;
   }
 }
 
