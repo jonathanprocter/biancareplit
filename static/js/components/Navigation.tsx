@@ -1,29 +1,86 @@
-import { AppBar, Button, Toolbar, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-
+import { useLocation } from 'wouter';
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu';
 
 const Navigation = () => {
+  const [location, setLocation] = useLocation();
+
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          NCLEX Coach
-        </Typography>
-        <Button color="inherit" component={RouterLink} to="/">
-          Dashboard
-        </Button>
-        <Button color="inherit" component={RouterLink} to="/quiz">
-          Quiz
-        </Button>
-        <Button color="inherit" component={RouterLink} to="/chat">
-          AI Chat
-        </Button>
-        <Button color="inherit" component={RouterLink} to="/analytics">
-          Analytics
-        </Button>
-      </Toolbar>
-    </AppBar>
+    <NavigationMenu className="px-4 py-2 border-b">
+      <NavigationMenuList className="flex items-center justify-between w-full">
+        <NavigationMenuItem>
+          <NavigationMenuLink
+            className={navigationMenuTriggerStyle()}
+            onClick={() => setLocation('/')}
+          >
+            Medical Education Platform
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        <div className="flex items-center space-x-4">
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              className={navigationMenuTriggerStyle()}
+              onClick={() => setLocation('/')}
+            >
+              Dashboard
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              className={navigationMenuTriggerStyle()}
+              onClick={() => setLocation('/study')}
+            >
+              Study
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              className={navigationMenuTriggerStyle()}
+              onClick={() => setLocation('/analytics')}
+            >
+              Analytics
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              className={navigationMenuTriggerStyle()}
+              onClick={() => setLocation('/chat')}
+            >
+              AI Chat
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => setLocation('/profile')}
+          >
+            Profile
+          </Button>
+          <Button
+            variant="default"
+            onClick={() => {
+              // Handle logout
+              setLocation('/login');
+            }}
+          >
+            Sign Out
+          </Button>
+        </div>
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 };
 

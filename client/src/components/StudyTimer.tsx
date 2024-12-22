@@ -109,4 +109,103 @@ export const StudyTimer = () => {
     const newSessionHistory = [
       ...timer.sessionHistory,
       {
-        duration: timer.isBreak ? (newCompletedSessions % 4 === 0 ? 15 : 5) : timer.optimalDurati
+        duration: timer.isBreak ? (newCompletedSessions % 4 === 0 ? 15 : 5) : timer.optimalDuration,
+        type: timer.isBreak ? 'break' : 'work',
+        completedAt: new Date().toISOString(),
+        productivity: timer.isBreak ? 1 : Math.random() * 0.4 + 0.6, // Simulated productivity
+      },
+    ];
+
+    const newOptimalDuration = calculateOptimalDuration(newSessionHistory);
+    const newFocusScore = calculateFocusScore(newSessionHistory);
+
+    setTimer((prev) => ({
+      ...prev,
+      minutes: timer.isBreak ? newOptimalDuration : 5,
+      seconds: 0,
+      isActive: false,
+      isBreak: !timer.isBreak,
+      completedSessions: newCompletedSessions,
+      focusScore: newFocusScore,
+      optimalDuration: newOptimalDuration,
+      sessionHistory: newSessionHistory,
+    }));
+
+    // Show completion notification
+    toast({
+      title: timer.isBreak ? 'Break Complete!' : 'Session Complete!',
+      description: timer.isBreak
+        ? "Time to get back to studying! You've got this!"
+        : 'Great work! Take a short break to recharge.',
+    });
+
+    // Set new motivation message
+    setMotivation(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
+  };
+
+  const toggleTimer = () => {
+    setTimer((prev) => ({ ...prev, isActive: !prev.isActive }));
+  };
+
+  const resetTimer = () => {
+    setTimer((prev) => ({
+      ...prev,
+      minutes: prev.isBreak ? 5 : prev.optimalDuration,
+      seconds: 0,
+      isActive: false,
+    }));
+  };
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardContent className="p-6">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="flex items-center space-x-2">
+            {timer.isBreak ? (
+              <Coffee className="h-6 w-6 text-blue-500" />
+            ) : (
+              <Brain className="h-6 w-6 text-green-500" />
+            )}
+            <h2 className="text-2xl font-bold">{timer.isBreak ? 'Break Time' : 'Study Session'}</h2>
+          </div>
+
+          <div className="text-6xl font-mono">
+            {String(timer.minutes).padStart(2, '0')}:{String(timer.seconds).padStart(2, '0')}
+          </div>
+
+          <div className="flex space-x-4">
+            <Button onClick={toggleTimer} size="lg">
+              {timer.isActive ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+            </Button>
+            <Button onClick={resetTimer} variant="outline" size="lg">
+              <RotateCcw className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <div className="w-full space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Focus Score</span>
+              <span>{Math.round(timer.focusScore)}%</span>
+            </div>
+            <Progress value={timer.focusScore} className="h-2" />
+          </div>
+
+          <AnimatePresence>
+            {motivation && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="text-center text-sm text-gray-600"
+              >
+                {motivation}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default StudyTimer;

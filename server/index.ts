@@ -84,7 +84,6 @@ const corsOptions: CorsOptions = {
 app.use(cors(corsOptions));
 app.set('trust proxy', 1);
 
-
 // File upload middleware
 app.use(
   fileUpload({
@@ -213,25 +212,27 @@ async function startServer(): Promise<void> {
     // Step 5: Start server with port conflict handling
     const PORT = 5000;
     const startServer = (port: number) => {
-      server.listen(port, '0.0.0.0', () => {
-        log(`Server started successfully on port ${port}`);
-      }).on('error', (err: NodeJS.ErrnoException) => {
-        if (err.code === 'EADDRINUSE') {
-          log(`Port ${port} is in use, attempting to terminate existing process...`);
-          const { exec } = require('child_process');
-          exec(`lsof -i :${port} | grep LISTEN | awk '{print $2}' | xargs kill -9`, (err: Error) => {
-            if (err) {
-              log(`Failed to free port ${port}, please check manually`);
-              process.exit(1);
-            }
-            log(`Successfully freed port ${port}, restarting server...`);
-            setTimeout(() => startServer(port), 1000);
-          });
-        } else {
-          log(`Failed to start server: ${err.message}`);
-          process.exit(1);
-        }
-      });
+      server!
+        .listen(port, '0.0.0.0', () => {
+          log(`Server started successfully on port ${port}`);
+        })
+        .on('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE') {
+            log(`Port ${port} is in use, attempting to terminate existing process...`);
+            const { exec } = require('child_process');
+            exec(`lsof -i :${port} | grep LISTEN | awk '{print $2}' | xargs kill -9`, (err: Error) => {
+              if (err) {
+                log(`Failed to free port ${port}, please check manually`);
+                process.exit(1);
+              }
+              log(`Successfully freed port ${port}, restarting server...`);
+              setTimeout(() => startServer(port), 1000);
+            });
+          } else {
+            log(`Failed to start server: ${err.message}`);
+            process.exit(1);
+          }
+        });
     };
 
     startServer(PORT);
@@ -275,8 +276,8 @@ async function startServer(): Promise<void> {
         'Error during final cleanup:',
         cleanupError instanceof Error ? cleanupError.message : 'Unknown error',
       );
-      process.exit(1);
     }
+    process.exit(1);
   }
 }
 
