@@ -6,23 +6,31 @@ import { Button } from '@/components/ui/button';
 
 import { useToast } from '@/hooks/use-toast';
 
-const Navigation = () => {
+function Navigation() {
   const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [location] = useLocation();
   const publicRoutes = ['/', '/register'];
 
+  // Don't show navigation on public routes
   if (publicRoutes.includes(location)) {
     return null;
   }
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+
     try {
       setIsLoggingOut(true);
       localStorage.removeItem('userId');
       localStorage.removeItem('username');
       window.location.href = '/';
     } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
       toast({
         variant: 'destructive',
@@ -65,6 +73,6 @@ const Navigation = () => {
       </div>
     </nav>
   );
-};
+}
 
 export default Navigation;

@@ -28,7 +28,14 @@ app.use(express.urlencoded({ extended: false }));
 // CORS configuration
 app.use(
   cors({
-    origin: ['http://localhost:5000', 'http://0.0.0.0:5000'],
+    origin: (origin, callback) => {
+      const allowedOrigins = ['http://localhost:5174', 'http://0.0.0.0:5174'];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   }),
@@ -82,7 +89,7 @@ async function startServer() {
     // Create HTTP server
     const server = createServer(app);
 
-    // Register routes
+    // Register routes before setting up Vite
     registerRoutes(app);
 
     // Setup frontend serving
@@ -102,33 +109,42 @@ async function startServer() {
       });
     });
 
-    // Port retry logic
-    const findAvailablePort = async (startPort: number = 5000): Promise<number> => {
-      return new Promise((resolve, reject) => {
-        const tryPort = (port: number) => {
-          server.once('error', (err: NodeJS.ErrnoException) => {
-            if (err.code === 'EADDRINUSE') {
-              log(`Port ${port} is in use, trying port ${port + 1}`);
-              server.close();
-              tryPort(port + 1);
-            } else {
-              reject(err);
-            }
-          });
+    // Port retry logic with exponential backoff
+    const findAvailablePort = async (
+      startPort: number = 3000,
+      maxAttempts: number = 5,
+    ): Promise<number> => {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const port = startPort + attempt;
+        try {
+          await new Promise<void>((resolve, reject) => {
+            server.once('error', (err: NodeJS.ErrnoException) => {
+              if (err.code === 'EADDRINUSE') {
+                log(`Port ${port} is in use, trying next port...`);
+                server.close();
+                resolve();
+              } else {
+                reject(err);
+              }
+            });
 
-          server.listen(port, '0.0.0.0', () => {
-            server.removeAllListeners('error');
-            resolve(port);
+            server.listen(port, '0.0.0.0', () => {
+              server.removeAllListeners('error');
+              resolve();
+            });
           });
-        };
-
-        tryPort(startPort);
-      });
+          return port;
+        } catch (err) {
+          if (attempt === maxAttempts - 1) throw err;
+          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 100));
+        }
+      }
+      throw new Error('Could not find an available port after maximum attempts');
     };
 
     const port = await findAvailablePort();
     log(`Server started successfully on port ${port}`);
-    log(`API and client both available at http://0.0.0.0:${port}`);
+    log(`API server running at http://0.0.0.0:${port}`);
 
     // Graceful shutdown
     const cleanup = async (signal: string) => {
