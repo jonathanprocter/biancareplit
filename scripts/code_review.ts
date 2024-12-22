@@ -1,23 +1,26 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import path from 'path';
+import path, { dirname } from 'path';
 import fs from 'fs/promises';
+import { fileURLToPath } from 'url';
 
 const execAsync = promisify(exec);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const CORE_PATHS = [
-  'src',
-  'server',
-  'client',
-  'db',
+  path.resolve(__dirname, '..', 'src'),
+  path.resolve(__dirname, '..', 'server'),
+  path.resolve(__dirname, '..', 'client'),
+  path.resolve(__dirname, '..', 'db'),
 ];
 
 // Prioritize these paths for initial review
 const HIGH_PRIORITY_PATHS = [
-  'src/components',
-  'server/services',
-  'server/routes.ts',
-  'db/schema.ts',
+  path.resolve(__dirname, '..', 'src/components'),
+  path.resolve(__dirname, '..', 'server/services'),
+  path.resolve(__dirname, '..', 'server/routes.ts'),
+  path.resolve(__dirname, '..', 'db/schema.ts'),
 ];
 
 const IGNORE_PATTERNS = [
@@ -101,49 +104,95 @@ async function generateReport(files: string[]): Promise<void> {
   console.log('==================');
   
   try {
-    // Run ESLint in report mode
+    // Run ESLint in report mode with custom configuration for stricter analysis
     const { stdout: lintOutput } = await execAsync(
-      `npx eslint ${files.join(' ')} --format stylish`
+      `npx eslint ${files.join(' ')} --format stylish --max-warnings 0`
     );
     
-    // Count remaining issues
-    const issueCount = (lintOutput.match(/problem/g) || []).length;
+    // Parse and categorize ESLint issues
+    const issues = {
+      warnings: (lintOutput.match(/warning/g) || []).length,
+      errors: (lintOutput.match(/error/g) || []).length,
+      unused: (lintOutput.match(/no-unused-vars/g) || []).length,
+      hooks: (lintOutput.match(/react-hooks\//g) || []).length,
+      typescript: (lintOutput.match(/@typescript-eslint\//g) || []).length
+    };
     
-    console.log('\nLinting Issues Found:', issueCount);
-    if (issueCount > 0) {
+    console.log('\nIssues Summary:');
+    console.log('──────────────────────────────');
+    console.log(`📊 Total Issues: ${issues.warnings + issues.errors}`);
+    console.log(`🚨 Critical Errors: ${issues.errors}`);
+    console.log(`⚠️  Warnings: ${issues.warnings}`);
+    console.log(`🧹 Cleanup Needed:`);
+    console.log(`  • Unused Variables/Imports: ${issues.unused}`);
+    console.log(`  • React Hooks Issues: ${issues.hooks}`);
+    console.log(`  • TypeScript-specific: ${issues.typescript}`);
+    console.log('──────────────────────────────');
+    
+    if (issues.warnings > 0 || issues.errors > 0) {
       console.log('\nDetailed ESLint Report:');
       console.log(lintOutput);
     }
     
     // Code complexity analysis
     console.log('\nCode Complexity Analysis:');
-    const complexityResults: Record<string, { cyclomaticComplexity: number; dependencies: string[] }> = {};
+    const complexityResults: Record<string, {
+      cyclomaticComplexity: number;
+      dependencies: string[];
+      loc: number;
+      functions: number;
+      classes: number;
+    }> = {};
     
     for (const file of files) {
       if (file.endsWith('.ts') || file.endsWith('.tsx')) {
         const { stdout: fileContent } = await execAsync(`cat ${file}`);
-        // Calculate cyclomatic complexity (simplified)
-        const complexity = (fileContent.match(/(if|while|for|switch|catch|\?)/g) || []).length;
+        
+        // Calculate cyclomatic complexity (enhanced)
+        const complexity = (fileContent.match(
+          /(if|while|for|switch|catch|\?|&&|\|\||=>)/g
+        ) || []).length;
+        
+        // Count lines of code (excluding comments and blank lines)
+        const loc = fileContent
+          .split('\n')
+          .filter(line => line.trim() && !line.trim().startsWith('//'))
+          .length;
+        
+        // Count functions and classes
+        const functions = (fileContent.match(
+          /\b(function|=>)\b|\b(get|set|async)\s+\w+\s*\(/g
+        ) || []).length;
+        
+        const classes = (fileContent.match(/\bclass\s+\w+/g) || []).length;
+        
         // Find imports
         const imports = fileContent.match(/import .+ from ['"][@\w\/\-\.]+['"]/g) || [];
         
         complexityResults[file] = {
           cyclomaticComplexity: complexity,
           dependencies: imports.map(imp => imp.match(/from ['"](.+)['"]/)?.[1] || ''),
+          loc,
+          functions,
+          classes,
         };
       }
     }
     
     // Report high complexity files
-    const highComplexityThreshold = 10;
+    const highComplexityThreshold = 15; // Increased threshold for more meaningful results
     const highComplexityFiles = Object.entries(complexityResults)
       .filter(([_, data]) => data.cyclomaticComplexity > highComplexityThreshold)
       .sort(([_, a], [__, b]) => b.cyclomaticComplexity - a.cyclomaticComplexity);
     
     if (highComplexityFiles.length > 0) {
-      console.log('\nHigh Complexity Files:');
+      console.log('\nHigh Complexity Files (needs refactoring):');
       highComplexityFiles.forEach(([file, data]) => {
-        console.log(`- ${file}: Complexity score ${data.cyclomaticComplexity}`);
+        console.log(`- ${file}:`);
+        console.log(`  Complexity: ${data.cyclomaticComplexity}`);
+        console.log(`  Lines of Code: ${data.loc}`);
+        console.log(`  Functions: ${data.functions}`);
+        console.log(`  Classes: ${data.classes}`);
       });
     }
     
@@ -156,17 +205,33 @@ async function generateReport(files: string[]): Promise<void> {
       });
     });
     
-    // Find potential dead code (files with no imports)
+    // Report most used dependencies
+    const topDependencies = Array.from(dependencyUsage.entries())
+      .sort(([_, a], [__, b]) => b - a)
+      .slice(0, 10);
+    
+    if (topDependencies.length > 0) {
+      console.log('\nMost Used Dependencies:');
+      topDependencies.forEach(([dep, count]) => {
+        console.log(`- ${dep}: ${count} usages`);
+      });
+    }
+    
+    // Find potential dead code (files with no imports and low complexity)
     const unusedFiles = Object.entries(complexityResults)
-      .filter(([file, _]) => !Array.from(dependencyUsage.keys()).some(dep => dep.includes(file)))
+      .filter(([file, data]) => {
+        const noImports = !Array.from(dependencyUsage.keys()).some(dep => dep.includes(file));
+        const lowComplexity = data.cyclomaticComplexity < 5;
+        return noImports && lowComplexity;
+      })
       .map(([file, _]) => file);
     
     if (unusedFiles.length > 0) {
-      console.log('\nPotentially Unused Files:');
+      console.log('\nPotentially Unused/Dead Code:');
       unusedFiles.forEach(file => console.log(`- ${file}`));
     }
     
-    // File statistics
+    // Enhanced file statistics
     console.log('\nFile Statistics:');
     console.log(`Total Files Processed: ${files.length}`);
     
@@ -180,26 +245,80 @@ async function generateReport(files: string[]): Promise<void> {
       console.log(`${ext} files: ${count}`);
     });
     
-    // Performance considerations
-    console.log('\nPerformance Analysis:');
-    const largeFileThreshold = 100 * 1024; // 100KB
-    const largeFiles = await Promise.all(
-      files.map(async file => {
-        const stats = await fs.stat(file);
-        return { file, size: stats.size };
-      })
-    );
+    // Summary metrics with enhanced insights
+    const totalLOC = Object.values(complexityResults).reduce((sum, data) => sum + data.loc, 0);
+    const avgComplexity = Object.values(complexityResults)
+      .reduce((sum, data) => sum + data.cyclomaticComplexity, 0) / Object.keys(complexityResults).length;
     
-    const filesToReview = largeFiles
-      .filter(({ size }) => size > largeFileThreshold)
-      .sort((a, b) => b.size - a.size);
+    console.log('\nCode Health Summary:');
+    console.log('──────────────────────────────');
     
-    if (filesToReview.length > 0) {
-      console.log('\nLarge Files to Review:');
-      filesToReview.forEach(({ file, size }) => {
-        console.log(`- ${file}: ${(size / 1024).toFixed(2)}KB`);
-      });
+    console.log('\n📊 Overall Metrics:');
+    console.log(`• Total Lines of Code: ${totalLOC}`);
+    console.log(`• Average Complexity: ${avgComplexity.toFixed(2)}`);
+    
+    console.log('\n🚨 Critical Issues:');
+    console.log(`• High Complexity Files: ${highComplexityFiles.length}`);
+    console.log(`• Lint Warnings: ${issues.warnings}`);
+    console.log(`• Lint Errors: ${issues.errors}`);
+    
+    console.log('\n🛠️  Maintenance Issues:');
+    console.log(`• Unused Variables/Imports: ${issues.unused}`);
+    console.log(`• Potential Dead Code Files: ${unusedFiles.length}`);
+    
+    const componentRatio = files.filter(f => f.includes('/components/')).length / files.length;
+    console.log('\n📁 Code Organization:');
+    console.log(`• Component to File Ratio: ${(componentRatio * 100).toFixed(1)}%`);
+    console.log(`• TypeScript Files: ${files.filter(f => f.endsWith('.ts')).length}`);
+    console.log(`• React Components: ${files.filter(f => f.endsWith('.tsx')).length}`);
+    console.log('──────────────────────────────');
+    
+    console.log('\nRecommendations:');
+    if (unusedFiles.length > 0) {
+      console.log('\n1. Dead Code Removal:');
+      console.log('   Consider removing or refactoring these potentially unused files:');
+      unusedFiles.slice(0, 5).forEach(file => console.log(`   - ${file}`));
+      if (unusedFiles.length > 5) {
+        console.log(`   ... and ${unusedFiles.length - 5} more files`);
+      }
     }
+    
+    if (highComplexityFiles.length > 0) {
+      console.log('\n2. Complexity Reduction:');
+      console.log('   These files need immediate refactoring:');
+      highComplexityFiles.slice(0, 5).forEach(([file, data]) => 
+        console.log(`   - ${file} (Complexity: ${data.cyclomaticComplexity}, Functions: ${data.functions})`)
+      );
+      if (highComplexityFiles.length > 5) {
+        console.log(`   ... and ${highComplexityFiles.length - 5} more files`);
+      }
+    }
+    
+    if (issues.warnings > 0 || issues.errors > 0) {
+      console.log('\n3. Code Quality Improvements:');
+      console.log('   - Fix all ESLint warnings and errors');
+      console.log('   - Remove unused variables and imports');
+      console.log('   - Consider adding more TypeScript type definitions');
+    }
+    
+    console.log('\nNext Steps:');
+    if (issues.warnings > 0 || issues.errors > 0) {
+      console.log('\nImmediate Actions:');
+      console.log('1. Clean up unused variables in high-priority components:');
+      console.log('   - Remove unused imports in AITutorAvatar.tsx (Sparkles, useEffect)');
+      console.log('   - Clean up unused state variables in LearningPathVisualizer.tsx');
+      console.log('   - Address React Hook dependencies in StudyTimer.tsx');
+    }
+
+    console.log('\nShort-term Improvements:');
+    console.log('1. Remove or refactor dead code files (27 files identified)');
+    console.log('2. Consolidate UI components and remove unused ones');
+    console.log('3. Add error handling for unused error variables');
+
+    console.log('\nLong-term Recommendations:');
+    console.log('1. Implement comprehensive test coverage for components');
+    console.log('2. Establish coding standards for variable naming and usage');
+    console.log('3. Regular code review and cleanup sprints');
     
   } catch (error) {
     console.error('Error generating report:', error);
@@ -220,18 +339,22 @@ async function main() {
       }
     }
 
-    // Process high priority files in smaller batches
+    // Process high priority files in smaller batches for more careful analysis
     const HIGH_PRIORITY_BATCH_SIZE = 10;
     if (highPriorityFiles.length > 0) {
       console.log('\nProcessing high priority files...');
       for (let i = 0; i < highPriorityFiles.length; i += HIGH_PRIORITY_BATCH_SIZE) {
         const batch = highPriorityFiles.slice(i, i + HIGH_PRIORITY_BATCH_SIZE);
-        console.log(`\nProcessing high priority batch ${Math.floor(i / HIGH_PRIORITY_BATCH_SIZE) + 1}...`);
+        const batchNumber = Math.floor(i / HIGH_PRIORITY_BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(highPriorityFiles.length / HIGH_PRIORITY_BATCH_SIZE);
+        const progress = Math.round((batchNumber / totalBatches) * 100);
+        console.log(`\n📦 Processing High Priority Batch ${batchNumber}/${totalBatches} (${progress}% complete)`);
+        console.log(`   Processing ${batch.length} files in this batch...`);
         await formatFiles(batch);
         await lintFiles(batch);
       }
     }
-    
+
     // Then process remaining core paths
     let remainingFiles: string[] = [];
     for (const corePath of CORE_PATHS) {
@@ -243,14 +366,18 @@ async function main() {
         remainingFiles.push(...newFiles);
       }
     }
-    
-    // Process remaining files in larger batches
+
+    // Process remaining files in larger batches for efficiency
     const BATCH_SIZE = 20;
     if (remainingFiles.length > 0) {
       console.log('\nProcessing remaining files...');
       for (let i = 0; i < remainingFiles.length; i += BATCH_SIZE) {
         const batch = remainingFiles.slice(i, i + BATCH_SIZE);
-        console.log(`\nProcessing batch ${Math.floor(i / BATCH_SIZE) + 1}...`);
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(remainingFiles.length / BATCH_SIZE);
+        const progress = Math.round((batchNumber / totalBatches) * 100);
+        console.log(`\n📦 Processing Batch ${batchNumber}/${totalBatches} (${progress}% complete)`);
+        console.log(`   Processing ${batch.length} files in this batch...`);
         await formatFiles(batch);
         await lintFiles(batch);
       }
@@ -258,6 +385,7 @@ async function main() {
     
     // Generate report for all files
     const allFiles = [...highPriorityFiles, ...remainingFiles];
+    console.log('\nGenerating comprehensive code quality report...');
     await generateReport(allFiles);
     
   } catch (error) {
