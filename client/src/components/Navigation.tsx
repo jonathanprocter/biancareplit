@@ -1,4 +1,4 @@
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 
 import { useState } from 'react';
 
@@ -6,21 +6,15 @@ import { Button } from '@/components/ui/button';
 
 import { useToast } from '@/hooks/use-toast';
 
-function Navigation() {
+const Navigation = () => {
   const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [location] = useState('/'); // Default location
+  const [location] = useLocation();
   const publicRoutes = ['/', '/register'];
 
   if (publicRoutes.includes(location)) {
     return null;
   }
-
-  const linkClass = (path: string): string => {
-    return `text-lg font-semibold ${
-      location === path ? 'text-primary' : 'text-foreground hover:text-primary'
-    }`;
-  };
 
   const handleLogout = async () => {
     try {
@@ -46,10 +40,18 @@ function Navigation() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/dashboard">
-              <a className={linkClass('/dashboard')}>Dashboard</a>
+              <a
+                className={`text-lg font-semibold ${location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+              >
+                Dashboard
+              </a>
             </Link>
             <Link href="/progress">
-              <a className={linkClass('/progress')}>My Progress</a>
+              <a
+                className={`text-lg font-semibold ${location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+              >
+                My Progress
+              </a>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
@@ -61,6 +63,6 @@ function Navigation() {
       </div>
     </nav>
   );
-}
+};
 
 export default Navigation;

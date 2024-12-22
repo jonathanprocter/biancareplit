@@ -1,4 +1,5 @@
 import { AlertCircle } from 'lucide-react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { Helmet } from 'react-helmet';
 import { Route, Switch } from 'wouter';
 
@@ -6,28 +7,45 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import Navigation from '@/components/Navigation';
 
-const App: React.FC = () => {
+// Error fallback component
+const ErrorFallback = ({ error }: { error: Error }) => (
+  <div className="flex min-h-screen w-full items-center justify-center bg-gray-50">
+    <Card className="mx-4 w-full max-w-md">
+      <CardContent className="pt-6">
+        <div className="mb-4 flex gap-2">
+          <AlertCircle className="h-8 w-8 text-red-500" />
+          <h1 className="text-2xl font-bold text-gray-900">Something went wrong</h1>
+        </div>
+        <p className="mt-4 text-sm text-gray-600">{error.message}</p>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const App = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Medical Education Platform</title>
-        <meta charSet="utf-8" />
-        <meta name="description" content="An advanced AI-powered medical education platform" />
-      </Helmet>
-      <Navigation />
-      <main className="container mx-auto px-4 py-8">
-        <Switch>
-          <Route path="/">
-            <Dashboard />
-          </Route>
-          <Route component={NotFound} />
-        </Switch>
-      </main>
-    </div>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <div className="min-h-screen bg-background">
+        <Helmet>
+          <title>Medical Education Platform</title>
+          <meta charSet="utf-8" />
+          <meta name="description" content="An advanced AI-powered medical education platform" />
+        </Helmet>
+        <Navigation />
+        <main className="container mx-auto px-4 py-8">
+          <Switch>
+            <Route path="/">
+              <Dashboard />
+            </Route>
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+      </div>
+    </ErrorBoundary>
   );
 };
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Welcome to Medical Education Platform</h1>
@@ -36,7 +54,7 @@ const Dashboard: React.FC = () => {
   );
 };
 
-function NotFound() {
+const NotFound = () => {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-gray-50">
       <Card className="mx-4 w-full max-w-md">
@@ -50,6 +68,6 @@ function NotFound() {
       </Card>
     </div>
   );
-}
+};
 
 export default App;

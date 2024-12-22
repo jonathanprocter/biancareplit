@@ -55,11 +55,21 @@ export async function closeDatabase() {
   } catch (error) {
     console.error(
       '[Database] Error during cleanup:',
-      error instanceof Error ? error.message : error,
+      error instanceof Error ? error.message : 'Unknown error',
     );
+    throw error; // Re-throw to ensure proper process termination
   }
 }
 
-// Handle cleanup
-process.on('SIGINT', () => void closeDatabase());
-process.on('SIGTERM', () => void closeDatabase());
+// Handle cleanup with proper async handling
+process.on('SIGINT', () => {
+  closeDatabase()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+});
+
+process.on('SIGTERM', () => {
+  closeDatabase()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+});

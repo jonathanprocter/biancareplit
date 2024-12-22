@@ -134,31 +134,34 @@ async function startServer() {
 
     // Start server with port retry logic
     // Try to use port 5000 first, then fall back to other ports if needed
-    const tryPort = (port: number): Promise<number> => {
-      return new Promise((resolve, reject) => {
-        server
-          .listen(port, '0.0.0.0')
-          .on('listening', () => {
-            log(`Server started successfully on port ${port}`);
-            log(`API and client both available at http://0.0.0.0:${port}`);
-            resolve(port);
-          })
-          .on('error', (err: NodeJS.ErrnoException) => {
-            if (err.code === 'EADDRINUSE') {
-              log(`Port ${port} is in use, trying port ${port + 1}`);
-              server.close();
-              resolve(tryPort(port + 1));
-            } else {
-              reject(err);
-            }
-          });
-      });
+    const startServer = async (port: number = 5000): Promise<void> => {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          server
+            .listen(port, '0.0.0.0', () => {
+              log(`Server started successfully on port ${port}`);
+              log(`API and client both available at http://0.0.0.0:${port}`);
+              resolve();
+            })
+            .on('error', (err: NodeJS.ErrnoException) => {
+              if (err.code === 'EADDRINUSE') {
+                log(`Port ${port} is in use, trying port ${port + 1}`);
+                server.close();
+                startServer(port + 1)
+                  .then(resolve)
+                  .catch(reject);
+              } else {
+                reject(err);
+              }
+            });
+        });
+      } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+      }
     };
 
-    tryPort(5000).catch((error) => {
-      console.error('Failed to start server:', error);
-      process.exit(1);
-    });
+    await startServer();
 
     // Graceful shutdown
     const cleanup = async (signal: string) => {
