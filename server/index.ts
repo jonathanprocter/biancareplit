@@ -84,13 +84,6 @@ const corsOptions: CorsOptions = {
 app.use(cors(corsOptions));
 app.set('trust proxy', 1);
 
-// JSON parsing error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  if (err instanceof SyntaxError && 'body' in err) {
-    return res.status(400).json({ error: 'Invalid JSON' });
-  }
-  next(err);
-});
 
 // File upload middleware
 app.use(
@@ -217,11 +210,31 @@ async function startServer(): Promise<void> {
       log('Static file serving configured for production');
     }
 
-    // Step 5: Start server
+    // Step 5: Start server with port conflict handling
     const PORT = 5000;
-    server.listen(PORT, '0.0.0.0', () => {
-      log(`Server started successfully on port ${PORT}`);
-    });
+    const startServer = (port: number) => {
+      server.listen(port, '0.0.0.0', () => {
+        log(`Server started successfully on port ${port}`);
+      }).on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+          log(`Port ${port} is in use, attempting to terminate existing process...`);
+          const { exec } = require('child_process');
+          exec(`lsof -i :${port} | grep LISTEN | awk '{print $2}' | xargs kill -9`, (err: Error) => {
+            if (err) {
+              log(`Failed to free port ${port}, please check manually`);
+              process.exit(1);
+            }
+            log(`Successfully freed port ${port}, restarting server...`);
+            setTimeout(() => startServer(port), 1000);
+          });
+        } else {
+          log(`Failed to start server: ${err.message}`);
+          process.exit(1);
+        }
+      });
+    };
+
+    startServer(PORT);
 
     // Setup cleanup handlers
     const cleanup = async (signal: string) => {

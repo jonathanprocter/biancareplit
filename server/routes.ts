@@ -74,19 +74,16 @@ export function registerRoutes(app: Express): Server {
     const startTime = Date.now();
     try {
       const aiService = AIService.getInstance();
-      
+
       // Add timeout for health check
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Health check timeout')), 5000)
+        setTimeout(() => reject(new Error('Health check timeout')), 5000),
       );
-      
-      await Promise.race([
-        aiService.ensureConnection(),
-        timeoutPromise
-      ]);
+
+      await Promise.race([aiService.ensureConnection(), timeoutPromise]);
 
       const responseTime = Date.now() - startTime;
-      
+
       // Log slow responses
       if (responseTime > 1000) {
         console.warn(`[API] Slow health check response: ${responseTime}ms`);
@@ -103,7 +100,7 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('[API] Health check failed:', errorMessage);
-      
+
       res.status(503).json({
         status: 'unhealthy',
         message: errorMessage,
@@ -606,15 +603,13 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/learning-style/submit', requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
-      const responses = req.body.responses
-              if (!responses) {
+      const responses = req.body.responses;
+      if (!responses) {
         throw new Error('Invalid responses provided');
       }
-      // Sanitize medical data before processing
-      const sanitizedresponses = responses.map(response => sanitizeMedicalData(response));
-            ;
-      
-      if (!responses || !Array.isArray(responses)) {
+
+      // Validate response format
+      if (!Array.isArray(responses)) {
         throw new Error('Invalid responses format: responses must be an array');
       }
 
@@ -622,9 +617,10 @@ export function registerRoutes(app: Express): Server {
         throw new Error('No responses provided');
       }
 
-      // Sanitize medical data
-      const sanitizedResponses = responses.map(response => sanitizeMedicalData(response));
+      // Process and sanitize responses
+      const sanitizedResponses = responses.map((response) => sanitizeMedicalData(response));
 
+      // Submit sanitized responses for processing
       const result = await submitQuizResponses(userId, sanitizedResponses);
       res.json(result);
     } catch (error) {
@@ -973,7 +969,6 @@ export function registerRoutes(app: Express): Server {
           let output = '';
           let lastUpdate = Date.now();
           let progress = { processed: 0, total: validFiles.length };
-          let output = '';
 
           shell.on('message', (message) => {
             lastUpdate = Date.now();
@@ -1003,23 +998,16 @@ export function registerRoutes(app: Express): Server {
               reject(new Error('No output received from code review'));
               return;
             }
-            
+
             try {
               const parsedOutput = JSON.parse(output);
               console.log('[API] Successfully parsed review output');
               resolve(parsedOutput);
             } catch (err) {
-    if (err instanceof Error) {
-      console.error(`Error: ${err.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', err); {
-    if (err instanceof Error) {
-      console.error(`Error: ${err.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', err); {
-              console.error('[API] Failed to parse code review output:', err);
+              console.error(
+                '[API] Failed to parse code review output:',
+                err instanceof Error ? err.message : 'Unknown error',
+              );
               reject(new Error('Invalid code review results format'));
             }
           });
