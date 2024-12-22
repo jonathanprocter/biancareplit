@@ -17,7 +17,7 @@ import { fileURLToPath } from 'url';
 // Added http import
 import { WebSocketServer } from 'ws';
 
-import { closeDatabase, db, checkDatabaseHealth } from '../db';
+import { checkDatabaseHealth, closeDatabase, db } from '../db';
 import type { DatabaseError } from '../db';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
@@ -232,7 +232,7 @@ async function startServer(): Promise<void> {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         log(`Database health check attempt ${attempt}/${MAX_RETRIES}`);
-        
+
         const healthStatus = await checkDatabaseHealth();
         if (!healthStatus.healthy) {
           throw new Error(`Database health check failed: ${healthStatus.error}`);
@@ -244,7 +244,7 @@ async function startServer(): Promise<void> {
           tableCount: healthStatus.tableCount,
           connectionCount: healthStatus.connectionCount,
         });
-        
+
         break; // Health check successful, exit retry loop
       } catch (dbError) {
         const errorDetails = {

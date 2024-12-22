@@ -3,27 +3,73 @@ import { OpenAI } from 'openai';
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
 // do not change this unless explicitly requested by the user
 
+/**
+ * Represents a medical education question with multiple choice options
+ * @interface Question
+ */
 interface Question {
+  /** The question text */
   question: string;
+  /** Array of possible answer choices */
   options: string[];
+  /** Index of the correct answer (0-based) */
   correct_answer: number;
+  /** Detailed explanation of the answer for learning purposes */
   explanation: string;
+  /** Medical topic/subject area (e.g., "Anatomy", "Pathology") */
   topic: string;
+  /** Difficulty level ("easy", "medium", "hard") */
   difficulty: string;
+  /** Clinical relevance or context */
+  clinical_context?: string;
+  /** References to medical literature */
+  references?: string[];
 }
 
+/**
+ * Represents a medical education flashcard for spaced repetition learning
+ * @interface Flashcard
+ */
 interface Flashcard {
+  /** Question or medical term on the front */
   front: string;
+  /** Answer or definition on the back */
   back: string;
+  /** Medical topic/subject area */
   topic: string;
+  /** Classification category (e.g., "Anatomy", "Pharmacology") */
   category: string;
+  /** Clinical examples or case studies */
+  clinical_examples?: string[];
+  /** Visual aids or diagrams (base64 encoded) */
+  visual_aids?: string[];
+  /** Evidence-based medicine references */
+  references?: string[];
 }
 
+/**
+ * Tracks student progress and provides personalized learning recommendations
+ * @interface StudyProgress
+ */
 interface StudyProgress {
+  /** Areas of demonstrated competency */
   strengths: string[];
+  /** Topics requiring additional focus */
   weaknesses: string[];
+  /** Personalized study recommendations */
   recommendations: string[];
+  /** Overall proficiency score (0-100) */
   estimated_proficiency: number;
+  /** Breakdown by medical specialty */
+  specialty_breakdown?: Record<string, number>;
+  /** Recommended next learning objectives */
+  next_objectives?: string[];
+  /** Time-based learning analytics */
+  learning_analytics?: {
+    study_time: number;
+    retention_rate: number;
+    practice_frequency: number;
+  };
 }
 
 export class AIService {
@@ -62,30 +108,77 @@ export class AIService {
     return AIService.instance;
   }
 
+  /**
+   * Validates the OpenAI connection and model availability
+   * Implements retry logic and comprehensive error handling
+   * @private
+   * @throws {Error} If connection validation fails after retries
+   */
   private async ensureConnection(): Promise<void> {
     if (this.connectionValidated) return;
     if (this.initializationError) throw this.initializationError;
     if (!this.openai) throw new Error('OpenAI client not initialized');
 
-    try {
-      console.info('AIService: Validating OpenAI connection...');
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [{ role: 'system', content: 'Connection test' }],
-        max_tokens: 5,
-        response_format: { type: 'json_object' },
-      });
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2000; // 2 seconds
 
-      if (!response.choices?.[0]?.message?.content) {
-        throw new Error('Invalid response format from OpenAI API');
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        console.info(`AIService: Validating OpenAI connection (attempt ${attempt}/${MAX_RETRIES})...`);
+        
+        // Enhanced validation with medical education specific test
+        const response = await this.openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Validate medical education platform connection with a basic medical terminology test.' 
+            },
+            {
+              role: 'user',
+              content: 'Define the term "anatomy" in a short medical context.'
+            }
+          ],
+          max_tokens: 50,
+          response_format: { type: 'json_object' },
+        });
+
+        if (!response.choices?.[0]?.message?.content) {
+          throw new Error('Invalid response format from OpenAI API');
+        }
+
+        try {
+          // Verify JSON parsing and response structure
+          const content = JSON.parse(response.choices[0].message.content);
+          if (typeof content.definition !== 'string' || !content.definition.includes('anatomy')) {
+            throw new Error('Invalid response content structure');
+          }
+        } catch (parseError) {
+          throw new Error(`Response parsing failed: ${parseError.message}`);
+        }
+
+        this.connectionValidated = true;
+        console.info('AIService: Connection and model validated successfully');
+        return;
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        console.error(`AIService: Connection validation attempt ${attempt} failed -`, {
+          error: errorMessage,
+          timestamp: new Date().toISOString(),
+          attempt,
+          remainingRetries: MAX_RETRIES - attempt
+        });
+
+        if (attempt === MAX_RETRIES) {
+          throw new Error(`OpenAI connection validation failed after ${MAX_RETRIES} attempts: ${errorMessage}`);
+        }
+
+        // Exponential backoff
+        const delay = RETRY_DELAY * Math.pow(2, attempt - 1);
+        console.info(`AIService: Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-
-      this.connectionValidated = true;
-      console.info('AIService: Connection validated successfully');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error('AIService: Connection validation failed -', errorMessage);
-      throw new Error(`OpenAI connection validation failed: ${errorMessage}`);
     }
   }
 

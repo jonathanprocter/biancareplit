@@ -9,7 +9,7 @@ class DatabaseError extends Error {
   constructor(
     message: string,
     public readonly code?: string,
-    public readonly details?: Record<string, unknown>
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'DatabaseError';
@@ -205,13 +205,13 @@ export async function checkDatabaseHealth() {
       databaseResult,
       versionResult,
       tableCountResult,
-      connectionCountResult
+      connectionCountResult,
     ] = await Promise.all([
       _client`SELECT current_timestamp`,
       _client`SELECT current_database()`,
       _client`SELECT version()`,
       _client`SELECT count(*) as table_count FROM information_schema.tables WHERE table_schema = 'public'`,
-      _client`SELECT count(*) as connection_count FROM pg_stat_activity WHERE datname = current_database()`
+      _client`SELECT count(*) as connection_count FROM pg_stat_activity WHERE datname = current_database()`,
     ]);
 
     return {
@@ -257,7 +257,6 @@ export async function closeDatabase(): Promise<void> {
         await _client.end({ timeout: 5000 });
         console.log('[Database] All connections closed successfully');
       }
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('[Database] Error during cleanup:', {
@@ -278,7 +277,7 @@ export async function closeDatabase(): Promise<void> {
 // Enhanced cleanup handlers
 process.on('beforeExit', async () => {
   console.log('[Database] Process exit detected, initiating cleanup...');
-  await closeDatabase().catch(error => {
+  await closeDatabase().catch((error) => {
     console.error('[Database] Cleanup error during exit:', error);
     process.exit(1);
   });
@@ -286,7 +285,7 @@ process.on('beforeExit', async () => {
 
 process.on('SIGINT', async () => {
   console.log('[Database] Interrupt signal received, initiating cleanup...');
-  await closeDatabase().catch(error => {
+  await closeDatabase().catch((error) => {
     console.error('[Database] Cleanup error during interrupt:', error);
     process.exit(1);
   });
@@ -295,7 +294,7 @@ process.on('SIGINT', async () => {
 
 process.on('SIGTERM', async () => {
   console.log('[Database] Termination signal received, initiating cleanup...');
-  await closeDatabase().catch(error => {
+  await closeDatabase().catch((error) => {
     console.error('[Database] Cleanup error during termination:', error);
     process.exit(1);
   });
