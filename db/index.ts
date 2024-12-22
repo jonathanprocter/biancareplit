@@ -61,7 +61,7 @@ export async function closeDatabase() {
   }
 }
 
-// Handle cleanup with proper async handling
+// Handle cleanup on process termination
 process.on('SIGINT', () => {
   closeDatabase()
     .then(() => process.exit(0))

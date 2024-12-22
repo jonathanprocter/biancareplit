@@ -39,19 +39,25 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/dashboard">
-              <a
-                className={`text-lg font-semibold ${location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
-              >
-                Dashboard
-              </a>
+            <Link
+              href="/dashboard"
+              className="text-lg font-semibold text-foreground hover:text-primary"
+            >
+              {location === '/dashboard' ? (
+                <span className="text-primary">Dashboard</span>
+              ) : (
+                <span>Dashboard</span>
+              )}
             </Link>
-            <Link href="/progress">
-              <a
-                className={`text-lg font-semibold ${location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
-              >
-                My Progress
-              </a>
+            <Link
+              href="/progress"
+              className="text-lg font-semibold text-foreground hover:text-primary"
+            >
+              {location === '/progress' ? (
+                <span className="text-primary">My Progress</span>
+              ) : (
+                <span>My Progress</span>
+              )}
             </Link>
           </div>
           <div className="flex items-center space-x-4">
