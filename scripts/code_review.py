@@ -427,7 +427,8 @@ async def main():
         review_system = CodeReviewSystem()
         project_root = Path(__file__).parent.parent
 
-        logger.info("Starting code review and fixing process...")
+        logger.info("Starting automated code review process...")
+        auto_apply_fixes = True # Added to enable automatic fix application.
         results = await review_system.process_directory(str(project_root))
 
         logger.info("\nCode Review Summary:")

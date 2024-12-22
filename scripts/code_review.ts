@@ -578,6 +578,7 @@ function getColorForImportComplexity(complexity: number): string {
 async function main() {
   try {
     console.log('Starting automated code review...');
+    const AUTO_APPLY_FIXES = true;
 
     // First process high priority paths
     let highPriorityFiles: string[] = [];
