@@ -918,12 +918,12 @@ export function registerRoutes(app: Express): Server {
         const baseTimeout = 30000; // 30 seconds base
         const timePerFile = 1000; // 1 second per file
         const timePerMB = 2000; // 2 seconds per MB
-        const totalTimeout = Math.min(
+        const calculatedTimeout = Math.floor(
           baseTimeout + 
           (validFiles.length * timePerFile) + 
-          (totalSize / (1024 * 1024) * timePerMB),
-          300000 // Max 5 minutes
+          (totalSize / (1024 * 1024) * timePerMB)
         );
+        const totalTimeout = Math.min(calculatedTimeout, 300000); // Max 5 minutes
 
         console.log(`[API] Processing ${validFiles.length} files (${totalSize / (1024 * 1024)}MB) with ${totalTimeout}ms timeout`);
 

@@ -156,6 +156,7 @@ Code to review:
 {code}
 """
             try:
+                try:
                 response = self.client.chat.completions.create(
                     model="gpt-4o",
                     messages=[
@@ -166,9 +167,14 @@ Code to review:
                         {"role": "user", "content": prompt},
                     ],
                     response_format={"type": "json_object"},
-                    timeout=30,  # 30 second timeout for API call
                     max_tokens=500  # Limit response size
                 )
+            except Exception as api_error:
+                logger.error(f"OpenAI API call failed: {str(api_error)}")
+                return {
+                    "error": "Failed to analyze code",
+                    "details": str(api_error)
+                }
 
                 result = json.loads(response.choices[0].message.content)
                 logger.info(f"Successfully reviewed {file_path}")
