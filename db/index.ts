@@ -1,6 +1,7 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from 'ws';
+
 import * as schema from './schema';
 
 // Configure Neon database settings
@@ -23,6 +24,7 @@ const DB_CONFIG = {
 let pool: Pool | null = null;
 let retryCount = 0;
 let isConnecting = false;
+let db: ReturnType<typeof drizzle> | null = null;
 
 // Convert postgres:// to postgresql://
 function normalizeDbUrl(url: string): string {
@@ -56,7 +58,7 @@ const createWebSocketProxy = () => ({
 
 // Initialize database pool with retry mechanism
 async function initializePool() {
-  if (isConnecting) return;
+  if (isConnecting) return null;
   isConnecting = true;
 
   try {
@@ -101,17 +103,12 @@ async function initializePool() {
       },
     });
 
-    const connectionTest = Promise.race([
-      pool.query('SELECT 1'),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Connection timeout')), DB_CONFIG.CONNECTION_TIMEOUT),
-      ),
-    ]);
-
-    await connectionTest;
+    // Test the connection
+    await pool.query('SELECT 1');
     console.info('[Database] Connection established successfully');
     retryCount = 0;
 
+    // Initialize Drizzle instance
     return drizzle(pool, { schema });
   } catch (error) {
     console.error(
@@ -132,11 +129,10 @@ async function reconnect() {
     try {
       await pool.end();
     } catch (error) {
-      console.error(
-        '[Database] Error closing pool during reconnect:',
-        error instanceof Error ? error.message : error,
-      );
-    }
+    console.error(
+      '[Database] Error closing pool during reconnect:',
+      error instanceof Error ? error.message : error,
+    );
     pool = null;
   }
   return initializePool();
@@ -191,13 +187,20 @@ async function closeDatabase() {
         '[Database] Error during cleanup:',
         error instanceof Error ? error.message : error,
       );
-      throw error;
     }
   }
 }
 
 // Initialize the database connection
-const db = await initializePool();
+const dbPromise = initializePool();
+dbPromise
+  .then((drizzleInstance) => {
+    db = drizzleInstance;
+  })
+  .catch((error) => {
+    console.error('[Database] Failed to initialize database:', error);
+    process.exit(1);
+  });
 
 // Register cleanup handlers
 process.on('SIGINT', () => void closeDatabase());
@@ -206,3 +209,4 @@ process.on('SIGTERM', () => void closeDatabase());
 // Export database instance and utilities
 export type { Pool };
 export { db, checkDatabaseHealth, closeDatabase };
+export default db;

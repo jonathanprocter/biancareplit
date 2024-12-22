@@ -6,12 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import { TestPrettier } from '@/components/TestPrettier';
 
-function App() {
-  const testItems = [
-    { id: 1, name: 'Item 1' },
-    { id: 2, name: 'Item 2' },
-  ];
-
+const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
@@ -22,14 +17,23 @@ function App() {
       <main className="container mx-auto px-4 py-8">
         <Switch>
           <Route path="/">
-            <TestPrettier title="Test Component" items={testItems} />
+            <Dashboard />
           </Route>
           <Route component={NotFound} />
         </Switch>
       </main>
     </div>
   );
-}
+};
+
+const Dashboard: React.FC = () => {
+  const testItems = [
+    { id: 1, name: 'Item 1' },
+    { id: 2, name: 'Item 2' },
+  ];
+
+  return <TestPrettier title="Test Component" items={testItems} />;
+};
 
 function NotFound() {
   return (

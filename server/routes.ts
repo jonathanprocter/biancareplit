@@ -17,7 +17,7 @@ import {
   users,
 } from '../db/schema.js';
 import { AIService } from './services/AIService';
-import { CodeReviewService } from './services/CodeReviewService';
+import { CodeReviewService } from './services/code-review';
 import { submitQuizResponses } from './services/learning-style-assessment';
 import { generatePersonalizedPath } from './services/recommendations';
 import { sanitizeMedicalData } from './utils/sanitize';
@@ -183,30 +183,29 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Code review endpoint
+  // Code review endpoints
   app.post('/api/code-review', async (req, res) => {
     try {
-      const { directory, config } = req.body;
-
-      if (!directory) {
-        return res.status(400).json({
-          success: false,
-          message: 'Directory path is required',
-        });
-      }
-
-      const codeReviewService = CodeReviewService.getInstance();
-      const issues = await codeReviewService.analyzeDirectory(directory, config);
-
+      const codeReviewService = new CodeReviewService(process.cwd());
+      const results = await codeReviewService.reviewCode();
       res.json({
         success: true,
-        issues,
-        summary: {
-          totalIssues: issues.length,
-          errorCount: issues.filter((i) => i.severity === 'error').length,
-          warningCount: issues.filter((i) => i.severity === 'warning').length,
-          infoCount: issues.filter((i) => i.severity === 'info').length,
-        },
+        data: results,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      handleError(error as RequestError, res);
+    }
+  });
+
+  app.get('/api/code-review/metrics', async (req, res) => {
+    try {
+      const codeReviewService = new CodeReviewService(process.cwd());
+      const results = await codeReviewService.reviewCode();
+      res.json({
+        success: true,
+        metrics: results.metrics,
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       handleError(error as RequestError, res);
