@@ -608,35 +608,24 @@ export function registerRoutes(app: Express): Server {
       const userId = req.session.userId!;
       const responses = req.body.responses
               if (!responses) {
-                throw new Error(`Invalid responses provided`);
-              }
-              // Sanitize medical data
-              const sanitizedresponses = sanitizeMedicalData(responses);
-            
-              if (!responses) {
-                throw new Error(`Invalid responses provided`);
-              }
-              // Sanitize medical data
-              const sanitizedresponses = sanitizeMedicalData(responses);
-            
-              if (!responses || !Array.isArray(responses)) {
+        throw new Error('Invalid responses provided');
+      }
+      // Sanitize medical data before processing
+      const sanitizedresponses = responses.map(response => sanitizeMedicalData(response));
+            ;
+      
+      if (!responses || !Array.isArray(responses)) {
         throw new Error('Invalid responses format: responses must be an array');
       }
 
-      // Validate response format
       if (responses.length === 0) {
         throw new Error('No responses provided');
       }
 
       // Sanitize medical data
       const sanitizedResponses = responses.map(response => sanitizeMedicalData(response));
-            ;
 
-      if (!Array.isArray(responses) || responses.length === 0) {
-        return res.status(400).json({ message: 'Invalid response format' });
-      }
-
-      const result = await submitQuizResponses(userId, responses);
+      const result = await submitQuizResponses(userId, sanitizedResponses);
       res.json(result);
     } catch (error) {
       console.error('[API] Failed to submit learning style responses:', error);
@@ -984,18 +973,7 @@ export function registerRoutes(app: Express): Server {
           let output = '';
           let lastUpdate = Date.now();
           let progress = { processed: 0, total: validFiles.length };
-
-          shell.on('message', (message) => {
-            lastUpdate = Date.now();
-            try {
-              // Try to parse progress updates or final results
-              const parsed = JSON.parse(message);
-              if (parsed.type === 'progress') {
-                progress = parsed.data;
-                console.log(`[API] Progress: ${progress.processed}/${progress.total} files`);
-              } else {
-          let lastUpdate = Date.now();
-          let progress = { processed: 0, total: validFiles.length };
+          let output = '';
 
           shell.on('message', (message) => {
             lastUpdate = Date.now();
@@ -1021,15 +999,26 @@ export function registerRoutes(app: Express): Server {
           });
 
           shell.on('close', () => {
+            if (!output) {
+              reject(new Error('No output received from code review'));
+              return;
+            }
+            
             try {
-              if (!output) {
-                reject(new Error('No output received from code review'));
-                return;
-              }
               const parsedOutput = JSON.parse(output);
               console.log('[API] Successfully parsed review output');
               resolve(parsedOutput);
             } catch (err) {
+    if (err instanceof Error) {
+      console.error(`Error: ${err.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', err); {
+    if (err instanceof Error) {
+      console.error(`Error: ${err.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', err); {
               console.error('[API] Failed to parse code review output:', err);
               reject(new Error('Invalid code review results format'));
             }

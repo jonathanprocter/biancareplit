@@ -262,9 +262,8 @@ async function startServer(): Promise<void> {
         'Error during final cleanup:',
         cleanupError instanceof Error ? cleanupError.message : 'Unknown error',
       );
+      process.exit(1);
     }
-
-    process.exit(1);
   }
 }
 
