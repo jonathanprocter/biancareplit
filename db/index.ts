@@ -1,3 +1,4 @@
+
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from 'ws';
@@ -25,11 +26,6 @@ export async function testConnection() {
     console.info('[Database] Successfully connected to database');
     return true;
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Connection failed:',
       error instanceof Error ? error.message : 'Unknown error',
@@ -44,11 +40,6 @@ async function cleanup() {
     await pool.end();
     console.info('[Database] Connection pool closed successfully');
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error',
