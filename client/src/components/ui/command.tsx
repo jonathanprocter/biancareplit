@@ -1,4 +1,5 @@
-import { type DialogProps } from '@radix-ui/react-dialog';
+```typescript
+import { DialogProps } from '@radix-ui/react-dialog';
 import { Command as CommandPrimitive } from 'cmdk';
 import { Search } from 'lucide-react';
 
@@ -143,3 +144,4 @@ export {
   CommandShortcut,
   CommandSeparator,
 };
+```;

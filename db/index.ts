@@ -1,15 +1,16 @@
 import * as schema from '@db/schema';
 import { Pool } from '@neondatabase/serverless';
-import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { sql } from 'drizzle-orm';
 import { WebSocket } from 'ws';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
 }
 
+// Singleton pool and db instances
 let pool: Pool | null = null;
-let db: ReturnType<typeof drizzle> | null = null;
+let dbInstance: ReturnType<typeof drizzle> | null = null;
 
 // Initialize WebSocket with robust configuration
 const wsConstructor = (url: string): WebSocket => {
@@ -36,8 +37,8 @@ const wsConstructor = (url: string): WebSocket => {
   return ws;
 };
 
-// Initialize pool and database connection
-const initializeDatabase = () => {
+// Initialize database connection
+function initializeDatabase() {
   if (!pool) {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -48,32 +49,32 @@ const initializeDatabase = () => {
       maxUses: 5000,
       keepAlive: true,
     });
-    db = drizzle(pool, { schema });
+    dbInstance = drizzle(pool, { schema });
   }
-  return db;
-};
+  return dbInstance;
+}
 
-// Get database instance, creating if necessary
-export const getDb = () => {
-  if (!db) {
+// Get or create database instance
+export function getDb() {
+  if (!dbInstance) {
     return initializeDatabase();
   }
-  return db;
-};
+  return dbInstance;
+}
 
 // Test database connection with exponential backoff
 export async function testConnection(retries = 3): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`[Database] Testing connection (attempt ${i + 1}/${retries})...`);
-      const currentDb = getDb();
-      await currentDb.execute(sql`SELECT 1`);
+      const db = getDb();
+      await db.execute(sql`SELECT 1`);
       console.log('[Database] Connection test successful');
       return true;
     } catch (error) {
       console.error(
         `[Database] Connection test failed (attempt ${i + 1}/${retries}):`,
-        error instanceof Error ? error.message : 'Unknown error',
+        error instanceof Error ? error.message : 'Unknown error'
       );
 
       if (i < retries - 1) {
@@ -92,21 +93,21 @@ export async function cleanup(): Promise<void> {
     if (pool) {
       await pool.end();
       pool = null;
-      db = null;
+      dbInstance = null;
       console.log('[Database] Connection pool closed successfully');
     }
   } catch (error) {
     console.error(
       '[Database] Cleanup error:',
-      error instanceof Error ? error.message : 'Unknown error',
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }
 
 // Register cleanup handlers
-process.on('SIGINT', cleanup);
-process.on('SIGTERM', cleanup);
+process.once('SIGINT', cleanup);
+process.once('SIGTERM', cleanup);
 
-// Export database instance and SQL tag
-export const database = getDb();
+// Export database instance and utilities
+export const db = getDb();
 export { sql };

@@ -1,8 +1,8 @@
-import { db, testConnection } from '@db';
-import { spawn } from 'child_process';
+import { db } from '@db';
 import { sql } from 'drizzle-orm';
 import type { Express, Request, Response } from 'express';
 import { type Server, createServer } from 'http';
+import { spawn } from 'child_process';
 import { join } from 'path';
 
 import { paths } from '../config/paths';
@@ -11,7 +11,8 @@ import { log } from './vite';
 export async function registerRoutes(app: Express): Promise<Server> {
   // Test database connection before registering routes
   try {
-    await testConnection();
+    // Verify database connection
+    await db.execute(sql`SELECT 1`);
     log('[Server] Database connection verified');
   } catch (error) {
     log('[Server] Failed to verify database connection:', error);
@@ -40,7 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...process.env,
             PYTHONUNBUFFERED: '1',
           },
-        },
+        }
       );
 
       let output = '';

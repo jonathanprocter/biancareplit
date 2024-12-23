@@ -1,4 +1,4 @@
-import { cleanup, db, testConnection } from '@db';
+import { database as db, cleanup as dbCleanup, testConnection } from '@db';
 import cors from 'cors';
 import express, { NextFunction, type Request, Response } from 'express';
 import session from 'express-session';
@@ -45,7 +45,6 @@ async function cleanupExistingServer(): Promise<void> {
 async function startServer() {
   try {
     await cleanupExistingServer();
-    await cleanup();
 
     const app = express();
     app.use(express.json());
@@ -101,6 +100,7 @@ async function startServer() {
       throw new Error('Failed to register routes');
     }
 
+    // Global error handler
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       console.error('[Server] Error:', err);
       const status = (err as any).status || (err as any).statusCode || 500;
@@ -158,11 +158,10 @@ async function startServer() {
   }
 }
 
-// Error handlers
 async function handleShutdown(signal: string) {
   try {
     await cleanupExistingServer();
-    await cleanup();
+    await dbCleanup();
     log(`[Server] Gracefully shut down on ${signal}`);
     process.exit(0);
   } catch (error) {
@@ -174,16 +173,23 @@ async function handleShutdown(signal: string) {
   }
 }
 
-process.on('SIGTERM', () => handleShutdown('SIGTERM'));
-process.on('SIGINT', () => handleShutdown('SIGINT'));
+// Register signal handlers once
+process.once('SIGTERM', () => handleShutdown('SIGTERM'));
+process.once('SIGINT', () => handleShutdown('SIGINT'));
 
+// Handle uncaught exceptions
 process.on('uncaughtException', async (error) => {
   console.error('[Server] Uncaught Exception:', error);
   try {
     await cleanupExistingServer();
-    await cleanup();
+    await dbCleanup();
     log('[Server] Closed due to uncaught exception');
   } catch (cleanupError) {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
     console.error(
       '[Server] Error during cleanup after uncaught exception:',
       cleanupError instanceof Error ? cleanupError.message : cleanupError,
