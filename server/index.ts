@@ -143,38 +143,49 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Try different ports if default is in use
-    const tryPort = async (port: number): Promise<void> => {
-      try {
-        await new Promise<void>((resolve, reject) => {
-          server.once('error', (error: NodeJS.ErrnoException) => {
-            if (error.code === 'EADDRINUSE') {
-              log(`Port ${port} is in use, trying ${port + 1}...`);
-              server.close();
-              tryPort(port + 1)
-                .then(resolve)
-                .catch(reject);
-            } else {
-              reject(error);
-            }
-          });
-
-          server.listen(port, '0.0.0.0', () => {
-            log(`Server started successfully on port ${port}`);
-            resolve();
-          });
+    // Ensure only one server instance
+    if (globalServer) {
+      await new Promise<void>((resolve) => {
+        globalServer?.close(() => {
+          log('Closed existing server instance');
+          resolve();
         });
-      } catch (error) {
-        if (port > 5010) {
-          // Max 10 retries
-          throw new Error('Unable to find available port after multiple attempts');
-        }
-        await tryPort(port + 1);
-      }
-    };
+      });
+      globalServer = null;
+    }
 
-    // Start server with port retry mechanism
-    await tryPort(5000);
+    // Start server with proper error handling
+    const PORT = process.env.PORT || 5000;
+    await new Promise<void>((resolve, reject) => {
+      // Close any existing server instance
+      if (globalServer) {
+        globalServer.close(() => {
+          globalServer = null;
+          startNewServer();
+        });
+      } else {
+        startNewServer();
+      }
+
+      function startNewServer() {
+        server.listen(PORT, '0.0.0.0', () => {
+          globalServer = server;
+          const address = server.address();
+          const actualPort = typeof address === 'object' ? address?.port : PORT;
+          log(`Server started successfully on port ${actualPort}`);
+          resolve();
+        });
+
+        server.once('error', (error: NodeJS.ErrnoException) => {
+          if (error.code === 'EADDRINUSE') {
+            log(`Port ${PORT} is in use, letting OS assign an available port`);
+            server.listen(0, '0.0.0.0');
+          } else {
+            reject(error);
+          }
+        });
+      }
+    });
   } catch (error) {
     console.error('Fatal error during server startup:', error);
     cleanup();
