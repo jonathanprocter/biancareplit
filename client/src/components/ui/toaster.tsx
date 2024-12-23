@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Toast,
   ToastClose,
@@ -8,35 +6,24 @@ import {
   ToastTitle,
   ToastViewport,
 } from '@/components/ui/toast';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+
+import { useToast } from '@/contexts/toast-context';
 
 export function Toaster() {
-  const { toasts } = useToast();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
+  const { toasts, removeToast } = useToast();
 
   return (
     <ToastProvider>
-      {toasts.map(function renderToast({ id, title, description, action, ...props }) {
-        return (
-          <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && <ToastDescription>{description}</ToastDescription>}
-            </div>
-            {action}
-            <ToastClose />
-          </Toast>
-        );
-      })}
+      {toasts.map(({ id, title, description, action, ...props }) => (
+        <Toast key={id} {...props} onOpenChange={(open) => !open && removeToast(id)}>
+          <div className="grid gap-1">
+            {title && <ToastTitle>{title}</ToastTitle>}
+            {description && <ToastDescription>{description}</ToastDescription>}
+          </div>
+          {action}
+          <ToastClose />
+        </Toast>
+      ))}
       <ToastViewport />
     </ToastProvider>
   );

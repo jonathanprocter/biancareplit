@@ -4,12 +4,12 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/contexts/toast-context';
 
 function Navigation() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [location] = useLocation();
-  const { toast } = useToast();
+  const { addToast } = useToast();
 
   // Don't show navigation on public routes
   const publicRoutes = ['/', '/register'];
@@ -27,7 +27,7 @@ function Navigation() {
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
-      toast({
+      addToast({
         variant: 'destructive',
         title: 'Error',
         description: 'Failed to log out. Please try again.',

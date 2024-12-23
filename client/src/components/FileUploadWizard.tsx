@@ -6,7 +6,7 @@ import React, { useCallback, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/contexts/toast-context';
 
 interface UploadResult {
   topics?: string[];
@@ -31,7 +31,7 @@ interface UploadStatus {
 
 export const FileUploadWizard = () => {
   const [uploads, setUploads] = useState<UploadStatus[]>([]);
-  const { toast } = useToast();
+  const { addToast } = useToast();
 
   const processFileUpload = async (upload: UploadStatus) => {
     try {
@@ -65,7 +65,7 @@ export const FileUploadWizard = () => {
         ),
       );
 
-      toast({
+      addToast({
         title: 'Upload Successful',
         description: `${upload.file.name} has been processed and integrated into the learning system.`,
       });
@@ -79,7 +79,7 @@ export const FileUploadWizard = () => {
         ),
       );
 
-      toast({
+      addToast({
         variant: 'destructive',
         title: 'Upload Failed',
         description: `Failed to process ${upload.file.name}. Please try again.`,
@@ -99,7 +99,7 @@ export const FileUploadWizard = () => {
 
       await Promise.all(newUploads.map(processFileUpload));
     },
-    [toast],
+    [addToast],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
