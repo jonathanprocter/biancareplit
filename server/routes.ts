@@ -1,8 +1,8 @@
-import { db } from '@db';
+import { getDb } from '@db';
+import { spawn } from 'child_process';
 import { sql } from 'drizzle-orm';
 import type { Express, Request, Response } from 'express';
 import { type Server, createServer } from 'http';
-import { spawn } from 'child_process';
 import { join } from 'path';
 
 import { paths } from '../config/paths';
@@ -12,6 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Test database connection before registering routes
   try {
     // Verify database connection
+    const db = await getDb();
     await db.execute(sql`SELECT 1`);
     log('[Server] Database connection verified');
   } catch (error) {
@@ -41,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...process.env,
             PYTHONUNBUFFERED: '1',
           },
-        }
+        },
       );
 
       let output = '';
@@ -111,6 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get('/api/health', async (_req, res) => {
     try {
+      const db = await getDb();
       await db.execute(sql`SELECT 1`);
       res.json({
         status: 'healthy',

@@ -12,14 +12,16 @@ if (!process.env.DATABASE_URL) {
 let pool: Pool | null = null;
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
-// Initialize WebSocket with robust configuration
+// Initialize WebSocket with robust configuration and retries
 const wsConstructor = (url: string): WebSocket => {
+  console.log('[Database] Initializing WebSocket connection...');
+
   const ws = new WebSocket(url, {
     rejectUnauthorized: false,
     perMessageDeflate: false,
     skipUTF8Validation: true,
     handshakeTimeout: 30000,
-    maxPayload: 100 * 1024 * 1024,
+    maxPayload: 100 * 1024 * 1024, // 100MB
   });
 
   ws.on('error', (error) => {
@@ -37,54 +39,76 @@ const wsConstructor = (url: string): WebSocket => {
   return ws;
 };
 
-// Initialize database connection
-function initializeDatabase() {
-  if (!pool) {
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      webSocketConstructor: wsConstructor,
-      max: 1,
-      connectionTimeoutMillis: 30000,
-      idleTimeoutMillis: 30000,
-      maxUses: 5000,
-      keepAlive: true,
-    });
-    dbInstance = drizzle(pool, { schema });
-  }
-  return dbInstance;
-}
-
-// Get or create database instance
-export function getDb() {
+// Initialize database connection with retry mechanism
+async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzle>> {
   if (!dbInstance) {
-    return initializeDatabase();
-  }
-  return dbInstance;
-}
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`[Database] Initializing connection (attempt ${attempt}/${retries})...`);
 
-// Test database connection with exponential backoff
-export async function testConnection(retries = 3): Promise<boolean> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      console.log(`[Database] Testing connection (attempt ${i + 1}/${retries})...`);
-      const db = getDb();
-      await db.execute(sql`SELECT 1`);
-      console.log('[Database] Connection test successful');
-      return true;
-    } catch (error) {
-      console.error(
-        `[Database] Connection test failed (attempt ${i + 1}/${retries}):`,
-        error instanceof Error ? error.message : 'Unknown error'
-      );
+        pool = new Pool({
+          connectionString: process.env.DATABASE_URL,
+          webSocketConstructor: wsConstructor,
+          max: 1, // Limit connections for serverless environment
+          connectionTimeoutMillis: 30000,
+          idleTimeoutMillis: 30000,
+          maxUses: 5000,
+          keepAlive: true,
+        });
 
-      if (i < retries - 1) {
-        const delay = Math.min(1000 * Math.pow(2, i), 5000);
-        console.log(`[Database] Retrying in ${delay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        // Test the connection before creating Drizzle instance
+        const client = await pool.connect();
+        await client.query('SELECT 1');
+        client.release();
+
+        dbInstance = drizzle(pool, { schema });
+        console.log('[Database] Connection initialized successfully');
+        return dbInstance;
+      } catch (error) {
+        console.error(
+          `[Database] Connection attempt ${attempt} failed:`,
+          error instanceof Error ? error.message : 'Unknown error'
+        );
+
+        // Cleanup on initialization failure
+        if (pool) {
+          await pool.end();
+          pool = null;
+        }
+
+        // If this was the last attempt, throw the error
+        if (attempt === retries) {
+          throw error;
+        }
+
+        // Wait before next attempt (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        console.log(`[Database] Waiting ${delay}ms before next attempt...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
-  return false;
+
+  return dbInstance!;
+}
+
+// Test database connection
+export async function testConnection(retries = 3): Promise<boolean> {
+  try {
+    const db = await initializeDatabase(retries);
+    await db.execute(sql`SELECT 1`);
+    return true;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    console.error('[Database] Connection test failed:', 
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+    return false;
+  }
 }
 
 // Cleanup function
@@ -104,10 +128,13 @@ export async function cleanup(): Promise<void> {
   }
 }
 
-// Register cleanup handlers
+// Register cleanup handlers for graceful shutdown
 process.once('SIGINT', cleanup);
 process.once('SIGTERM', cleanup);
 
-// Export database instance and utilities
-export const db = getDb();
+// Export database instance getter and utilities
+export async function getDb() {
+  return initializeDatabase();
+}
+
 export { sql };

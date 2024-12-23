@@ -1,4 +1,4 @@
-import { database as db, cleanup as dbCleanup, testConnection } from '@db';
+import { cleanup as dbCleanup, getDb, testConnection } from '@db';
 import cors from 'cors';
 import express, { NextFunction, type Request, Response } from 'express';
 import session from 'express-session';
@@ -13,57 +13,27 @@ import { log, serveStatic, setupVite } from './vite';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 let globalServer: http.Server | null = null;
 
-// Check if port is in use
-async function isPortAvailable(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = new http.Server()
-      .listen(port, '0.0.0.0', () => {
-        server.close(() => resolve(true));
-      })
-      .on('error', () => resolve(false));
-  });
-}
-
-// Cleanup existing server
-async function cleanupExistingServer(): Promise<void> {
+async function cleanupServer(): Promise<void> {
   if (globalServer) {
-    try {
-      await new Promise<void>((resolve) => {
-        globalServer?.close(() => {
-          log('[Server] Existing server closed');
-          resolve();
-        });
+    await new Promise<void>((resolve) => {
+      globalServer?.close(() => {
+        log('[Server] Existing server closed');
+        resolve();
       });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      globalServer = null;
-    } catch (error) {
-      console.error('[Server] Error closing existing server:', error);
-    }
+    });
+    globalServer = null;
   }
 }
 
 async function startServer() {
   try {
-    await cleanupExistingServer();
+    await cleanupServer();
 
     const app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    log('[Server] Initializing database connection...');
-    const isConnected = await testConnection(5);
-
-    if (!isConnected) {
-      const dbError = new Error('Database connection failed');
-      if (process.env.NODE_ENV === 'production') {
-        throw dbError;
-      }
-      log('[Server] WARNING: Starting in development mode without database');
-      console.error(dbError);
-    } else {
-      log('[Server] Database connection verified');
-    }
-
+    // Configure CORS
     app.use(
       cors({
         origin:
@@ -75,8 +45,9 @@ async function startServer() {
       }),
     );
 
+    // Configure session
     const sessionStore = new (MemoryStore(session))({
-      checkPeriod: 86400000,
+      checkPeriod: 86400000, // 24h
     });
 
     app.use(
@@ -89,25 +60,35 @@ async function startServer() {
         cookie: {
           secure: process.env.NODE_ENV === 'production',
           httpOnly: true,
-          maxAge: 24 * 60 * 60 * 1000,
+          maxAge: 24 * 60 * 60 * 1000, // 24h
           sameSite: 'lax',
         },
       }),
     );
 
+    // Test database connection
+    log('[Server] Testing database connection...');
+    const isConnected = await testConnection(3);
+
+    if (!isConnected && process.env.NODE_ENV === 'production') {
+      throw new Error('Database connection failed in production mode');
+    }
+
+    // Register routes and create server
     const server = await registerRoutes(app);
     if (!server) {
-      throw new Error('Failed to register routes');
+      throw new Error('Failed to create HTTP server');
     }
 
     // Global error handler
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('[Server] Error:', err);
       const status = (err as any).status || (err as any).statusCode || 500;
       const message =
         process.env.NODE_ENV === 'production'
           ? 'Internal Server Error'
           : err.message || 'Internal Server Error';
+
+      console.error('[Server] Error:', err);
 
       if (!res.headersSent) {
         res.status(status).json({
@@ -118,30 +99,22 @@ async function startServer() {
       }
     });
 
-    if (app.get('env') === 'development') {
+    // Setup Vite or serve static files
+    if (process.env.NODE_ENV === 'development') {
       await setupVite(app, server);
     } else {
       serveStatic(app);
     }
 
+    // Start server
     const PORT = 5000;
-    const isPortFree = await isPortAvailable(PORT);
-
-    if (!isPortFree) {
-      log(`[Server] Port ${PORT} is in use, waiting for it to be available...`);
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      if (!(await isPortAvailable(PORT))) {
-        throw new Error(`Port ${PORT} is still in use after waiting`);
-      }
-    }
-
     server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
       log(`[Server] Started on port ${PORT}`);
       if (isConnected) {
-        log('[Server] Application started successfully with database connection');
+        log('[Server] Application started with database connection');
       } else {
-        log('[Server] Application started in limited mode without database connection');
+        log('[Server] Application started without database connection');
       }
     });
 
@@ -158,22 +131,25 @@ async function startServer() {
   }
 }
 
+// Handle cleanup
 async function handleShutdown(signal: string) {
+  console.log(`[Server] Received ${signal}, cleaning up...`);
   try {
-    await cleanupExistingServer();
+    await cleanupServer();
     await dbCleanup();
-    log(`[Server] Gracefully shut down on ${signal}`);
     process.exit(0);
   } catch (error) {
-    console.error(
-      `[Server] Error during ${signal} shutdown:`,
-      error instanceof Error ? error.message : error,
-    );
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    console.error('[Server] Error during shutdown:', error);
     process.exit(1);
   }
 }
 
-// Register signal handlers once
+// Register signal handlers
 process.once('SIGTERM', () => handleShutdown('SIGTERM'));
 process.once('SIGINT', () => handleShutdown('SIGINT'));
 
@@ -181,23 +157,20 @@ process.once('SIGINT', () => handleShutdown('SIGINT'));
 process.on('uncaughtException', async (error) => {
   console.error('[Server] Uncaught Exception:', error);
   try {
-    await cleanupExistingServer();
+    await cleanupServer();
     await dbCleanup();
-    log('[Server] Closed due to uncaught exception');
   } catch (cleanupError) {
     if (cleanupError instanceof Error) {
       console.error(`Error: ${cleanupError.message}`);
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', cleanupError); {
-    console.error(
-      '[Server] Error during cleanup after uncaught exception:',
-      cleanupError instanceof Error ? cleanupError.message : cleanupError,
-    );
+    console.error('[Server] Error during cleanup:', cleanupError);
   }
   process.exit(1);
 });
 
+// Start the server
 startServer().catch((error) => {
   console.error('[Server] Failed to start:', error);
   process.exit(1);
