@@ -1,3 +1,4 @@
+```typescript
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export interface Flashcard {
@@ -16,3 +17,4 @@ export interface FlashcardGenerationStatus {
   error?: string;
   success?: boolean;
 }
+```;

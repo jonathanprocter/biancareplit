@@ -1,3 +1,6 @@
+The code provided doesn't seem to have any syntax errors, bugs, security vulnerabilities, performance issues, or integration problems. It follows TypeScript best practices and style guidelines. Here is the same code:
+
+```typescript
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { cleanup, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -52,3 +55,4 @@ describe('TestPrettier', () => {
     expect(screen.getByText(/Test/i)).toBeInTheDocument();
   });
 });
+```

@@ -1,10 +1,9 @@
-import { type VariantProps, cva } from 'class-variance-authority';
+import { VariantProps, cva } from 'class-variance-authority';
+import DOMPurify from 'dompurify';
 
-import * as React from 'react';
+import React, { HTMLAttributes, forwardRef } from 'react';
 
 import { cn } from '@/lib/utils';
-
-// Ensure cva and cn utility functions are correctly handling user inputs
 
 const alertVariants = cva(
   'relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground',
@@ -22,22 +21,20 @@ const alertVariants = cva(
   },
 );
 
-// XSS prevention with className
-const sanitizeClassName = (className) => {
-  // Implement sanitization logic here
-  return className;
+const sanitizeClassName = (className: string): string => {
+  return DOMPurify.sanitize(className);
 };
 
-const Alert = React.forwardRef<
+const Alert = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+  HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
 >(({ className, variant, ...props }, ref) => {
-  const combinedClassName = cn(alertVariants({ variant }), sanitizeClassName(className));
+  const combinedClassName = cn(alertVariants({ variant }), sanitizeClassName(className || ''));
   return <div ref={ref} role="alert" className={combinedClassName} {...props} />;
 });
 Alert.displayName = 'Alert';
 
-const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+const AlertTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
     <h5
       ref={ref}
@@ -48,12 +45,11 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
 );
 AlertTitle.displayName = 'AlertTitle';
 
-const AlertDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('text-sm [&_p]:leading-relaxed', className)} {...props} />
-));
+const AlertDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('text-sm [&_p]:leading-relaxed', className)} {...props} />
+  ),
+);
 AlertDescription.displayName = 'AlertDescription';
 
 export { Alert, AlertTitle, AlertDescription };

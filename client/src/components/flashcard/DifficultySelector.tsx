@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   Select,
   SelectContent,
@@ -14,15 +16,15 @@ interface DifficultySelectorProps {
   disabled?: boolean;
 }
 
-export function DifficultySelector({
+export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
   value,
   onValueChange,
   disabled = false,
-}: DifficultySelectorProps) {
+}) => {
   return (
-    <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select difficulty" />
+    <Select value={value} onChange={onValueChange} disabled={disabled}>
+      <SelectTrigger className="w-180px">
+        <SelectValue>{value || 'Select difficulty'}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="easy">Easy</SelectItem>
@@ -31,4 +33,4 @@ export function DifficultySelector({
       </SelectContent>
     </Select>
   );
-}
+};

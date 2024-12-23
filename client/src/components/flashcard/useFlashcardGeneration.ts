@@ -10,14 +10,14 @@ export function useFlashcardGeneration() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('medium');
   const { toast } = useToast();
 
-  const generateFlashcards = async () => {
+  const generateFlashcards = async (): Promise<Flashcard[] | null> => {
     if (!selectedFile) {
       toast({
         title: 'No File Selected',
         description: 'Please select a file to generate flashcards.',
         variant: 'destructive',
       });
-      return;
+      return null;
     }
 
     setIsGenerating(true);
@@ -44,7 +44,6 @@ export function useFlashcardGeneration() {
 
       return flashcards;
     } catch (error) {
-      console.error('Error generating flashcards:', error);
       toast({
         title: 'Error',
         description: 'Failed to generate flashcards. Please try again.',

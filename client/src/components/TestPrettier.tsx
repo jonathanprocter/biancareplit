@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,14 +19,17 @@ export const TestPrettier = ({ title, items }: TestProps): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleOpenDialog = () => setIsOpen(true);
+  const handleOpenDialog = useCallback(() => setIsOpen(true), []);
 
-  const handleItemClick = (itemId: number) => {
-    toast({
-      title: 'Clicked',
-      description: `Clicked item ${itemId}`,
-    });
-  };
+  const handleItemClick = useCallback(
+    (itemId: number) => {
+      toast({
+        title: 'Clicked',
+        description: `Clicked item ${itemId}`,
+      });
+    },
+    [toast],
+  );
 
   return (
     <div className="p-4">
@@ -43,7 +45,6 @@ export const TestPrettier = ({ title, items }: TestProps): JSX.Element => {
               <div key={item.id} className="space-y-2">
                 <div className="text-sm font-medium">{item.name}</div>
                 <div className="flex items-center gap-2">
-                  {/* Consider using a span or div as the input is not editable */}
                   <span className="text-input">{item.name}</span>
                   <Button onClick={() => handleItemClick(item.id)} size="sm">
                     Click Me

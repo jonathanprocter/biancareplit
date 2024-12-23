@@ -1,4 +1,4 @@
-import { type ChangeEvent } from 'react';
+import React, { ChangeEvent, FC } from 'react';
 
 import { Input } from '@/components/ui/input';
 
@@ -7,10 +7,10 @@ interface FileUploadInputProps {
   disabled?: boolean;
 }
 
-export function FileUploadInput({ onFileChange, disabled = false }: FileUploadInputProps) {
+export const FileUploadInput: FC<FileUploadInputProps> = ({ onFileChange, disabled = false }) => {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    onFileChange(file || null);
+    const file = event.target.files?.length ? event.target.files[0] : null;
+    onFileChange(file);
   };
 
   return (
@@ -22,4 +22,4 @@ export function FileUploadInput({ onFileChange, disabled = false }: FileUploadIn
       disabled={disabled}
     />
   );
-}
+};

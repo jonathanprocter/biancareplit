@@ -1,5 +1,7 @@
 import { RefreshCw, Upload } from 'lucide-react';
 
+import React from 'react';
+
 import { Button } from '@/components/ui/button';
 
 interface FlashcardGenerationButtonProps {
@@ -8,11 +10,11 @@ interface FlashcardGenerationButtonProps {
   disabled: boolean;
 }
 
-export function FlashcardGenerationButton({
+export const FlashcardGenerationButton: React.FC<FlashcardGenerationButtonProps> = ({
   onClick,
   isGenerating,
   disabled,
-}: FlashcardGenerationButtonProps) {
+}) => {
   return (
     <Button onClick={onClick} disabled={disabled || isGenerating} className="w-full">
       {isGenerating ? (
@@ -28,4 +30,4 @@ export function FlashcardGenerationButton({
       )}
     </Button>
   );
-}
+};

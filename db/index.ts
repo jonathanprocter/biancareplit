@@ -10,15 +10,15 @@ if (!process.env.DATABASE_URL) {
 
 // Initialize WebSocket with robust configuration
 const wsConstructor = (url: string): WebSocket => {
-  const sanitizedUrl = url.replace(/\/\/.*@/, '//***@'); // Hide credentials in logs
+  const sanitizedUrl = url.replace(/\/\/.*@/, '//***@');
   console.log('[Database] Initializing WebSocket connection...', sanitizedUrl);
 
   const ws = new WebSocket(url, {
-    rejectUnauthorized: false, // Required for some PostgreSQL providers
-    perMessageDeflate: false, // Disable compression for better compatibility
-    skipUTF8Validation: true, // Skip UTF8 validation for better performance
-    handshakeTimeout: 60000, // 60 seconds handshake timeout
-    maxPayload: 100 * 1024 * 1024, // 100MB max payload
+    rejectUnauthorized: false,
+    perMessageDeflate: false,
+    skipUTF8Validation: true,
+    handshakeTimeout: 30000,
+    maxPayload: 100 * 1024 * 1024,
   });
 
   ws.on('error', (error) => {
@@ -40,16 +40,17 @@ const wsConstructor = (url: string): WebSocket => {
   return ws;
 };
 
-// Create a pool factory to ensure we always have a fresh pool
+// Create a pool factory with improved configuration
 const createPool = () => {
   console.log('[Database] Creating new connection pool...');
   return new Pool({
     connectionString: process.env.DATABASE_URL,
     webSocketConstructor: wsConstructor,
-    max: 1, // Single connection for development
-    connectionTimeoutMillis: 60000, // 60 seconds
-    idleTimeoutMillis: 60000,
-    maxUses: 7500, // Close connection after 7500 queries
+    max: 1,
+    connectionTimeoutMillis: 30000,
+    idleTimeoutMillis: 30000,
+    maxUses: 5000,
+    keepAlive: true,
   });
 };
 
@@ -63,14 +64,12 @@ export const db = drizzle(pool, { schema });
 export { sql };
 
 // Test database connection with exponential backoff
-export async function testConnection(retries = 5): Promise<boolean> {
+export async function testConnection(retries = 3): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`[Database] Testing connection (attempt ${i + 1}/${retries})...`);
-
-      // Test connection with a simple query
-      const result = await db.execute(sql`SELECT CURRENT_TIMESTAMP`);
-      console.log('[Database] Connection test successful:', result);
+      await db.execute(sql`SELECT 1`);
+      console.log('[Database] Connection test successful');
       return true;
     } catch (error) {
       console.error(
@@ -78,20 +77,16 @@ export async function testConnection(retries = 5): Promise<boolean> {
         error instanceof Error ? error.message : 'Unknown error',
       );
 
-      // Handle specific error cases
       if (error instanceof Error) {
         if (error.message.includes('after calling end on the pool')) {
           console.log('[Database] Pool ended, recreating...');
           pool = createPool();
           db.execute = (query: any) => drizzle(pool, { schema }).execute(query);
-        } else if (error.message.includes('WebSocket connection failed')) {
-          console.log('[Database] WebSocket connection failed, will retry with new connection');
-          await cleanup();
         }
       }
 
       if (i < retries - 1) {
-        const delay = Math.min(1000 * Math.pow(2, i), 10000); // Exponential backoff with max 10s
+        const delay = Math.min(1000 * Math.pow(2, i), 5000);
         console.log(`[Database] Retrying in ${delay}ms...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
@@ -100,13 +95,13 @@ export async function testConnection(retries = 5): Promise<boolean> {
   return false;
 }
 
-// Cleanup function
+// Cleanup function with improved error handling
 export async function cleanup(): Promise<void> {
   try {
     if (pool) {
       console.log('[Database] Closing existing pool...');
       await pool.end();
-      pool = createPool(); // Create a new pool for future use
+      pool = createPool();
       console.log('[Database] Connection pool closed and recreated successfully');
     }
   } catch (error) {
