@@ -1,3 +1,4 @@
+
 import * as schema from '@db/schema';
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
@@ -9,7 +10,6 @@ if (!process.env.DATABASE_URL) {
 
 console.log('[Database] Initializing connection pool...');
 
-// Configure pool with WebSocket options
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   webSocketConstructor: WebSocket,
@@ -19,10 +19,8 @@ const pool = new Pool({
   ssl: true,
 });
 
-// Create drizzle database instance
 export const db = drizzle(pool, { schema });
 
-// Test database connection with retries
 export async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -36,10 +34,6 @@ export async function testConnection(retries = 3, delay = 2000): Promise<boolean
         error instanceof Error ? error.message : 'Unknown error'
       );
 
-      if (error instanceof Error && error.stack) {
-        console.error('[Database] Error stack:', error.stack);
-      }
-
       if (attempt < retries) {
         console.log(`[Database] Waiting ${delay}ms before next attempt...`);
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -52,32 +46,11 @@ export async function testConnection(retries = 3, delay = 2000): Promise<boolean
   return false;
 }
 
-// Cleanup handler
 async function cleanup() {
   try {
     await pool.end();
     console.log('[Database] Connection pool closed successfully');
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error'
@@ -85,6 +58,5 @@ async function cleanup() {
   }
 }
 
-// Register cleanup handlers
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
