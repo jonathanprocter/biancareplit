@@ -4,7 +4,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import logging
 from backend.config.unified_config import config_manager
-from backend.database.db_config_manager import db_manager
+from backend.database.core import db_manager
 from backend.middleware.logging_middleware import LoggingMiddleware
 from backend.middleware.error_middleware import ErrorMiddleware
 from backend.middleware.metrics import MetricsMiddleware
@@ -24,21 +24,19 @@ def create_app(env_path=None):
         # Configure CORS
         CORS(app, resources={r"/*": {"origins": config_manager.get("CORS_ORIGINS", "*")}})
 
-        # Initialize middleware stack before database
+        # Initialize middleware stack
         LoggingMiddleware().init_app(app)
         ErrorMiddleware().init_app(app)
         MetricsMiddleware().init_app(app)
         HealthMiddleware().init_app(app)
 
         # Initialize database with proper error handling
-        try:
-            db_manager.init_app(app)
-            logger.info("Database initialized successfully")
-        except Exception as e:
-            logger.error(f"Database initialization failed: {str(e)}")
+        if not db_manager.init_app(app):
+            logger.warning("Database initialization failed - starting in limited functionality mode")
             if app.config['ENV'] == 'production':
-                raise
-            logger.warning("Starting in limited functionality mode")
+                raise RuntimeError("Cannot start in production without database")
+        else:
+            logger.info("Database initialized successfully")
 
         # Add database health check endpoint
         @app.route("/health/db")
@@ -57,7 +55,7 @@ def create_app(env_path=None):
                 logger.error(f"Database health check failed: {str(e)}")
                 return jsonify({
                     "status": "error",
-                    "message": str(e) if app.debug else "Database connection error"
+                    "message": str(e) if app.debug else "Database health check failed"
                 }), 503
 
         # Register error handlers
@@ -74,7 +72,7 @@ def create_app(env_path=None):
             logger.error(f"Internal server error: {str(error)}")
             return jsonify({
                 "error": "Internal Server Error",
-                "message": "An unexpected error occurred",
+                "message": "An unexpected error occurred" if not app.debug else str(error),
                 "status": 500
             }), 500
 

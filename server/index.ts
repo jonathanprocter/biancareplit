@@ -1,16 +1,12 @@
-import { db, testConnection } from '@db';
+import { db } from '@db';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from 'express-fileupload';
 import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
-import { AddressInfo } from 'net';
-import { createServer } from 'net';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-
-import { paths } from '../config/paths';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
@@ -24,11 +20,6 @@ let globalServer: Server | null = null;
 async function cleanup() {
   if (globalServer) {
     try {
-      const address = globalServer.address() as AddressInfo;
-      if (address) {
-        log(`Closing server on port ${address.port}`);
-      }
-
       await new Promise<void>((resolve) => {
         globalServer?.close(() => {
           log('Server closed');
@@ -50,33 +41,6 @@ process.on('uncaughtException', (error) => {
   cleanup();
 });
 
-// Check if a port is available
-async function isPortAvailable(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = createServer();
-    server.once('error', () => {
-      resolve(false);
-    });
-    server.once('listening', () => {
-      server.close();
-      resolve(true);
-    });
-    server.listen(port, '0.0.0.0');
-  });
-}
-
-// Find next available port
-async function findAvailablePort(startPort: number): Promise<number> {
-  let port = startPort;
-  while (!(await isPortAvailable(port))) {
-    port++;
-    if (port > startPort + 100) {
-      throw new Error('No available ports found');
-    }
-  }
-  return port;
-}
-
 async function startServer() {
   try {
     // Initialize Express
@@ -86,14 +50,10 @@ async function startServer() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Initialize database with enhanced error handling
+    // Initialize database
     log('[Server] Starting database initialization...');
+    const isConnected = await db.execute(sql`SELECT 1`).then(() => true).catch(() => false);
 
-    // Print connection details (without sensitive info)
-    const dbUrl = new URL(process.env.DATABASE_URL || '');
-    log(`[Server] Connecting to database at ${dbUrl.host}...`);
-
-    const isConnected = await testConnection();
     if (!isConnected && process.env.NODE_ENV === 'production') {
       log('[Server] FATAL: Cannot start server without database in production mode');
       process.exit(1);
@@ -106,10 +66,9 @@ async function startServer() {
 
     // CORS configuration
     const corsOptions = {
-      origin:
-        process.env.NODE_ENV === 'production'
-          ? ['https://your-production-domain.com']
-          : ['http://localhost:5000'], // Single port for development
+      origin: process.env.NODE_ENV === 'production' 
+        ? ['https://your-production-domain.com'] 
+        : ['http://localhost:5000'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       allowedHeaders: ['Content-Type', 'Authorization'],
@@ -123,32 +82,28 @@ async function startServer() {
     });
 
     // Session middleware
-    app.use(
-      session({
-        secret: process.env.SESSION_SECRET || 'development_secret',
-        resave: false,
-        saveUninitialized: false,
-        store: sessionStore,
-        cookie: {
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 24 * 60 * 60 * 1000, // 24 hours
-          sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-        },
-      }),
-    );
+    app.use(session({
+      secret: process.env.SESSION_SECRET || 'development_secret',
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      },
+    }));
 
     // File upload middleware
-    app.use(
-      fileUpload({
-        createParentPath: true,
-        limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-        useTempFiles: true,
-        tempFileDir: '/tmp/',
-        safeFileNames: true,
-        preserveExtension: true,
-        abortOnLimit: true,
-      }),
-    );
+    app.use(fileUpload({
+      createParentPath: true,
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+      useTempFiles: true,
+      tempFileDir: '/tmp/',
+      safeFileNames: true,
+      preserveExtension: true,
+      abortOnLimit: true,
+    }));
 
     // Register routes
     const server = await registerRoutes(app);
@@ -178,20 +133,13 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Find available port starting from 5000
-    const desiredPort = parseInt(process.env.PORT || '5000', 10);
-    const port = await findAvailablePort(desiredPort);
-    if (port !== desiredPort) {
-      log(`[Server] Port ${desiredPort} is in use, using port ${port} instead`);
-    }
-
     // Start server
-    server.listen(port, '0.0.0.0', () => {
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
-      const address = server.address();
-      const actualPort = typeof address === 'object' ? address?.port : port;
-      log(`Server started successfully on port ${actualPort}`);
+      log(`Server started successfully on port ${PORT}`);
     });
+
   } catch (error) {
     console.error('Fatal error during server startup:', error);
     await cleanup();
