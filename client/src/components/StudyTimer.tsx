@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Brain, Coffee, Pause, Play, RotateCcw, Timer } from 'lucide-react';
+import { Brain, Coffee, Pause, Play, RotateCcw } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 
@@ -48,37 +48,39 @@ export const StudyTimer = () => {
   ];
 
   useEffect(() => {
-    let interval: number | null = null;
+    let interval: NodeJS.Timeout | null = null;
 
     if (timer.isActive) {
-      const tick = () => {
-        if (timer.seconds === 0) {
-          if (timer.minutes === 0) {
-            handleTimerComplete();
+      interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev.seconds === 0) {
+            if (prev.minutes === 0) {
+              handleTimerComplete();
+              return prev;
+            } else {
+              return {
+                ...prev,
+                minutes: prev.minutes - 1,
+                seconds: 59,
+              };
+            }
           } else {
-            setTimer((prev) => ({
+            return {
               ...prev,
-              minutes: prev.minutes - 1,
-              seconds: 59,
-            }));
+              seconds: prev.seconds - 1,
+            };
           }
-        } else {
-          setTimer((prev) => ({
-            ...prev,
-            seconds: prev.seconds - 1,
-          }));
-        }
-      };
-      interval = window.setInterval(tick, 1000);
+        });
+      }, 1000);
     }
 
     return () => {
-      if (interval) window.clearInterval(interval);
+      if (interval) clearInterval(interval);
     };
-  }, [timer.isActive]);
+  }, [timer]);
 
   const calculateOptimalDuration = (sessionHistory: TimerState['sessionHistory']) => {
-    if (sessionHistory.length < 2) return 25; // Default Pomodoro duration
+    if (sessionHistory.length < 2) return 25;
 
     const recentSessions = sessionHistory.slice(-5);
     const averageProductivity =
@@ -112,15 +114,15 @@ export const StudyTimer = () => {
         duration: timer.isBreak ? (newCompletedSessions % 4 === 0 ? 15 : 5) : timer.optimalDuration,
         type: timer.isBreak ? 'break' : 'work',
         completedAt: new Date().toISOString(),
-        productivity: timer.isBreak ? 1 : Math.random() * 0.4 + 0.6, // Simulated productivity
+        productivity: timer.isBreak ? 1 : Math.random() * 0.4 + 0.6,
       },
     ];
 
     const newOptimalDuration = calculateOptimalDuration(newSessionHistory);
     const newFocusScore = calculateFocusScore(newSessionHistory);
 
-    setTimer((prev) => ({
-      ...prev,
+    setTimer({
+      ...timer,
       minutes: timer.isBreak ? newOptimalDuration : 5,
       seconds: 0,
       isActive: false,
@@ -129,9 +131,8 @@ export const StudyTimer = () => {
       focusScore: newFocusScore,
       optimalDuration: newOptimalDuration,
       sessionHistory: newSessionHistory,
-    }));
+    });
 
-    // Show completion notification
     toast({
       title: timer.isBreak ? 'Break Complete!' : 'Session Complete!',
       description: timer.isBreak
@@ -139,7 +140,6 @@ export const StudyTimer = () => {
         : 'Great work! Take a short break to recharge.',
     });
 
-    // Set new motivation message
     setMotivation(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
   };
 

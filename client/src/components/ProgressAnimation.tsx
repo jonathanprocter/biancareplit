@@ -50,12 +50,12 @@ const IconComponent = ({ icon }: { icon: Milestone['icon'] }) => {
     case 'award':
       return <Award className="h-6 w-6" />;
     default:
-      return null; // Handle unexpected icon type gracefully
+      return null;
   }
 };
 
-export function ProgressAnimation() {
-  const [currentProgress, setCurrentProgress] = useState(35); // Using state for dynamic UI
+export const ProgressAnimation: React.FC = () => {
+  const [currentProgress, setCurrentProgress] = useState(35);
 
   return (
     <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white overflow-hidden">
@@ -64,7 +64,6 @@ export function ProgressAnimation() {
       </CardHeader>
       <CardContent>
         <div className="relative pt-8 pb-4">
-          {/* Progress Path */}
           <div className="absolute top-12 left-0 right-0 h-2 bg-white/20 rounded-full" />
           <motion.div
             className="absolute top-12 left-0 h-2 bg-white rounded-full"
@@ -72,8 +71,6 @@ export function ProgressAnimation() {
             animate={{ width: `${currentProgress}%` }}
             transition={{ duration: 1.5, ease: 'easeOut' }}
           />
-
-          {/* Milestone Markers */}
           <div className="relative flex justify-between">
             {milestones.map((milestone) => (
               <motion.div
@@ -95,8 +92,6 @@ export function ProgressAnimation() {
               </motion.div>
             ))}
           </div>
-
-          {/* Progress Information */}
           <div className="mt-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -107,8 +102,6 @@ export function ProgressAnimation() {
               <p className="text-3xl font-bold mb-2">{currentProgress}%</p>
               <p className="text-sm opacity-80">Keep going! You're making great progress!</p>
             </motion.div>
-
-            {/* Milestone List */}
             <div className="mt-6 space-y-3">
               {milestones.map((milestone) => (
                 <motion.div
@@ -133,4 +126,4 @@ export function ProgressAnimation() {
       </CardContent>
     </Card>
   );
-}
+};

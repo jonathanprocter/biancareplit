@@ -45,7 +45,6 @@ export function SkillTreeVisualization({
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
 
-  // Initialize nodes with random positions
   useEffect(() => {
     const rng = seedrandom('skillTree');
     const initialNodes = skills.map((skill) => ({
@@ -57,7 +56,6 @@ export function SkillTreeVisualization({
     setNodes(initialNodes);
   }, [skills, width, height]);
 
-  // Force-directed graph simulation
   const simulateForces = useCallback(() => {
     setNodes((prevNodes) => {
       const newNodes = prevNodes.map((node) => ({
@@ -68,11 +66,9 @@ export function SkillTreeVisualization({
       const epsilon = 0.0001;
       const padding = 50;
 
-      // Apply forces
       for (let i = 0; i < newNodes.length; i++) {
         const node = newNodes[i];
 
-        // Repulsion between nodes
         for (let j = 0; j < newNodes.length; j++) {
           if (i === j) continue;
           const other = newNodes[j];
@@ -85,33 +81,29 @@ export function SkillTreeVisualization({
           node.velocity.y -= (dy / distance) * force * 0.05;
         }
 
-        // Attraction along prerequisites
         node.prerequisites.forEach((prereqId) => {
           const prereq = newNodes.find((n) => n.id === prereqId);
           if (prereq) {
             const dx = prereq.x - node.x;
             const dy = prereq.y - node.y;
             const distance = Math.sqrt(dx * dx + dy * dy) + epsilon;
-            const targetDistance = 150; // Desired distance between connected nodes
+            const targetDistance = 150;
             const strength = (distance - targetDistance) * 0.03;
             node.velocity.x += dx * strength;
             node.velocity.y += dy * strength;
           }
         });
 
-        // Center gravity
         const centerForce = 0.005;
         node.velocity.x += (width / 2 - node.x) * centerForce;
         node.velocity.y += (height / 2 - node.y) * centerForce;
 
-        // Apply velocity with damping measure
         const damping = 0.7;
         node.x += node.velocity.x * damping;
         node.y += node.velocity.y * damping;
         node.velocity.x *= damping;
         node.velocity.y *= damping;
 
-        // Boundary constraints with padding
         node.x = Math.max(padding, Math.min(width - padding, node.x));
         node.y = Math.max(padding, Math.min(height - padding, node.y));
       }
