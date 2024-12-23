@@ -3,9 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import { StrictMode } from 'react';
 
-import { Toaster } from '@/components/ui/toaster';
-
-import { ToastProvider } from '@/lib/toast';
+import { ToastProvider, Toaster } from '@/lib/toast';
 
 import App from './App';
 import './index.css';

@@ -3,17 +3,16 @@ import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from 'express-fileupload';
 import session from 'express-session';
-import { Server, createServer } from 'http';
+import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
-import path from 'path';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Global server instance for cleanup
 let globalServer: Server | null = null;
@@ -112,12 +111,9 @@ async function startServer() {
       }),
     );
 
-    // Create HTTP server
-    const server = createServer(app);
-
     // Register routes before error handling
-    const httpServer = await registerRoutes(app);
-    if (!httpServer) {
+    const server = await registerRoutes(app);
+    if (!server) {
       throw new Error('Failed to register routes');
     }
 
@@ -156,40 +152,13 @@ async function startServer() {
       globalServer = null;
     }
 
-    // Start new server with retry logic
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-
-    while (retryCount < MAX_RETRIES) {
-      try {
-        await new Promise<void>((resolve, reject) => {
-          server.listen(PORT, '0.0.0.0', () => {
-            globalServer = server;
-            const address = server.address();
-            const actualPort = typeof address === 'object' ? address?.port : PORT;
-            log(`Server started successfully on port ${actualPort}`);
-            resolve();
-          });
-
-          server.once('error', (error: NodeJS.ErrnoException) => {
-            if (error.code === 'EADDRINUSE') {
-              log(`Port ${PORT} is in use, trying random port`);
-              server.listen(0, '0.0.0.0');
-            } else {
-              reject(error);
-            }
-          });
-        });
-        break; // Successfully started
-      } catch (error) {
-        retryCount++;
-        if (retryCount === MAX_RETRIES) {
-          throw error;
-        }
-        log(`Retry attempt ${retryCount}/${MAX_RETRIES}`);
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retry
-      }
-    }
+    // Start new server
+    server.listen(PORT, '0.0.0.0', () => {
+      globalServer = server;
+      const address = server.address();
+      const actualPort = typeof address === 'object' ? address?.port : PORT;
+      log(`Server started successfully on port ${actualPort}`);
+    });
   } catch (error) {
     console.error('Fatal error during server startup:', error);
     await cleanup();

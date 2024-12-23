@@ -31,7 +31,7 @@ interface UploadStatus {
 
 export const FileUploadWizard = () => {
   const [uploads, setUploads] = useState<UploadStatus[]>([]);
-  const { addToast } = useToast();
+  const { toast } = useToast();
 
   const processFileUpload = async (upload: UploadStatus) => {
     try {
@@ -46,9 +46,10 @@ export const FileUploadWizard = () => {
       const formData = new FormData();
       formData.append('file', upload.file);
 
-      const response = await fetch(process.env.REACT_APP_UPLOAD_ENDPOINT || '/api/content/upload', {
+      const response = await fetch('/api/content/upload', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -65,12 +66,12 @@ export const FileUploadWizard = () => {
         ),
       );
 
-      addToast({
+      toast({
         title: 'Upload Successful',
         description: `${upload.file.name} has been processed and integrated into the learning system.`,
       });
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       setUploads((prev) =>
         prev.map((u) =>
           u.file.name === upload.file.name && u.file.size === upload.file.size
@@ -79,7 +80,7 @@ export const FileUploadWizard = () => {
         ),
       );
 
-      addToast({
+      toast({
         variant: 'destructive',
         title: 'Upload Failed',
         description: `Failed to process ${upload.file.name}. Please try again.`,
@@ -99,7 +100,7 @@ export const FileUploadWizard = () => {
 
       await Promise.all(newUploads.map(processFileUpload));
     },
-    [addToast],
+    [toast],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
