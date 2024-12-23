@@ -283,7 +283,7 @@ Code to review:
 
                 start_time = time.time()
                 response = self.client.chat.completions.create(
-                    model="gpt-4o",
+                    model="gpt-4",
                     messages=[
                         {
                             "role": "system",
@@ -525,10 +525,8 @@ Code to review:
             processed_count = 0
             start_time = time.time()
 
-            try:
-                # Add try-except block for file processing
-                try:
-                    for file_path, language, priority in sorted(files_to_process, key=lambda item: item[2]):
+            for file_path, language, priority in sorted(files_to_process, key=lambda item: item[2]):
+                    try:
                         try:
                             logger.info(f"Reviewing {file_path}")
 
