@@ -8,11 +8,7 @@ import time
 from typing import Dict, Any
 from pathlib import Path
 import asyncio
-try:
-    from openai import OpenAI
-except ImportError:
-    logging.error("OpenAI package not found. Please install it using: pip install openai")
-    sys.exit(1)
+from openai import OpenAI, OpenAIError
 
 # Configure logging
 logging.basicConfig(
@@ -190,28 +186,40 @@ Code to review:
                 
                 result = json.loads(response.choices[0].message.content)
                 logger.info(f"Successfully reviewed {file_path}")
-                return result
+                return {
+                    "status": "success",
+                    "file": str(file_path),
+                    "review": result
+                }
 
             except json.JSONDecodeError as json_err:
                 error_msg = f"Failed to parse OpenAI response: {str(json_err)}"
                 logger.error(error_msg)
                 return {
+                    "status": "error",
                     "error": "Invalid response format",
-                    "details": error_msg
+                    "details": error_msg,
+                    "file": str(file_path)
                 }
 
-            except Exception as api_error:
+            except OpenAIError as api_error:
                 error_msg = f"OpenAI API error for {file_path}: {str(api_error)}"
                 logger.error(error_msg)
                 return {
+                    "status": "error",
                     "error": "Failed to analyze code",
-                    "details": error_msg
+                    "details": error_msg,
+                    "file": str(file_path)
                 }
 
         except Exception as e:
             error_msg = f"Error reviewing file {file_path}: {str(e)}"
             logger.error(error_msg)
-            return {"error": error_msg}
+            return {
+                "status": "error",
+                "error": error_msg,
+                "file": str(file_path)
+            }
 
     async def review_file_async(self, file_path: Path, results, stats):
         """Asynchronously review a single file."""
@@ -239,20 +247,20 @@ Code to review:
             results[str(file_path)] = review_result
             stats["processed"] += 1
             
-            if "error" in review_result:
+            if review_result.get("status") == "error":
                 stats["errors"] += 1
-                logger.error(f"Review failed for {file_path}: {review_result['error']}")
+                logger.error(f"Review failed for {file_path}: {review_result.get('error')}")
             else:
                 logger.info(f"Successfully reviewed {file_path} in {duration:.1f}s")
             
         except Exception as e:
             logger.error(f"Error processing {file_path}: {str(e)}")
             results[str(file_path)] = {
+                "status": "error",
                 "error": str(e),
-                "status": "failed"
+                "file": str(file_path)
             }
             stats["errors"] += 1
-            stats["skipped"] += 1
 
     def process_directory(self, directory: str) -> Dict[str, Any]:
         """Process all supported files in the directory recursively."""
@@ -290,7 +298,10 @@ Code to review:
             # Collect all eligible files first
             files_to_process = []
             for root, dirs, files in os.walk(directory):
+                # Filter out excluded directories
                 dirs[:] = [d for d in dirs if d not in exclude_dirs]
+                
+                # Process each file
                 for file_name in files:
                     if any(file_name.endswith(exc) for exc in exclude_files):
                         continue
@@ -299,6 +310,7 @@ Code to review:
                         files_to_process.append(file_path)
 
             results["stats"]["total_files"] = len(files_to_process)
+            logger.info(f"Found {len(files_to_process)} files to process")
 
             async def process_files():
                 # Process files in batches to avoid rate limits
@@ -398,44 +410,76 @@ def main():
             }, indent=2))
             sys.exit(1)
 
+        logger.info(f"Starting code review for: {path}")
         start_time = time.time()
-        if path.is_file():
-            results = service.review_file(path)
-        else:
-            results = service.process_directory(str(path))
-        end_time = time.time()
-
-        if args.format == 'json':
-            print(json.dumps({
-                "success": True,
-                "results": results,
-                "execution_time": round(end_time - start_time, 2)
-            }, indent=2))
-        else:
-            print(f"Code Review Results for {args.path}")
-            print("=" * 50)
-            print(f"Execution time: {round(end_time - start_time, 2)} seconds\n")
-            
-            if isinstance(results, dict) and 'error' in results:
-                print(f"Error: {results['error']}")
+        
+        try:
+            if path.is_file():
+                results = service.review_file(path)
             else:
-                for file_path, review in results.items():
-                    print(f"\nFile: {file_path}")
-                    print("-" * 30)
-                    if 'summary' in review:
-                        print(f"Score: {review['summary']['score']}/10")
-                        print(f"Severity: {review['summary']['severity']}")
-                        if 'recommendations' in review['summary']:
+                results = service.process_directory(str(path))
+            
+            end_time = time.time()
+            duration = round(end_time - start_time, 2)
+            logger.info(f"Review completed in {duration} seconds")
+
+            if args.format == 'json':
+                print(json.dumps({
+                    "success": True,
+                    "results": results,
+                    "execution_time": duration
+                }, indent=2))
+            else:
+                print(f"Code Review Results for {args.path}")
+                print("=" * 50)
+                print(f"Execution time: {duration} seconds\n")
+                
+                if isinstance(results, dict):
+                    if results.get("status") == "error":
+                        print(f"Error: {results['error']}")
+                    elif path.is_file():
+                        review = results.get("review", {})
+                        if "summary" in review:
+                            print(f"Score: {review['summary']['score']}/10")
+                            print(f"Severity: {review['summary']['severity']}")
                             print("\nRecommendations:")
                             for rec in review['summary']['recommendations']:
                                 print(f"- {rec}")
-                    if 'issues' in review:
-                        print("\nIssues:")
-                        for issue in review['issues']:
-                            print(f"- [{issue['severity']}] {issue['type']}")
-                            print(f"  {issue['description']}")
-                            print(f"  Suggestion: {issue['suggestion']}")
-                    print()
+                        if "issues" in review:
+                            print("\nIssues:")
+                            for issue in review['issues']:
+                                print(f"\n[{issue['severity']}] {issue['type']}")
+                                print(f"Description: {issue['description']}")
+                                print(f"Suggestion: {issue['suggestion']}")
+                                if 'line_number' in issue:
+                                    print(f"Line: {issue['line_number']}")
+                    else:
+                        for file_path, file_results in results.get("files", {}).items():
+                            if file_results.get("status") != "error":
+                                review = file_results.get("review", {})
+                                print(f"\nFile: {file_path}")
+                                print("-" * 30)
+                                if "summary" in review:
+                                    print(f"Score: {review['summary']['score']}/10")
+                                    print(f"Severity: {review['summary']['severity']}")
+                                    print("\nRecommendations:")
+                                    for rec in review['summary']['recommendations']:
+                                        print(f"- {rec}")
+                                if "issues" in review:
+                                    print("\nIssues:")
+                                    for issue in review['issues']:
+                                        print(f"\n[{issue['severity']}] {issue['type']}")
+                                        print(f"Description: {issue['description']}")
+                                        print(f"Suggestion: {issue['suggestion']}")
+                                        if 'line_number' in issue:
+                                            print(f"Line: {issue['line_number']}")
+
+        except Exception as e:
+            print(json.dumps({
+                "success": False,
+                "error": str(e)
+            }, indent=2))
+            sys.exit(1)
 
     except Exception as e:
         print(json.dumps({
