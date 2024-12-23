@@ -1,7 +1,7 @@
 """Middleware management system."""
 
 import logging
-from typing import Dict, List, Type
+from typing import Dict, Type, Optional
 from flask import Flask
 from .base import BaseMiddleware
 from .middleware_config import middleware_registry
@@ -20,8 +20,11 @@ class MiddlewareManager:
 
     def register(self, name: str, middleware_class: Type[BaseMiddleware]) -> None:
         """Register middleware class."""
-        self._registry[name] = middleware_class
-        logger.debug(f"Registered middleware: {name}")
+        if name not in self._registry:
+            self._registry[name] = middleware_class
+            logger.debug(f"Registered middleware: {name}")
+        else:
+            logger.warning(f"Middleware {name} is already registered")
 
     def init_app(self, app: Flask) -> None:
         """Initialize middleware with Flask app."""
@@ -38,25 +41,21 @@ class MiddlewareManager:
                 self._middleware[name] = middleware
 
                 if hasattr(middleware, "before_request"):
-                    app.before_request_funcs.setdefault(None, []).append(
-                        middleware.before_request
-                    )
+                    app.before_request(middleware.before_request)
 
                 if hasattr(middleware, "after_request"):
-                    app.after_request_funcs.setdefault(None, []).append(
-                        middleware.after_request
-                    )
+                    app.after_request(middleware.after_request)
 
                 if hasattr(middleware, "teardown_request"):
-                    app.teardown_request_funcs.setdefault(None, []).append(
-                        middleware.teardown_request
-                    )
+                    app.teardown_request(middleware.teardown_request)
 
                 logger.info(f"Initialized middleware: {name}")
             except Exception as e:
-                logger.error(f"Failed to initialize middleware {name}: {e}")
+                logger.error(
+                    f"Failed to initialize middleware {name}: {e}", exc_info=True
+                )
 
-    def get_middleware(self, name: str) -> BaseMiddleware:
+    def get_middleware(self, name: str) -> Optional[BaseMiddleware]:
         """Get initialized middleware instance."""
         return self._middleware.get(name)
 

@@ -70,6 +70,6 @@ config_by_name = {
 }
 
 
-def get_config(config_name: str = None):
+def get_config(config_name: str = "default"):
     """Get configuration class by name."""
-    return config_by_name.get(config_name or "default")
+    return config_by_name.get(config_name, DevelopmentConfig)

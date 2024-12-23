@@ -50,7 +50,7 @@ class ConfigManager:
             config_path = self.config_dir / "config.json"
             with open(config_path) as f:
                 all_config = json.load(f)
-                config = all_config[self.env]
+                config = all_config.get(self.env, {})
 
             # Load environment-specific overrides
             env_config = self.env_loader.load_env_vars("APP_")
@@ -66,8 +66,9 @@ class ConfigManager:
             logger.error(f"Failed to load or validate config: {str(e)}")
             raise
 
+    @staticmethod
     def _merge_configs(
-        self, base: Dict[str, Any], override: Dict[str, Any]
+        base: Dict[str, Any], override: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Deep merge configuration dictionaries"""
         merged = base.copy()
@@ -146,13 +147,13 @@ class ConfigManager:
             format=log_format,
             handlers=[
                 logging.StreamHandler(),
-                logging.FileHandler(self.logs_dir / f"{self.env}.log"),
+                logging.FileHandler(str(self.logs_dir / f"{self.env}.log")),
             ],
         )
 
         # Configure Flask logger
         if not app.debug and not app.logger.handlers:
-            file_handler = logging.FileHandler(self.logs_dir / "flask.log")
+            file_handler = logging.FileHandler(str(self.logs_dir / "flask.log"))
             file_handler.setFormatter(logging.Formatter(log_format))
             app.logger.addHandler(file_handler)
             app.logger.setLevel(getattr(logging, log_level))

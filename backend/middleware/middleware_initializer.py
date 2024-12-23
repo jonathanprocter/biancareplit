@@ -9,16 +9,19 @@ logger = logging.getLogger(__name__)
 class MiddlewareInitializer:
     def __init__(self):
         self._app: Optional[Flask] = None
-        self._middleware_registry: Dict[str, BaseMiddleware] = {}
+        self._middleware_registry: Dict[str, Type[BaseMiddleware]] = {}
         self._initialized = False
 
     def init_app(self, app: Flask) -> None:
         """Initialize all registered middleware with the Flask app"""
+        if self._initialized:
+            logger.warning("App already initialized")
+            return
         self._app = app
         self._initialize_middleware()
         self._initialized = True
 
-    def register(self, name: str, middleware: BaseMiddleware) -> None:
+    def register(self, name: str, middleware: Type[BaseMiddleware]) -> None:
         """Register a new middleware component"""
         if name in self._middleware_registry:
             logger.warning(f"Middleware {name} already registered")
@@ -32,10 +35,13 @@ class MiddlewareInitializer:
 
         for name, middleware in self._middleware_registry.items():
             try:
-                middleware.init_app(self._app)
+                middleware_instance = middleware()
+                middleware_instance.init_app(self._app)
                 logger.info(f"Initialized middleware: {name}")
             except Exception as e:
-                logger.error(f"Failed to initialize middleware {name}: {e}")
+                logger.error(
+                    f"Failed to initialize middleware {name}: {e}", exc_info=True
+                )
                 raise
 
     @property

@@ -30,5 +30,5 @@ def init_core(app: Flask, env: str = "development") -> bool:
         logger.info("Core initialization completed successfully")
         return True
     except Exception as e:
-        logger.error(f"Core initialization failed: {e}")
+        logger.error(f"Core initialization failed: {str(e)}")
         return False

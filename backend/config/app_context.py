@@ -6,8 +6,9 @@ from typing import Generator
 import logging
 from pathlib import Path
 from sqlalchemy import text
-from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import scoped_session, sessionmaker
 import os
+from backend.database.db_config import db
 
 
 class ApplicationContextError(Exception):
@@ -55,52 +56,35 @@ class ApplicationContextManager:
 
     def init_app(self, app: Flask) -> None:
         """Initialize application context."""
-        try:
-            if not isinstance(app, Flask):
-                raise ApplicationContextError("Invalid Flask application instance")
+        if not isinstance(app, Flask):
+            raise ApplicationContextError("Invalid Flask application instance")
 
-            self.app = app
-            self.logger = self._setup_logger()
+        self.app = app
+        self.logger = self._setup_logger()
 
-            # Set up database configuration
-            from backend.database.db_config import db
+        # Set up database configuration
+        if not hasattr(app, "config"):
+            raise ApplicationContextError("Flask application config not initialized")
 
-            if not hasattr(app, "config"):
-                raise ApplicationContextError(
-                    "Flask application config not initialized"
-                )
+        if "SQLALCHEMY_DATABASE_URI" not in app.config:
+            app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+            app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-            if "SQLALCHEMY_DATABASE_URI" not in app.config:
-                app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-                app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-            # Initialize with app context
-            with app.app_context():
-                db.init_app(app)
-                self.db_session = db.session
-                self._setup_database()
-                self.logger.info("Application context initialized successfully")
-
-        except Exception as e:
-            self.logger.error(f"Application context initialization failed: {str(e)}")
-            raise ApplicationContextError(
-                f"Failed to initialize application context: {str(e)}"
-            )
+        # Initialize with app context
+        with app.app_context():
+            db.init_app(app)
+            self.db_session = scoped_session(sessionmaker(bind=db.engine))
+            self._setup_database()
+            self.logger.info("Application context initialized successfully")
 
     def _setup_database(self) -> None:
         """Setup database connection."""
         if not self.app:
-            raise RuntimeError("Application not initialized")
+            raise ApplicationContextError("Application not initialized")
 
-        try:
-            from backend.database.db_config import db
-
-            db.init_app(self.app)
-            self.db_session = db.session
-            self.logger.info("Database session setup completed")
-        except Exception as e:
-            self.logger.error(f"Database setup failed: {str(e)}")
-            raise
+        db.init_app(self.app)
+        self.db_session = scoped_session(sessionmaker(bind=db.engine))
+        self.logger.info("Database session setup completed")
 
     @contextmanager
     def app_context(self) -> Generator[Flask, None, None]:
@@ -113,12 +97,9 @@ class ApplicationContextManager:
             yield self.app
         else:
             ctx = self.app.app_context()
+            ctx.push()
             try:
-                ctx.push()
                 yield self.app
-            except Exception as e:
-                self.logger.error(f"Error in application context: {str(e)}")
-                raise ApplicationContextError(f"Application context error: {str(e)}")
             finally:
                 ctx.pop()
 
@@ -130,30 +111,23 @@ class ApplicationContextManager:
 
         # Ensure we're in an application context
         with self.app_context():
+            # Create a new session for this context
+            session = self.db_session()
             try:
-                # Create a new session for this context
-                session = scoped_session(self.db_session.registry)
                 yield session
                 session.commit()
-            except Exception as e:
-                if session:
-                    session.rollback()
-                self.logger.error(f"Database session error: {str(e)}")
+            except Exception:
+                session.rollback()
                 raise
             finally:
-                if session:
-                    session.remove()
+                session.close()
 
     def verify_database(self) -> bool:
         """Verify database connection within application context."""
-        try:
-            with self.app_context(), self.db_session_context() as session:
-                session.execute(text("SELECT 1"))
-                self.logger.info("Database verification successful")
-                return True
-        except Exception as e:
-            self.logger.error(f"Database verification failed: {str(e)}")
-            return False
+        with self.app_context(), self.db_session_context() as session:
+            session.execute(text("SELECT 1"))
+            self.logger.info("Database verification successful")
+            return True
 
 
 # Create singleton instance

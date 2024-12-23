@@ -9,8 +9,14 @@ logger = logging.getLogger(__name__)
 
 class AuthMiddleware:
     def __init__(self, app=None, secret_key=None):
+        if app is None:
+            raise ValueError("app cannot be None")
+        if secret_key is None:
+            secret_key = app.config.get("SECRET_KEY")
+        if secret_key is None:
+            raise ValueError("secret_key cannot be None")
         self.app = app
-        self.secret_key = secret_key or app.config.get("SECRET_KEY")
+        self.secret_key = secret_key
 
     def authenticate(self):
         def decorator(f):

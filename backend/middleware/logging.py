@@ -27,7 +27,12 @@ class LoggingMiddleware(BaseMiddleware):
             if hasattr(g, "start"):
                 duration = time.time() - g.start
                 logger.info(
-                    f"{request.method} {request.path} {response.status_code} "
-                    f"({duration:.2f}s)"
+                    "%s %s %s (%.2fs)",
+                    request.method,
+                    request.path,
+                    response.status,
+                    duration,
                 )
             return response
+
+        super().init_app(app)

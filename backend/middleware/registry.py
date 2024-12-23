@@ -1,3 +1,4 @@
+```python
 from typing import Dict, List, Optional
 import logging
 from .base import BaseMiddleware
@@ -13,15 +14,18 @@ class MiddlewareRegistry:
     def register(self, middleware: BaseMiddleware) -> None:
         """Register a middleware component"""
         name = middleware.__class__.__name__
-        self._middlewares[name] = middleware
-        logger.info(f"Registered middleware: {name}")
+        if name not in self._middlewares:
+            self._middlewares[name] = middleware
+            logger.info(f"Registered middleware: {name}")
+        else:
+            logger.error(f"Middleware {name} already registered")
 
     def initialize_all(self, app) -> None:
         """Initialize all registered middleware"""
         if self._initialized:
             return
 
-        for name, middleware in self._middlewares.items():
+        for name, middleware in list(self._middlewares.items()):
             try:
                 middleware.initialize(app)
                 logger.info(f"Initialized middleware: {name}")
@@ -41,3 +45,4 @@ class MiddlewareRegistry:
 
 
 middleware_registry = MiddlewareRegistry()
+```

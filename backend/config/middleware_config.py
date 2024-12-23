@@ -1,9 +1,14 @@
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any, Optional
 import logging
 from pathlib import Path
 import yaml
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 class MiddlewareConfig:
@@ -14,8 +19,8 @@ class MiddlewareConfig:
     def load_config(self) -> None:
         try:
             config_path = Path("config/middleware.yaml")
-            if config_path.exists():
-                with open(config_path) as f:
+            if config_path.is_file():
+                with config_path.open("r") as f:
                     self.config = yaml.safe_load(f)
                 logger.info("Middleware configuration loaded successfully")
             else:
@@ -25,7 +30,8 @@ class MiddlewareConfig:
             logger.error(f"Error loading middleware configuration: {str(e)}")
             self.config = self._get_default_config()
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    @staticmethod
+    def _get_default_config() -> Dict[str, Any]:
         return {
             "error_handling": {"enabled": True},
             "logging": {"enabled": True, "level": "INFO"},

@@ -20,8 +20,8 @@ class ConfigLoader:
     def load_yaml(self, file_path: Path) -> Optional[Dict[str, Any]]:
         """Load YAML configuration file"""
         try:
-            if file_path.exists():
-                with open(file_path) as f:
+            if file_path.is_file():
+                with file_path.open("r") as f:
                     config = yaml.safe_load(f)
                     if config is None:
                         logger.warning(f"Empty YAML file: {file_path}")
@@ -36,8 +36,8 @@ class ConfigLoader:
     def load_json(self, file_path: Path) -> Optional[Dict[str, Any]]:
         """Load JSON configuration file"""
         try:
-            if file_path.exists():
-                with open(file_path) as f:
+            if file_path.is_file():
+                with file_path.open("r") as f:
                     return json.load(f)
             logger.warning(f"Configuration file not found: {file_path}")
             return None
@@ -61,6 +61,10 @@ class ConfigLoader:
             default_yaml = self.base_path / f"{name}_default.yaml"
             default_json = self.base_path / f"{name}_default.json"
             config = self.load_yaml(default_yaml) or self.load_json(default_json) or {}
+
+        # Validate the config
+        if not self.validator.validate(config):
+            raise ValueError("Invalid configuration")
 
         return self._process_config(config)
 

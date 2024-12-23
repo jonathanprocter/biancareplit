@@ -11,7 +11,7 @@ class ConfigManager:
     def __init__(self):
         self.config: Dict[str, Any] = {}
         self.env = os.getenv("FLASK_ENV", "development")
-        self.config_dir = Path(__file__).parent
+        self.config_dir = Path(__file__).resolve().parent
         self._load_config()
 
     def _load_config(self):
@@ -37,7 +37,7 @@ class ConfigManager:
             logger.warning(f"Config file not found: {filename}")
             return {}
 
-        with open(file_path) as f:
+        with file_path.open() as f:
             return yaml.safe_load(f) or {}
 
     def get(self, key: str, default: Any = None) -> Any:

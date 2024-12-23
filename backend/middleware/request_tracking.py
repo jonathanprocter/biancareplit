@@ -19,10 +19,10 @@ class RequestTrackingMiddleware(BaseMiddleware):
     def before_request(self, request: Request) -> Optional[Response]:
         """Start request timing."""
         g.start_time = time.time()
-        g.request_id = request.headers.get("X-Request-ID", "")
+        g.request_id = request.headers.get("X-Request-ID", None)
         return None
 
-    def after_request(self, response: Response) -> Response:
+    def after_request(self, request: Request, response: Response) -> Response:
         """Log request metrics."""
         total_time = time.time() - getattr(g, "start_time", 0)
 
@@ -37,3 +37,12 @@ class RequestTrackingMiddleware(BaseMiddleware):
             response.headers["X-Request-ID"] = g.request_id
 
         return response
+
+    def __call__(self, environ, start_response):
+        """Make the middleware callable."""
+        with self.app.request_context(environ):
+            request = Request(environ)
+            self.before_request(request)
+            response = self.app.wsgi_app(environ, start_response)
+            response = self.after_request(request, response)
+            return response

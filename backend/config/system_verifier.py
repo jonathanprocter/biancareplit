@@ -11,9 +11,9 @@ class SystemVerification:
 
     def __init__(self, context_manager: ApplicationContextManager):
         self.context_manager = context_manager
-        self.logger = context_manager.logger
+        self.logger = logging.getLogger(__name__)
 
-    def verify_system(self) -> Dict[str, bool]:
+    def verify_system(self) -> Dict[str, Any]:
         """Run comprehensive system verification."""
         results = {
             "app_context": False,
@@ -32,12 +32,10 @@ class SystemVerification:
                     results["database_connection"] = True
 
                 # Verify migrations
-                if self._verify_migrations():
-                    results["migrations"] = True
+                results["migrations"] = self._verify_migrations()
 
                 # Verify configuration
-                if self._verify_configuration():
-                    results["configuration"] = True
+                results["configuration"] = self._verify_configuration()
 
         except Exception as e:
             self.logger.error(f"System verification failed: {str(e)}")
@@ -64,10 +62,10 @@ class SystemVerification:
                     self.logger.info(f"Current migration version: {version}")
                     return bool(version)
 
-                return False
         except Exception as e:
             self.logger.error(f"Migration verification failed: {str(e)}")
-            return False
+
+        return False
 
     def _verify_configuration(self) -> bool:
         """Verify system configuration."""

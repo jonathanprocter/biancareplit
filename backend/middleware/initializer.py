@@ -27,6 +27,8 @@ class MiddlewareInitializer:
 
     def register(self, name: str, middleware_class: Type[BaseMiddleware]) -> None:
         """Register middleware class."""
+        if name in self._registry:
+            logger.warning(f"Middleware {name} is already registered. Overwriting.")
         self._registry[name] = middleware_class
         logger.debug(f"Registered middleware: {name}")
 
@@ -36,14 +38,11 @@ class MiddlewareInitializer:
             logger.error("No Flask app configured")
             return
 
-        # Register error handler and request tracking by default
-        self.register("error_handler", ErrorHandlerMiddleware)
-        self.register("request_tracking", RequestTrackingMiddleware)
-
         enabled = middleware_registry.get_enabled_middleware()
 
         for name in enabled:
             if name not in self._registry:
+                logger.warning(f"Middleware {name} is not registered.")
                 continue
 
             try:

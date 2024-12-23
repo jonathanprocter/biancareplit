@@ -10,55 +10,55 @@ from flask import current_app, g, request
 logger = logging.getLogger(__name__)
 
 
-def request_handler_middleware():
+def request_handler_middleware(f):
     """Middleware for handling request lifecycle and logging."""
 
-    def middleware(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            request_id = f"req_{int(time.time() * 1000)}"
-            g.request_id = request_id
-            g.request_start_time = time.time()
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        g.request_id = f"req_{int(time.time() * 1000)}"
+        g.request_start_time = time.time()
+
+        logger.info(
+            f"Request started: {g.request_id}",
+            extra={
+                "request_id": g.request_id,
+                "method": request.method,
+                "path": request.path,
+                "remote_addr": request.remote_addr,
+            },
+        )
+
+        try:
+            response = f(*args, **kwargs)
+            duration = time.time() - g.request_start_time
 
             logger.info(
-                f"Request started: {request_id}",
+                f"Request completed: {g.request_id}",
                 extra={
-                    "request_id": request_id,
-                    "method": request.method,
-                    "path": request.path,
-                    "remote_addr": request.remote_addr,
+                    "request_id": g.request_id,
+                    "duration": f"{duration:.3f}s",
+                    "status_code": (
+                        response.status_code
+                        if hasattr(response, "status_code")
+                        else None
+                    ),
                 },
             )
 
-            try:
-                response = f(*args, **kwargs)
-                duration = time.time() - g.request_start_time
+            return response
+        except Exception as e:
+            logger.error(
+                f"Request failed: {g.request_id}",
+                extra={
+                    "request_id": g.request_id,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+                exc_info=True,
+            )
+            raise
 
-                logger.info(
-                    f"Request completed: {request_id}",
-                    extra={
-                        "request_id": request_id,
-                        "duration": f"{duration:.3f}s",
-                        "status_code": getattr(response, "status_code", None),
-                    },
-                )
-
-                return response
-            except Exception as e:
-                logger.error(
-                    f"Request failed: {request_id}",
-                    extra={
-                        "request_id": request_id,
-                        "error": str(e),
-                        "error_type": type(e).__name__,
-                    },
-                    exc_info=True,
-                )
-                raise
-
-        return decorated_function
-
-    return middleware
+    return decorated_function
 
 
 def init_middleware(app):
@@ -82,3 +82,7 @@ def init_middleware(app):
         response.headers["X-XSS-Protection"] = "1; mode=block"
 
         return response
+
+    app.before_request(before_request)
+    app.after_request(after_request)
+    app.wsgi_app = request_handler_middleware(app.wsgi_app)

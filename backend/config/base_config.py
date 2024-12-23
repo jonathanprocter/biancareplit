@@ -2,9 +2,8 @@
 
 import os
 import sys
-import json
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from dotenv import load_dotenv
 import logging
 from logging.config import dictConfig
@@ -24,13 +23,13 @@ class BaseConfig:
     TESTING = os.getenv("FLASK_TESTING", "False").lower() == "true"
 
     # Paths
-    PROJECT_ROOT = Path(__file__).parent.parent.parent
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
     LOGS_DIR = PROJECT_ROOT / "logs"
     INSTANCE_PATH = PROJECT_ROOT / "instance"
 
     # Ensure critical directories exist
-    LOGS_DIR.mkdir(exist_ok=True)
-    INSTANCE_PATH.mkdir(exist_ok=True)
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    INSTANCE_PATH.mkdir(parents=True, exist_ok=True)
 
     # Flask Settings
     SECRET_KEY = os.getenv("SECRET_KEY")
@@ -57,8 +56,8 @@ class BaseConfig:
 
     # Security Settings
     CSRF_ENABLED = True
-    CSRF_SESSION_KEY = os.getenv("CSRF_SESSION_KEY", os.urandom(24).hex())
-    PASSWORD_SALT = os.getenv("PASSWORD_SALT", os.urandom(24).hex())
+    CSRF_SESSION_KEY = os.getenv("CSRF_SESSION_KEY")
+    PASSWORD_SALT = os.getenv("PASSWORD_SALT")
 
     # Middleware Settings
     MIDDLEWARE_CONFIG = {
@@ -192,37 +191,31 @@ class BaseConfig:
     @classmethod
     def init_app(cls, app):
         """Initialize Flask application with configuration."""
-        try:
-            if not app:
-                raise ValueError("No Flask application instance provided")
+        if not app:
+            raise ValueError("No Flask application instance provided")
 
-            # Initialize configuration
-            app.config.from_object(cls)
+        # Initialize configuration
+        app.config.from_object(cls)
 
-            # Set up application paths
-            app.instance_path = str(cls.INSTANCE_PATH)
+        # Set up application paths
+        app.instance_path = str(cls.INSTANCE_PATH)
 
-            # Initialize logging
-            if not app.debug:
-                # Add file handler for production
-                if not os.path.exists("logs"):
-                    os.makedirs("logs")
-                file_handler = logging.FileHandler("logs/application.log")
-                file_handler.setFormatter(
-                    logging.Formatter(
-                        "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
-                    )
+        # Initialize logging
+        if not app.debug:
+            # Add file handler for production
+            if not os.path.exists("logs"):
+                os.makedirs("logs")
+            file_handler = logging.FileHandler("logs/application.log")
+            file_handler.setFormatter(
+                logging.Formatter(
+                    "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
                 )
-                file_handler.setLevel(logging.INFO)
-                app.logger.addHandler(file_handler)
-                app.logger.setLevel(logging.INFO)
-                app.logger.info("Application startup")
+            )
+            file_handler.setLevel(logging.INFO)
+            app.logger.addHandler(file_handler)
+            app.logger.setLevel(logging.INFO)
+            app.logger.info("Application startup")
 
-            # Ensure application context is available
-            with app.app_context():
-                logging.info(f"Initialized {cls.__name__} configuration")
-
-            return True
-        except Exception as e:
-            logging.error(f"Failed to initialize application configuration: {e}")
-            raise
+        # Ensure application context is available
+        with app.app_context():
+            logging.info(f"Initialized {cls.__name__} configuration")

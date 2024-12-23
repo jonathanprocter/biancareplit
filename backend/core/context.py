@@ -3,8 +3,9 @@
 import logging
 from contextlib import contextmanager
 from typing import Generator, Optional, Dict, Any
-from flask import current_app
+from flask import current_app, has_app_context
 from backend.database.db_config import DatabaseConfig
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +22,13 @@ class ApplicationContext:
         """Initialize application context with configuration."""
         try:
             if self._initialized:
-                return True
+                return False
 
             self.db_config = DatabaseConfig(env)
             self.settings = {
                 "environment": env,
                 "debug": env == "development",
-                "initialized_at": None,
+                "initialized_at": datetime.now(),
             }
             self._initialized = True
             return True
@@ -38,18 +39,19 @@ class ApplicationContext:
     @contextmanager
     def session_scope(self) -> Generator:
         """Provide a transactional scope around a series of operations."""
+        if not has_app_context():
+            raise RuntimeError("No application context. Initialize the app first.")
+
+        session = self.db_config.session
         try:
-            yield
-            if current_app.db.session.is_active:
-                current_app.db.session.commit()
+            yield session
+            session.commit()
         except Exception as e:
-            if current_app.db.session.is_active:
-                current_app.db.session.rollback()
+            session.rollback()
             logger.error(f"Session error: {e}")
             raise
         finally:
-            if current_app.db.session.is_active:
-                current_app.db.session.close()
+            session.close()
 
 
 app_context = ApplicationContext()

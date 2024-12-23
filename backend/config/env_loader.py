@@ -13,13 +13,16 @@ class EnvLoader:
             return value.lower() == "true"
 
         # Integer conversion
-        if value.isdigit():
-            return int(value)
+        try:
+            value = int(value)
+            return value
+        except ValueError:
+            pass
 
         # Float conversion
         try:
-            if "." in value:
-                return float(value)
+            value = float(value)
+            return value
         except ValueError:
             pass
 

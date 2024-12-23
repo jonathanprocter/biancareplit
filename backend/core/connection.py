@@ -233,7 +233,7 @@ class ConnectionManager:
                 for middleware in middleware_registry.get_all()
             )
         except Exception as e:
-            self.logger.error(f"Middleware connection check failed: {e}")
+            self.logger.error(f"Middleware connection check failed: {str(e)}")
             return False
 
     def _check_frontend_connections(self) -> bool:
@@ -266,7 +266,8 @@ class ConnectionManager:
     def log_connection_status(self, connection_status: Dict[str, bool]) -> None:
         """Log the status of all system connections."""
         is_healthy = all(
-            status for name, status in connection_status.items()
+            status
+            for name, status in connection_status.items()
             if isinstance(status, bool)
         )
 
@@ -283,5 +284,3 @@ class ConnectionManager:
 
 # Create singleton instance
 connection_manager = ConnectionManager()
-
-

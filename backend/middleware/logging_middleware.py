@@ -16,7 +16,6 @@ class LoggingMiddleware(BaseMiddleware):
     def __init__(self):
         super().__init__()
         self.app = None
-        self._request_id = None
 
     def init_app(self, app):
         """Initialize logging middleware."""
@@ -25,12 +24,11 @@ class LoggingMiddleware(BaseMiddleware):
         @app.before_request
         def before_request():
             """Log request details and start timing."""
-            self._request_id = str(uuid.uuid4())
+            g.request_id = str(uuid.uuid4())
             g.start_time = time.time()
-            g.request_id = self._request_id
 
             logger.info(
-                f"Request started | ID: {self._request_id} | "
+                f"Request started | ID: {g.request_id} | "
                 f"{request.method} {request.path} | "
                 f"Client: {request.remote_addr} | "
                 f"Args: {dict(request.args)} | "
@@ -44,7 +42,7 @@ class LoggingMiddleware(BaseMiddleware):
             status_phrase = response.status
 
             log_msg = (
-                f"Request completed | ID: {self._request_id} | "
+                f"Request completed | ID: {g.request_id} | "
                 f"Duration: {duration:.3f}s | "
                 f"{request.method} {request.path} | "
                 f"Status: {status_phrase} | "
@@ -56,7 +54,7 @@ class LoggingMiddleware(BaseMiddleware):
             else:
                 logger.warning(log_msg)
 
-            response.headers["X-Request-ID"] = self._request_id
+            response.headers["X-Request-ID"] = g.request_id
             return response
 
         @app.teardown_request
@@ -64,5 +62,5 @@ class LoggingMiddleware(BaseMiddleware):
             """Log any errors during request handling."""
             if exc:
                 logger.error(
-                    f"Request failed | ID: {self._request_id} | " f"Error: {str(exc)}"
+                    f"Request failed | ID: {g.request_id} | " f"Error: {str(exc)}"
                 )

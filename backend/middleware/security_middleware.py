@@ -1,6 +1,6 @@
 import logging
-from typing import Optional, Callable
-from flask import Request, Response, request
+from typing import Optional
+from flask import Request, Response
 import re
 
 logger = logging.getLogger(__name__)
@@ -8,12 +8,12 @@ logger = logging.getLogger(__name__)
 
 class SecurityMiddleware:
     def __init__(self):
-        self.allowed_origins = ["https://*.repl.co"]
+        self.allowed_origins = [".repl.co"]
         self.safe_request_pattern = re.compile(r"^[a-zA-Z0-9_\-./]*$")
 
     def process_request(self, request: Request) -> Optional[Response]:
         if not self._validate_origin(request):
-            logger.warning(f"Invalid origin: {request.origin}")
+            logger.warning(f"Invalid origin: {request.headers.get('Origin')}")
             return Response("Invalid origin", status=403)
 
         if not self._validate_request_path(request):
@@ -26,10 +26,7 @@ class SecurityMiddleware:
         origin = request.headers.get("Origin")
         if not origin:
             return True
-        return any(
-            origin.endswith(allowed.replace("*", ""))
-            for allowed in self.allowed_origins
-        )
+        return any(origin.endswith(allowed) for allowed in self.allowed_origins)
 
     def _validate_request_path(self, request: Request) -> bool:
         return bool(self.safe_request_pattern.match(request.path))

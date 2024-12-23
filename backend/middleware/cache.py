@@ -1,72 +1,48 @@
-"""Cache middleware implementation."""
-
-import logging
-from typing import Any
-from flask import request, Response
-from .base import BaseMiddleware
-
-logger = logging.getLogger(__name__)
-
-
-class CacheMiddleware(BaseMiddleware):
-    """Response caching middleware."""
-
-    def _setup_middleware(self) -> None:
-        """Setup cache handlers."""
-        self.app.after_request(self.after_request)
-
-    def after_request(self, response: Response) -> Response:
-        """Handle response caching."""
-        if self._should_cache_response(request, response):
-            self._cache_response(request, response)
-        return response
-
-    def _should_cache_response(self, request: Any, response: Response) -> bool:
-        """Determine if response should be cached."""
-        return False  # Implement caching logic
-
-    def _cache_response(self, request: Any, response: Response) -> None:
-        """Cache the response."""
-        pass  # Implement caching mechanism
-
-
 import logging
 from functools import wraps
-from flask import request
+from typing import Any, Callable
+from flask import request, Response
 from datetime import datetime, timedelta
+from werkzeug.security import safe_str_cmp
+from hashlib import sha256
 
 logger = logging.getLogger(__name__)
 
 
 class CacheMiddleware:
-    def __init__(self, app):
+    """Response caching middleware."""
+
+    def __init__(self, app: Any) -> None:
         self.app = app
         self.cache = {}
-        self.initialize()
+        self._setup_middleware()
 
-    def initialize(self):
+    def _setup_middleware(self) -> None:
+        """Setup cache handlers."""
         logger.info("Cache middleware initialized")
 
-    def cached(self, timeout=300):
-        def decorator(f):
+    def cached(self, timeout: int = 300) -> Callable:
+        def decorator(f: Callable) -> Callable:
             @wraps(f)
-            def decorated_function(*args, **kwargs):
-                cache_key = f"{request.path}:{request.args}"
+            def decorated_function(*args: Any, **kwargs: Any) -> Any:
+                cache_key = sha256(
+                    f"{request.path}:{str(request.args)}".encode()
+                ).hexdigest()
                 cached_data = self.cache.get(cache_key)
 
                 if cached_data:
                     timestamp, data = cached_data
-                    if datetime.now() < timestamp + timedelta(seconds=timeout):
-                        return data
+                    if datetime.utcnow() < timestamp + timedelta(seconds=timeout):
+                        return Response(data, 200)
 
                 data = f(*args, **kwargs)
-                self.cache[cache_key] = (datetime.now(), data)
+                self.cache[cache_key] = (datetime.utcnow(), data)
                 return data
 
             return decorated_function
 
         return decorator
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         self.cache.clear()
         logger.info("Cache cleared")
