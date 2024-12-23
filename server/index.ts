@@ -7,15 +7,13 @@ import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
 import path from 'path';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 
+import { projectPaths } from '../config/project-paths';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-// ES module path handling
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Cleanup handlers collection
+const cleanupHandlers = new Set<() => Promise<void>>();
 
 // Global server instance for cleanup
 let globalServer: Server | null = null;
@@ -97,7 +95,7 @@ async function startServer() {
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
           sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         },
-      }),
+      })
     );
 
     // File upload middleware
@@ -111,7 +109,7 @@ async function startServer() {
         preserveExtension: true,
         abortOnLimit: true,
         debug: process.env.NODE_ENV === 'development',
-      }),
+      })
     );
 
     // Register routes before error handling
