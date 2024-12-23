@@ -1,0 +1,120 @@
+// scripts/preDeployCheck.ts
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+
+interface CheckResult {
+  passed: boolean;
+  message: string;
+  details?: string;
+}
+
+async function runChecks(): Promise<CheckResult[]> {
+  const results: CheckResult[] = [];
+
+  // Check package versions
+  try {
+    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+    const reactVersion = packageJson.dependencies.react;
+    if (reactVersion !== '18.2.0') {
+      results.push({
+        passed: false,
+        message: 'React version mismatch',
+        details: `Expected 18.2.0, found ${reactVersion}`
+      });
+    } else {
+      results.push({
+        passed: true,
+        message: 'React version check passed'
+      });
+    }
+  } catch (error) {
+    results.push({
+      passed: false,
+      message: 'Failed to check package versions',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+
+  // Check build
+  try {
+    execSync('npm run build', { stdio: 'pipe' });
+    results.push({
+      passed: true,
+      message: 'Build completed successfully'
+    });
+  } catch (error) {
+    results.push({
+      passed: false,
+      message: 'Build failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+
+  // Check TypeScript
+  try {
+    execSync('npm run check', { stdio: 'pipe' });
+    results.push({
+      passed: true,
+      message: 'TypeScript checks passed'
+    });
+  } catch (error) {
+    results.push({
+      passed: false,
+      message: 'TypeScript checks failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+
+  // Check for required files
+  const requiredFiles = [
+    'dist/index.js',
+    'dist/assets',
+    '.env'
+  ];
+
+  for (const file of requiredFiles) {
+    const exists = fs.existsSync(path.resolve(file));
+    results.push({
+      passed: exists,
+      message: `Checking for ${file}`,
+      details: exists ? undefined : 'File not found'
+    });
+  }
+
+  return results;
+}
+
+async function main() {
+  console.log('Running pre-deployment checks...\n');
+  
+  const results = await runChecks();
+  const failed = results.filter(r => !r.passed);
+  
+  console.log('\nCheck Results:');
+  results.forEach(result => {
+    const icon = result.passed ? '✅' : '❌';
+    console.log(`${icon} ${result.message}`);
+    if (result.details) {
+      console.log(`   └─ ${result.details}`);
+    }
+  });
+  
+  console.log(`\nSummary: ${results.length - failed.length}/${results.length} checks passed`);
+  
+  if (failed.length > 0) {
+    console.log('\nFailed checks:');
+    failed.forEach(result => {
+      console.log(`❌ ${result.message}`);
+      if (result.details) {
+        console.log(`   └─ ${result.details}`);
+      }
+    });
+    process.exit(1);
+  }
+}
+
+main().catch(error => {
+  console.error('Pre-deployment check failed:', error);
+  process.exit(1);
+});

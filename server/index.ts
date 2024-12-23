@@ -32,7 +32,7 @@ async function waitForDatabase(retries = 3, delay = 5000): Promise<void> {
     } catch (error) {
       if (i === retries - 1) throw error;
       log(`[Server] Database connection failed, retrying in ${delay / 1000}s...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }

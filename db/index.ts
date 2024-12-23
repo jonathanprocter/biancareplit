@@ -2,6 +2,8 @@ import * as schema from '@db/schema';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+import { log } from '../server/vite';
+
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
 }
@@ -17,7 +19,7 @@ const client = postgres(process.env.DATABASE_URL, {
   },
   debug: process.env.NODE_ENV === 'development',
   onnotice: (notice) => {
-    console.log('[Database] Notice:', notice.message);
+    log('[Database] Notice:', notice.message);
   },
   ssl: {
     rejectUnauthorized: false, // Required for some cloud database providers
@@ -39,17 +41,12 @@ export { sql } from 'drizzle-orm';
 export async function cleanup(): Promise<void> {
   try {
     await client.end();
-    console.log('[Database] Connection pool closed successfully');
+    log('[Database] Connection pool closed successfully');
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
+      log('[Database] Error:', error.message);
     } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error('[Database] Error:', error.message);
-    } else {
-      console.error('[Database] An unknown error occurred:', error);
+      log('[Database] An unknown error occurred:', error);
     }
   }
 }

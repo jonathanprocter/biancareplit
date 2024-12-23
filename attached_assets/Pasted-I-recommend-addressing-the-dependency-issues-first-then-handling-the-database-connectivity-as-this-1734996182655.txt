@@ -1,0 +1,75 @@
+I recommend addressing the dependency issues first, then handling the database connectivity, as this will provide the most stable foundation for the review.
+Here's the step-by-step approach:
+
+First, let's fix the React dependency issues:
+
+bashCopy# Clean the dependency tree
+rm -rf node_modules package-lock.json
+
+# Install correct React versions
+npm install react@18.2.0 react-dom@18.2.0 @types/react@18.2.0 @types/react-dom@18.2.0
+
+# Reinstall all dependencies
+npm install
+
+Then, let's verify the database connectivity:
+
+typescriptCopy// Add this to server/db/index.ts
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { neon } from '@neondatabase/serverless';
+
+export async function testConnection(retries = 5): Promise<boolean> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const sql = neon(process.env.DATABASE_URL!);
+      const db = drizzle(sql);
+      await db.execute('SELECT 1'); // Basic connectivity test
+      return true;
+    } catch (error) {
+      console.error(`Database connection attempt ${i + 1} failed:`, error);
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retrying
+      }
+    }
+  }
+  return false;
+}
+
+// Add graceful fallback in server/index.ts
+const isConnected = await testConnection(5);
+if (!isConnected) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Database connection required in production');
+  }
+  console.warn('Starting in development mode without database connection');
+}
+
+Update your environment variables:
+
+envCopyDATABASE_URL=postgresql://user:password@your-db-url:5432/dbname
+NODE_ENV=development
+
+Add database health check endpoint:
+
+typescriptCopy// Add to server/routes/index.ts
+app.get('/api/health', async (req, res) => {
+  const dbConnected = await testConnection(1);
+  res.json({
+    status: 'ok',
+    database: dbConnected ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV
+  });
+});
+After implementing these changes:
+
+Run development environment:
+
+bashCopynpm run dev
+
+Verify the setup:
+
+bashCopy# Check database connection
+curl http://localhost:5000/api/health
+
+# Check frontend build
+npm run build

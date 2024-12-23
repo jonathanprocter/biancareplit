@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { Brain, BookOpen, Target, Clock, CheckCircle } from 'lucide-react';
 import { NCLEXQuestion } from '../types';
 import { calculateTimeSpent, calculateConfidence } from '../lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface LearningPattern {
   currentLevel: string;
@@ -48,179 +50,133 @@ interface AdaptiveContent extends NCLEXQuestion {
 }
 
 const AdaptiveLearningInterface: React.FC = () => {
-  const [currentContent, setCurrentContent] = useState<AdaptiveContent | null>(null);
-  const [learningPatterns, setLearningPatterns] = useState<LearningPattern | null>(null);
-  const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackData | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const [studySession, setStudySession] = useState<StudySession>({
     startTime: Date.now(),
     questionStartTime: Date.now(),
     currentStreak: 0,
   });
 
-  useEffect(() => {
-    // Fetch initial learning patterns and performance data
-    fetchUserData();
-  }, []);
-
-  // Reset question timer when new content is loaded
-  useEffect(() => {
-    if (currentContent) {
-      setStudySession((prev) => ({
-        ...prev,
-        questionStartTime: Date.now(),
-      }));
-    }
-  }, [currentContent]);
-
-  const fetchUserData = async (): Promise<void> => {
-    try {
-      const [patternsResponse, performanceResponse] = await Promise.all([
-        fetch('/api/learning-patterns'),
-        fetch('/api/performance-data'),
-      ]);
-
-      const patterns: LearningPattern = await patternsResponse.json();
-      const performance: PerformanceData = await performanceResponse.json();
-
-      setLearningPatterns(patterns);
-      setPerformanceData(performance);
-
-      // Generate initial content based on patterns
-      await generateAdaptiveContent(patterns, performance);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
-
-  const generateAdaptiveContent = async (
-    patterns: LearningPattern,
-    performance: PerformanceData,
-  ): Promise<void> => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/adaptive-content/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          learningPatterns: patterns,
-          performanceData: performance,
-        }),
-      });
-
-      const content: AdaptiveContent = await response.json();
-      setCurrentContent(content);
-    } catch (error) {
-      console.error('Error generating content:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAnswerSubmission = async (answer: number): Promise<void> => {
-    if (!currentContent) return;
-
-    setSelectedAnswer(answer);
-    const timeSpent = calculateTimeSpent(studySession.questionStartTime);
-
-    try {
-      const response = await fetch('/api/adaptive-content/submit-answer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contentId: currentContent.id,
-          answer,
-          timeSpent,
-          confidenceLevel: calculateConfidence(
-            timeSpent,
-            answer === currentContent.options.indexOf(currentContent.correct_answer),
-            isDifficultyLevel(currentContent.difficulty) ? currentContent.difficulty : 'medium',
-          ),
-        }),
-      });
-
-      const result: ApiResponse<{
-        feedback: FeedbackData;
-        patterns?: LearningPattern;
-      }> = await response.json();
-
-      if (result.success && result.data) {
-        setFeedback(result.data.feedback);
-
-        // Update learning patterns if provided
-        if (result.data.patterns) {
-          await updateLearningPatterns(result.data.patterns);
-        }
-
-        // Update study session stats
-        setStudySession((prev) => ({
-          ...prev,
-          currentStreak: result.data.feedback.correct ? prev.currentStreak + 1 : 0,
-          questionStartTime: Date.now(),
-        }));
-      }
-    } catch (error) {
-      console.error('Error submitting answer:', error);
-      setFeedback({
-        correct: false,
-        message: 'Failed to submit answer. Please try again.',
-        explanation: 'A network error occurred.',
-      });
-    }
-  };
-
-  const updateLearningPatterns = async (newPatterns: LearningPattern): Promise<void> => {
-    setLearningPatterns(newPatterns);
-    if (performanceData) {
-      await generateAdaptiveContent(newPatterns, performanceData);
-    }
-  };
-
-  const [adaptiveInsights, setAdaptiveInsights] = useState<{
-    recommendedTopics: string[];
-    strengthAreas: string[];
-    difficultyLevel: string;
-    learningTrend: 'improving' | 'stable' | 'needs_focus';
-  }>({
-    recommendedTopics: [],
-    strengthAreas: [],
-    difficultyLevel: 'beginner',
-    learningTrend: 'stable',
+  // Queries
+  const { data: learningPatterns } = useQuery<LearningPattern>({
+    queryKey: ['/api/learning-patterns'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  useEffect(() => {
-    if (performanceData) {
-      updateAdaptiveInsights();
-    }
-  }, [performanceData]);
+  const { data: performanceData } = useQuery<PerformanceData>({
+    queryKey: ['/api/performance-data'],
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const updateAdaptiveInsights = async () => {
-    try {
-      const response = await fetch('/api/nclex-coach/adaptive-insights', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const { data: adaptiveInsights, refetch: refetchInsights } = useQuery({
+    queryKey: ['/api/nclex-coach/adaptive-insights'],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Mutations
+  const generateContentMutation = useMutation({
+    mutationFn: async (variables: {
+      learningPatterns: LearningPattern;
+      performanceData: PerformanceData;
+    }) => {
+      const response = await fetch('/api/adaptive-content/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(variables),
       });
+      if (!response.ok) throw new Error('Failed to generate content');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['currentContent'], data);
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to generate adaptive content. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
 
-      if (response.ok) {
-        const insights = await response.json();
-        setAdaptiveInsights(insights);
-      }
-    } catch (error) {
-      console.error('Error fetching adaptive insights:', error);
+  const submitAnswerMutation = useMutation({
+    mutationFn: async (variables: {
+      contentId: string;
+      answer: number;
+      timeSpent: number;
+      confidenceLevel: number;
+    }) => {
+      const response = await fetch('/api/adaptive-content/submit-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(variables),
+      });
+      if (!response.ok) throw new Error('Failed to submit answer');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Update patterns and generate new content
+      queryClient.invalidateQueries({ queryKey: ['/api/learning-patterns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/performance-data'] });
+      refetchInsights();
+
+      setStudySession((prev) => ({
+        ...prev,
+        currentStreak: data.feedback.correct ? prev.currentStreak + 1 : 0,
+        questionStartTime: Date.now(),
+      }));
+
+      // Show feedback toast
+      toast({
+        title: data.feedback.correct ? 'Correct!' : 'Incorrect',
+        description: data.feedback.message,
+        variant: data.feedback.correct ? 'default' : 'destructive',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to submit answer. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Effects
+  useEffect(() => {
+    if (learningPatterns && performanceData) {
+      generateContentMutation.mutate({ learningPatterns, performanceData });
     }
-  };
+  }, [learningPatterns, performanceData]);
 
-  return (
-    <div className="space-y-6 p-6">
-      {/* Adaptive Insights Panel */}
+  // Handlers
+  const handleAnswerSubmission = useCallback(
+    (answer: number) => {
+      const currentContent = queryClient.getQueryData<AdaptiveContent>(['currentContent']);
+      if (!currentContent) return;
+
+      const timeSpent = calculateTimeSpent(studySession.questionStartTime);
+      const confidenceLevel = calculateConfidence(
+        timeSpent,
+        answer === currentContent.options.indexOf(currentContent.correct_answer),
+        isDifficultyLevel(currentContent.difficulty) ? currentContent.difficulty : 'medium',
+      );
+
+      submitAnswerMutation.mutate({
+        contentId: currentContent.id.toString(),
+        answer,
+        timeSpent,
+        confidenceLevel,
+      });
+    },
+    [studySession.questionStartTime, submitAnswerMutation],
+  );
+
+  // Memoized components
+  const AdaptiveInsightsPanel = useMemo(
+    () => (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -229,47 +185,42 @@ const AdaptiveLearningInterface: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-semibold">Recommended Focus Areas</h3>
-              <ul className="list-disc pl-4">
-                {adaptiveInsights.recommendedTopics.map((topic, index) => (
-                  <li key={index} className="text-sm text-gray-600">
-                    {topic}
-                  </li>
-                ))}
-              </ul>
+          {adaptiveInsights && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <h3 className="font-semibold">Recommended Focus Areas</h3>
+                <ul className="list-disc pl-4">
+                  {adaptiveInsights.recommendedTopics.map((topic, index) => (
+                    <li key={index} className="text-sm text-gray-600">
+                      {topic}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-semibold">Strength Areas</h3>
+                <ul className="list-disc pl-4">
+                  {adaptiveInsights.strengthAreas.map((area, index) => (
+                    <li key={index} className="text-sm text-green-600">
+                      {area}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Strength Areas</h3>
-              <ul className="list-disc pl-4">
-                {adaptiveInsights.strengthAreas.map((area, index) => (
-                  <li key={index} className="text-sm text-green-600">
-                    {area}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="flex items-center justify-between">
-              <span>Current Learning Level</span>
-              <Badge
-                variant={
-                  adaptiveInsights.learningTrend === 'improving'
-                    ? 'success'
-                    : adaptiveInsights.learningTrend === 'stable'
-                    ? 'default'
-                    : 'destructive'
-                }
-              >
-                {adaptiveInsights.difficultyLevel}
-              </Badge>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
-      {/* Progress Overview */}
+    ),
+    [adaptiveInsights],
+  );
+
+  const currentContent = queryClient.getQueryData<AdaptiveContent>(['currentContent']);
+
+  return (
+    <div className="space-y-6 p-6">
+      {AdaptiveInsightsPanel}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -305,7 +256,6 @@ const AdaptiveLearningInterface: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Current Content */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -314,13 +264,12 @@ const AdaptiveLearningInterface: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {generateContentMutation.isPending ? (
             <div className="flex items-center justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
             </div>
           ) : currentContent ? (
             <div className="space-y-6">
-              {/* Question or Content Display */}
               <div className="p-4 border rounded-lg">
                 <div className="font-medium mb-4">{currentContent.question}</div>
 
@@ -328,9 +277,12 @@ const AdaptiveLearningInterface: React.FC = () => {
                   {currentContent.options?.map((option, index) => (
                     <Button
                       key={index}
-                      variant={selectedAnswer === index ? 'secondary' : 'outline'}
+                      variant={
+                        submitAnswerMutation.variables?.answer === index ? 'secondary' : 'outline'
+                      }
                       className="w-full justify-start text-left"
                       onClick={() => handleAnswerSubmission(index)}
+                      disabled={submitAnswerMutation.isPending}
                     >
                       {option}
                     </Button>
@@ -338,18 +290,6 @@ const AdaptiveLearningInterface: React.FC = () => {
                 </div>
               </div>
 
-              {/* Feedback Display */}
-              {feedback && (
-                <div className={`p-4 rounded-lg ${feedback.correct ? 'bg-green-50' : 'bg-red-50'}`}>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className={feedback.correct ? 'text-green-500' : 'text-red-500'} />
-                    <span className="font-medium">{feedback.message}</span>
-                  </div>
-                  <div className="mt-2">{feedback.explanation}</div>
-                </div>
-              )}
-
-              {/* Content Metadata */}
               <div className="flex flex-wrap gap-2">
                 <Badge>{currentContent.difficulty} Difficulty</Badge>
                 <Badge variant="outline">{currentContent.topic}</Badge>
@@ -368,30 +308,31 @@ const AdaptiveLearningInterface: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Learning Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5" />
-            Learning Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {learningPatterns?.insights?.map((insight, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-blue-50">
-                  <Brain className="h-4 w-4 text-blue-500" />
+      {learningPatterns?.insights && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              Learning Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {learningPatterns.insights.map((insight, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className="p-2 rounded-full bg-blue-50">
+                    <Brain className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <div className="font-medium">{insight.title}</div>
+                    <div className="text-sm text-gray-600">{insight.description}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-medium">{insight.title}</div>
-                  <div className="text-sm text-gray-600">{insight.description}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

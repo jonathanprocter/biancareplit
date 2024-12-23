@@ -64,3 +64,8 @@ python-dotenv
 flask-migrate
 flask-sqlalchemy
 psycopg2-binary
+flask-migrate
+flask-sqlalchemy
+numpy
+scikit-learn
+sqlalchemy

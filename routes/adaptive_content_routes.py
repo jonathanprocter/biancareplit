@@ -1,10 +1,11 @@
 from flask import Blueprint, jsonify, request
-from models import db, Review, Flashcard, StudyMaterial
+from models import db, Review, Flashcard, StudyMaterial, Content, AdaptivePattern
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 import logging
+from typing import Dict, List, Optional, Union, Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -14,13 +15,21 @@ adaptive_content_bp = Blueprint("adaptive_content", __name__, url_prefix="/api")
 
 
 @adaptive_content_bp.route("/learning-patterns", methods=["GET"])
-def get_learning_patterns():
-    """Get user's learning patterns"""
+def get_learning_patterns() -> tuple[dict, int]:
+    """Get user's learning patterns with proper error handling and type safety"""
     try:
-        # Get user's review history
+        # Get user's review history with proper limit
         reviews = Review.query.order_by(Review.created_at.desc()).limit(100).all()
 
-        # Calculate patterns
+        if not reviews:
+            return jsonify({
+                "currentLevel": "Beginner",
+                "preferredStyle": "Visual",
+                "weakAreas": [],
+                "insights": []
+            }), 200
+
+        # Calculate patterns with proper error handling
         patterns = {
             "currentLevel": calculate_current_level(reviews),
             "preferredStyle": determine_learning_style(reviews),
@@ -28,17 +37,25 @@ def get_learning_patterns():
             "insights": generate_learning_insights(reviews),
         }
 
-        return jsonify(patterns)
+        return jsonify(patterns), 200
     except Exception as e:
         logger.error(f"Error getting learning patterns: {str(e)}")
         return jsonify({"error": "Failed to retrieve learning patterns"}), 500
 
 
 @adaptive_content_bp.route("/performance-data", methods=["GET"])
-def get_performance_data():
-    """Get user's performance data"""
+def get_performance_data() -> tuple[dict, int]:
+    """Get user's performance data with proper error handling"""
     try:
         reviews = Review.query.order_by(Review.created_at.desc()).limit(100).all()
+
+        if not reviews:
+            return jsonify({
+                "overallProgress": 0,
+                "masteredTopics": 0,
+                "studyStreak": 0,
+                "recentPerformance": []
+            }), 200
 
         performance_data = {
             "overallProgress": calculate_overall_progress(reviews),
@@ -47,21 +64,26 @@ def get_performance_data():
             "recentPerformance": get_recent_performance(reviews),
         }
 
-        return jsonify(performance_data)
+        return jsonify(performance_data), 200
     except Exception as e:
         logger.error(f"Error getting performance data: {str(e)}")
         return jsonify({"error": "Failed to retrieve performance data"}), 500
 
 
 @adaptive_content_bp.route("/adaptive-content/generate", methods=["POST"])
-def generate_adaptive_content():
-    """Generate adaptive content based on patterns"""
+def generate_adaptive_content() -> tuple[dict, int]:
+    """Generate adaptive content based on patterns with proper validation"""
     try:
-        data = request.json
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
         patterns = data.get("learningPatterns")
         performance = data.get("performanceData")
 
-        # Generate content based on patterns and performance
+        if not patterns or not performance:
+            return jsonify({"error": "Missing required data"}), 400
+
         content = {
             "id": generate_content_id(),
             "question": generate_adaptive_question(patterns, performance),
@@ -71,20 +93,26 @@ def generate_adaptive_content():
             "tags": generate_content_tags(patterns),
         }
 
-        return jsonify(content)
+        return jsonify(content), 200
     except Exception as e:
         logger.error(f"Error generating adaptive content: {str(e)}")
         return jsonify({"error": "Failed to generate adaptive content"}), 500
 
 
 @adaptive_content_bp.route("/adaptive-content/submit-answer", methods=["POST"])
-def submit_answer():
-    """Submit and process answer"""
+def submit_answer() -> tuple[dict, int]:
+    """Submit and process answer with proper validation and error handling"""
     try:
-        data = request.json
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
         content_id = data.get("contentId")
         answer = data.get("answer")
         time_spent = data.get("timeSpent")
+
+        if not all([content_id, answer is not None, time_spent]):
+            return jsonify({"error": "Missing required fields"}), 400
 
         # Process the answer and generate feedback
         result = {
@@ -93,14 +121,14 @@ def submit_answer():
             "patterns": update_learning_patterns(content_id, answer, time_spent),
         }
 
-        return jsonify(result)
+        return jsonify(result), 200
     except Exception as e:
         logger.error(f"Error submitting answer: {str(e)}")
         return jsonify({"error": "Failed to process answer"}), 500
 
 
-def calculate_study_streak():
-    """Calculate the current study streak in days"""
+def calculate_study_streak() -> int:
+    """Calculate the current study streak in days with proper error handling"""
     try:
         today = datetime.utcnow().date()
         streak = 0
@@ -126,71 +154,175 @@ def calculate_study_streak():
         return 0
 
 
-# Helper functions for pattern analysis and content generation
-def calculate_current_level(reviews):
+def calculate_current_level(reviews: List[Review]) -> str:
+    """Calculate user's current level based on performance metrics"""
     if not reviews:
         return "Beginner"
-    # Implement level calculation logic
-    return "Intermediate"
+
+    try:
+        correct_answers = sum(1 for r in reviews if r.score >= 0.8)
+        accuracy = correct_answers / len(reviews)
+
+        if accuracy >= 0.8:
+            return "Advanced"
+        elif accuracy >= 0.6:
+            return "Intermediate"
+        else:
+            return "Beginner"
+    except Exception as e:
+        logger.error(f"Error calculating current level: {str(e)}")
+        return "Beginner"
 
 
-def determine_learning_style(reviews):
+def determine_learning_style(reviews: List[Review]) -> str:
+    """Determine user's learning style based on historical performance"""
     if not reviews:
         return "Visual"
-    # Implement learning style detection
-    return "Visual"
+
+    try:
+        # Implement learning style detection based on review patterns
+        styles = ["Visual", "Auditory", "Reading/Writing", "Kinesthetic"]
+        # Add actual implementation based on your learning style detection logic
+        return "Visual"  # Default for now
+    except Exception as e:
+        logger.error(f"Error determining learning style: {str(e)}")
+        return "Visual"
 
 
-def identify_weak_areas(reviews):
+def identify_weak_areas(reviews: List[Review]) -> List[str]:
+    """Identify areas where the user needs improvement"""
     if not reviews:
         return []
-    # Implement weak areas identification
-    return ["Topic A", "Topic B"]
+
+    try:
+        # Group reviews by topic and calculate success rate
+        topic_performance = {}
+        for review in reviews:
+            topic = review.topic
+            if topic not in topic_performance:
+                topic_performance[topic] = {"total": 0, "correct": 0}
+            topic_performance[topic]["total"] += 1
+            if review.score >= 0.8:
+                topic_performance[topic]["correct"] += 1
+
+        # Identify topics with success rate below 60%
+        weak_areas = []
+        for topic, stats in topic_performance.items():
+            if (stats["correct"] / stats["total"]) < 0.6:
+                weak_areas.append(topic)
+
+        return weak_areas
+    except Exception as e:
+        logger.error(f"Error identifying weak areas: {str(e)}")
+        return []
 
 
-def generate_learning_insights(reviews):
+def generate_learning_insights(reviews: List[Review]) -> List[Dict[str, str]]:
+    """Generate personalized learning insights based on user's performance"""
     if not reviews:
         return []
-    # Generate learning insights
-    return [
-        {
-            "title": "Study Pattern Analysis",
-            "description": "You learn best during evening hours",
-        }
-    ]
+
+    try:
+        insights = []
+
+        # Time-based performance analysis
+        time_performance = analyze_time_performance(reviews)
+        if time_performance:
+            insights.append({
+                "title": "Optimal Study Time",
+                "description": f"You perform best during {time_performance} hours"
+            })
+
+        # Topic mastery progress
+        mastery_insight = analyze_topic_mastery(reviews)
+        if mastery_insight:
+            insights.append(mastery_insight)
+
+        return insights
+    except Exception as e:
+        logger.error(f"Error generating learning insights: {str(e)}")
+        return []
 
 
-def calculate_overall_progress(reviews):
+def analyze_time_performance(reviews: List[Review]) -> Optional[str]:
+    """Analyze when the user performs best"""
+    try:
+        time_scores = {}
+        for review in reviews:
+            hour = review.created_at.hour
+            if hour not in time_scores:
+                time_scores[hour] = []
+            time_scores[hour].append(review.score)
+
+        best_hour = max(time_scores.items(), key=lambda x: sum(x[1])/len(x[1]))[0]
+        if 5 <= best_hour < 12:
+            return "morning"
+        elif 12 <= best_hour < 17:
+            return "afternoon"
+        else:
+            return "evening"
+    except Exception as e:
+        logger.error(f"Error analyzing time performance: {str(e)}")
+        return None
+
+
+def analyze_topic_mastery(reviews: List[Review]) -> Optional[Dict[str, str]]:
+    """Analyze topic mastery progress"""
+    try:
+        recent_reviews = sorted(reviews, key=lambda x: x.created_at, reverse=True)[:20]
+        improvement_rate = sum(1 for r in recent_reviews if r.score > 0.8) / len(recent_reviews)
+
+        if improvement_rate >= 0.8:
+            return {
+                "title": "Mastery Progress",
+                "description": "You're showing excellent mastery of recent topics!"
+            }
+        elif improvement_rate >= 0.6:
+            return {
+                "title": "Steady Progress",
+                "description": "You're making steady progress in your learning journey."
+            }
+        else:
+            return {
+                "title": "Learning Opportunity",
+                "description": "Focus on reviewing challenging topics to improve mastery."
+            }
+    except Exception as e:
+        logger.error(f"Error analyzing topic mastery: {str(e)}")
+        return None
+
+
+def calculate_overall_progress(reviews: List[Review]) -> int:
     if not reviews:
         return 0
     # Calculate progress percentage
     return 65
 
 
-def count_mastered_topics(reviews):
+def count_mastered_topics(reviews: List[Review]) -> int:
     if not reviews:
         return 0
     # Count mastered topics
     return 3
 
 
-def get_recent_performance(reviews):
+def get_recent_performance(reviews: List[Review]) -> List[Dict[str, Union[datetime, float]]]:
     if not reviews:
         return []
     # Get recent performance data
     return [{"date": r.created_at, "score": r.score} for r in reviews[:5]]
 
 
-def generate_content_id():
+def generate_content_id() -> float:
     return datetime.utcnow().timestamp()
 
 
-def generate_adaptive_question(patterns, performance):
+def generate_adaptive_question(patterns: Dict[str, Any], performance: Dict[str, Any]) -> str:
     # Generate question based on patterns
     return "What is the primary function of the adaptive learning system?"
 
 
-def generate_question_options():
+def generate_question_options() -> List[str]:
     # Generate options
     return [
         "Pattern recognition",
@@ -200,22 +332,22 @@ def generate_question_options():
     ]
 
 
-def determine_optimal_difficulty(patterns):
+def determine_optimal_difficulty(patterns: Dict[str, Any]) -> str:
     # Determine difficulty
     return "Intermediate"
 
 
-def select_next_topic(patterns):
+def select_next_topic(patterns: Dict[str, Any]) -> str:
     # Select topic
     return "Adaptive Learning Systems"
 
 
-def generate_content_tags(patterns):
+def generate_content_tags(patterns: Dict[str, Any]) -> List[str]:
     # Generate tags
     return ["adaptive", "learning", "patterns"]
 
 
-def evaluate_answer(content_id, answer):
+def evaluate_answer(content_id: Any, answer: Any) -> bool:
     """Evaluate the correctness of an answer"""
     try:
         content = Content.query.get(content_id)
@@ -240,7 +372,7 @@ def evaluate_answer(content_id, answer):
         return False
 
 
-def generate_feedback(content_id, answer):
+def generate_feedback(content_id: Any, answer: Any) -> Dict[str, Any]:
     """Generate detailed feedback for the answer"""
     try:
         content = Content.query.get(content_id)
@@ -279,7 +411,7 @@ def generate_feedback(content_id, answer):
         }
 
 
-def update_learning_patterns(content_id, answer, time_spent):
+def update_learning_patterns(content_id: Any, answer: Any, time_spent: Any) -> Dict[str, Any]:
     """Update learning patterns based on user interaction"""
     try:
         content = Content.query.get(content_id)
@@ -320,7 +452,7 @@ def update_learning_patterns(content_id, answer, time_spent):
 
         return {
             "currentLevel": current_level,
-            "preferredStyle": determine_learning_style(pattern),
+            "preferredStyle": determine_learning_style([pattern]),
             "weakAreas": identify_weak_areas([pattern]),
             "recommendedDifficulty": (
                 "Advanced" if pattern.accuracy_rate > 80 else "Intermediate"
