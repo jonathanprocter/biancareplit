@@ -7,49 +7,79 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
 }
 
-// Configure database client with WebSocket support
+console.log('[Database] Initializing connection pool...');
+
+// Configure pool with simplified options
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  webSocketConstructor: WebSocket,
-  connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 30000,
-  max: 20,
+  webSocketConstructor: class extends WebSocket {
+    constructor(url: string, protocols?: string | string[]) {
+      console.log('[Database] Attempting WebSocket connection...');
+      super(url, protocols, {
+        rejectUnauthorized: false,
+        handshakeTimeout: 30000,
+      });
+
+      this.on('open', () => {
+        console.log('[Database] WebSocket connection established successfully');
+      });
+
+      this.on('error', (error) => {
+        console.error('[Database] WebSocket error:', error);
+      });
+
+      this.on('close', (code, reason) => {
+        console.log('[Database] WebSocket closed:', code, reason.toString());
+      });
+    }
+  },
+  max: 10,
+  connectionTimeoutMillis: 30000,
+  idleTimeoutMillis: 60000,
 });
 
 // Create drizzle database instance
 export const db = drizzle(pool, { schema });
 
-// Test database connection function
-export async function testConnection() {
-  try {
-    const result = await pool.query('SELECT version()');
-    console.info('[Database] Connected to PostgreSQL version:', result.rows[0].version);
-    return true;
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    console.error(
-      '[Database] Connection failed:',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
-    throw error;
+// Test database connection with retries
+export async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`[Database] Connection attempt ${attempt}/${retries}...`);
+      const result = await pool.query('SELECT version()');
+      console.log(
+        '[Database] Connected successfully to PostgreSQL version:',
+        result.rows[0].version,
+      );
+      return true;
+    } catch (error) {
+      console.error(
+        `[Database] Connection attempt ${attempt}/${retries} failed:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+
+      if (error instanceof Error) {
+        console.error('[Database] Error stack:', error.stack);
+      }
+
+      if (attempt < retries) {
+        console.log(`[Database] Waiting ${delay}ms before next attempt...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        console.error('[Database] All connection attempts failed');
+        throw error;
+      }
+    }
   }
+  return false;
 }
 
-// Handle cleanup on process termination
+// Cleanup handler
 async function cleanup() {
   try {
     await pool.end();
-    console.info('[Database] Connection pool closed successfully');
+    console.log('[Database] Connection pool closed successfully');
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error',
@@ -61,11 +91,4 @@ async function cleanup() {
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
 
-// Initial connection test
-testConnection()
-  .then(() => {
-    console.info('[Database] Initial connection test passed');
-  })
-  .catch((error) => {
-    console.error('[Database] Initial connection test failed:', error);
-  });
+export default db;

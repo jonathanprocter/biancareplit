@@ -1,7 +1,7 @@
 import { db, testConnection } from '@db';
 import { spawn } from 'child_process';
 import { sql } from 'drizzle-orm';
-import type { Express } from 'express';
+import type { Express, Request, Response } from 'express';
 import { type Server, createServer } from 'http';
 import { join } from 'path';
 
@@ -18,34 +18,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     throw error;
   }
 
-  // Code review endpoint
-  app.post('/api/code-review', async (req, res) => {
+  // Code review endpoint with enhanced error handling and validation
+  app.post('/api/code-review', async (req: Request, res: Response) => {
     try {
-      const process = spawn('python3', [
-        join(paths.root, 'services/code_review_service.py'),
-        '--path',
-        paths.root,
-        '--format',
-        'json',
-      ]);
+      // Input validation
+      const { path = paths.root, format = 'json' } = req.body;
+
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(400).json({
+          status: 'error',
+          error: 'OpenAI API key is not configured',
+        });
+      }
+
+      // Spawn the Python code review process
+      const reviewProcess = spawn(
+        'python3',
+        [join(paths.root, 'services/code_review_service.py'), '--path', path, '--format', format],
+        {
+          env: {
+            ...process.env,
+            PYTHONUNBUFFERED: '1',
+          },
+        },
+      );
 
       let output = '';
       let error = '';
 
-      process.stdout.on('data', (data) => {
+      // Collect stdout data
+      reviewProcess.stdout.on('data', (data) => {
         output += data;
+        log('[Code Review] Output:', data.toString());
       });
 
-      process.stderr.on('data', (data) => {
+      // Collect stderr data
+      reviewProcess.stderr.on('data', (data) => {
         error += data;
+        log('[Code Review] Error:', data.toString());
       });
 
-      process.on('close', (code) => {
+      // Handle process completion
+      reviewProcess.on('close', (code) => {
         if (code !== 0) {
           log('[Code Review] Process exited with code:', code);
           return res.status(500).json({
             status: 'error',
             error: error || 'Code review process failed',
+            code,
           });
         }
 
@@ -53,20 +73,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const results = JSON.parse(output);
           res.json({
             status: 'success',
+            timestamp: new Date().toISOString(),
             results,
           });
         } catch (e) {
+          const parseError = e instanceof Error ? e.message : 'Unknown error';
+          log('[Code Review] Failed to parse results:', parseError);
           res.status(500).json({
             status: 'error',
             error: 'Failed to parse code review results',
+            details: parseError,
           });
         }
       });
+
+      // Handle process errors
+      reviewProcess.on('error', (err) => {
+        log('[Code Review] Process error:', err);
+        res.status(500).json({
+          status: 'error',
+          error: 'Failed to execute code review process',
+          details: err.message,
+        });
+      });
     } catch (error) {
-      log('[Code Review] Failed to start process:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log('[Code Review] Failed to start process:', errorMessage);
       res.status(500).json({
         status: 'error',
         error: 'Failed to start code review process',
+        details: errorMessage,
       });
     }
   });

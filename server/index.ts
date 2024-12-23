@@ -58,14 +58,34 @@ async function startServer() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Initialize database first
-    log('[Server] Initializing database connection...');
+    // Initialize database with enhanced error handling
+    log('[Server] Starting database initialization...');
+    
+    // Print connection details (without sensitive info)
+    const dbUrl = new URL(process.env.DATABASE_URL || '');
+    log(`[Server] Connecting to database at ${dbUrl.host}...`);
+
     try {
-      await testConnection();
+      const isConnected = await testConnection(5, 3000); // 5 retries, 3 second delay
+      if (!isConnected) {
+        throw new Error('Database connection failed after multiple retries');
+      }
       log('[Server] Database connection established successfully');
     } catch (error) {
-      log('[Server] Database initialization failed:', error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log('[Server] Database initialization error:', errorMessage);
+      
+      if (error instanceof Error && error.stack) {
+        log('[Server] Error stack:', error.stack);
+      }
+      
+      if (process.env.NODE_ENV === 'development') {
+        log('[Server] WARNING: Continuing in development mode without database');
+        log('[Server] Some features may be unavailable');
+      } else {
+        log('[Server] FATAL: Cannot start server without database in production mode');
+        throw error;
+      }
     }
 
     // CORS configuration
