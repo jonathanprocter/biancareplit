@@ -35,14 +35,13 @@ async function startServer() {
 
     // Enhanced CORS configuration
     const corsOptions = {
-      origin:
-        process.env.NODE_ENV === 'production'
-          ? process.env.CORS_ORIGIN?.split(',') || 'https://your-domain.com'
-          : ['http://localhost:5000', 'http://0.0.0.0:5000'],
+      origin: process.env.NODE_ENV === 'production'
+        ? process.env.CORS_ORIGIN?.split(',') || 'https://your-domain.com'
+        : ['http://localhost:5000', 'http://0.0.0.0:5000'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
-      maxAge: 86400, // 24 hours
+      maxAge: 86400 // 24 hours
     };
     app.use(cors(corsOptions));
 
@@ -50,7 +49,7 @@ async function startServer() {
     const sessionStore = new (MemoryStore(session))({
       checkPeriod: 86400000, // 24h
       stale: false,
-      ttl: 86400000,
+      ttl: 86400000
     });
 
     const sessionConfig = {
@@ -65,8 +64,10 @@ async function startServer() {
         maxAge: 24 * 60 * 60 * 1000, // 24h
         sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         path: '/',
-        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
-      },
+        domain: process.env.NODE_ENV === 'production'
+          ? process.env.COOKIE_DOMAIN
+          : undefined
+      }
     };
 
     if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
@@ -77,7 +78,7 @@ async function startServer() {
 
     // Test database connection
     log('[Server] Testing database connection...');
-    const isConnected = await testConnection(3);
+    const isConnected = await testConnection();
 
     if (!isConnected && process.env.NODE_ENV === 'production') {
       throw new Error('Database connection failed in production mode');
@@ -92,21 +93,20 @@ async function startServer() {
     // Global error handler with enhanced security
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       const status = (err as any).status || (err as any).statusCode || 500;
-      const message =
-        process.env.NODE_ENV === 'production'
-          ? 'Internal Server Error'
-          : err.message || 'Internal Server Error';
+      const message = process.env.NODE_ENV === 'production'
+        ? 'Internal Server Error'
+        : err.message || 'Internal Server Error';
 
       // Log full error details in development
       if (process.env.NODE_ENV !== 'production') {
-        console.error('[Server] Error:', err);
+        log('[Server] Error:', err);
       }
 
       if (!res.headersSent) {
         res.status(status).json({
           error: message,
           status,
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString()
         });
       }
     });
@@ -132,31 +132,27 @@ async function startServer() {
 
     server.on('error', (error: NodeJS.ErrnoException) => {
       if (error.code === 'EADDRINUSE') {
-        console.error(`[Server] Port ${PORT} is already in use`);
+        log(`[Server] Port ${PORT} is already in use`);
       } else {
-        console.error('[Server] Server error:', error);
+        log('[Server] Server error:', error);
       }
     });
+
   } catch (error) {
-    console.error('[Server] Fatal error during startup:', error);
+    log('[Server] Fatal error during startup:', error);
     process.exit(1);
   }
 }
 
 // Handle cleanup
 async function handleShutdown(signal: string) {
-  console.log(`[Server] Received ${signal}, cleaning up...`);
+  log(`[Server] Received ${signal}, cleaning up...`);
   try {
     await cleanupServer();
     await dbCleanup();
     process.exit(0);
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    console.error('[Server] Error during shutdown:', error);
+    log('[Server] Error during shutdown:', error);
     process.exit(1);
   }
 }
@@ -167,23 +163,18 @@ process.once('SIGINT', () => handleShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', async (error) => {
-  console.error('[Server] Uncaught Exception:', error);
+  log('[Server] Uncaught Exception:', error);
   try {
     await cleanupServer();
     await dbCleanup();
   } catch (cleanupError) {
-    if (cleanupError instanceof Error) {
-      console.error(`Error: ${cleanupError.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', cleanupError); {
-    console.error('[Server] Error during cleanup:', cleanupError);
+    log('[Server] Error during cleanup:', cleanupError);
   }
   process.exit(1);
 });
 
 // Start the server
 startServer().catch((error) => {
-  console.error('[Server] Failed to start:', error);
+  log('[Server] Failed to start:', error);
   process.exit(1);
 });

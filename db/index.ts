@@ -12,23 +12,23 @@ if (!process.env.DATABASE_URL) {
 let pool: Pool | null = null;
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
-// Initialize WebSocket with robust configuration and proper error handling
+// Initialize WebSocket with robust configuration
 function createWebSocket(url: string): WebSocket {
   console.log('[Database] Creating WebSocket connection...');
-  const wsUrl = url.replace(/^postgres:\/\//, 'wss://').replace(/^postgresql:\/\//, 'wss://');
+  const wsUrl = url.replace(/^postgres(ql)?:\/\//, 'wss://').replace(/\?.*$/, '');
 
   const ws = new WebSocket(wsUrl, {
     perMessageDeflate: false,
     skipUTF8Validation: true,
-    handshakeTimeout: 10000,
+    handshakeTimeout: 30000,
     maxPayload: 100 * 1024 * 1024, // 100MB
-    headers: {
-      'User-Agent': 'neon-serverless',
-    },
   });
 
   ws.on('error', (error) => {
-    console.error('[Database] WebSocket error:', error instanceof Error ? error.message : String(error));
+    console.error(
+      '[Database] WebSocket error:',
+      error instanceof Error ? error.message : String(error),
+    );
   });
 
   ws.on('open', () => {
@@ -43,7 +43,15 @@ function createWebSocket(url: string): WebSocket {
     try {
       ws.pong();
     } catch (error) {
-      console.error('[Database] Error sending pong:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+      console.error(
+        '[Database] Error sending pong:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   });
 
@@ -68,8 +76,8 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
           connectionString: process.env.DATABASE_URL,
           webSocketConstructor: createWebSocket,
           max: 1,
-          connectionTimeoutMillis: 10000,
-          idleTimeoutMillis: 10000,
+          connectionTimeoutMillis: 30000,
+          idleTimeoutMillis: 30000,
           maxUses: 5000,
           keepAlive: true,
         });
@@ -106,7 +114,7 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
         const jitter = Math.random() * 1000;
         const delay = baseDelay + jitter;
         console.log(`[Database] Waiting ${Math.round(delay)}ms before next attempt...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
@@ -114,19 +122,27 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
   return dbInstance!;
 }
 
-// Test database connection with enhanced error reporting
-export async function testConnection(retries = 3): Promise<boolean> {
+// Export database instance getter with connection verification
+export async function getDb(): Promise<ReturnType<typeof drizzle>> {
   try {
-    const db = await initializeDatabase(retries);
+    const db = await initializeDatabase();
     await db.execute(sql`SELECT 1`);
-    return true;
+    return db;
   } catch (error) {
-    console.error('[Database] Connection test failed:', error instanceof Error ? error.message : String(error));
-    return false;
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    console.error(
+      '[Database] Connection verification failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return initializeDatabase();
   }
 }
 
-// Enhanced cleanup function with proper error handling
+// Enhanced cleanup function
 export async function cleanup(): Promise<void> {
   try {
     if (pool) {
@@ -136,27 +152,35 @@ export async function cleanup(): Promise<void> {
       console.log('[Database] Connection pool closed successfully');
     }
   } catch (error) {
-    console.error('[Database] Cleanup error:', error instanceof Error ? error.message : String(error));
+    console.error(
+      '[Database] Cleanup error:',
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+// Test database connection with enhanced error reporting
+export async function testConnection(): Promise<boolean> {
+  try {
+    const db = await getDb();
+    await db.execute(sql`SELECT 1`);
+    return true;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    console.error(
+      '[Database] Connection test failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return false;
   }
 }
 
 // Register cleanup handlers
 process.once('SIGINT', cleanup);
 process.once('SIGTERM', cleanup);
-
-// Export database instance getter with connection verification
-export async function getDb(): Promise<ReturnType<typeof drizzle>> {
-  const db = await initializeDatabase();
-
-  // Verify connection is still alive
-  try {
-    await db.execute(sql`SELECT 1`);
-  } catch (error) {
-    console.log('[Database] Connection verification failed, reinitializing...');
-    return initializeDatabase();
-  }
-
-  return db;
-}
 
 export { sql };
