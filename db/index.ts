@@ -1,5 +1,6 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { sql } from 'drizzle-orm';
 import ws from 'ws';
 
 import * as schema from './schema';
@@ -14,95 +15,50 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
 }
 
-let pool: Pool | null = null;
-let dbInstance: ReturnType<typeof drizzle> | null = null;
+// Configure database client with WebSocket support
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle(pool, { schema });
 
-async function initializeDatabase() {
+// Test database connection function
+export async function testConnection() {
   try {
-    // Return existing instance if already initialized
-    if (dbInstance && pool) {
-      return dbInstance;
-    }
-
-    // Create new pool if needed
-    if (!pool) {
-      pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        max: 20,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000,
-      });
-    }
-
-    // Test connection
     await pool.query('SELECT 1');
-
-    // Create Drizzle instance
-    dbInstance = drizzle(pool, { schema });
     console.info('[Database] Successfully connected to database');
-    return dbInstance;
+    return true;
   } catch (error) {
     console.error(
       '[Database] Connection failed:',
       error instanceof Error ? error.message : 'Unknown error',
     );
-
-    // Cleanup on failure
-    if (pool) {
-      await pool
-        .end()
-        .catch((err) =>
-          console.error('[Database] Error closing pool:', err instanceof Error ? err.message : err),
-        );
-      pool = null;
-    }
-    dbInstance = null;
-
     throw error;
   }
 }
 
-async function closeDatabase() {
+// Handle cleanup on process termination
+process.on('SIGINT', async () => {
   try {
-    if (pool) {
-      await pool.end();
-      console.info('[Database] Connection pool closed successfully');
-    }
+    await pool.end();
+    console.info('[Database] Connection pool closed successfully');
+    process.exit(0);
   } catch (error) {
     console.error(
       '[Database] Failed to close database:',
       error instanceof Error ? error.message : 'Unknown error',
     );
+    process.exit(1);
   }
-
-  pool = null;
-  dbInstance = null;
-}
-
-// Handle cleanup on process termination
-process.on('SIGINT', () => {
-  closeDatabase()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error(
-        '[Database] Failed to close database:',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
-      process.exit(1);
-    });
 });
 
-process.on('SIGTERM', () => {
-  closeDatabase()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error(
-        '[Database] Failed to close database:',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
-      process.exit(1);
-    });
+process.on('SIGTERM', async () => {
+  try {
+    await pool.end();
+    console.info('[Database] Connection pool closed successfully');
+    process.exit(0);
+  } catch (error) {
+    console.error(
+      '[Database] Failed to close database:',
+      error instanceof Error ? error.message : 'Unknown error',
+    );
+    process.exit(1);
+  }
 });
-
-// Export the database initialization function
-export const db = initializeDatabase;

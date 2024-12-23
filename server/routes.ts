@@ -1,4 +1,4 @@
-import { db } from '@db';
+import { db, testConnection } from '@db';
 import { sql } from 'drizzle-orm';
 import type { Express } from 'express';
 import { type Server, createServer } from 'http';
@@ -8,12 +8,20 @@ import { submitQuizResponses } from './services/learning-style-assessment';
 import { sanitizeMedicalData } from './utils/sanitize';
 import { log } from './vite';
 
-export function registerRoutes(app: Express): Server {
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Test database connection before registering routes
+  try {
+    await testConnection();
+    log('[Server] Database connection verified');
+  } catch (error) {
+    log('[Server] Failed to verify database connection:', error);
+    throw error;
+  }
+
   // Health check endpoint
   app.get('/api/health', async (_req, res) => {
     try {
-      const dbInstance = await db();
-      await dbInstance.execute(sql`SELECT 1`);
+      await db.execute(sql`SELECT 1`);
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),

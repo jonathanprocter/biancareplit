@@ -280,23 +280,60 @@ export class CodeReviewService {
   }
 
   private generateSuggestions(content: string, file: string, suggestions: string[]): void {
-    // Suggest error boundary for medical data handling
+    // Medical data handling suggestions
     if (content.includes('patient') || content.includes('medical')) {
-      suggestions.push(
-        `Consider adding an ErrorBoundary component in ${file} to handle medical data display errors gracefully`,
-      );
+      if (!content.includes('ErrorBoundary')) {
+        suggestions.push(
+          `Consider adding an ErrorBoundary component in ${file} to handle medical data display errors gracefully`,
+        );
+      }
+      if (!content.includes('sanitize') && !content.includes('encrypt')) {
+        suggestions.push(`Add data sanitization/encryption in ${file} to ensure HIPAA compliance`);
+      }
     }
 
-    // Suggest accessibility improvements
-    if (!content.includes('aria-')) {
-      suggestions.push(`Add ARIA labels in ${file} to improve accessibility`);
+    // Accessibility improvement suggestions
+    if (content.includes('img') && !content.includes('alt=')) {
+      suggestions.push(`Add alt text to images in ${file} for screen readers`);
+    }
+    if (!content.includes('aria-') && !content.includes('role=')) {
+      suggestions.push(`Add ARIA labels and roles in ${file} to improve accessibility`);
     }
 
-    // Suggest security improvements
+    // Security improvement suggestions
     if (content.includes('innerHTML')) {
       suggestions.push(
-        `Replace innerHTML in ${file} with safer alternatives to prevent XSS attacks`,
+        `Replace innerHTML in ${file} with safer alternatives like textContent or sanitized HTML to prevent XSS attacks`,
       );
+    }
+    if (content.includes('eval(') || content.includes('new Function(')) {
+      suggestions.push(
+        `Remove dynamic code execution (eval/new Function) in ${file} as it poses security risks`,
+      );
+    }
+
+    // Performance suggestions
+    if (content.includes('useEffect') && content.includes('setState')) {
+      suggestions.push(
+        `Review useEffect dependencies in ${file} to prevent unnecessary re-renders`,
+      );
+    }
+    if (content.includes('map(') && !content.includes('key=')) {
+      suggestions.push(`Add key prop to mapped elements in ${file} for better React performance`);
+    }
+
+    // Medical education specific suggestions
+    if (file.includes('learning') || file.includes('education')) {
+      if (!content.includes('feedback') && !content.includes('progress')) {
+        suggestions.push(
+          `Consider adding learning progress tracking and feedback mechanisms in ${file}`,
+        );
+      }
+      if (!content.includes('adaptive') && !content.includes('personalize')) {
+        suggestions.push(
+          `Consider implementing adaptive learning features in ${file} based on user performance`,
+        );
+      }
     }
   }
 
@@ -370,16 +407,50 @@ export class CodeReviewService {
 
   private calculateMedicalCompliance(files: string[]): number {
     let totalCompliance = 0;
+    const weights = {
+      hipaa: 0.4,
+      accessibility: 0.3,
+      educationalBestPractices: 0.3,
+    };
+
     for (const file of files) {
       const content = readFileSync(file, 'utf-8');
+      let score = 0;
+
+      // HIPAA Compliance (40%)
       const sensitiveDataMatches = content.match(MEDICAL_PATTERNS.sensitiveData);
       const hipaaMatches = content.match(MEDICAL_PATTERNS.hipaaCompliance);
+      if (sensitiveDataMatches && hipaaMatches) {
+        score +=
+          weights.hipaa *
+          ((content.includes('encrypt') ? 0.4 : 0) +
+            (content.includes('sanitize') ? 0.3 : 0) +
+            (content.includes('validate') ? 0.3 : 0));
+      }
+
+      // Accessibility (30%)
       const accessibilityMatches = content.match(MEDICAL_PATTERNS.accessibility);
-      let score = 0;
-      if (sensitiveDataMatches && hipaaMatches) score += 1;
-      if (accessibilityMatches) score += 1;
+      if (accessibilityMatches) {
+        score +=
+          weights.accessibility *
+          ((content.includes('aria-label') ? 0.4 : 0) +
+            (content.includes('role=') ? 0.3 : 0) +
+            (content.includes('alt=') ? 0.3 : 0));
+      }
+
+      // Educational Best Practices (30%)
+      const educationalScore =
+        (content.includes('feedback') ? 0.2 : 0) +
+        (content.includes('progress') ? 0.2 : 0) +
+        (content.includes('adaptive') ? 0.2 : 0) +
+        (content.includes('assessment') ? 0.2 : 0) +
+        (content.includes('learning-style') ? 0.2 : 0);
+      score += weights.educationalBestPractices * educationalScore;
+
       totalCompliance += score;
     }
-    return totalCompliance / files.length;
+
+    // Normalize to 0-100 range
+    return Math.min(100, (totalCompliance / files.length) * 100);
   }
 }

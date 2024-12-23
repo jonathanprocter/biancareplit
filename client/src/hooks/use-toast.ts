@@ -1,5 +1,4 @@
 import * as React from 'react';
-
 import { type ToastActionElement, type ToastProps } from '@/components/ui/toast';
 
 const TOAST_LIMIT = 1;
@@ -62,7 +61,7 @@ const addToRemoveQueue = (toastId: string) => {
     toastTimeouts.delete(toastId);
     dispatch({
       type: 'REMOVE_TOAST',
-      toastId: toastId,
+      toastId,
     });
   }, TOAST_REMOVE_DELAY);
 
@@ -80,7 +79,9 @@ const reducer = (state: State, action: Action): State => {
     case 'UPDATE_TOAST':
       return {
         ...state,
-        toasts: state.toasts.map((t) => (t.id === action.id ? { ...t, ...action.toast } : t)),
+        toasts: state.toasts.map((t) =>
+          t.id === action.id ? { ...t, ...action.toast } : t,
+        ),
       };
 
     case 'DISMISS_TOAST': {
@@ -106,7 +107,6 @@ const reducer = (state: State, action: Action): State => {
         ),
       };
     }
-
     case 'REMOVE_TOAST':
       if (action.toastId === undefined) {
         return {

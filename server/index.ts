@@ -1,4 +1,4 @@
-import { db } from '@db';
+import { db, testConnection } from '@db';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from 'express-fileupload';
@@ -57,24 +57,15 @@ async function startServer() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Initialize database
+    // Initialize database first
+    log('[Server] Initializing database connection...');
     try {
-      log('[Server] Initializing database connection...');
-      const dbInstance = await db();
-      if (!dbInstance) {
-        throw new Error('Failed to initialize database');
-      }
+      await testConnection();
       log('[Server] Database connection established successfully');
     } catch (error) {
       log('[Server] Database initialization failed:', error);
       throw error;
     }
-
-    // Session store configuration
-    const MemoryStoreConstructor = MemoryStore(session);
-    const sessionStore = new MemoryStoreConstructor({
-      checkPeriod: 86400000, // 24 hours
-    });
 
     // CORS configuration
     const corsOptions = {
@@ -85,6 +76,12 @@ async function startServer() {
       maxAge: 86400,
     };
     app.use(cors(corsOptions));
+
+    // Session store configuration
+    const MemoryStoreConstructor = MemoryStore(session);
+    const sessionStore = new MemoryStoreConstructor({
+      checkPeriod: 86400000, // 24 hours
+    });
 
     // Session middleware
     app.use(
@@ -101,31 +98,41 @@ async function startServer() {
       }),
     );
 
-    // File upload middleware
+    // File upload middleware with proper error handling
     app.use(
       fileUpload({
         createParentPath: true,
-        limits: { fileSize: 10 * 1024 * 1024 },
+        limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
         useTempFiles: true,
         tempFileDir: '/tmp/',
         safeFileNames: true,
         preserveExtension: true,
+        abortOnLimit: true,
+        debug: process.env.NODE_ENV === 'development',
       }),
     );
 
     // Create HTTP server
     const server = createServer(app);
 
-    // Register routes
-    registerRoutes(app);
+    // Register routes before error handling
+    const httpServer = await registerRoutes(app);
+    if (!httpServer) {
+      throw new Error('Failed to register routes');
+    }
 
     // Error handling middleware
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
+      console.error('Error:', err);
+      const status = (err as any).status || (err as any).statusCode || 500;
       const message = err.message || 'Internal Server Error';
 
       if (!res.headersSent) {
-        res.status(status).json({ message });
+        res.status(status).json({
+          status: 'error',
+          message,
+          timestamp: new Date().toISOString(),
+        });
       }
     });
 
@@ -136,7 +143,6 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start server
     const PORT = process.env.PORT || 5000;
 
     // Close existing server if any
@@ -150,25 +156,40 @@ async function startServer() {
       globalServer = null;
     }
 
-    // Start new server
-    await new Promise<void>((resolve, reject) => {
-      server.listen(PORT, '0.0.0.0', () => {
-        globalServer = server;
-        const address = server.address();
-        const actualPort = typeof address === 'object' ? address?.port : PORT;
-        log(`Server started successfully on port ${actualPort}`);
-        resolve();
-      });
+    // Start new server with retry logic
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
 
-      server.once('error', (error: NodeJS.ErrnoException) => {
-        if (error.code === 'EADDRINUSE') {
-          log(`Port ${PORT} is in use, trying random port`);
-          server.listen(0, '0.0.0.0');
-        } else {
-          reject(error);
+    while (retryCount < MAX_RETRIES) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          server.listen(PORT, '0.0.0.0', () => {
+            globalServer = server;
+            const address = server.address();
+            const actualPort = typeof address === 'object' ? address?.port : PORT;
+            log(`Server started successfully on port ${actualPort}`);
+            resolve();
+          });
+
+          server.once('error', (error: NodeJS.ErrnoException) => {
+            if (error.code === 'EADDRINUSE') {
+              log(`Port ${PORT} is in use, trying random port`);
+              server.listen(0, '0.0.0.0');
+            } else {
+              reject(error);
+            }
+          });
+        });
+        break; // Successfully started
+      } catch (error) {
+        retryCount++;
+        if (retryCount === MAX_RETRIES) {
+          throw error;
         }
-      });
-    });
+        log(`Retry attempt ${retryCount}/${MAX_RETRIES}`);
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retry
+      }
+    }
   } catch (error) {
     console.error('Fatal error during server startup:', error);
     await cleanup();

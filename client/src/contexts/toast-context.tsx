@@ -29,17 +29,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const value = React.useMemo(() => ({
-    toasts,
-    addToast,
-    removeToast,
-  }), [toasts, addToast, removeToast]);
-
-  return (
-    <ToastContext.Provider value={value}>
-      {children}
-    </ToastContext.Provider>
+  const value = React.useMemo(
+    () => ({
+      toasts,
+      addToast,
+      removeToast,
+    }),
+    [toasts, addToast, removeToast],
   );
+
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
 }
 
 export function useToast() {
