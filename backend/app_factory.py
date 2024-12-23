@@ -5,7 +5,7 @@ from flask_cors import CORS
 import os
 import logging
 from backend.config.unified_config import config_manager
-from backend.database.core import init_db
+from backend.database.core import init_db, get_db
 from backend.middleware.logging_middleware import LoggingMiddleware
 from backend.middleware.error_middleware import ErrorMiddleware
 from backend.middleware.metrics import MetricsMiddleware
@@ -15,7 +15,7 @@ from backend.routes import api
 logger = logging.getLogger(__name__)
 
 def create_app(env_path=None):
-    """Create and configure Flask application."""
+    """Create and configure Flask application with enhanced error handling."""
     try:
         app = Flask(__name__)
 
@@ -25,15 +25,40 @@ def create_app(env_path=None):
         # Configure CORS
         CORS(app, resources={r"/*": {"origins": config_manager.get("CORS_ORIGINS", "*")}})
 
-        # Initialize middleware stack
+        # Initialize middleware stack before database
         LoggingMiddleware().init_app(app)
         ErrorMiddleware().init_app(app)
         MetricsMiddleware().init_app(app)
         HealthMiddleware().init_app(app)
 
-        # Initialize database
-        init_db(app)
+        # Initialize database with proper error handling
+        if not init_db(app):
+            logger.warning("Database initialization failed - starting in limited functionality mode")
+            if app.config['ENV'] == 'production':
+                raise RuntimeError("Cannot start in production without database")
+        else:
+            logger.info("Database initialized successfully")
 
+        # Add database health check endpoint
+        @app.route("/health/db")
+        def db_health():
+            try:
+                db = get_db()
+                if not db:
+                    return jsonify({"status": "error", "message": "Database not initialized"}), 503
+
+                # Verify connection
+                db.session.execute("SELECT 1")
+                return jsonify({
+                    "status": "healthy",
+                    "message": "Database connection verified"
+                })
+            except Exception as e:
+                logger.error(f"Database health check failed: {str(e)}")
+                return jsonify({
+                    "status": "error",
+                    "message": str(e) if app.debug else "Database connection error"
+                }), 503
 
         # Register error handlers
         @app.errorhandler(404)

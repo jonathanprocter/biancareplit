@@ -6,6 +6,7 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
+import { createServer } from 'net';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -48,6 +49,33 @@ process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   cleanup();
 });
+
+// Check if a port is available
+async function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = createServer();
+    server.once('error', () => {
+      resolve(false);
+    });
+    server.once('listening', () => {
+      server.close();
+      resolve(true);
+    });
+    server.listen(port, '0.0.0.0');
+  });
+}
+
+// Find next available port
+async function findAvailablePort(startPort: number): Promise<number> {
+  let port = startPort;
+  while (!(await isPortAvailable(port))) {
+    port++;
+    if (port > startPort + 100) {
+      throw new Error('No available ports found');
+    }
+  }
+  return port;
+}
 
 async function startServer() {
   try {
@@ -150,14 +178,18 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Use a single port (5000) for both development and production
-    const PORT = process.env.PORT || 5000;
+    // Find available port starting from 5000
+    const desiredPort = parseInt(process.env.PORT || '5000', 10);
+    const port = await findAvailablePort(desiredPort);
+    if (port !== desiredPort) {
+      log(`[Server] Port ${desiredPort} is in use, using port ${port} instead`);
+    }
 
     // Start server
-    server.listen(PORT, '0.0.0.0', () => {
+    server.listen(port, '0.0.0.0', () => {
       globalServer = server;
       const address = server.address();
-      const actualPort = typeof address === 'object' ? address?.port : PORT;
+      const actualPort = typeof address === 'object' ? address?.port : port;
       log(`Server started successfully on port ${actualPort}`);
     });
   } catch (error) {

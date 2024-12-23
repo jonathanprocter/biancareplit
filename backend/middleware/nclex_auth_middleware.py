@@ -92,7 +92,9 @@ def create_token(user_id: int, role: str = "student") -> str:
         "role": role,
         "exp": datetime.utcnow() + timedelta(days=1),
     }
-    return jwt.encode(payload, config.get("JWT_SECRET_KEY"), algorithm="HS256")
+    return jwt.encode(payload, config.get("JWT_SECRET_KEY"), algorithm="HS256").decode(
+        "utf-8"
+    )
 
 
 def init_auth(app):
