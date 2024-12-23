@@ -20,8 +20,8 @@ class CoreConfigManager:
             app.config.update(
                 {
                     "ENV": self.env,
-                    "DEBUG": self.env == "development",
-                    "TESTING": self.env == "testing",
+                    "DEBUG": self.env.lower() == "development",
+                    "TESTING": self.env.lower() == "testing",
                     "SQLALCHEMY_DATABASE_URI": os.getenv(
                         "DATABASE_URL", "sqlite:///app.db"
                     ),

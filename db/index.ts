@@ -16,6 +16,9 @@ const pool = new Pool({
   connectionTimeoutMillis: 30000,
   idleTimeoutMillis: 30000,
   ssl: true,
+  maxUses: 7500, // Add connection recycling
+  retryInterval: 100, // Add retry interval
+  maxRetries: 3, // Add max retries
 });
 
 export const db = drizzle(pool, { schema });
@@ -24,9 +27,14 @@ export async function testConnection(retries = 3, delay = 2000): Promise<boolean
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`[Database] Connection attempt ${attempt}/${retries}...`);
-      await pool.query('SELECT 1');
-      console.log('[Database] Database connection successful');
-      return true;
+      const client = await pool.connect();
+      try {
+        await client.query('SELECT 1');
+        console.log('[Database] Database connection successful');
+        return true;
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.error(
         `[Database] Connection attempt ${attempt}/${retries} failed:`,
@@ -50,6 +58,11 @@ async function cleanup(): Promise<void> {
     await pool.end();
     console.log('[Database] Connection pool closed successfully');
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error',
@@ -57,5 +70,6 @@ async function cleanup(): Promise<void> {
   }
 }
 
+// Register cleanup handlers
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);

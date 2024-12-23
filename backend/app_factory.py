@@ -14,24 +14,16 @@ from backend.routes import api
 
 logger = logging.getLogger(__name__)
 
-def setup_logging():
-    """Configure application logging."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-
 def create_app(env_path=None):
     """Create and configure Flask application."""
     try:
-        setup_logging()
         app = Flask(__name__)
 
         # Initialize configuration
         config_manager.init_app(app)
 
         # Configure CORS
-        CORS(app)
+        CORS(app, resources={r"/*": {"origins": config_manager.get("CORS_ORIGINS", "*")}})
 
         # Initialize middleware stack
         LoggingMiddleware().init_app(app)
@@ -42,10 +34,6 @@ def create_app(env_path=None):
         # Initialize database
         init_db(app)
 
-        # Register health check endpoint
-        @app.route("/health")
-        def health_check():
-            return jsonify({"status": "healthy"})
 
         # Register error handlers
         @app.errorhandler(404)
@@ -68,7 +56,6 @@ def create_app(env_path=None):
         # Register blueprints
         app.register_blueprint(api.bp)
 
-
         logger.info("Application initialized successfully")
         return app
 
@@ -76,8 +63,12 @@ def create_app(env_path=None):
         logger.error(f"Failed to create application: {str(e)}")
         raise
 
-# Create application instance
-application = create_app()
+def run_app():
+    """Run the application."""
+    app = create_app()
+    host = config_manager.get("HOST", "0.0.0.0")
+    port = config_manager.get("PORT", 5000)
+    app.run(host=host, port=port)
 
 if __name__ == "__main__":
-    application.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")))
+    run_app()

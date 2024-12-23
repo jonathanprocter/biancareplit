@@ -5,14 +5,14 @@ from pathlib import Path
 import yaml
 import logging
 from typing import Dict, Any, Optional
-from dotenv import load_dotenv
+from flask import Flask
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
-
-# Load environment variables
-load_dotenv()
 
 class UnifiedConfigManager:
     """Centralized configuration management system."""
@@ -26,39 +26,55 @@ class UnifiedConfigManager:
         return cls._instance
 
     def __init__(self):
-        if self._initialized:
+        if hasattr(self, '_initialized') and self._initialized:
             return
 
-        self.config: Dict[str, Any] = {}
         self.env = os.getenv("FLASK_ENV", "development")
-        self.config_dir = Path(__file__).resolve().parent
-
-        # Core settings
-        self.required_env_vars = [
-            "SECRET_KEY",
-            "DATABASE_URL"
-        ]
+        self.config: Dict[str, Any] = {}
+        self.base_dir = Path(__file__).parent.parent.parent
+        self.config_dir = self.base_dir / "config"
 
         # Initialize configuration
         self._load_config()
+        self._setup_logging()
         self._initialized = True
 
     def _load_config(self) -> None:
         """Load configuration from multiple sources."""
         try:
-            # Load base config
-            base_config = self._load_yaml_file("config.yaml")
-            self.config.update(base_config)
+            # Base configuration
+            self.config.update({
+                "ENV": self.env,
+                "DEBUG": self.env == "development",
+                "TESTING": self.env == "testing",
+                "SECRET_KEY": os.getenv("SECRET_KEY", os.urandom(24).hex()),
+                "SQLALCHEMY_DATABASE_URI": os.getenv("DATABASE_URL"),
+                "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+                "SQLALCHEMY_ENGINE_OPTIONS": {
+                    "pool_size": int(os.getenv("DB_POOL_SIZE", "10")),
+                    "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "20")),
+                    "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+                    "pool_recycle": 1800,
+                },
+                "SERVER_NAME": None,  # Allow dynamic port binding
+                "HOST": "0.0.0.0",
+                "PORT": int(os.getenv("PORT", "5000")),
+                "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "*").split(","),
+                "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
+                "MIDDLEWARE": {
+                    "logging": {"enabled": True},
+                    "security": {"enabled": True},
+                    "metrics": {"enabled": True},
+                    "health": {"enabled": True}
+                }
+            })
 
-            # Load environment specific config
-            env_config = self._load_yaml_file(f"{self.env}.yaml")
-            self.config.update(env_config)
-
-            # Override with environment variables
-            self._load_env_overrides()
-
-            # Validate configuration
-            self._validate_config()
+            # Load environment-specific config if exists
+            env_config_path = self.config_dir / f"{self.env}.yaml"
+            if env_config_path.exists():
+                with env_config_path.open() as f:
+                    env_config = yaml.safe_load(f) or {}
+                    self.config.update(env_config)
 
             logger.info(f"Configuration loaded successfully for environment: {self.env}")
 
@@ -66,69 +82,47 @@ class UnifiedConfigManager:
             logger.error(f"Failed to load configuration: {str(e)}")
             raise
 
-    def _load_yaml_file(self, filename: str) -> Dict[str, Any]:
-        """Load and parse YAML configuration file."""
-        file_path = self.config_dir / filename
-        if not file_path.exists():
-            logger.warning(f"Config file not found: {filename}")
-            return {}
+    def _setup_logging(self) -> None:
+        """Configure logging based on environment."""
+        log_level = self.config.get("LOG_LEVEL", "INFO")
+        log_dir = self.base_dir / "logs"
+        log_dir.mkdir(exist_ok=True)
 
-        try:
-            with file_path.open() as f:
-                return yaml.safe_load(f) or {}
-        except Exception as e:
-            logger.error(f"Error loading {filename}: {str(e)}")
-            return {}
+        handlers = [
+            logging.StreamHandler(),
+            logging.FileHandler(str(log_dir / f"{self.env}.log"))
+        ]
 
-    def _load_env_overrides(self) -> None:
-        """Override configuration with environment variables."""
-        for key in os.environ:
-            if key.startswith("APP_"):
-                config_key = key[4:].lower()
-                self.config[config_key] = os.getenv(key)
-
-    def _validate_config(self) -> None:
-        """Validate required configuration settings."""
-        missing_vars = []
-        for var in self.required_env_vars:
-            if not os.getenv(var):
-                missing_vars.append(var)
-
-        if missing_vars:
-            raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+        logging.basicConfig(
+            level=getattr(logging, log_level),
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            handlers=handlers
+        )
 
     def get(self, key: str, default: Any = None) -> Any:
-        """Get configuration value using dot notation."""
-        try:
-            value = self.config
-            for k in key.split("."):
-                value = value[k]
-            return value
-        except (KeyError, TypeError):
-            return default
+        """Get configuration value."""
+        return self.config.get(key, default)
 
-    def init_app(self, app) -> None:
+    def init_app(self, app: Flask) -> None:
         """Initialize Flask application with configuration."""
         try:
-            # Set core Flask configuration
-            app.config.update({
-                "ENV": self.env,
-                "DEBUG": self.env == "development",
-                "TESTING": self.env == "testing",
-                "SECRET_KEY": os.getenv("SECRET_KEY"),
-                "SQLALCHEMY_DATABASE_URI": os.getenv("DATABASE_URL"),
-                "SQLALCHEMY_TRACK_MODIFICATIONS": False
-            })
+            # Update Flask configuration
+            app.config.update(self.config)
 
-            # Update with custom configuration
-            for key, value in self.config.items():
-                if isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        app.config[f"{key.upper()}_{sub_key.upper()}"] = sub_value
-                else:
-                    app.config[key.upper()] = value
+            # Set up logging for Flask app
+            if not app.debug:
+                log_dir = self.base_dir / "logs"
+                log_dir.mkdir(exist_ok=True)
 
-            logger.info("Application configuration initialized successfully")
+                file_handler = logging.FileHandler(str(log_dir / "flask.log"))
+                file_handler.setFormatter(
+                    logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                )
+                file_handler.setLevel(logging.INFO)
+                app.logger.addHandler(file_handler)
+                app.logger.setLevel(logging.INFO)
+
+            logger.info(f"Initialized application config for environment: {self.env}")
 
         except Exception as e:
             logger.error(f"Failed to initialize application configuration: {str(e)}")
