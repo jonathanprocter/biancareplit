@@ -1,8 +1,11 @@
 import { db, testConnection } from '@db';
+import { spawn } from 'child_process';
 import { sql } from 'drizzle-orm';
 import type { Express } from 'express';
 import { type Server, createServer } from 'http';
+import { join } from 'path';
 
+import { paths } from '../config/paths';
 import { log } from './vite';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -14,6 +17,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     log('[Server] Failed to verify database connection:', error);
     throw error;
   }
+
+  // Code review endpoint
+  app.post('/api/code-review', async (req, res) => {
+    try {
+      const process = spawn('python3', [
+        join(paths.root, 'services/code_review_service.py'),
+        '--path',
+        paths.root,
+        '--format',
+        'json',
+      ]);
+
+      let output = '';
+      let error = '';
+
+      process.stdout.on('data', (data) => {
+        output += data;
+      });
+
+      process.stderr.on('data', (data) => {
+        error += data;
+      });
+
+      process.on('close', (code) => {
+        if (code !== 0) {
+          log('[Code Review] Process exited with code:', code);
+          return res.status(500).json({
+            status: 'error',
+            error: error || 'Code review process failed',
+          });
+        }
+
+        try {
+          const results = JSON.parse(output);
+          res.json({
+            status: 'success',
+            results,
+          });
+        } catch (e) {
+          res.status(500).json({
+            status: 'error',
+            error: 'Failed to parse code review results',
+          });
+        }
+      });
+    } catch (error) {
+      log('[Code Review] Failed to start process:', error);
+      res.status(500).json({
+        status: 'error',
+        error: 'Failed to start code review process',
+      });
+    }
+  });
 
   // Health check endpoint
   app.get('/api/health', async (_req, res) => {

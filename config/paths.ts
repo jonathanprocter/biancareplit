@@ -8,9 +8,9 @@ function getDirname(importMetaUrl: string) {
   return dirname(fileURLToPath(importMetaUrl));
 }
 
-// Get current directory
-const __dirname = getDirname(import.meta.url);
-const projectRoot = resolve(__dirname, '..');
+// Get current directory using import.meta.url
+const currentDir = getDirname(import.meta.url);
+const projectRoot = resolve(currentDir, '..');
 
 /**
  * Unified project paths configuration
@@ -37,12 +37,12 @@ export const paths = {
     middleware: resolve(projectRoot, 'server', 'middleware'),
   },
   db: resolve(projectRoot, 'db'),
-  config: __dirname,
+  config: currentDir,
   aliases: {
     '@': resolve(projectRoot, 'client', 'src'),
     '@db': resolve(projectRoot, 'db'),
     '@server': resolve(projectRoot, 'server'),
-    '@config': __dirname
+    '@config': currentDir
   }
 } as const;
 

@@ -17,13 +17,13 @@ const pool = new Pool({
 });
 
 // Create drizzle database instance
-const db = drizzle(pool, { schema });
+export const db = drizzle(pool, { schema });
 
 // Test database connection function
-async function testConnection() {
+export async function testConnection() {
   try {
     const result = await pool.query('SELECT version()');
-    console.info('[Database] Successfully connected to database:', result.rows[0].version);
+    console.info('[Database] Connected to PostgreSQL version:', result.rows[0].version);
     return true;
   } catch (error) {
     console.error(
@@ -44,7 +44,6 @@ async function cleanup() {
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error'
     );
-    process.exit(1);
   }
 }
 
@@ -59,8 +58,5 @@ testConnection()
   })
   .catch((error) => {
     console.error('[Database] Initial connection test failed:', error);
-    process.exit(1);
+    // Don't exit process here, let the application handle the error
   });
-
-// Export database instance and utility functions
-export { db, testConnection };

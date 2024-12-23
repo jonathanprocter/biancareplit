@@ -6,14 +6,14 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
-
-import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { getModulePath } from '../config/paths';
+import { fileURLToPath } from 'url';
+
+import { paths } from '../config/paths';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-const paths = getModulePath(import.meta.url);
+// Get server directory path for ES modules
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Global server instance for cleanup
