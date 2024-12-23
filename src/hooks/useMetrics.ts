@@ -76,6 +76,16 @@ export function useMetrics() {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', err); {
+    if (err instanceof Error) {
+      console.error(`Error: ${err.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', err); {
+    if (err instanceof Error) {
+      console.error(`Error: ${err.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', err); {
         console.error(
           'Error parsing metrics data:',
           err instanceof Error ? err.message : 'Unknown error',

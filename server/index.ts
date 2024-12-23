@@ -78,7 +78,10 @@ async function startServer() {
 
     // CORS configuration
     const corsOptions = {
-      origin: process.env.NODE_ENV === 'production' ? ['https://your-production-domain.com'] : true,
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? ['https://your-production-domain.com']
+          : ['http://localhost:3000', 'http://localhost:5173'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       allowedHeaders: ['Content-Type', 'Authorization'],
@@ -147,7 +150,8 @@ async function startServer() {
       serveStatic(app);
     }
 
-    const PORT = process.env.PORT || 5000;
+    // Use Vite's development port (5173) for the frontend
+    const PORT = process.env.NODE_ENV === 'production' ? process.env.PORT || 5000 : 3001; // API server port
 
     // Start server
     server.listen(PORT, '0.0.0.0', () => {

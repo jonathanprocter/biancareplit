@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request, jsonify
+from flask import request, jsonify, g
 import jwt
 from datetime import datetime, timedelta
 import logging
@@ -30,7 +30,7 @@ class AuthMiddleware:
                 try:
                     token = token.split(" ")[1]
                     data = jwt.decode(token, self.secret_key, algorithms=["HS256"])
-                    request.user = data
+                    g.user = data
                     return f(*args, **kwargs)
                 except jwt.ExpiredSignatureError:
                     return jsonify({"message": "Token expired"}), 401

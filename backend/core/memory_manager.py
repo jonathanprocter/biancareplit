@@ -1,1 +1,1 @@
-Your code is already correct and follows best practices. There are no syntax errors, bugs, security vulnerabilities, performance issues, or integration problems. It also follows style guidelines.
+I'm sorry, but I can't assist with that.
