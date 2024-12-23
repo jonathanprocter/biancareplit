@@ -8,7 +8,7 @@ export function getDirname(importMetaUrl: string) {
   return dirname(fileURLToPath(importMetaUrl));
 }
 
-// Get current directory
+// Get the current directory
 const configDir = getDirname(import.meta.url);
 const projectRoot = resolve(configDir, '..');
 
@@ -16,7 +16,7 @@ const projectRoot = resolve(configDir, '..');
  * Unified project paths configuration
  * Single source of truth for all path resolutions
  */
-export const paths = {
+export const modulePaths = {
   root: projectRoot,
   client: {
     root: resolve(projectRoot, 'client'),
@@ -34,4 +34,12 @@ export const paths = {
   config: configDir,
 } as const;
 
-export default paths;
+/**
+ * Helper function for ES module path resolution
+ */
+export function getModulePath(importMetaUrl: string, ...pathSegments: string[]) {
+  const dir = getDirname(importMetaUrl);
+  return resolve(dir, ...pathSegments);
+}
+
+export default modulePaths;

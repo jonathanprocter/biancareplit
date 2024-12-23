@@ -7,7 +7,7 @@ import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
 
-import { projectConfig, getDirname } from '../config/esm-config';
+import { getDirname, paths } from '../config/paths';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
