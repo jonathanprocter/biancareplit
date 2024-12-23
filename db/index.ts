@@ -28,7 +28,10 @@ function createWebSocket(url: string): WebSocket {
   });
 
   ws.on('error', (error) => {
-    console.error('[Database] WebSocket error:', error.message);
+    console.error(
+      '[Database] WebSocket error:',
+      error instanceof Error ? error.message : String(error),
+    );
   });
 
   ws.on('open', () => {
@@ -48,7 +51,10 @@ function createWebSocket(url: string): WebSocket {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', error); {
-      console.error('[Database] Error sending pong:', error);
+      console.error(
+        '[Database] Error sending pong:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   });
 
@@ -93,10 +99,10 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
         console.log('[Database] Connection initialized successfully');
         return dbInstance;
       } catch (error) {
-        lastError = error as Error;
+        lastError = error instanceof Error ? error : new Error(String(error));
         console.error(
           `[Database] Connection attempt ${attempt} failed:`,
-          error instanceof Error ? error.message : 'Unknown error',
+          error instanceof Error ? error.message : String(error),
         );
 
         // Cleanup on failure
@@ -108,7 +114,7 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
         if (attempt === retries) {
           console.error('[Database] All connection attempts failed');
           throw new Error(
-            `Failed to initialize database after ${retries} attempts: ${lastError?.message}`,
+            `Failed to initialize database after ${retries} attempts: ${lastError.message}`,
           );
         }
 
@@ -139,7 +145,7 @@ export async function testConnection(retries = 3): Promise<boolean> {
       console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Connection test failed:',
-      error instanceof Error ? error.message : 'Unknown error',
+      error instanceof Error ? error.message : String(error),
     );
     return false;
   }
@@ -157,7 +163,7 @@ export async function cleanup(): Promise<void> {
   } catch (error) {
     console.error(
       '[Database] Cleanup error:',
-      error instanceof Error ? error.message : 'Unknown error',
+      error instanceof Error ? error.message : String(error),
     );
   }
 }

@@ -50,9 +50,9 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
       setIsConnected(false);
       if (reconnectAttempts > 0) {
         setTimeout(() => {
-          setReconnectAttempts(reconnectAttempts - 1);
+          setReconnectAttempts((prev) => prev - 1);
           connect();
-        }, options.reconnectInterval);
+        }, reconnectInterval);
       } else {
         console.error('WebSocket connection failed.');
       }
@@ -64,16 +64,14 @@ const useWebSocket = (url: string, options: WebSocketOptions = {}) => {
     };
 
     setSocket(ws);
-  }, [url, options, reconnectAttempts]);
+  }, [url, options, reconnectAttempts, reconnectInterval]);
 
   useEffect(() => {
     connect();
     return () => {
-      if (socket) {
-        socket.close();
-      }
+      socket?.close();
     };
-  }, [connect, socket]);
+  }, [connect]);
 
   return { isConnected };
 };

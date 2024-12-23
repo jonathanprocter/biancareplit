@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'react-query';
 
 import React, { useEffect, useState } from 'react';
 
@@ -20,32 +20,36 @@ interface Alert {
 
 export const MonitoringDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const { isConnected, sendMessage } = useWebSocket('/api/ws', {
-    onMessage: (data) => {
-      if (data.type === 'metrics') {
-        setMetrics(data.data);
-        setIsLoading(false);
-      }
-    },
-  });
+  const [metricsLoading, setMetricsLoading] = useState(true);
 
   useEffect(() => {
-    // Initial load
     fetch('/api/monitoring/metrics')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return res.json();
+      })
       .then((data) => {
         setMetrics(data);
-        setIsLoading(false);
+        setMetricsLoading(false);
+      })
+      .catch((error) => {
+        console.error('There has been a problem with your fetch operation:', error);
       });
   }, []);
 
-  const { data: alerts, isLoading: alertsLoading } = useQuery<Alert[]>({
-    queryKey: ['alerts'],
-    queryFn: () => fetch('/api/monitoring/alerts').then((res) => res.json()),
-    refetchInterval: 10000,
-  });
+  const { data: alerts, isLoading: alertsLoading } = useQuery<Alert[]>(
+    'alerts',
+    () =>
+      fetch('/api/monitoring/alerts').then((res) => {
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return res.json();
+      }),
+    { refetchInterval: 10000 },
+  );
 
   if (metricsLoading || alertsLoading) {
     return <div>Loading monitoring data...</div>;

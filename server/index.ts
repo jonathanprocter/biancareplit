@@ -137,6 +137,7 @@ async function startServer() {
         console.error('[Server] Server error:', error);
       }
     });
+
   } catch (error) {
     console.error('[Server] Fatal error during startup:', error);
     process.exit(1);

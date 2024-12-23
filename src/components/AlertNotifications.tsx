@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 interface Alert {
+  id: string;
   type: string;
   message: string;
-  severity: string;
+  severity: 'critical' | 'warning' | 'info';
   timestamp: string;
 }
 
@@ -12,21 +13,19 @@ interface AlertNotificationsProps {
 }
 
 export const AlertNotifications: React.FC<AlertNotificationsProps> = ({ alerts }) => {
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-100 border-red-500 text-red-900';
-      case 'warning':
-        return 'bg-yellow-100 border-yellow-500 text-yellow-900';
-      default:
-        return 'bg-blue-100 border-blue-500 text-blue-900';
-    }
-  };
+  const alertsWithSeverityColor = useMemo(
+    () =>
+      alerts.map((alert) => ({
+        ...alert,
+        severityColor: getSeverityColor(alert.severity),
+      })),
+    [alerts],
+  );
 
   return (
     <div className="space-y-2">
-      {alerts.map((alert, index) => (
-        <div key={index} className={`p-4 border-l-4 rounded ${getSeverityColor(alert.severity)}`}>
+      {alertsWithSeverityColor.map((alert) => (
+        <div key={alert.id} className={`p-4 border-l-4 rounded ${alert.severityColor}`}>
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold">{alert.type}</h3>
@@ -39,3 +38,14 @@ export const AlertNotifications: React.FC<AlertNotificationsProps> = ({ alerts }
     </div>
   );
 };
+
+function getSeverityColor(severity: 'critical' | 'warning' | 'info'): string {
+  switch (severity) {
+    case 'critical':
+      return 'bg-red-100 border-red-500 text-red-900';
+    case 'warning':
+      return 'bg-yellow-100 border-yellow-500 text-yellow-900';
+    default:
+      return 'bg-blue-100 border-blue-500 text-blue-900';
+  }
+}
