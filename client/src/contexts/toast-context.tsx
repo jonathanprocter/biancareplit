@@ -1,14 +1,20 @@
 import * as React from 'react';
+import {
+  Toast,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from '@/components/ui/toast';
 
-import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
-
-export type Toast = {
+interface Toast {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: ToastActionElement;
+  variant?: 'default' | 'destructive';
   duration?: number;
-} & ToastProps;
+}
 
 interface ToastContextValue {
   toasts: Toast[];
@@ -16,24 +22,24 @@ interface ToastContextValue {
   removeToast: (id: string) => void;
 }
 
-const ToastContext = React.createContext<ToastContextValue | null>(null);
+const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
 
   const addToast = React.useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).slice(2, 9);
-    setToasts((prevToasts) => [...prevToasts, { ...toast, id }]);
+    setToasts((prev) => [...prev, { ...toast, id }]);
 
     if (toast.duration !== Infinity) {
       setTimeout(() => {
-        setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
+        setToasts((prev) => prev.filter((t) => t.id !== id));
       }, toast.duration || 5000);
     }
   }, []);
 
   const removeToast = React.useCallback((id: string) => {
-    setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const contextValue = React.useMemo(
@@ -45,7 +51,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [toasts, addToast, removeToast],
   );
 
-  return <ToastContext.Provider value={contextValue}>{children}</ToastContext.Provider>;
+  return (
+    <ToastContext.Provider value={contextValue}>
+      <ToastProvider>
+        {children}
+        {toasts.map(({ id, title, description, variant, ...props }) => (
+          <Toast key={id} variant={variant} {...props}>
+            <div className="grid gap-1">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && <ToastDescription>{description}</ToastDescription>}
+            </div>
+            <ToastClose onClick={() => removeToast(id)} />
+          </Toast>
+        ))}
+        <ToastViewport />
+      </ToastProvider>
+    </ToastContext.Provider>
+  );
 }
 
 export function useToast() {

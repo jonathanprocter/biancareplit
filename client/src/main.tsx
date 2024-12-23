@@ -18,10 +18,10 @@ const root = createRoot(rootElement);
 
 root.render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
+    <ToastProvider>
+      <QueryClientProvider client={queryClient}>
         <App />
-      </ToastProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ToastProvider>
   </StrictMode>,
 );
