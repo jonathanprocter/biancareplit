@@ -1,4 +1,4 @@
-import { BookOpen, Bot, Brain, Loader2, Send, Target } from 'lucide-react';
+import { BookOpen, Bot, Loader2, Send, Target } from 'lucide-react';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -56,13 +56,21 @@ export function AIMentor() {
     };
 
     fetchContext();
-  }, [mentorContext]);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const sanitizeInput = (input: string): string => {
+    return input.replace(/<\/?[a-z][\s\S]*>/i, '');
+  };
+
+  const sanitizeOutput = (output: string): string => {
+    return output.replace(/<\/?[a-z][\s\S]*>/i, '');
+  };
 
   const sendMessage = async (): Promise<void> => {
     if (!input.trim()) return;
@@ -109,16 +117,6 @@ export function AIMentor() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const sanitizeInput = (input: string): string => {
-    // Sanitize the input
-    return input.replace(/<\/?[a-z][\s\S]*>/i, '');
-  };
-
-  const sanitizeOutput = (output: string): string => {
-    // Sanitize the output
-    return output.replace(/<\/?[a-z][\s\S]*>/i, '');
   };
 
   return (

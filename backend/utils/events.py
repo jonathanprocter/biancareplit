@@ -34,64 +34,42 @@ class EventEmitter:
 
     async def emit(self, event: str, data: Any = None) -> None:
         """Emit an event with optional data"""
+        if event not in self.handlers:
+            return
+
         try:
-            if event not in self.handlers:
-                return
-
-            # Process through middleware with timeout
-            try:
-                processed_data = await asyncio.wait_for(
-                    self._process_middleware(event, data),
-                    timeout=5.0,  # 5 second timeout for middleware processing
-                )
-            except asyncio.TimeoutError:
-                self.logger.error(f"Middleware processing timeout for event: {event}")
-                processed_data = data
-            except Exception as e:
-                self.logger.error(f"Middleware processing error: {str(e)}")
-                processed_data = data
-
-            # Execute handlers with proper error handling
-            tasks = []
-            for handler in self.handlers[event]:
-                try:
-                    if asyncio.iscoroutinefunction(handler):
-                        task = asyncio.create_task(
-                            handler(processed_data), name=f"event_handler_{event}"
-                        )
-                    else:
-                        # Wrap sync handlers in asyncio.to_thread with timeout
-                        task = asyncio.create_task(
-                            asyncio.wait_for(
-                                asyncio.to_thread(handler, processed_data), timeout=5.0
-                            ),
-                            name=f"sync_handler_{event}",
-                        )
-                    tasks.append(task)
-                except Exception as e:
-                    self.logger.error(
-                        f"Handler creation error for event {event}: {str(e)}",
-                        exc_info=True,
-                    )
-
-            # Wait for all handlers to complete with timeout
-            if tasks:
-                try:
-                    await asyncio.wait_for(
-                        asyncio.gather(*tasks, return_exceptions=True),
-                        timeout=10.0,  # 10 second timeout for all handlers
-                    )
-                except asyncio.TimeoutError:
-                    self.logger.error(f"Handler execution timeout for event: {event}")
-                except Exception as e:
-                    self.logger.error(
-                        f"Handler execution error for event {event}: {str(e)}",
-                        exc_info=True,
-                    )
-
+            processed_data = await self._process_middleware(event, data)
         except Exception as e:
-            self.logger.error(f"Event emission error: {str(e)}")
-            raise
+            self.logger.error(f"Middleware processing error: {str(e)}")
+            processed_data = data
+
+        tasks = []
+        for handler in self.handlers[event]:
+            try:
+                if asyncio.iscoroutinefunction(handler):
+                    task = asyncio.create_task(
+                        handler(processed_data), name=f"event_handler_{event}"
+                    )
+                else:
+                    task = asyncio.create_task(
+                        asyncio.to_thread(handler, processed_data),
+                        name=f"sync_handler_{event}",
+                    )
+                tasks.append(task)
+            except Exception as e:
+                self.logger.error(
+                    f"Handler creation error for event {event}: {str(e)}",
+                    exc_info=True,
+                )
+
+        if tasks:
+            try:
+                await asyncio.gather(*tasks, return_exceptions=True)
+            except Exception as e:
+                self.logger.error(
+                    f"Handler execution error for event {event}: {str(e)}",
+                    exc_info=True,
+                )
 
     async def _process_middleware(self, event: str, data: Any) -> Any:
         """Process data through middleware chain"""
@@ -105,6 +83,7 @@ class EventEmitter:
                     processed_data = middleware(event, processed_data)
             except Exception as e:
                 self.logger.error(f"Middleware error: {str(e)}")
+                raise
 
         return processed_data
 

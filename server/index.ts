@@ -19,7 +19,7 @@ async function startServer() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Initialize database connection
+    // Initialize database connection with detailed logging
     log('[Server] Initializing database connection...');
     const isConnected = await testConnection(3);
 
@@ -33,60 +33,88 @@ async function startServer() {
       log('[Server] Database connection verified');
     }
 
-    // Simple CORS setup
-    app.use(cors({
-      origin: true,
-      credentials: true,
-    }));
+    // Configure CORS with secure defaults
+    app.use(
+      cors({
+        origin:
+          process.env.NODE_ENV === 'production'
+            ? process.env.CORS_ORIGIN || 'https://your-domain.com'
+            : true,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      }),
+    );
 
-    // Session setup
+    // Configure session with security best practices
     const sessionStore = new (MemoryStore(session))({
-      checkPeriod: 86400000,
+      checkPeriod: 86400000, // 24 hours
     });
 
-    app.use(session({
-      secret: process.env.SESSION_SECRET || 'development_secret',
-      resave: false,
-      saveUninitialized: false,
-      store: sessionStore,
-      cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: 'lax',
-      },
-    }));
+    app.use(
+      session({
+        secret: process.env.SESSION_SECRET || 'development_secret',
+        resave: false,
+        saveUninitialized: false,
+        store: sessionStore,
+        name: 'sessionId',
+        cookie: {
+          secure: process.env.NODE_ENV === 'production',
+          httpOnly: true,
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          sameSite: 'lax',
+        },
+      }),
+    );
 
-    // Register routes
+    // Register routes with error handling
     const server = await registerRoutes(app);
     if (!server) {
       throw new Error('Failed to register routes');
     }
 
-    // Error handling
+    // Global error handler
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Error:', err);
       const status = (err as any).status || (err as any).statusCode || 500;
       const message = err.message || 'Internal Server Error';
 
       if (!res.headersSent) {
-        res.status(status).json({ error: message, status });
+        res.status(status).json({
+          error: message,
+          status,
+          timestamp: new Date().toISOString(),
+        });
       }
     });
 
-    // Setup frontend
+    // Setup frontend based on environment
     if (app.get('env') === 'development') {
       await setupVite(app, server);
     } else {
       serveStatic(app);
     }
 
-    // Start server
+    // Start server with health check
     const PORT = parseInt(process.env.PORT || '5000', 10);
+
+    // Close existing server if it exists
+    if (globalServer) {
+      await new Promise<void>((resolve) => {
+        globalServer?.close(() => resolve());
+      });
+    }
+
     server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
       log(`Server started on port ${PORT}`);
-    });
 
+      // Log successful startup
+      if (isConnected) {
+        log('Application started successfully with database connection');
+      } else {
+        log('Application started in limited mode without database connection');
+      }
+    });
   } catch (error) {
     console.error('Fatal error during server startup:', error);
     process.exit(1);

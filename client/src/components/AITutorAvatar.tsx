@@ -105,7 +105,7 @@ export const AITutorAvatar: React.FC = () => {
           <motion.div
             className={`w-16 h-16 rounded-full ${mood.color} flex items-center justify-center text-2xl`}
             animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: 3, ease: 'easeInOut' }} // Changed to finite repeat with easing
+            transition={{ duration: 2, repeat: 3, ease: 'easeInOut' }}
           >
             {mood.expression}
           </motion.div>
@@ -116,7 +116,7 @@ export const AITutorAvatar: React.FC = () => {
               AI Study Companion
             </h3>
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence exitBeforeEnter>
               <motion.div
                 key={currentMessage}
                 initial={{ opacity: 0, y: 10 }}
@@ -131,7 +131,7 @@ export const AITutorAvatar: React.FC = () => {
                       Thinking...
                     </span>
                   ) : (
-                    mood.message
+                    currentMessage || mood.message
                   )}
                 </p>
               </motion.div>

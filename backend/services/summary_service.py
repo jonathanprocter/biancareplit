@@ -17,12 +17,12 @@ class SummaryService:
         yesterday = datetime.now() - timedelta(days=1)
 
         # Get study sessions
-        sessions = StudySession.query.filter(
+        sessions = await StudySession.query.filter(
             StudySession.user_id == user_id, StudySession.created_at >= yesterday
         ).all()
 
         # Get question attempts
-        attempts = QuestionAttempt.query.filter(
+        attempts = await QuestionAttempt.query.filter(
             QuestionAttempt.user_id == user_id, QuestionAttempt.created_at >= yesterday
         ).all()
 

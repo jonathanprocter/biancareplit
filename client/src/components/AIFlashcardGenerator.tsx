@@ -1,6 +1,6 @@
-import { RefreshCw } from 'lucide-react';
+import { ReactComponent as RefreshCw } from 'lucide-react/icons/refresh-cw';
 
-import React from 'react';
+import React, { FC } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -9,7 +9,7 @@ import { FileUploadInput } from '@/components/flashcard/FileUploadInput';
 import { FlashcardGenerationButton } from '@/components/flashcard/FlashcardGenerationButton';
 import { useFlashcardGeneration } from '@/components/flashcard/useFlashcardGeneration';
 
-export const AIFlashcardGenerator: React.FC = () => {
+export const AIFlashcardGenerator: FC = () => {
   const {
     selectedFile,
     setSelectedFile,
@@ -19,7 +19,6 @@ export const AIFlashcardGenerator: React.FC = () => {
     generateFlashcards,
   } = useFlashcardGeneration();
 
-  // Add feedback mechanism for guiding user actions
   const isButtonDisabled = !selectedFile || isGenerating;
 
   return (

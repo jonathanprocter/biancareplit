@@ -8,11 +8,11 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
 }
 
-// Initialize WebSocket with basic configuration
+// Initialize WebSocket with robust configuration
 const wsConstructor = (url: string): WebSocket => {
   const ws = new WebSocket(url, {
-    rejectUnauthorized: false, // Required for development
-    handshakeTimeout: 10000,
+    rejectUnauthorized: false,
+    handshakeTimeout: 30000
   });
 
   ws.on('error', (error) => {
@@ -23,14 +23,24 @@ const wsConstructor = (url: string): WebSocket => {
     console.log('[Database] WebSocket connection established');
   });
 
+  ws.on('close', (code, reason) => {
+    console.log('[Database] WebSocket connection closed:', code, reason.toString());
+  });
+
+  ws.on('ping', () => {
+    ws.pong();
+  });
+
   return ws;
 };
 
-// Create connection pool with minimal configuration
+// Create connection pool with optimized settings
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   webSocketConstructor: wsConstructor,
-  max: 1,
+  max: 1, // Single connection for development
+  connectionTimeoutMillis: 30000,
+  idleTimeoutMillis: 30000
 });
 
 // Initialize Drizzle ORM with schema
@@ -39,12 +49,12 @@ export const db = drizzle(pool, { schema });
 // Export SQL tag for raw queries
 export { sql };
 
-// Test database connection with retries
+// Test database connection with exponential backoff
 export async function testConnection(retries = 3): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`[Database] Testing connection (attempt ${i + 1}/${retries})...`);
-      await db.execute(sql`SELECT 1`);
+      await db.execute(sql`SELECT current_timestamp`);
       console.log('[Database] Connection test successful');
       return true;
     } catch (error) {
@@ -53,7 +63,8 @@ export async function testConnection(retries = 3): Promise<boolean> {
         error instanceof Error ? error.message : 'Unknown error'
       );
       if (i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const delay = Math.min(1000 * Math.pow(2, i), 10000); // Exponential backoff with max 10s
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
@@ -73,7 +84,7 @@ export async function cleanup(): Promise<void> {
       console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Cleanup error:',
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }
