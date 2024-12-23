@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { type ToastActionElement, type ToastProps } from '@/components/ui/toast';
 
@@ -22,11 +23,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const addToast = React.useCallback((toast: Omit<ToasterToast, 'id'>) => {
     const id = Math.random().toString(36).slice(2, 9);
     setToasts((prev) => [...prev, { ...toast, id }]);
-
-    // Auto dismiss after 5 seconds
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 5000);
   }, []);
 
   const removeToast = React.useCallback((id: string) => {
