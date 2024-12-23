@@ -1,4 +1,3 @@
-import { db, testConnection } from '@db';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from 'express-fileupload';
@@ -6,15 +5,13 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-
+import { db, testConnection } from '@db';
 import { registerRoutes } from './routes.js';
 import { log, serveStatic, setupVite } from './vite.js';
 
-// ES Module compatibility
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Global server instance for cleanup
 let globalServer: Server | null = null;
@@ -42,8 +39,8 @@ async function cleanup() {
 }
 
 // Setup cleanup handlers
-process.on('SIGTERM', cleanup);
 process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   cleanup();
@@ -93,13 +90,13 @@ async function startServer() {
         store: sessionStore,
         cookie: {
           secure: process.env.NODE_ENV === 'production',
-          maxAge: 24 * 60 * 60 * 1000,
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
           sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         },
-      }),
+      })
     );
 
-    // File upload middleware with proper error handling
+    // File upload middleware
     app.use(
       fileUpload({
         createParentPath: true,
@@ -110,7 +107,7 @@ async function startServer() {
         preserveExtension: true,
         abortOnLimit: true,
         debug: process.env.NODE_ENV === 'development',
-      }),
+      })
     );
 
     // Register routes before error handling
@@ -143,18 +140,7 @@ async function startServer() {
 
     const PORT = process.env.PORT || 5000;
 
-    // Close existing server if any
-    if (globalServer) {
-      await new Promise<void>((resolve) => {
-        globalServer?.close(() => {
-          log('Closed existing server instance');
-          resolve();
-        });
-      });
-      globalServer = null;
-    }
-
-    // Start new server
+    // Start server
     server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
       const address = server.address();

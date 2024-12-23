@@ -1,80 +1,61 @@
-import * as React from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from '@/components/ui/toast';
+import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
-type ToasterToast = {
+const TOAST_REMOVE_DELAY = 5000;
+
+type ToasterToast = ToastProps & {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: React.ReactNode;
-  variant?: 'default' | 'destructive';
+  action?: ToastActionElement;
 };
 
-type ToastContextType = {
+type ToasterContext = {
   toasts: ToasterToast[];
-  toast: (toast: Omit<ToasterToast, 'id'>) => void;
+  addToast: (props: Omit<ToasterToast, 'id'>) => void;
   removeToast: (id: string) => void;
 };
 
-const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
+export const ToastContext = createContext<ToasterContext | undefined>(undefined);
 
-export function ToastContextProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<ToasterToast[]>([]);
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = useState<ToasterToast[]>([]);
 
-  const toast = React.useCallback((toast: Omit<ToasterToast, 'id'>) => {
+  const addToast = useCallback(({ ...props }: Omit<ToasterToast, 'id'>) => {
     const id = Math.random().toString(36).slice(2, 9);
-    setToasts((prev) => [...prev, { ...toast, id }]);
+    setToasts((prev) => [...prev, { id, ...props }]);
 
-    // Auto dismiss after 5 seconds
     setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 5000);
+      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    }, TOAST_REMOVE_DELAY);
   }, []);
 
-  const removeToast = React.useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const value = React.useMemo(
+  const value = useMemo(
     () => ({
       toasts,
-      toast,
+      addToast,
       removeToast,
     }),
-    [toasts, toast, removeToast],
+    [toasts, addToast, removeToast],
   );
 
-  return (
-    <ToastContext.Provider value={value}>
-      {children}
-      <ToastProvider>
-        {toasts.map(({ id, title, description, action, ...props }) => (
-          <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && <ToastDescription>{description}</ToastDescription>}
-            </div>
-            {action}
-            <ToastClose onClick={() => removeToast(id)} />
-          </Toast>
-        ))}
-        <ToastViewport />
-      </ToastProvider>
-    </ToastContext.Provider>
-  );
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
 }
 
 export function useToast() {
-  const context = React.useContext(ToastContext);
+  const context = useContext(ToastContext);
+
   if (!context) {
-    throw new Error('useToast must be used within a ToastContextProvider');
+    throw new Error('useToast must be used within a ToastProvider');
   }
-  return context;
+
+  return {
+    ...context,
+    toast: context.addToast,
+  };
 }
