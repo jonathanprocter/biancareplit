@@ -60,7 +60,7 @@ async function startServer() {
 
     // Initialize database with enhanced error handling
     log('[Server] Starting database initialization...');
-    
+
     // Print connection details (without sensitive info)
     const dbUrl = new URL(process.env.DATABASE_URL || '');
     log(`[Server] Connecting to database at ${dbUrl.host}...`);
