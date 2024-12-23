@@ -9,19 +9,19 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement;
 };
 
-type ToastContextType = {
+type ToastContextValue = {
   toasts: ToasterToast[];
   addToast: (toast: Omit<ToasterToast, 'id'>) => void;
   removeToast: (id: string) => void;
 };
 
-const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
+const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<ToasterToast[]>([]);
 
   const addToast = React.useCallback((toast: Omit<ToasterToast, 'id'>) => {
-    const id = Math.random().toString();
+    const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { ...toast, id }]);
   }, []);
 

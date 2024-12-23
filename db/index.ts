@@ -1,6 +1,5 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { sql } from 'drizzle-orm';
 import ws from 'ws';
 
 import * as schema from './schema';
@@ -26,6 +25,11 @@ export async function testConnection() {
     console.info('[Database] Successfully connected to database');
     return true;
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Connection failed:',
       error instanceof Error ? error.message : 'Unknown error',
@@ -35,30 +39,24 @@ export async function testConnection() {
 }
 
 // Handle cleanup on process termination
-process.on('SIGINT', async () => {
+async function cleanup() {
   try {
     await pool.end();
     console.info('[Database] Connection pool closed successfully');
     process.exit(0);
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close database:',
       error instanceof Error ? error.message : 'Unknown error',
     );
     process.exit(1);
   }
-});
+}
 
-process.on('SIGTERM', async () => {
-  try {
-    await pool.end();
-    console.info('[Database] Connection pool closed successfully');
-    process.exit(0);
-  } catch (error) {
-    console.error(
-      '[Database] Failed to close database:',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
-    process.exit(1);
-  }
-});
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
