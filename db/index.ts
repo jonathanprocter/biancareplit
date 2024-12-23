@@ -26,14 +26,9 @@ async function testConnection() {
     console.info('[Database] Successfully connected to database:', result.rows[0].version);
     return true;
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Connection failed:',
-      error instanceof Error ? error.message : 'Unknown error',
+      error instanceof Error ? error.message : 'Unknown error'
     );
     throw error;
   }
@@ -45,14 +40,9 @@ async function cleanup() {
     await pool.end();
     console.info('[Database] Connection pool closed successfully');
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
-      error instanceof Error ? error.message : 'Unknown error',
+      error instanceof Error ? error.message : 'Unknown error'
     );
     process.exit(1);
   }

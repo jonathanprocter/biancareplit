@@ -49,10 +49,21 @@ export const paths = {
 /**
  * Helper for ES module path resolution
  */
-function resolvePath(...pathSegments: string[]) {
-  return resolve(__dirname, ...pathSegments);
+export function getModulePath(importMetaUrl: string) {
+  const __dirname = getDirname(importMetaUrl);
+  return {
+    root: resolve(__dirname, '..'),
+    client: {
+      root: resolve(__dirname, '..', 'client'),
+      src: resolve(__dirname, '..', 'client', 'src'),
+      public: resolve(__dirname, '..', 'client', 'public'),
+      dist: resolve(__dirname, '..', 'dist', 'public')
+    },
+    aliases: {
+      '@': resolve(__dirname, '..', 'client', 'src'),
+      '@db': resolve(__dirname, '..', 'db')
+    }
+  };
 }
 
-// Export all utilities and paths
-export { getDirname, resolvePath };
 export default paths;

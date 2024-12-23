@@ -7,12 +7,14 @@ import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
 
-import { getDirname, paths } from '../config/paths';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { getModulePath } from '../config/paths';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-// Get dirname for ES modules
-const __dirname = getDirname(import.meta.url);
+const paths = getModulePath(import.meta.url);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Global server instance for cleanup
 let globalServer: Server | null = null;
