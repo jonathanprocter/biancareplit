@@ -2,15 +2,16 @@ import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
 // Get the directory name in ES module context
-function getDirname(importMetaUrl: string) {
+export function getDirname(importMetaUrl: string) {
   return dirname(fileURLToPath(importMetaUrl));
 }
 
-// Create paths relative to this config file
-const configDir = getDirname(import.meta.url);
-const projectRoot = resolve(configDir, '..');
+// Get current directory 
+const __dirname = getDirname(import.meta.url);
+const projectRoot = resolve(__dirname, '..');
 
-export const projectPaths = {
+// Define project paths
+export const projectConfig = {
   root: projectRoot,
   client: {
     root: resolve(projectRoot, 'client'),
@@ -25,8 +26,13 @@ export const projectPaths = {
     middleware: resolve(projectRoot, 'server', 'middleware'),
   },
   db: resolve(projectRoot, 'db'),
-  config: configDir,
+  config: __dirname,
 } as const;
 
-export { getDirname };
-export default projectPaths;
+// Helper for path resolution in ES modules
+export function getModulePath(importMetaUrl: string, ...pathSegments: string[]) {
+  const dir = getDirname(importMetaUrl);
+  return resolve(dir, ...pathSegments);
+}
+
+export default projectConfig;

@@ -1,3 +1,4 @@
+import { db, testConnection } from '@db';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from 'express-fileupload';
@@ -5,16 +6,13 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 
-import { db, testConnection } from '@db';
-import { paths } from '../config/paths';
+import { projectConfig, getDirname } from '../config/esm-config';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-// ES modules compatibility
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Get dirname for ES modules
+const __dirname = getDirname(import.meta.url);
 
 // Global server instance for cleanup
 let globalServer: Server | null = null;
