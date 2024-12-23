@@ -52,3 +52,4 @@ python-shell
 flask-cors
 openai
 python-shell
+openai
