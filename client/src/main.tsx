@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import { StrictMode } from 'react';
 
-import { ToastProvider } from '@/contexts/toast-context';
+import { ToastContextProvider } from '@/contexts/toast-context';
 
 import App from './App';
 import './index.css';
@@ -18,10 +18,10 @@ const root = createRoot(rootElement);
 
 root.render(
   <StrictMode>
-    <ToastProvider>
+    <ToastContextProvider>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
-    </ToastProvider>
+    </ToastContextProvider>
   </StrictMode>,
 );

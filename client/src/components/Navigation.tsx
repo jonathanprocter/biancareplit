@@ -26,11 +26,6 @@ function Navigation() {
       localStorage.removeItem('username');
       window.location.href = '/';
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
       addToast({
         variant: 'destructive',
