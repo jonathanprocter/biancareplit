@@ -1,17 +1,13 @@
 import { Link, useLocation } from 'wouter';
-
 import { useState } from 'react';
-
 import { Button } from '@/components/ui/button';
-
 import { useToast } from '@/hooks/use-toast';
 
-function Navigation() {
+export function Navigation() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [location] = useLocation();
   const { toast } = useToast();
 
-  // Show navigation on all routes for testing
   const handleLogout = async () => {
     if (isLoggingOut) return;
 
@@ -78,5 +74,3 @@ function Navigation() {
     </nav>
   );
 }
-
-export default Navigation;

@@ -5,7 +5,7 @@ import { Route, Switch } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/toaster';
 
-import Navigation from '@/components/Navigation';
+import { Navigation } from '@/components/Navigation';
 
 // Error fallback component
 function ErrorFallback({ error }: { error: Error }) {
@@ -31,7 +31,9 @@ function Dashboard() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Welcome to Medical Education Platform</h1>
-          <p className="text-muted-foreground">Your personalized learning experience starts here.</p>
+          <p className="text-muted-foreground">
+            Your personalized learning experience starts here.
+          </p>
         </div>
       </div>
     </div>

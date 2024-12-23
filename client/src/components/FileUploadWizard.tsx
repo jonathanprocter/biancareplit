@@ -6,7 +6,7 @@ import React, { useCallback, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
-import { useToast } from '@/contexts/toast-context';
+import { useToast } from '@/hooks/use-toast';
 
 interface UploadResult {
   topics?: string[];
