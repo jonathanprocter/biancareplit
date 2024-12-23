@@ -3,8 +3,6 @@ import { createRoot } from 'react-dom/client';
 
 import { StrictMode } from 'react';
 
-import { Toaster } from '@/components/ui/toaster';
-
 import { ToastProvider } from '@/contexts/toast-context';
 
 import App from './App';
@@ -23,7 +21,6 @@ root.render(
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <App />
-        <Toaster />
       </ToastProvider>
     </QueryClientProvider>
   </StrictMode>,

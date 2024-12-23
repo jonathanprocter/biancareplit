@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { createContext, useCallback, useContext, useState } from 'react';
 
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
@@ -17,37 +16,40 @@ interface ToastContextValue {
   removeToast: (id: string) => void;
 }
 
-const ToastContext = createContext<ToastContextValue | null>(null);
-
-let toastCount = 0;
+const ToastContext = React.createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
 
-  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
-    const id = String(++toastCount);
-    setToasts((currentToasts) => [...currentToasts, { ...toast, id }]);
+  const addToast = React.useCallback((toast: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).slice(2, 9);
+    setToasts((prevToasts) => [...prevToasts, { ...toast, id }]);
 
     if (toast.duration !== Infinity) {
       setTimeout(() => {
-        setToasts((currentToasts) => currentToasts.filter((t) => t.id !== id));
+        setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
       }, toast.duration || 5000);
     }
   }, []);
 
-  const removeToast = useCallback((id: string) => {
-    setToasts((currentToasts) => currentToasts.filter((t) => t.id !== id));
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
   }, []);
 
-  return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
-      {children}
-    </ToastContext.Provider>
+  const contextValue = React.useMemo(
+    () => ({
+      toasts,
+      addToast,
+      removeToast,
+    }),
+    [toasts, addToast, removeToast],
   );
+
+  return <ToastContext.Provider value={contextValue}>{children}</ToastContext.Provider>;
 }
 
 export function useToast() {
-  const context = useContext(ToastContext);
+  const context = React.useContext(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
