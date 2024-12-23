@@ -1,2 +1,2 @@
-// Import from the main toast implementation
-export { useToast } from '@/lib/toast';
+// Export from the toast context
+export { useToast } from '@/contexts/toast-context';

@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import {
   Toast,
   ToastClose,
@@ -18,17 +19,17 @@ type ToasterToast = {
 
 type ToastContextType = {
   toasts: ToasterToast[];
-  addToast: (toast: Omit<ToasterToast, 'id'>) => void;
+  toast: (toast: Omit<ToasterToast, 'id'>) => void;
   removeToast: (id: string) => void;
 };
 
 const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastContextProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<ToasterToast[]>([]);
 
-  const addToast = React.useCallback((toast: Omit<ToasterToast, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
+  const toast = React.useCallback((toast: Omit<ToasterToast, 'id'>) => {
+    const id = Math.random().toString(36).slice(2, 9);
     setToasts((prev) => [...prev, { ...toast, id }]);
 
     // Auto dismiss after 5 seconds
@@ -38,22 +39,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeToast = React.useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const value = React.useMemo(
     () => ({
       toasts,
-      addToast,
+      toast,
       removeToast,
     }),
-    [toasts, addToast, removeToast],
+    [toasts, toast, removeToast],
   );
 
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <ToastProvider swipeDirection="right">
+      <ToastProvider>
         {toasts.map(({ id, title, description, action, ...props }) => (
           <Toast key={id} {...props}>
             <div className="grid gap-1">
@@ -61,7 +62,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               {description && <ToastDescription>{description}</ToastDescription>}
             </div>
             {action}
-            <ToastClose />
+            <ToastClose onClick={() => removeToast(id)} />
           </Toast>
         ))}
         <ToastViewport />
@@ -73,7 +74,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function useToast() {
   const context = React.useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
+    throw new Error('useToast must be used within a ToastContextProvider');
   }
   return context;
 }
