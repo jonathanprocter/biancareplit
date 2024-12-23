@@ -22,7 +22,6 @@ const RETRY_DELAY = 1000; // 1 second
 
 async function initializeDatabase() {
   let retries = 0;
-  let lastError: Error | null = null;
 
   while (retries < MAX_RETRIES) {
     try {
@@ -45,12 +44,9 @@ async function initializeDatabase() {
       console.info('[Database] Successfully connected to database');
       return dbInstance;
     } catch (error) {
-      lastError =
-        error instanceof Error ? error : new Error('Unknown error during database initialization');
-      console.error(
-        `[Database] Connection attempt ${retries + 1} failed:`,
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      retries++;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[Database] Connection attempt ${retries} failed: ${errorMessage}`);
 
       if (pool) {
         await pool.end().catch(console.error);
@@ -58,21 +54,26 @@ async function initializeDatabase() {
         dbInstance = null;
       }
 
-      retries++;
-      if (retries === MAX_RETRIES) break;
+      if (retries === MAX_RETRIES) {
+        throw new Error(`Failed to initialize database after ${MAX_RETRIES} attempts: ${errorMessage}`);
+      }
 
-      // Wait before retrying with exponential backoff
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY * Math.pow(2, retries)));
     }
   }
 
-  throw lastError || new Error('Failed to initialize database after multiple attempts');
+  throw new Error('Failed to initialize database after multiple attempts');
 }
 
-// Health check function
 export async function checkDatabaseHealth() {
   try {
-    if (!pool) throw new Error('Database pool not initialized');
+    if (!pool) {
+      return {
+        healthy: false,
+        error: 'Database pool not initialized',
+        timestamp: new Date().toISOString(),
+      };
+    }
 
     const startTime = Date.now();
     const result = await pool.query('SELECT 1');
@@ -89,19 +90,16 @@ export async function checkDatabaseHealth() {
       },
     };
   } catch (error) {
-    console.error(
-      '[Database] Health check failed:',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Database] Health check failed:', errorMessage);
     return {
       healthy: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
       timestamp: new Date().toISOString(),
     };
   }
 }
 
-// Cleanup function
 export async function closeDatabase() {
   if (!pool) return;
 
@@ -109,32 +107,50 @@ export async function closeDatabase() {
     await pool.end();
     console.info('[Database] Connection pool closed successfully');
   } catch (error) {
-    console.error(
-      '[Database] Error during cleanup:',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Database] Error during cleanup:', errorMessage);
     throw error;
   }
 }
 
 // Initialize the database and export the instance
-export const db = await initializeDatabase();
+let db: ReturnType<typeof drizzle>;
+
+// Initialize database connection
+initializeDatabase()
+  .then((instance) => {
+    db = instance;
+  })
+  .catch((error) => {
+    console.error('[Database] Failed to initialize:', error);
+    process.exit(1);
+  });
 
 // Handle cleanup on process termination
-function setupCleanupHandler(signal: string) {
-  process.on(signal, async () => {
-    try {
-      await closeDatabase();
-      process.exit(0);
-    } catch (error) {
-      console.error(
-        '[Database] Failed to close database:',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
-      process.exit(1);
-    }
-  });
-}
+process.on('SIGINT', async () => {
+  try {
+    await closeDatabase();
+    process.exit(0);
+  } catch (error) {
+    console.error(
+      '[Database] Failed to close database:',
+      error instanceof Error ? error.message : 'Unknown error',
+    );
+    process.exit(1);
+  }
+});
 
-setupCleanupHandler('SIGINT');
-setupCleanupHandler('SIGTERM');
+process.on('SIGTERM', async () => {
+  try {
+    await closeDatabase();
+    process.exit(0);
+  } catch (error) {
+    console.error(
+      '[Database] Failed to close database:',
+      error instanceof Error ? error.message : 'Unknown error',
+    );
+    process.exit(1);
+  }
+});
+
+export { db };

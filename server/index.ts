@@ -135,42 +135,42 @@ async function startServer() {
       });
     });
 
-    // Port retry logic with exponential backoff
-    const findAvailablePort = async (
-      startPort: number = 3000,
-      maxAttempts: number = 5,
-    ): Promise<number> => {
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const port = startPort + attempt;
-        try {
-          await new Promise<void>((resolve, reject) => {
-            server.once('error', (err: NodeJS.ErrnoException) => {
-              if (err.code === 'EADDRINUSE') {
-                log(`Port ${port} is in use, trying next port...`);
-                server.close();
-                resolve();
-              } else {
-                reject(err);
-              }
-            });
+    // Port retry logic
+    const startPort = 5000;
+    const maxAttempts = 5;
+    let port = startPort;
+    let isListening = false;
 
-            server.listen(port, '0.0.0.0', () => {
-              server.removeAllListeners('error');
+    while (!isListening && port < startPort + maxAttempts) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          server.once('error', (err: NodeJS.ErrnoException) => {
+            if (err.code === 'EADDRINUSE') {
+              port++;
+              server.close();
               resolve();
-            });
+            } else {
+              reject(err);
+            }
           });
-          return port;
-        } catch (err) {
-          if (attempt === maxAttempts - 1) throw err;
-          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 100));
+
+          server.listen(port, '0.0.0.0', () => {
+            isListening = true;
+            resolve();
+          });
+        });
+
+        if (isListening) {
+          log(`Server started successfully on port ${port}`);
+          log(`API server running at http://0.0.0.0:${port}`);
+        }
+      } catch (error) {
+        console.error('Server error:', error);
+        if (port === startPort + maxAttempts - 1) {
+          throw new Error('Could not find an available port after maximum attempts');
         }
       }
-      throw new Error('Could not find an available port after maximum attempts');
-    };
-
-    const port = await findAvailablePort();
-    log(`Server started successfully on port ${port}`);
-    log(`API server running at http://0.0.0.0:${port}`);
+    }
 
     // Graceful shutdown
     const cleanup = async (signal: string) => {
