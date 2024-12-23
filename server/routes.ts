@@ -1,12 +1,12 @@
-import { db, testConnection } from '@db';
+import { db, testConnection } from '@db/index.js';
 import { sql } from 'drizzle-orm';
 import type { Express } from 'express';
 import { type Server, createServer } from 'http';
 
-import { CodeReviewService } from './services/code-review';
-import { submitQuizResponses } from './services/learning-style-assessment';
-import { sanitizeMedicalData } from './utils/sanitize';
-import { log } from './vite';
+import { CodeReviewService } from './services/code-review.js';
+import { submitQuizResponses } from './services/learning-style-assessment.js';
+import { sanitizeMedicalData } from './utils/sanitize.js';
+import { log } from './vite.js';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Test database connection before registering routes
@@ -84,6 +84,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create HTTP server
-  const httpServer = createServer(app);
-  return httpServer;
+  try {
+    const httpServer = createServer(app);
+    return httpServer;
+  } catch (error) {
+    log('[Server] Failed to create HTTP server:', error);
+    throw error;
+  }
 }

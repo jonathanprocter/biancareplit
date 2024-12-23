@@ -6,13 +6,15 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
-import { dirname, resolve } from 'path';
+import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import { registerRoutes } from './routes';
-import { log, serveStatic, setupVite } from './vite';
+import { registerRoutes } from './routes.js';
+import { log, serveStatic, setupVite } from './vite.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// ES Module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Global server instance for cleanup
 let globalServer: Server | null = null;
