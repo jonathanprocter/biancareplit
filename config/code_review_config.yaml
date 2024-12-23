@@ -1,0 +1,27 @@
+
+code_review:
+  max_file_size: 102400  # 100KB
+  batch_size: 5
+  api_timeout: 60.0
+  fix_patterns:
+    - name: unused_imports
+      enabled: true
+    - name: trailing_whitespace
+      enabled: true
+    - name: multiple_blank_lines
+      enabled: true
+    - name: missing_type_hints
+      enabled: true
+  exclude_patterns:
+    - "node_modules/"
+    - "dist/"
+    - "build/"
+    - "__pycache__/"
+    - "*.min.js"
+    - "*.map"
+  include_extensions:
+    - ".py"
+    - ".ts"
+    - ".tsx"
+    - ".js"
+    - ".jsx"
