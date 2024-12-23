@@ -33,38 +33,47 @@ async function startServer() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Configure CORS
-    app.use(
-      cors({
-        origin:
-          process.env.NODE_ENV === 'production'
-            ? process.env.CORS_ORIGIN || 'https://your-domain.com'
-            : true,
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      }),
-    );
+    // Enhanced CORS configuration
+    const corsOptions = {
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? process.env.CORS_ORIGIN?.split(',') || 'https://your-domain.com'
+          : ['http://localhost:5000', 'http://0.0.0.0:5000'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      maxAge: 86400, // 24 hours
+    };
+    app.use(cors(corsOptions));
 
-    // Configure session
+    // Enhanced session configuration
     const sessionStore = new (MemoryStore(session))({
       checkPeriod: 86400000, // 24h
+      stale: false,
+      ttl: 86400000,
     });
 
-    app.use(
-      session({
-        secret: process.env.SESSION_SECRET || 'development_secret',
-        resave: false,
-        saveUninitialized: false,
-        store: sessionStore,
-        name: 'sessionId',
-        cookie: {
-          secure: process.env.NODE_ENV === 'production',
-          httpOnly: true,
-          maxAge: 24 * 60 * 60 * 1000, // 24h
-          sameSite: 'lax',
-        },
-      }),
-    );
+    const sessionConfig = {
+      secret: process.env.SESSION_SECRET || 'development_secret',
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      name: 'sessionId',
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 24h
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
+      },
+    };
+
+    if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+      throw new Error('SESSION_SECRET must be set in production');
+    }
+
+    app.use(session(sessionConfig));
 
     // Test database connection
     log('[Server] Testing database connection...');
@@ -80,7 +89,7 @@ async function startServer() {
       throw new Error('Failed to create HTTP server');
     }
 
-    // Global error handler
+    // Global error handler with enhanced security
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       const status = (err as any).status || (err as any).statusCode || 500;
       const message =
@@ -88,7 +97,10 @@ async function startServer() {
           ? 'Internal Server Error'
           : err.message || 'Internal Server Error';
 
-      console.error('[Server] Error:', err);
+      // Log full error details in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[Server] Error:', err);
+      }
 
       if (!res.headersSent) {
         res.status(status).json({
@@ -107,7 +119,7 @@ async function startServer() {
     }
 
     // Start server
-    const PORT = 5000;
+    const PORT = process.env.PORT || 5000;
     server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
       log(`[Server] Started on port ${PORT}`);
