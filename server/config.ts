@@ -1,5 +1,5 @@
-import { SessionOptions } from "express-session";
-import { MemoryStore } from "memorystore";
+import { SessionOptions } from 'express-session';
+import { MemoryStore } from 'memorystore';
 
 interface Config {
   openai: {
@@ -12,7 +12,7 @@ interface Config {
     keepAliveTimeout: number;
     headers: {
       Connection: string;
-      "Keep-Alive": string;
+      'Keep-Alive': string;
     };
   };
   session: SessionOptions;
@@ -27,7 +27,7 @@ interface Config {
 // Check for required environment variables
 const requiredEnvVars = {
   DATABASE_URL: process.env.DATABASE_URL,
-  SESSION_SECRET: process.env.SESSION_SECRET || "development-secret-key",
+  SESSION_SECRET: process.env.SESSION_SECRET || 'development-secret-key',
 };
 
 // Check all required environment variables
@@ -40,31 +40,31 @@ Object.entries(requiredEnvVars).forEach(([name, value]) => {
 
 export const config: Config = {
   openai: {
-    apiKey: process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || "",
+    apiKey: process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '',
   },
   server: {
     port: Number(process.env.PORT) || 5000,
-    env: process.env.NODE_ENV || "development",
+    env: process.env.NODE_ENV || 'development',
     timeout: 120000,
     keepAliveTimeout: 65000,
     headers: {
-      Connection: "keep-alive",
-      "Keep-Alive": "timeout=65",
+      Connection: 'keep-alive',
+      'Keep-Alive': 'timeout=65',
     },
   },
   session: {
-    secret: process.env.SESSION_SECRET || "development-secret-key",
+    secret: process.env.SESSION_SECRET || 'development-secret-key',
     resave: false,
     saveUninitialized: false,
     store: new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: "lax",
+      sameSite: 'lax',
     },
-    name: "sid",
+    name: 'sid',
   },
   database: {
     url: process.env.DATABASE_URL,

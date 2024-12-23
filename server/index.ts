@@ -30,16 +30,17 @@ async function startServer() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Initialize database connection with detailed logging
+    // Initialize database connection with enhanced error handling
     log('[Server] Initializing database connection...');
-    const isConnected = await testConnection(3);
-
-    if (!isConnected && process.env.NODE_ENV === 'production') {
-      throw new Error('Cannot start server without database in production');
-    }
+    const isConnected = await testConnection(5); // Increased retries for initial connection
 
     if (!isConnected) {
+      const dbError = new Error('Database connection failed');
+      if (process.env.NODE_ENV === 'production') {
+        throw dbError;
+      }
       log('[Server] WARNING: Starting in development mode without database');
+      console.error(dbError);
     } else {
       log('[Server] Database connection verified');
     }
@@ -56,7 +57,7 @@ async function startServer() {
       }),
     );
 
-    // Configure session with security best practices
+    // Configure session with enhanced security
     const sessionStore = new (MemoryStore(session))({
       checkPeriod: 86400000, // 24 hours
     });
@@ -83,11 +84,14 @@ async function startServer() {
       throw new Error('Failed to register routes');
     }
 
-    // Global error handler
+    // Global error handler with improved logging
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('Error:', err);
+      console.error('[Server] Error:', err);
       const status = (err as any).status || (err as any).statusCode || 500;
-      const message = err.message || 'Internal Server Error';
+      const message =
+        process.env.NODE_ENV === 'production'
+          ? 'Internal Server Error'
+          : err.message || 'Internal Server Error';
 
       if (!res.headersSent) {
         res.status(status).json({
@@ -105,62 +109,28 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Find an available port
-    const findAvailablePort = async (
-      startPort: number,
-      maxAttempts: number = 10,
-    ): Promise<number> => {
-      for (let port = startPort; port < startPort + maxAttempts; port++) {
-        try {
-          await new Promise<void>((resolve, reject) => {
-            const testServer = app
-              .listen(port, '0.0.0.0')
-              .once('error', (err: any) => {
-                if (err.code === 'EADDRINUSE') {
-                  testServer.close();
-                  resolve();
-                } else {
-                  reject(err);
-                }
-              })
-              .once('listening', () => {
-                testServer.close();
-                reject(new Error('Port available'));
-              });
-          });
-        } catch (err) {
-          if (err.message === 'Port available') {
-            return port;
-          }
-        }
-      }
-      throw new Error('No available ports found');
-    };
-
-    const PORT = await findAvailablePort(5000);
-    log(`[Server] Found available port: ${PORT}`);
-
+    const PORT = 5000;
     server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
-      log(`Server started on port ${PORT}`);
+      log(`[Server] Started on port ${PORT}`);
 
       if (isConnected) {
-        log('Application started successfully with database connection');
+        log('[Server] Application started successfully with database connection');
       } else {
-        log('Application started in limited mode without database connection');
+        log('[Server] Application started in limited mode without database connection');
       }
     });
   } catch (error) {
-    console.error('Fatal error during server startup:', error);
+    console.error('[Server] Fatal error during startup:', error);
     process.exit(1);
   }
 }
 
-// Cleanup handlers
+// Enhanced cleanup handlers
 process.on('SIGTERM', () => {
   if (globalServer) {
     globalServer.close(() => {
-      log('Server closed');
+      log('[Server] Closed due to SIGTERM');
       process.exit(0);
     });
   }
@@ -169,17 +139,17 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   if (globalServer) {
     globalServer.close(() => {
-      log('Server closed');
+      log('[Server] Closed due to SIGINT');
       process.exit(0);
     });
   }
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
+  console.error('[Server] Uncaught Exception:', error);
   if (globalServer) {
     globalServer.close(() => {
-      log('Server closed');
+      log('[Server] Closed due to uncaught exception');
       process.exit(1);
     });
   }
@@ -187,6 +157,6 @@ process.on('uncaughtException', (error) => {
 
 // Start the server
 startServer().catch((error) => {
-  console.error('Failed to start server:', error);
+  console.error('[Server] Failed to start:', error);
   process.exit(1);
 });

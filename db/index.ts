@@ -1,7 +1,7 @@
 import * as schema from '@db/schema';
 import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
 import { sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import { WebSocket } from 'ws';
 
 if (!process.env.DATABASE_URL) {
@@ -13,16 +13,11 @@ const wsConstructor = (url: string): WebSocket => {
   console.log('[Database] Initializing WebSocket connection...');
 
   const ws = new WebSocket(url, {
-    rejectUnauthorized: false,
-    handshakeTimeout: 30000,
-    followRedirects: true,
-    headers: {
-      'User-Agent': 'drizzle-orm-neon',
-      'Accept-Encoding': 'gzip, deflate, br',
-      Connection: 'Upgrade',
-      Upgrade: 'websocket',
-      'Sec-WebSocket-Version': '13',
-    },
+    rejectUnauthorized: false, // Required for some PostgreSQL providers
+    perMessageDeflate: false, // Disable compression for better compatibility
+    skipUTF8Validation: true, // Skip UTF8 validation for better performance
+    handshakeTimeout: 15000, // 15 seconds handshake timeout
+    maxPayload: 100 * 1024 * 1024, // 100MB max payload
   });
 
   ws.on('error', (error) => {
@@ -49,8 +44,9 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   webSocketConstructor: wsConstructor,
   max: 1, // Single connection for development
-  connectionTimeoutMillis: 30000,
-  idleTimeoutMillis: 30000
+  connectionTimeoutMillis: 15000,
+  idleTimeoutMillis: 15000,
+  maxUses: 7500, // Close connection after 7500 queries
 });
 
 // Initialize Drizzle ORM with schema
@@ -70,11 +66,11 @@ export async function testConnection(retries = 3): Promise<boolean> {
     } catch (error) {
       console.error(
         `[Database] Connection test failed (attempt ${i + 1}/${retries}):`,
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : 'Unknown error',
       );
       if (i < retries - 1) {
         const delay = Math.min(1000 * Math.pow(2, i), 10000); // Exponential backoff with max 10s
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
@@ -89,7 +85,7 @@ export async function cleanup(): Promise<void> {
   } catch (error) {
     console.error(
       '[Database] Cleanup error:',
-      error instanceof Error ? error.message : 'Unknown error'
+      error instanceof Error ? error.message : 'Unknown error',
     );
   }
 }

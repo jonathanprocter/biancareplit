@@ -72,19 +72,16 @@ export const DailyWelcomeCard = () => {
     const updateTimeAndGreeting = () => {
       const now = new Date();
       setCurrentTime(now);
-    };
-
-    const updateGreeting = () => {
-      const hour = currentTime.getHours();
+      const hour = now.getHours();
       if (hour < 12) setGreeting('Good Morning');
       else if (hour < 18) setGreeting('Good Afternoon');
       else setGreeting('Good Evening');
     };
 
-    updateGreeting();
+    updateTimeAndGreeting();
     const timer = setInterval(updateTimeAndGreeting, 60000);
     return () => clearInterval(timer);
-  }, [currentTime]);
+  }, []);
 
   if (loading) {
     return (

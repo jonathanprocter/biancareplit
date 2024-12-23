@@ -40,19 +40,10 @@ export function LearningPathVisualizer() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('LearningPathVisualizer: Component initialized');
-    }
-
     const abortController = new AbortController();
-
     const fetchData = async () => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('LearningPathVisualizer: Starting data fetch');
-      }
       setIsLoading(true);
       setError(null);
-
       try {
         const context = {
           currentTopic: 'Fundamentals of Nursing',
@@ -60,14 +51,6 @@ export function LearningPathVisualizer() {
           strugglingAreas: ['Pharmacology', 'Critical Care'],
           learningStyle: 'Visual',
         };
-
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(
-            'LearningPathVisualizer: Calling generateLearningPath with context:',
-            context,
-          );
-        }
-
         const defaultMilestones: Milestone[] = [
           {
             id: 1,
@@ -80,29 +63,19 @@ export function LearningPathVisualizer() {
             xpPoints: 100,
           },
         ];
-
         setMilestones(defaultMilestones);
-
         const result = await generateLearningPath(context);
-
         if (!Array.isArray(result.milestones)) {
           throw new Error('Invalid milestones format received');
         }
-
         const mappedMilestones = result.milestones.map((milestone, index) => ({
           id: index + 1,
           ...milestone,
           completed: false,
         }));
-
         setMilestones(mappedMilestones);
         setCategoryProgress(result.categoryProgress);
-
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('LearningPathVisualizer: Data loaded successfully');
-        }
       } catch (err) {
-        console.error('LearningPathVisualizer: Error loading data', err);
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to load learning path data';
         setError(errorMessage);
@@ -111,7 +84,6 @@ export function LearningPathVisualizer() {
           description: errorMessage,
           variant: 'destructive',
         });
-
         const fallbackMilestones: Milestone[] = [
           {
             id: 1,
@@ -124,15 +96,12 @@ export function LearningPathVisualizer() {
             xpPoints: 100,
           },
         ];
-
         setMilestones(fallbackMilestones);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchData();
-
     return () => {
       abortController.abort();
     };

@@ -1,3 +1,4 @@
+```typescript
 import { AnimatePresence, motion } from 'framer-motion';
 import { Award, Brain, Calendar, Sparkles } from 'lucide-react';
 
@@ -145,3 +146,4 @@ export const LearningHeatMap = () => {
 };
 
 export default LearningHeatMap;
+```

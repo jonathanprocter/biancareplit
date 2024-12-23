@@ -33,60 +33,63 @@ export const FileUploadWizard = () => {
   const [uploads, setUploads] = useState<UploadStatus[]>([]);
   const { toast } = useToast();
 
-  const processFileUpload = async (upload: UploadStatus) => {
-    try {
-      setUploads((prev) =>
-        prev.map((u) =>
-          u.file.name === upload.file.name && u.file.size === upload.file.size
-            ? { ...u, status: 'uploading' }
-            : u,
-        ),
-      );
+  const processFileUpload = useCallback(
+    async (upload: UploadStatus) => {
+      try {
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.file.name === upload.file.name && u.file.size === upload.file.size
+              ? { ...u, status: 'uploading' }
+              : u,
+          ),
+        );
 
-      const formData = new FormData();
-      formData.append('file', upload.file);
+        const formData = new FormData();
+        formData.append('file', upload.file);
 
-      const response = await fetch('/api/content/upload', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
+        const response = await fetch('/api/content/upload', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
 
-      if (!response.ok) {
-        throw new Error(await response.text());
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        const result = await response.json();
+
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.file.name === upload.file.name && u.file.size === upload.file.size
+              ? { ...u, status: 'complete', result }
+              : u,
+          ),
+        );
+
+        toast({
+          title: 'Upload Successful',
+          description: `${upload.file.name} has been processed and integrated into the learning system.`,
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.file.name === upload.file.name && u.file.size === upload.file.size
+              ? { ...u, status: 'error', error: errorMessage }
+              : u,
+          ),
+        );
+
+        toast({
+          variant: 'destructive',
+          title: 'Upload Failed',
+          description: `Failed to process ${upload.file.name}. Please try again.`,
+        });
       }
-
-      const result = await response.json();
-
-      setUploads((prev) =>
-        prev.map((u) =>
-          u.file.name === upload.file.name && u.file.size === upload.file.size
-            ? { ...u, status: 'complete', result }
-            : u,
-        ),
-      );
-
-      toast({
-        title: 'Upload Successful',
-        description: `${upload.file.name} has been processed and integrated into the learning system.`,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      setUploads((prev) =>
-        prev.map((u) =>
-          u.file.name === upload.file.name && u.file.size === upload.file.size
-            ? { ...u, status: 'error', error: errorMessage }
-            : u,
-        ),
-      );
-
-      toast({
-        variant: 'destructive',
-        title: 'Upload Failed',
-        description: `Failed to process ${upload.file.name}. Please try again.`,
-      });
-    }
-  };
+    },
+    [toast],
+  );
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -100,16 +103,12 @@ export const FileUploadWizard = () => {
 
       await Promise.all(newUploads.map(processFileUpload));
     },
-    [toast],
+    [processFileUpload],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'text/plain': ['.txt'],
-    },
+    accept: ['.pdf', '.docx', '.txt'],
     multiple: true,
   });
 
