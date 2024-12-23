@@ -1,12 +1,15 @@
 import { Link, useLocation } from 'wouter';
+
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+
 import { useToast } from '@/hooks/use-toast';
 
 function Navigation() {
-  const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [location] = useLocation();
+  const { toast } = useToast();
 
   // Don't show navigation on public routes
   const publicRoutes = ['/', '/register'];
