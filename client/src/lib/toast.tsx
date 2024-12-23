@@ -7,7 +7,7 @@ import {
   ToastTitle,
   ToastProvider as ToastUIProvider,
   ToastViewport,
-} from '@/components/ui/toast';
+} from '../components/ui/toast';
 
 interface ToasterToast {
   id: string;
