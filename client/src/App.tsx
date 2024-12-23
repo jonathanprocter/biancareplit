@@ -8,14 +8,14 @@ import { Navigation } from '@/components/Navigation';
 // Error fallback component
 function ErrorFallback({ error }: { error: Error }) {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gray-50">
-      <Card className="mx-4 w-full max-w-md">
+    <div className="min-h-screen w-full flex items-center justify-center">
+      <Card className="w-full max-w-md mx-4">
         <CardContent className="pt-6">
-          <div className="mb-4 flex gap-2">
+          <div className="flex mb-4 gap-2">
             <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">Something went wrong</h1>
+            <h1 className="text-2xl font-bold">Something went wrong</h1>
           </div>
-          <p className="mt-4 text-sm text-gray-600">{error.message}</p>
+          <p className="mt-4 text-sm text-muted-foreground">{error.message}</p>
         </CardContent>
       </Card>
     </div>
@@ -28,7 +28,7 @@ function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Welcome to Medical Education Platform</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome to Medical Education Platform</h1>
           <p className="text-muted-foreground">
             Your personalized learning experience starts here.
           </p>
@@ -41,25 +41,26 @@ function Dashboard() {
 // NotFound component
 function NotFound() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gray-50">
-      <Card className="mx-4 w-full max-w-md">
+    <div className="min-h-screen w-full flex items-center justify-center">
+      <Card className="w-full max-w-md mx-4">
         <CardContent className="pt-6">
-          <div className="mb-4 flex gap-2">
+          <div className="flex mb-4 gap-2">
             <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
+            <h1 className="text-2xl font-bold">404 Page Not Found</h1>
           </div>
-          <p className="mt-4 text-sm text-gray-600">The page you are looking for does not exist.</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            The page you are looking for does not exist.
+          </p>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-// Main App component
 function App() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <div className="min-h-screen flex flex-col">
         <Navigation />
         <main className="flex-1 container mx-auto px-4 py-8">
           <Switch>
