@@ -11,4 +11,4 @@ const Skeleton: React.FC<Props> = ({ className, ...props }) => {
 }
 
 export default Skeleton;
-```
+```;

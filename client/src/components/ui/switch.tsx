@@ -1,4 +1,5 @@
 import * as SwitchPrimitives from '@radix-ui/react-switch';
+import PropTypes from 'prop-types';
 
 import * as React from 'react';
 
@@ -23,6 +24,11 @@ const Switch = React.forwardRef<
     />
   </SwitchPrimitives.Root>
 ));
+
 Switch.displayName = SwitchPrimitives.Root.displayName;
+
+Switch.propTypes = {
+  'aria-labelledby': PropTypes.string.isRequired,
+};
 
 export { Switch };

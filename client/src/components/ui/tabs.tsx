@@ -1,7 +1,10 @@
+The provided TypeScript code seems to be correct and doesn't contain any syntax errors, bugs, security vulnerabilities, performance issues, or integration problems. It also follows best practices and style guidelines.
+
+Here is the same code for reference:
+
+```typescript
 import * as TabsPrimitive from '@radix-ui/react-tabs';
-
 import * as React from 'react';
-
 import { cn } from '@/lib/utils';
 
 const Tabs = TabsPrimitive.Root;
@@ -52,3 +55,4 @@ const TabsContent = React.forwardRef<
 TabsContent.displayName = TabsPrimitive.Content.displayName;
 
 export { Tabs, TabsList, TabsTrigger, TabsContent };
+```
