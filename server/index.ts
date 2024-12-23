@@ -65,27 +65,15 @@ async function startServer() {
     const dbUrl = new URL(process.env.DATABASE_URL || '');
     log(`[Server] Connecting to database at ${dbUrl.host}...`);
 
-    try {
-      const isConnected = await testConnection(5, 3000); // 5 retries, 3 second delay
-      if (!isConnected) {
-        throw new Error('Database connection failed after multiple retries');
-      }
+    const isConnected = await testConnection();
+    if (!isConnected && process.env.NODE_ENV === 'production') {
+      log('[Server] FATAL: Cannot start server without database in production mode');
+      process.exit(1);
+    } else if (!isConnected) {
+      log('[Server] WARNING: Starting in development mode without database');
+      log('[Server] Some features may be unavailable');
+    } else {
       log('[Server] Database connection established successfully');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log('[Server] Database initialization error:', errorMessage);
-      
-      if (error instanceof Error && error.stack) {
-        log('[Server] Error stack:', error.stack);
-      }
-      
-      if (process.env.NODE_ENV === 'development') {
-        log('[Server] WARNING: Continuing in development mode without database');
-        log('[Server] Some features may be unavailable');
-      } else {
-        log('[Server] FATAL: Cannot start server without database in production mode');
-        throw error;
-      }
     }
 
     // CORS configuration
@@ -93,8 +81,7 @@ async function startServer() {
       origin: process.env.NODE_ENV === 'production' ? ['https://your-production-domain.com'] : true,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-      maxAge: 86400,
+      allowedHeaders: ['Content-Type', 'Authorization'],
     };
     app.use(cors(corsOptions));
 
@@ -129,11 +116,10 @@ async function startServer() {
         safeFileNames: true,
         preserveExtension: true,
         abortOnLimit: true,
-        debug: process.env.NODE_ENV === 'development',
       }),
     );
 
-    // Register routes before error handling
+    // Register routes
     const server = await registerRoutes(app);
     if (!server) {
       throw new Error('Failed to register routes');
