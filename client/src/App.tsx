@@ -3,6 +3,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
+
 import { Navigation } from '@/components/Navigation';
 
 // Error fallback component
@@ -28,7 +29,9 @@ function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome to Medical Education Platform</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome to Medical Education Platform
+          </h1>
           <p className="text-muted-foreground">
             Your personalized learning experience starts here.
           </p>
