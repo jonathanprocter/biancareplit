@@ -2,7 +2,7 @@ import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from 'express-fileupload';
 import session from 'express-session';
-import { Server, createServer } from 'http';
+import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,51 +18,33 @@ async function startServer() {
   try {
     // Initialize database first
     log('[Server] Initializing database connection...');
-    const dbInstance = await db().catch((error) => {
-      log('[Server] Database initialization failed: ' + (error instanceof Error ? error.message : String(error)));
-      throw error;
-    });
-
-    if (!dbInstance) {
-      throw new Error('Database initialization returned null');
-    }
-
-    // Verify database connection
-    await dbInstance.execute(sql`SELECT 1`).catch((error) => {
-      log('[Server] Database connection test failed: ' + (error instanceof Error ? error.message : String(error)));
-      throw error;
-    });
-
+    const dbInstance = await db();
     log('[Server] Database connection established successfully');
 
-    // Initialize Express and session store
+    // Initialize Express
     const app = express();
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: false }));
+
+    // Session store configuration
     const MemoryStoreConstructor = MemoryStore(session);
     const sessionStore = new MemoryStoreConstructor({
       checkPeriod: 86400000, // 24 hours
     });
 
-    // Basic middleware setup
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: false }));
+    // CORS configuration - Allow all origins in development
+    const corsOptions = {
+      origin: process.env.NODE_ENV === 'production' 
+        ? ['https://your-production-domain.com'] // Replace with actual production domain
+        : true, // Allow all origins in development
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+      maxAge: 86400 // CORS preflight cache time in seconds
+    };
+    app.use(cors(corsOptions));
 
-    // CORS configuration
-    app.use(
-      cors({
-        origin: (origin, callback) => {
-          const allowedOrigins = ['http://localhost:5174', 'http://0.0.0.0:5174'];
-          if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-          } else {
-            callback(new Error('Not allowed by CORS'));
-          }
-        },
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      }),
-    );
-
-    // Configure session middleware
+    // Session middleware
     app.use(
       session({
         secret: process.env.SESSION_SECRET || 'development_secret',
@@ -71,12 +53,13 @@ async function startServer() {
         store: sessionStore,
         cookie: {
           secure: process.env.NODE_ENV === 'production',
-          maxAge: 24 * 60 * 60 * 1000,
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
         },
       }),
     );
 
-    // File upload configuration
+    // File upload middleware
     app.use(
       fileUpload({
         createParentPath: true,
@@ -88,18 +71,8 @@ async function startServer() {
       }),
     );
 
-    // Request logging
-    app.use((req, res, next) => {
-      const start = Date.now();
-      res.on('finish', () => {
-        const duration = Date.now() - start;
-        log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
-      });
-      next();
-    });
-
     // Create HTTP server
-    const server = createServer(app);
+    const server = new Server(app);
 
     // Register routes
     registerRoutes(app);
@@ -111,58 +84,20 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Enhanced error handling middleware
+    // Error handling middleware
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       console.error('[Server] Error:', err);
-      const statusCode = err instanceof URIError ? 400 : 500;
-      res.status(statusCode).json({
-        message: statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+      res.status(500).json({
+        message: 'Internal Server Error',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined,
       });
     });
 
-    // Port retry logic with proper cleanup
-    const startPort = 5000;
-    const maxAttempts = 5;
-    
-    async function tryPort(port: number, server: Server): Promise<boolean> {
-      return new Promise((resolve) => {
-        const onError = (err: NodeJS.ErrnoException) => {
-          server.removeListener('error', onError);
-          if (err.code === 'EADDRINUSE') {
-            log(`Port ${port} in use, will try next port`);
-            resolve(false);
-          } else {
-            console.error(`Unexpected server error:`, err);
-            resolve(false);
-          }
-        };
-
-        server.once('error', onError);
-        server.listen(port, '0.0.0.0', () => {
-          server.removeListener('error', onError);
-          log(`Server started successfully on port ${port}`);
-          log(`API server running at http://0.0.0.0:${port}`);
-          resolve(true);
-        });
-      });
-    }
-
-    let success = false;
-    let currentPort = startPort;
-
-    while (!success && currentPort < startPort + maxAttempts) {
-      success = await tryPort(currentPort, server);
-      if (!success) {
-        currentPort++;
-        // Ensure server is not in a listening state before trying next port
-        server.close();
-      }
-    }
-
-    if (!success) {
-      throw new Error(`Could not find an available port after ${maxAttempts} attempts`);
-    }
+    // Start server
+    const PORT = 5000;
+    server.listen(PORT, '0.0.0.0', () => {
+      log(`Server started successfully on port ${PORT}`);
+    });
 
     // Graceful shutdown
     const cleanup = async (signal: string) => {

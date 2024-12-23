@@ -14,94 +14,94 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
 }
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
-
 let pool: Pool | null = null;
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
 async function initializeDatabase() {
-  if (dbInstance) return dbInstance;
-
-  let retries = 0;
-  while (retries < MAX_RETRIES) {
-    try {
-      if (!pool) {
-        pool = new Pool({
-          connectionString: process.env.DATABASE_URL,
-          max: 20,
-          idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 5000,
-        });
-      }
-
-      // Test the connection
-      await pool.query('SELECT 1');
-      dbInstance = drizzle(pool, { schema });
-      console.info('[Database] Successfully connected to database');
+  try {
+    // Return existing instance if already initialized
+    if (dbInstance && pool) {
       return dbInstance;
-    } catch (error) {
-      retries++;
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`[Database] Connection attempt ${retries} failed: ${errorMessage}`);
-
-      if (pool) {
-        await pool.end().catch(console.error);
-        pool = null;
-        dbInstance = null;
-      }
-
-      if (retries === MAX_RETRIES) {
-        throw new Error(
-          `Failed to initialize database after ${MAX_RETRIES} attempts: ${errorMessage}`,
-        );
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY * Math.pow(2, retries)));
     }
-  }
 
-  throw new Error('Failed to initialize database after multiple attempts');
+    // Create new pool if needed
+    if (!pool) {
+      pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+      });
+    }
+
+    // Test connection
+    await pool.query('SELECT 1');
+
+    // Create Drizzle instance
+    dbInstance = drizzle(pool, { schema });
+    console.info('[Database] Successfully connected to database');
+    return dbInstance;
+  } catch (error) {
+    console.error(
+      '[Database] Connection failed:',
+      error instanceof Error ? error.message : 'Unknown error',
+    );
+
+    // Cleanup on failure
+    if (pool) {
+      await pool
+        .end()
+        .catch((err) =>
+          console.error('[Database] Error closing pool:', err instanceof Error ? err.message : err),
+        );
+      pool = null;
+    }
+    dbInstance = null;
+
+    throw error;
+  }
 }
 
-// Cleanup function
 async function closeDatabase() {
-  if (!pool) return;
-
   try {
-    await pool.end();
-    console.info('[Database] Connection pool closed successfully');
+    if (pool) {
+      await pool.end();
+      console.info('[Database] Connection pool closed successfully');
+    }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[Database] Error during cleanup:', errorMessage);
+    console.error(
+      '[Database] Failed to close database:',
+      error instanceof Error ? error.message : 'Unknown error',
+    );
   }
+
+  pool = null;
+  dbInstance = null;
 }
 
 // Handle cleanup on process termination
-process.on('SIGINT', async () => {
-  try {
-    await closeDatabase();
-    process.exit(0);
-  } catch (error) {
-    console.error(
-      '[Database] Failed to close database:',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
-    process.exit(1);
-  }
+process.on('SIGINT', () => {
+  closeDatabase()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(
+        '[Database] Failed to close database:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      process.exit(1);
+    });
 });
 
-process.on('SIGTERM', async () => {
-  try {
-    await closeDatabase();
-    process.exit(0);
-  } catch (error) {
-    console.error(
-      '[Database] Failed to close database:',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
-    process.exit(1);
-  }
+process.on('SIGTERM', () => {
+  closeDatabase()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(
+        '[Database] Failed to close database:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      process.exit(1);
+    });
 });
 
 // Export the database initialization function
