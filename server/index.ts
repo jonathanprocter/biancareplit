@@ -5,7 +5,7 @@ import fileUpload from 'express-fileupload';
 import session from 'express-session';
 import { Server, createServer } from 'http';
 import MemoryStore from 'memorystore';
-import { type NetServer, createServer as createNetServer } from 'net';
+import { AddressInfo } from 'net';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -15,72 +15,55 @@ import { log, serveStatic, setupVite } from './vite';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Function to find an available port
-async function findAvailablePort(startPort: number): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const testServer = createNetServer();
-    testServer.unref();
+// Global server instance for cleanup
+let globalServer: Server | null = null;
 
-    testServer.on('error', (err: NodeJS.ErrnoException) => {
-      if (err.code === 'EADDRINUSE') {
-        testServer.close(() => {
-          resolve(findAvailablePort(startPort + 1));
-        });
-      } else {
-        reject(err);
-      }
-    });
+// Cleanup function for graceful shutdown
+function cleanup() {
+  if (globalServer) {
+    const address = globalServer.address() as AddressInfo;
+    if (address) {
+      log(`Closing server on port ${address.port}`);
+    }
 
-    testServer.listen(startPort, '0.0.0.0', () => {
-      testServer.close(() => resolve(startPort));
+    globalServer.close(() => {
+      log('Server closed');
+      process.exit(0);
     });
-  });
+  } else {
+    process.exit(0);
+  }
 }
 
-async function startServer() {
-  let server: Server | null = null;
+// Setup cleanup handlers
+process.on('SIGTERM', cleanup);
+process.on('SIGINT', cleanup);
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  cleanup();
+});
 
+async function startServer() {
   try {
-    // Initialize Express first
+    // Initialize Express
     const app = express();
+
+    // Basic middleware
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Add request logging middleware
-    app.use((req, res, next) => {
-      const start = Date.now();
-      const path = req.path;
-      let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-      const originalResJson = res.json;
-      res.json = function (bodyJson, ...args) {
-        capturedJsonResponse = bodyJson;
-        return originalResJson.apply(res, [bodyJson, ...args]);
-      };
-
-      res.on('finish', () => {
-        const duration = Date.now() - start;
-        if (path.startsWith('/api')) {
-          let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-          if (capturedJsonResponse) {
-            logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-          }
-
-          if (logLine.length > 80) {
-            logLine = logLine.slice(0, 79) + '…';
-          }
-
-          log(logLine);
-        }
-      });
-
-      next();
-    });
-
     // Initialize database
-    log('[Server] Initializing database connection...');
-    const dbInstance = await db();
-    log('[Server] Database connection established successfully');
+    try {
+      log('[Server] Initializing database connection...');
+      const dbInstance = await db();
+      if (!dbInstance) {
+        throw new Error('Failed to initialize database');
+      }
+      log('[Server] Database connection established successfully');
+    } catch (error) {
+      log('[Server] Database initialization failed:', error);
+      throw error;
+    }
 
     // Session store configuration
     const MemoryStoreConstructor = MemoryStore(session);
@@ -125,17 +108,32 @@ async function startServer() {
       }),
     );
 
-    // Create HTTP server
-    server = createServer(app);
+    // Ensure cleanup of any existing server
+    if (globalServer) {
+      await new Promise<void>((resolve) => {
+        globalServer?.close(() => {
+          log('Closed existing server instance');
+          resolve();
+        });
+      });
+      globalServer = null;
+    }
 
-    // Register API routes
+    // Create and configure HTTP server
+    const server = createServer(app);
+    globalServer = server;
+
+    // Register routes
     registerRoutes(app);
 
     // Error handling middleware
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || 'Internal Server Error';
-      res.status(status).json({ message });
+
+      if (!res.headersSent) {
+        res.status(status).json({ message });
+      }
     });
 
     // Setup frontend serving
@@ -145,38 +143,42 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Find available port
-    const desiredPort = 5000;
-    const port = await findAvailablePort(desiredPort);
+    // Try different ports if default is in use
+    const tryPort = async (port: number): Promise<void> => {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          server.once('error', (error: NodeJS.ErrnoException) => {
+            if (error.code === 'EADDRINUSE') {
+              log(`Port ${port} is in use, trying ${port + 1}...`);
+              server.close();
+              tryPort(port + 1)
+                .then(resolve)
+                .catch(reject);
+            } else {
+              reject(error);
+            }
+          });
 
-    server.listen(port, '0.0.0.0', () => {
-      log(`Server started successfully on port ${port}`);
-    });
-
-    // Cleanup function for graceful shutdown
-    const cleanup = () => {
-      if (server) {
-        server.close(() => {
-          log('Server closed');
-          process.exit(0);
+          server.listen(port, '0.0.0.0', () => {
+            log(`Server started successfully on port ${port}`);
+            resolve();
+          });
         });
-      } else {
-        process.exit(0);
+      } catch (error) {
+        if (port > 5010) {
+          // Max 10 retries
+          throw new Error('Unable to find available port after multiple attempts');
+        }
+        await tryPort(port + 1);
       }
     };
 
-    // Handle process termination
-    process.on('SIGTERM', cleanup);
-    process.on('SIGINT', cleanup);
+    // Start server with port retry mechanism
+    await tryPort(5000);
   } catch (error) {
     console.error('Fatal error during server startup:', error);
-    if (server) {
-      server.close(() => {
-        process.exit(1);
-      });
-    } else {
-      process.exit(1);
-    }
+    cleanup();
+    process.exit(1);
   }
 }
 

@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
+import { Toaster } from '@/components/ui/toaster';
 
 import Navigation from '@/components/Navigation';
 
@@ -54,22 +55,25 @@ function NotFound() {
 // Main App component
 function App() {
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="min-h-screen bg-background">
-        <Helmet>
-          <title>Medical Education Platform</title>
-          <meta charSet="utf-8" />
-          <meta name="description" content="An advanced AI-powered medical education platform" />
-        </Helmet>
-        <Navigation />
-        <main className="container mx-auto px-4 py-8">
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route component={NotFound} />
-          </Switch>
-        </main>
-      </div>
-    </ErrorBoundary>
+    <>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <div className="min-h-screen bg-background">
+          <Helmet>
+            <title>Medical Education Platform</title>
+            <meta charSet="utf-8" />
+            <meta name="description" content="An advanced AI-powered medical education platform" />
+          </Helmet>
+          <Navigation />
+          <main className="container mx-auto px-4 py-8">
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route component={NotFound} />
+            </Switch>
+          </main>
+        </div>
+      </ErrorBoundary>
+      <Toaster />
+    </>
   );
 }
 
