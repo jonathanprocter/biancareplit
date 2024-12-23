@@ -26,6 +26,11 @@ export async function testConnection() {
     console.info('[Database] Connected to PostgreSQL version:', result.rows[0].version);
     return true;
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Connection failed:',
       error instanceof Error ? error.message : 'Unknown error',
@@ -40,6 +45,11 @@ async function cleanup() {
     await pool.end();
     console.info('[Database] Connection pool closed successfully');
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error',
@@ -51,15 +61,11 @@ async function cleanup() {
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
 
-// Export pool for direct access if needed
-export { pool };
-
-// Attempt initial connection
+// Initial connection test
 testConnection()
   .then(() => {
     console.info('[Database] Initial connection test passed');
   })
   .catch((error) => {
     console.error('[Database] Initial connection test failed:', error);
-    // Don't exit process here, let the application handle the error
   });

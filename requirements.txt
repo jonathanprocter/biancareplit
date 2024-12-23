@@ -55,3 +55,9 @@ python-shell
 openai
 openai
 openai
+alembic
+flask-migrate
+flask-sqlalchemy
+openai
+psycopg2-binary
+python-dotenv
