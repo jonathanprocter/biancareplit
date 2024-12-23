@@ -65,6 +65,7 @@ function App() {
         </main>
       </div>
       <Toaster />
+      {/* ToastViewport is rendered by Toaster */}
     </ErrorBoundary>
   );
 }

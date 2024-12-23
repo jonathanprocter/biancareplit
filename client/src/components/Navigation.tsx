@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 function Navigation() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [location] = useLocation();
-  const { addToast } = useToast();
+  const { toast } = useToast();
 
   // Don't show navigation on public routes
   const publicRoutes = ['/', '/register'];
@@ -27,7 +27,7 @@ function Navigation() {
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
-      addToast({
+      toast({
         variant: 'destructive',
         title: 'Error',
         description: 'Failed to log out. Please try again.',
