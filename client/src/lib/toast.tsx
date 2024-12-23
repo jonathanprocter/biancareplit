@@ -1,13 +1,12 @@
 import * as React from 'react';
-
 import {
   Toast,
   ToastClose,
   ToastDescription,
-  ToastTitle,
   ToastProvider as ToastUIProvider,
+  ToastTitle,
   ToastViewport,
-} from '../components/ui/toast';
+} from '@/components/ui/toast';
 
 interface ToasterToast {
   id: string;
@@ -42,22 +41,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const contextValue = React.useMemo(
+    () => ({
+      toasts,
+      addToast,
+      removeToast,
+    }),
+    [toasts, addToast, removeToast]
+  );
+
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
-      <ToastUIProvider>
-        {toasts.map(({ id, title, description, action, variant }) => (
-          <Toast key={id} variant={variant}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && <ToastDescription>{description}</ToastDescription>}
-            </div>
-            {action}
-            <ToastClose onClick={() => removeToast(id)} />
-          </Toast>
-        ))}
-        <ToastViewport />
-      </ToastUIProvider>
     </ToastContext.Provider>
   );
 }
@@ -68,7 +63,7 @@ export function useToast() {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return {
-    toast: (props: Omit<ToasterToast, 'id'>) => context.addToast(props),
+    toast: context.addToast,
     toasts: context.toasts,
   };
 }
