@@ -70,7 +70,6 @@ function App() {
           </Switch>
         </main>
       </div>
-      <Toaster />
     </ErrorBoundary>
   );
 }
