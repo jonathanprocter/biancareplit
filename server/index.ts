@@ -6,10 +6,9 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
-import path from 'path';
 
-import { projectPaths } from '../config/project-paths';
 import { registerRoutes } from './routes';
+import { serverPaths } from './utils/server-paths';
 import { log, serveStatic, setupVite } from './vite';
 
 // Cleanup handlers collection
@@ -95,7 +94,7 @@ async function startServer() {
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
           sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         },
-      })
+      }),
     );
 
     // File upload middleware
@@ -109,7 +108,7 @@ async function startServer() {
         preserveExtension: true,
         abortOnLimit: true,
         debug: process.env.NODE_ENV === 'development',
-      })
+      }),
     );
 
     // Register routes before error handling
