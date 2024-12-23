@@ -1,13 +1,14 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { cleanup, db, testConnection } from "@db";
-import http from "http";
-import cors from "cors";
-import session from "express-session";
-import MemoryStore from "memorystore";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import { cleanup, db, testConnection } from '@db';
+import cors from 'cors';
+import express, { NextFunction, type Request, Response } from 'express';
+import session from 'express-session';
+import http from 'http';
+import MemoryStore from 'memorystore';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+import { registerRoutes } from './routes';
+import { log, serveStatic, setupVite } from './vite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 let globalServer: http.Server | null = null;
@@ -16,10 +17,10 @@ let globalServer: http.Server | null = null;
 async function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
     const server = new http.Server()
-      .listen(port, "0.0.0.0", () => {
+      .listen(port, '0.0.0.0', () => {
         server.close(() => resolve(true));
       })
-      .on("error", () => resolve(false));
+      .on('error', () => resolve(false));
   });
 }
 
@@ -29,14 +30,14 @@ async function cleanupExistingServer(): Promise<void> {
     try {
       await new Promise<void>((resolve) => {
         globalServer?.close(() => {
-          log("[Server] Existing server closed");
+          log('[Server] Existing server closed');
           resolve();
         });
       });
       await new Promise((resolve) => setTimeout(resolve, 1000));
       globalServer = null;
     } catch (error) {
-      console.error("[Server] Error closing existing server:", error);
+      console.error('[Server] Error closing existing server:', error);
     }
   }
 }
@@ -50,28 +51,29 @@ async function startServer() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    log("[Server] Initializing database connection...");
+    log('[Server] Initializing database connection...');
     const isConnected = await testConnection(5);
 
     if (!isConnected) {
-      const dbError = new Error("Database connection failed");
-      if (process.env.NODE_ENV === "production") {
+      const dbError = new Error('Database connection failed');
+      if (process.env.NODE_ENV === 'production') {
         throw dbError;
       }
-      log("[Server] WARNING: Starting in development mode without database");
+      log('[Server] WARNING: Starting in development mode without database');
       console.error(dbError);
     } else {
-      log("[Server] Database connection verified");
+      log('[Server] Database connection verified');
     }
 
     app.use(
       cors({
-        origin: process.env.NODE_ENV === "production"
-          ? process.env.CORS_ORIGIN || "https://your-domain.com"
-          : true,
+        origin:
+          process.env.NODE_ENV === 'production'
+            ? process.env.CORS_ORIGIN || 'https://your-domain.com'
+            : true,
         credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      })
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      }),
     );
 
     const sessionStore = new (MemoryStore(session))({
@@ -80,31 +82,32 @@ async function startServer() {
 
     app.use(
       session({
-        secret: process.env.SESSION_SECRET || "development_secret",
+        secret: process.env.SESSION_SECRET || 'development_secret',
         resave: false,
         saveUninitialized: false,
         store: sessionStore,
-        name: "sessionId",
+        name: 'sessionId',
         cookie: {
-          secure: process.env.NODE_ENV === "production",
+          secure: process.env.NODE_ENV === 'production',
           httpOnly: true,
           maxAge: 24 * 60 * 60 * 1000,
-          sameSite: "lax",
+          sameSite: 'lax',
         },
-      })
+      }),
     );
 
     const server = await registerRoutes(app);
     if (!server) {
-      throw new Error("Failed to register routes");
+      throw new Error('Failed to register routes');
     }
 
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-      console.error("[Server] Error:", err);
+      console.error('[Server] Error:', err);
       const status = (err as any).status || (err as any).statusCode || 500;
-      const message = process.env.NODE_ENV === "production"
-        ? "Internal Server Error"
-        : err.message || "Internal Server Error";
+      const message =
+        process.env.NODE_ENV === 'production'
+          ? 'Internal Server Error'
+          : err.message || 'Internal Server Error';
 
       if (!res.headersSent) {
         res.status(status).json({
@@ -115,7 +118,7 @@ async function startServer() {
       }
     });
 
-    if (app.get("env") === "development") {
+    if (app.get('env') === 'development') {
       await setupVite(app, server);
     } else {
       serveStatic(app);
@@ -132,32 +135,31 @@ async function startServer() {
       }
     }
 
-    server.listen(PORT, "0.0.0.0", () => {
+    server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
       log(`[Server] Started on port ${PORT}`);
       if (isConnected) {
-        log("[Server] Application started successfully with database connection");
+        log('[Server] Application started successfully with database connection');
       } else {
-        log("[Server] Application started in limited mode without database connection");
+        log('[Server] Application started in limited mode without database connection');
       }
     });
 
-    server.on("error", (error: NodeJS.ErrnoException) => {
-      if (error.code === "EADDRINUSE") {
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
         console.error(`[Server] Port ${PORT} is already in use`);
       } else {
-        console.error("[Server] Server error:", error);
+        console.error('[Server] Server error:', error);
       }
     });
-
   } catch (error) {
-    console.error("[Server] Fatal error during startup:", error);
+    console.error('[Server] Fatal error during startup:', error);
     process.exit(1);
   }
 }
 
-// Enhanced error handlers
-async function handleShutdown(signal: string): Promise<void> {
+// Error handlers
+async function handleShutdown(signal: string) {
   try {
     await cleanupExistingServer();
     await cleanup();
@@ -166,32 +168,31 @@ async function handleShutdown(signal: string): Promise<void> {
   } catch (error) {
     console.error(
       `[Server] Error during ${signal} shutdown:`,
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : error,
     );
     process.exit(1);
   }
 }
 
-process.on("SIGTERM", () => handleShutdown("SIGTERM"));
-process.on("SIGINT", () => handleShutdown("SIGINT"));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('SIGINT', () => handleShutdown('SIGINT'));
 
-process.on("uncaughtException", async (error) => {
-  console.error("[Server] Uncaught Exception:", error);
+process.on('uncaughtException', async (error) => {
+  console.error('[Server] Uncaught Exception:', error);
   try {
     await cleanupExistingServer();
     await cleanup();
-    log("[Server] Closed due to uncaught exception");
+    log('[Server] Closed due to uncaught exception');
   } catch (cleanupError) {
     console.error(
-      "[Server] Error during cleanup after uncaught exception:",
-      cleanupError instanceof Error ? cleanupError.message : cleanupError
+      '[Server] Error during cleanup after uncaught exception:',
+      cleanupError instanceof Error ? cleanupError.message : cleanupError,
     );
-  } finally {
-    process.exit(1);
   }
+  process.exit(1);
 });
 
 startServer().catch((error) => {
-  console.error("[Server] Failed to start:", error);
+  console.error('[Server] Failed to start:', error);
   process.exit(1);
 });
