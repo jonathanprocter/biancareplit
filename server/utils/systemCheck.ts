@@ -1,4 +1,4 @@
-import { testConnection, db } from '../../db';
+import { db, testConnection } from '../../db';
 import { log } from '../vite';
 
 export interface SystemCheckResult {
@@ -55,7 +55,7 @@ export async function checkAPIEndpoints(): Promise<{ success: boolean; errors: s
 
   return {
     success: errors.length === 0,
-    errors
+    errors,
   };
 }
 
@@ -67,15 +67,15 @@ export async function performSystemCheck(): Promise<SystemCheckResult> {
       api: false,
       static: false,
       env: true,
-      migrations: false
+      migrations: false,
     },
     details: {
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   };
 
   // Check environment variables
-  const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+  const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
   if (missingEnvVars.length > 0) {
     result.checks.env = false;
     result.details.missingEnvVars = missingEnvVars;
@@ -87,7 +87,7 @@ export async function performSystemCheck(): Promise<SystemCheckResult> {
   try {
     const dbConnected = await testConnection(3);
     result.checks.database = dbConnected;
-    
+
     if (dbConnected) {
       // Only check schema if connection succeeds
       result.checks.migrations = await validateDatabaseSchema();
@@ -102,7 +102,8 @@ export async function performSystemCheck(): Promise<SystemCheckResult> {
   } catch (error) {
     result.checks.database = false;
     result.status = 'error';
-    result.details.databaseError = error instanceof Error ? error.message : 'Unknown database error';
+    result.details.databaseError =
+      error instanceof Error ? error.message : 'Unknown database error';
     log('[SystemCheck] Database check error:', error);
   }
 

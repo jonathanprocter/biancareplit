@@ -1,10 +1,13 @@
+import { useQuery } from '@tanstack/react-query';
+import { AlertCircle, CheckCircle, RefreshCw, XCircle } from 'lucide-react';
+
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+
 import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
 
 interface SystemStatus {
   status: 'ok' | 'error';
@@ -26,8 +29,13 @@ interface SystemStatus {
 
 const SystemCheck: React.FC = () => {
   const { toast } = useToast();
-  
-  const { data: status, isLoading, error, refetch } = useQuery<SystemStatus>({
+
+  const {
+    data: status,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<SystemStatus>({
     queryKey: ['/api/system-check'],
     refetchInterval: 30000, // Refresh every 30 seconds
     retry: 2,
@@ -60,12 +68,7 @@ const SystemCheck: React.FC = () => {
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
           Failed to fetch system status
-          <Button
-            variant="outline"
-            size="sm"
-            className="ml-2"
-            onClick={() => refetch()}
-          >
+          <Button variant="outline" size="sm" className="ml-2" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
           </Button>
@@ -89,7 +92,7 @@ const SystemCheck: React.FC = () => {
           </span>
         </AlertTitle>
       </Alert>
-      
+
       {Object.entries(status.checks).map(([key, value]) => (
         <Alert key={key} variant={value ? 'default' : 'destructive'}>
           <AlertTitle className="flex items-center">
@@ -102,20 +105,16 @@ const SystemCheck: React.FC = () => {
           </AlertTitle>
           {!value && (
             <AlertDescription>
-              {status.details[`${key}Error`] || 
-               (key === 'env' && status.details.missingEnvVars?.join(', ')) ||
-               `${key} check failed`}
+              {status.details[`${key}Error`] ||
+                (key === 'env' && status.details.missingEnvVars?.join(', ')) ||
+                `${key} check failed`}
             </AlertDescription>
           )}
         </Alert>
       ))}
 
       <div className="flex justify-end">
-        <Button
-          variant="outline"
-          onClick={() => refetch()}
-          className="flex items-center"
-        >
+        <Button variant="outline" onClick={() => refetch()} className="flex items-center">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh Status
         </Button>
