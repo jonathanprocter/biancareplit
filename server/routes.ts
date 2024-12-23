@@ -5,8 +5,9 @@ import { type Server, createServer } from 'http';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import { log } from './vite.js';
+import { log } from './vite';
 
+// ES Modules path handling
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export async function registerRoutes(app: Express): Promise<Server> {
