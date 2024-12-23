@@ -2,21 +2,17 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
-import { vitePaths } from "./config/vite-paths";
-import path from "path";
+import paths from "./config/paths";
+import { resolve } from "path";
 
-// Use vitePaths for consistent path resolution
 export default defineConfig({
   plugins: [react(), runtimeErrorOverlay(), themePlugin()],
-  root: vitePaths.client.root,
+  root: paths.client.root,
   resolve: {
-    alias: {
-      "@": path.resolve(vitePaths.client.src),
-      "@db": path.resolve(vitePaths.client.root, "../db")
-    }
+    alias: paths.aliases
   },
   build: {
-    outDir: vitePaths.outDir,
+    outDir: paths.client.dist,
     emptyOutDir: true,
   },
   server: {

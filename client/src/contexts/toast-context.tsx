@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
-
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
 const TOAST_REMOVE_DELAY = 5000;
@@ -19,7 +18,7 @@ type ToasterContext = {
 
 export const ToastContext = createContext<ToasterContext | undefined>(undefined);
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastContextProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToasterToast[]>([]);
 
   const addToast = useCallback(({ ...props }: Omit<ToasterToast, 'id'>) => {
@@ -51,7 +50,7 @@ export function useToast() {
   const context = useContext(ToastContext);
 
   if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
+    throw new Error('useToast must be used within a ToastContextProvider');
   }
 
   return {
@@ -59,3 +58,6 @@ export function useToast() {
     toast: context.addToast,
   };
 }
+
+// For backward compatibility
+export const ToastProvider = ToastContextProvider;

@@ -11,18 +11,26 @@ if (!process.env.DATABASE_URL) {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   webSocketConstructor: WebSocket,
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000,
+  max: 20,
 });
 
 // Create drizzle database instance
-export const db = drizzle(pool, { schema });
+const db = drizzle(pool, { schema });
 
 // Test database connection function
-export async function testConnection() {
+async function testConnection() {
   try {
-    await pool.query('SELECT 1');
-    console.info('[Database] Successfully connected to database');
+    const result = await pool.query('SELECT version()');
+    console.info('[Database] Successfully connected to database:', result.rows[0].version);
     return true;
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Connection failed:',
       error instanceof Error ? error.message : 'Unknown error',
@@ -37,10 +45,16 @@ async function cleanup() {
     await pool.end();
     console.info('[Database] Connection pool closed successfully');
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error',
     );
+    process.exit(1);
   }
 }
 
@@ -48,8 +62,15 @@ async function cleanup() {
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
 
-// Test connection on startup
-testConnection().catch((error) => {
-  console.error('[Database] Initial connection test failed:', error);
-  process.exit(1);
-});
+// Attempt initial connection
+testConnection()
+  .then(() => {
+    console.info('[Database] Initial connection test passed');
+  })
+  .catch((error) => {
+    console.error('[Database] Initial connection test failed:', error);
+    process.exit(1);
+  });
+
+// Export database instance and utility functions
+export { db, testConnection };
