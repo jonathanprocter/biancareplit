@@ -1,9 +1,3 @@
-The provided code seems to be correct and doesn't contain any syntax errors, bugs, security vulnerabilities, performance issues, or integration problems. It already follows best practices and style guidelines for TypeScript and React. 
-
-However, the `cva` function from the `class-variance-authority` package is not a standard or well-known package, and its usage might be incorrect or unnecessary. If it's a custom function, make sure it's imported correctly and used properly. If it's not necessary, consider removing it.
-
-Here is the code with the `cva` function removed:
-
 ```typescript
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
 import { ChevronDown } from 'lucide-react';
@@ -118,4 +112,4 @@ export {
   NavigationMenuIndicator,
   NavigationMenuViewport,
 };
-```
+```;

@@ -1,7 +1,7 @@
 import * as schema from '@db/schema';
 import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
 import { sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import { WebSocket } from 'ws';
 
 if (!process.env.DATABASE_URL) {
@@ -12,12 +12,12 @@ if (!process.env.DATABASE_URL) {
 let pool: Pool | null = null;
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
-// Initialize WebSocket with robust configuration and retries
-const wsConstructor = (url: string): WebSocket => {
-  console.log('[Database] Initializing WebSocket connection...');
+// Initialize WebSocket with robust configuration
+function createWebSocket(url: string): WebSocket {
+  console.log('[Database] Creating WebSocket connection...');
+  const wsUrl = url.replace('postgres://', 'wss://').replace('postgresql://', 'wss://');
 
-  const ws = new WebSocket(url, {
-    rejectUnauthorized: false,
+  const ws = new WebSocket(wsUrl, {
     perMessageDeflate: false,
     skipUTF8Validation: true,
     handshakeTimeout: 30000,
@@ -37,7 +37,7 @@ const wsConstructor = (url: string): WebSocket => {
   });
 
   return ws;
-};
+}
 
 // Initialize database connection with retry mechanism
 async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzle>> {
@@ -46,9 +46,10 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
       try {
         console.log(`[Database] Initializing connection (attempt ${attempt}/${retries})...`);
 
+        // Configure pool with detailed options
         pool = new Pool({
           connectionString: process.env.DATABASE_URL,
-          webSocketConstructor: wsConstructor,
+          webSocketConstructor: createWebSocket,
           max: 1, // Limit connections for serverless environment
           connectionTimeoutMillis: 30000,
           idleTimeoutMillis: 30000,
@@ -56,35 +57,41 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
           keepAlive: true,
         });
 
-        // Test the connection before creating Drizzle instance
+        // Test the connection
         const client = await pool.connect();
-        await client.query('SELECT 1');
-        client.release();
+        try {
+          await client.query('SELECT 1');
+          console.log('[Database] Connection test successful');
+        } finally {
+          client.release();
+        }
 
         dbInstance = drizzle(pool, { schema });
         console.log('[Database] Connection initialized successfully');
         return dbInstance;
+
       } catch (error) {
         console.error(
           `[Database] Connection attempt ${attempt} failed:`,
-          error instanceof Error ? error.message : 'Unknown error'
+          error instanceof Error ? error.message : 'Unknown error',
         );
 
-        // Cleanup on initialization failure
+        // Cleanup on failure
         if (pool) {
-          await pool.end();
+          await pool.end().catch((err) => 
+            console.error('[Database] Error while closing pool:', err)
+          );
           pool = null;
         }
 
-        // If this was the last attempt, throw the error
         if (attempt === retries) {
-          throw error;
+          throw new Error(`Failed to initialize database after ${retries} attempts`);
         }
 
         // Wait before next attempt (exponential backoff)
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
         console.log(`[Database] Waiting ${delay}ms before next attempt...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
@@ -99,13 +106,9 @@ export async function testConnection(retries = 3): Promise<boolean> {
     await db.execute(sql`SELECT 1`);
     return true;
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    console.error('[Database] Connection test failed:', 
-      error instanceof Error ? error.message : 'Unknown error'
+    console.error(
+      '[Database] Connection test failed:',
+      error instanceof Error ? error.message : 'Unknown error',
     );
     return false;
   }
@@ -123,17 +126,17 @@ export async function cleanup(): Promise<void> {
   } catch (error) {
     console.error(
       '[Database] Cleanup error:',
-      error instanceof Error ? error.message : 'Unknown error'
+      error instanceof Error ? error.message : 'Unknown error',
     );
   }
 }
 
-// Register cleanup handlers for graceful shutdown
+// Register cleanup handlers
 process.once('SIGINT', cleanup);
 process.once('SIGTERM', cleanup);
 
-// Export database instance getter and utilities
-export async function getDb() {
+// Export database instance getter
+export async function getDb(): Promise<ReturnType<typeof drizzle>> {
   return initializeDatabase();
 }
 
