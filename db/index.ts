@@ -43,7 +43,6 @@ async function cleanup() {
   try {
     await pool.end();
     console.info('[Database] Connection pool closed successfully');
-    process.exit(0);
   } catch (error) {
     if (error instanceof Error) {
       console.error(`Error: ${error.message}`);
@@ -51,7 +50,7 @@ async function cleanup() {
     } else {
       console.error('An unknown error occurred:', error); {
     console.error(
-      '[Database] Failed to close database:',
+      '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error',
     );
     process.exit(1);
