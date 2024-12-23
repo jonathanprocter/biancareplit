@@ -4,7 +4,7 @@ import express, { NextFunction, type Request, Response } from 'express';
 import session from 'express-session';
 import http from 'http';
 import MemoryStore from 'memorystore';
-import { dirname } from 'path';
+import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { registerRoutes } from './routes';
@@ -27,7 +27,9 @@ async function cleanupServer(): Promise<void> {
 
 async function startServer() {
   try {
+    // Clean up any existing server instance
     await cleanupServer();
+    await dbCleanup();
 
     const app = express();
     app.use(express.json());
@@ -42,49 +44,18 @@ async function startServer() {
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
-      maxAge: 86400, // 24 hours
+      maxAge: 86400,
     };
     app.use(cors(corsOptions));
 
-    // Enhanced session configuration
-    const sessionStore = new (MemoryStore(session))({
-      checkPeriod: 86400000, // 24h
-      stale: false,
-      ttl: 86400000,
-    });
-
-    const sessionConfig = {
-      secret: process.env.SESSION_SECRET || 'development_secret',
-      resave: false,
-      saveUninitialized: false,
-      store: sessionStore,
-      name: 'sessionId',
-      cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 24h
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
-      },
-    };
-
-    if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
-      throw new Error('SESSION_SECRET must be set in production');
-    }
-
-    app.use(session(sessionConfig));
-
-    // Test database connection
+    // Test database connection before proceeding
     log('[Server] Testing database connection...');
     try {
       await db.execute(sql`SELECT 1`);
       log('[Server] Database connection verified');
     } catch (error) {
       log('[Server] Database connection check failed:', error);
-      if (process.env.NODE_ENV === 'production') {
-        throw error;
-      }
+      throw error;
     }
 
     // Register routes and create server
@@ -93,55 +64,51 @@ async function startServer() {
       throw new Error('Failed to create HTTP server');
     }
 
-    // Global error handler with enhanced security
-    app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-      const status = (err as any).status || (err as any).statusCode || 500;
-      const message =
-        process.env.NODE_ENV === 'production'
-          ? 'Internal Server Error'
-          : err.message || 'Internal Server Error';
-
-      // Log full error details in development
-      if (process.env.NODE_ENV !== 'production') {
-        log('[Server] Error:', err);
-      }
-
-      if (!res.headersSent) {
-        res.status(status).json({
-          error: message,
-          status,
-          timestamp: new Date().toISOString(),
-        });
-      }
-    });
-
     // Setup Vite or serve static files
     if (process.env.NODE_ENV === 'development') {
       await setupVite(app, server);
     } else {
-      serveStatic(app);
+      app.use(express.static(path.join(__dirname, '../dist/public')));
+      app.get('*', (_req, res) => {
+        res.sendFile(path.join(__dirname, '../dist/public/index.html'));
+      });
     }
 
-    // Start server with proper error handling
+    // Start server with proper error handling and port management
     const PORT = process.env.PORT || 5000;
     await new Promise<void>((resolve, reject) => {
+      const handleError = (error: NodeJS.ErrnoException) => {
+        if (error.code === 'EADDRINUSE') {
+          log(`[Server] Port ${PORT} is already in use, trying to close existing connections...`);
+          cleanupServer()
+            .then(() => {
+              server
+                .listen(PORT, '0.0.0.0', () => {
+                  globalServer = server;
+                  log(`[Server] Started on port ${PORT} after cleanup`);
+                  resolve();
+                })
+                .on('error', reject);
+            })
+            .catch(reject);
+        } else {
+          log('[Server] Server error:', error);
+          reject(error);
+        }
+      };
+
       server
         .listen(PORT, '0.0.0.0', () => {
           globalServer = server;
           log(`[Server] Started on port ${PORT}`);
           resolve();
         })
-        .on('error', (error: NodeJS.ErrnoException) => {
-          if (error.code === 'EADDRINUSE') {
-            log(`[Server] Port ${PORT} is already in use`);
-          } else {
-            log('[Server] Server error:', error);
-          }
-          reject(error);
-        });
+        .on('error', handleError);
     });
   } catch (error) {
     log('[Server] Fatal error during startup:', error);
+    await cleanupServer();
+    await dbCleanup();
     process.exit(1);
   }
 }

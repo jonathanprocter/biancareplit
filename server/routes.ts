@@ -37,9 +37,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API error handling middleware
   app.use('/api', (err: Error, _req: Request, res: Response) => {
     const status = (err as any).status || (err as any).statusCode || 500;
-    const message = process.env.NODE_ENV === 'production' 
-      ? 'Internal Server Error' 
-      : err.message || 'Internal Server Error';
+    const message =
+      process.env.NODE_ENV === 'production'
+        ? 'Internal Server Error'
+        : err.message || 'Internal Server Error';
 
     if (!res.headersSent) {
       res.status(status).json({
