@@ -53,7 +53,6 @@ async function cleanup() {
       error instanceof Error ? error.message : 'Unknown error',
     );
   }
-  process.exit(1);
 }
 
 // Register cleanup handlers

@@ -6,18 +6,13 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 
 import { registerRoutes } from './routes';
-import { paths } from './utils/paths';
+import { paths, getDirname } from './utils/unified-paths';
 import { log, serveStatic, setupVite } from './vite';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Cleanup handlers collection
-const cleanupHandlers = new Set<() => Promise<void>>();
+// Get current directory for ES modules
+const __dirname = getDirname(import.meta.url);
 
 // Global server instance for cleanup
 let globalServer: Server | null = null;
