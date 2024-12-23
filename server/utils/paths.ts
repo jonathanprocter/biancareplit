@@ -1,15 +1,8 @@
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
-/**
- * Get the directory name in ES module context
- */
-function getCurrentDirname(importMetaUrl: string) {
-  return dirname(fileURLToPath(importMetaUrl));
-}
-
-// Create paths relative to this utils file
-const currentDir = getCurrentDirname(import.meta.url);
+// Get current directory
+const currentDir = dirname(fileURLToPath(import.meta.url));
 const serverDir = resolve(currentDir, '..');
 const projectRoot = resolve(serverDir, '..');
 
@@ -32,9 +25,9 @@ export const paths = {
   config: resolve(projectRoot, 'config'),
 } as const;
 
-// Helper function to get dirname in ES modules
+// Helper function for ES module path resolution
 export function getDirname(importMetaUrl: string) {
-  return getCurrentDirname(importMetaUrl);
+  return dirname(fileURLToPath(importMetaUrl));
 }
 
 export default paths;

@@ -1,4 +1,3 @@
-import { db, testConnection } from '@db';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from 'express-fileupload';
@@ -6,13 +5,16 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
+import { db, testConnection } from '@db';
+import { paths } from '../config/paths';
 import { registerRoutes } from './routes';
-import { paths, getDirname } from './utils/unified-paths';
 import { log, serveStatic, setupVite } from './vite';
 
-// Get current directory for ES modules
-const __dirname = getDirname(import.meta.url);
+// ES modules compatibility
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Global server instance for cleanup
 let globalServer: Server | null = null;

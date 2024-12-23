@@ -1,6 +1,9 @@
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
+/**
+ * Get the directory name in ES module context
+ */
 export function getDirname(importMetaUrl: string) {
   return dirname(fileURLToPath(importMetaUrl));
 }
@@ -29,7 +32,9 @@ export const paths = {
   config: resolve(projectRoot, 'config'),
 } as const;
 
-// Helper function for ES module path resolution
+/**
+ * Helper function for ES module path resolution
+ */
 export function getModulePath(importMetaUrl: string, ...pathSegments: string[]) {
   const dir = getDirname(importMetaUrl);
   return resolve(dir, ...pathSegments);
