@@ -51,6 +51,9 @@ async function cleanup() {
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
 
+// Export pool for direct access if needed
+export { pool };
+
 // Attempt initial connection
 testConnection()
   .then(() => {

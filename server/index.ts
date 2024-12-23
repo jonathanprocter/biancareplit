@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 
 import { paths } from '../config/paths';
 import { registerRoutes } from './routes';
-import { log, serveStatic, setupVite } from './vite';
+import { setupVite, serveStatic, log } from './vite.js';
 
 // Get server directory path for ES modules
 const __dirname = dirname(fileURLToPath(import.meta.url));
