@@ -73,7 +73,7 @@ async function startServer() {
       log('[Server] WARNING: Starting in development mode without database');
       log('[Server] Some features may be unavailable');
     } else {
-      log('[Server] Database connection established successfully');
+      log('[Server] Database connection verified');
     }
 
     // CORS configuration
@@ -81,7 +81,7 @@ async function startServer() {
       origin:
         process.env.NODE_ENV === 'production'
           ? ['https://your-production-domain.com']
-          : ['http://localhost:3000', 'http://localhost:5173'],
+          : ['http://localhost:5000'], // Single port for development
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       allowedHeaders: ['Content-Type', 'Authorization'],
@@ -150,8 +150,8 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Use Vite's development port (5173) for the frontend
-    const PORT = process.env.NODE_ENV === 'production' ? process.env.PORT || 5000 : 3001; // API server port
+    // Use a single port (5000) for both development and production
+    const PORT = process.env.PORT || 5000;
 
     // Start server
     server.listen(PORT, '0.0.0.0', () => {

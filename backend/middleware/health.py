@@ -3,7 +3,7 @@
 import psutil
 import logging
 from typing import Dict, Any, Optional
-from flask import Flask, jsonify, make_response, current_app
+from flask import Flask, jsonify, make_response
 from datetime import datetime
 from .base import BaseMiddleware
 
@@ -35,7 +35,8 @@ class HealthMiddleware(BaseMiddleware):
             response.headers["Content-Type"] = "application/json"
             return response
 
-    def _get_memory_usage(self) -> Dict[str, Any]:
+    @staticmethod
+    def _get_memory_usage() -> Dict[str, Any]:
         """Get current memory usage."""
         process = psutil.Process()
         return {
@@ -43,6 +44,7 @@ class HealthMiddleware(BaseMiddleware):
             "percent": round(process.memory_percent(), 2),
         }
 
-    def _get_cpu_usage(self) -> Dict[str, float]:
+    @staticmethod
+    def _get_cpu_usage() -> Dict[str, float]:
         """Get current CPU usage."""
         return {"percent": round(psutil.cpu_percent(interval=0.1), 2)}
