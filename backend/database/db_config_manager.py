@@ -7,10 +7,6 @@ import logging
 from typing import Optional
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,22 +16,29 @@ logger = logging.getLogger(__name__)
 db = SQLAlchemy()
 migrate = Migrate()
 
-
 class DatabaseConfigManager:
     """Database configuration manager."""
 
-    def __init__(self, app: Optional[Flask] = None):
-        self.app = app
-        if app is not None:
-            self.init_app(app)
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        self.initialized = False
 
     def init_app(self, app: Flask) -> None:
         """Initialize database with Flask application."""
         try:
+            if self.initialized:
+                return
+
             # Configure database URL from environment variables
             database_url = os.getenv("DATABASE_URL")
             if not database_url:
-                database_url = f"postgresql://{os.getenv('PGUSER', 'postgres')}:{os.getenv('PGPASSWORD', 'postgres')}@{os.getenv('PGHOST', '0.0.0.0')}:{os.getenv('PGPORT', '5432')}/{os.getenv('PGDATABASE', 'neondb')}"
+                raise ValueError("DATABASE_URL environment variable must be set")
 
             # Handle heroku-style postgres URLs
             if database_url.startswith("postgres://"):
@@ -49,27 +52,41 @@ class DatabaseConfigManager:
                 "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
                 "pool_recycle": 300,
                 "pool_pre_ping": True,
+                "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
             }
 
             # Initialize extensions
             db.init_app(app)
             migrate.init_app(app, db)
 
-            logger.info("Database initialized successfully")
+            # Test connection
+            with app.app_context():
+                db.session.execute("SELECT 1")
+                db.create_all()
+                logger.info("Database initialized successfully")
+
+            self.initialized = True
+
         except Exception as e:
             logger.error(f"Failed to initialize database: {str(e)}")
             raise
 
-    def verify_connection(self) -> bool:
+    def verify_connection(self, app: Flask) -> bool:
         """Verify database connection."""
         try:
-            with self.app.app_context():
+            with app.app_context():
                 db.session.execute("SELECT 1")
                 return True
         except Exception as e:
             logger.error(f"Database connection failed: {str(e)}")
             return False
 
+    def get_db(self) -> Optional[SQLAlchemy]:
+        """Get database instance."""
+        if not self.initialized:
+            logger.error("Database not initialized")
+            return None
+        return db
 
 # Create singleton instance
 db_manager = DatabaseConfigManager()

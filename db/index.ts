@@ -18,13 +18,15 @@ const wsConstructor = (url: string): WebSocket => {
     headers: {
       'Accept-Encoding': 'gzip, deflate, br',
     },
-    handshakeTimeout: 30000, // Increased timeout for better reliability
+    handshakeTimeout: 60000, // Increased timeout for better reliability
   });
 
   // Enhanced error handling and logging
   ws.on('error', (error) => {
     console.error('[Database] WebSocket error:', error.message);
-    console.error('[Database] Error details:', error);
+    if (error.stack) {
+      console.error('[Database] Stack trace:', error.stack);
+    }
   });
 
   ws.on('open', () => {
@@ -42,19 +44,19 @@ const wsConstructor = (url: string): WebSocket => {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   webSocketConstructor: wsConstructor,
-  connectionTimeoutMillis: 30000, // Increased timeout
-  max: 10, // Increased max connections for better performance
-  idleTimeoutMillis: 120000, // Increased idle timeout
-  maxUses: 7500, // Connections will be cycled after this many uses
-  retryInterval: 1000, // More frequent retries
-  maxRetries: 5, // Increased retry attempts
+  connectionTimeoutMillis: 60000, // Increased timeout
+  max: 5, // Reduced max connections for stability
+  idleTimeoutMillis: 30000, // Reduced idle timeout
+  maxUses: 5000, // Reduced connection reuse
+  retryInterval: 100, // Faster retries
+  maxRetries: 5,
 });
 
 // Initialize Drizzle ORM with enhanced error handling
-export const db = drizzle(pool, { schema });
+const db = drizzle(pool, { schema });
 
 // Improved connection testing with detailed error reporting
-export async function testConnection(): Promise<boolean> {
+async function testConnection(): Promise<boolean> {
   console.log('[Database] Testing database connection...');
 
   try {
@@ -67,8 +69,10 @@ export async function testConnection(): Promise<boolean> {
       client.release();
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[Database] Connection test failed:', errorMessage);
+    console.error(
+      '[Database] Connection test failed:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     if (error instanceof Error && error.stack) {
       console.error('[Database] Stack trace:', error.stack);
     }
@@ -79,7 +83,6 @@ export async function testConnection(): Promise<boolean> {
 // Enhanced cleanup function with proper error handling
 async function cleanup(): Promise<void> {
   console.log('[Database] Initiating cleanup...');
-
   try {
     await pool.end();
     console.log('[Database] Connection pool closed successfully');
@@ -92,5 +95,5 @@ async function cleanup(): Promise<void> {
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
 
-// Export pool for direct access if needed
-export { pool };
+// Export necessary components
+export { db, pool, testConnection, cleanup };

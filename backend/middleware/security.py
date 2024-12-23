@@ -15,11 +15,11 @@ class SecurityMiddleware(BaseMiddleware):
     def __init__(self, app: Flask):
         self.app = app
         self.config = app.config.get("SECURITY", {})
-        super().__init__(**self.config)
+        super().__init__()
 
-    def _configure(self, **config) -> None:
+    def _configure(self) -> None:
         """Configure security settings."""
-        self.request_size_limit = config.get(
+        self.request_size_limit = self.config.get(
             "request_size_limit", 10 * 1024 * 1024
         )  # 10MB default
 
@@ -66,6 +66,7 @@ class SecurityMiddleware(BaseMiddleware):
         return decorator
 
     def initialize(self):
+        self._configure()
         if self.config.get("csrf_protection", True):
             self.app.before_request(self.process_request)
         logger.info("Security middleware initialized")

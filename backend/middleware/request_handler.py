@@ -2,7 +2,6 @@
 
 import logging
 import time
-from datetime import datetime
 from functools import wraps
 
 from flask import current_app, g, request

@@ -2,10 +2,9 @@
 
 from flask import Flask, jsonify
 from flask_cors import CORS
-import os
 import logging
 from backend.config.unified_config import config_manager
-from backend.database.core import init_db, get_db
+from backend.database.db_config_manager import db_manager
 from backend.middleware.logging_middleware import LoggingMiddleware
 from backend.middleware.error_middleware import ErrorMiddleware
 from backend.middleware.metrics import MetricsMiddleware
@@ -32,27 +31,28 @@ def create_app(env_path=None):
         HealthMiddleware().init_app(app)
 
         # Initialize database with proper error handling
-        if not init_db(app):
-            logger.warning("Database initialization failed - starting in limited functionality mode")
-            if app.config['ENV'] == 'production':
-                raise RuntimeError("Cannot start in production without database")
-        else:
+        try:
+            db_manager.init_app(app)
             logger.info("Database initialized successfully")
+        except Exception as e:
+            logger.error(f"Database initialization failed: {str(e)}")
+            if app.config['ENV'] == 'production':
+                raise
+            logger.warning("Starting in limited functionality mode")
 
         # Add database health check endpoint
         @app.route("/health/db")
         def db_health():
             try:
-                db = get_db()
-                if not db:
-                    return jsonify({"status": "error", "message": "Database not initialized"}), 503
-
-                # Verify connection
-                db.session.execute("SELECT 1")
+                if db_manager.verify_connection(app):
+                    return jsonify({
+                        "status": "healthy",
+                        "message": "Database connection verified"
+                    })
                 return jsonify({
-                    "status": "healthy",
-                    "message": "Database connection verified"
-                })
+                    "status": "error",
+                    "message": "Database connection failed"
+                }), 503
             except Exception as e:
                 logger.error(f"Database health check failed: {str(e)}")
                 return jsonify({
