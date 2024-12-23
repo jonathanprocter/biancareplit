@@ -1,4 +1,4 @@
-import { cleanup as dbCleanup, getDb, testConnection } from '@db';
+import { db, cleanup as dbCleanup, sql } from '@db';
 import cors from 'cors';
 import express, { NextFunction, type Request, Response } from 'express';
 import session from 'express-session';
@@ -77,10 +77,14 @@ async function startServer() {
 
     // Test database connection
     log('[Server] Testing database connection...');
-    const isConnected = await testConnection();
-
-    if (!isConnected && process.env.NODE_ENV === 'production') {
-      throw new Error('Database connection failed in production mode');
+    try {
+      await db.execute(sql`SELECT 1`);
+      log('[Server] Database connection verified');
+    } catch (error) {
+      log('[Server] Database connection check failed:', error);
+      if (process.env.NODE_ENV === 'production') {
+        throw error;
+      }
     }
 
     // Register routes and create server
@@ -118,24 +122,23 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start server
+    // Start server with proper error handling
     const PORT = process.env.PORT || 5000;
-    server.listen(PORT, '0.0.0.0', () => {
-      globalServer = server;
-      log(`[Server] Started on port ${PORT}`);
-      if (isConnected) {
-        log('[Server] Application started with database connection');
-      } else {
-        log('[Server] Application started without database connection');
-      }
-    });
-
-    server.on('error', (error: NodeJS.ErrnoException) => {
-      if (error.code === 'EADDRINUSE') {
-        log(`[Server] Port ${PORT} is already in use`);
-      } else {
-        log('[Server] Server error:', error);
-      }
+    await new Promise<void>((resolve, reject) => {
+      server
+        .listen(PORT, '0.0.0.0', () => {
+          globalServer = server;
+          log(`[Server] Started on port ${PORT}`);
+          resolve();
+        })
+        .on('error', (error: NodeJS.ErrnoException) => {
+          if (error.code === 'EADDRINUSE') {
+            log(`[Server] Port ${PORT} is already in use`);
+          } else {
+            log('[Server] Server error:', error);
+          }
+          reject(error);
+        });
     });
   } catch (error) {
     log('[Server] Fatal error during startup:', error);

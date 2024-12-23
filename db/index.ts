@@ -1,80 +1,34 @@
 import * as schema from '@db/schema';
-import { Pool } from '@neondatabase/serverless';
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { WebSocket } from 'ws';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
 }
 
-let pool: Pool | null = null;
-let ws: WebSocket | null = null;
-
-const createWebSocket = (url: string): WebSocket => {
-  const wsUrl = url
-    .replace(/^postgres:\/\//, 'wss://')
-    .replace(/^postgresql:\/\//, 'wss://')
-    .split('?')[0];
-  console.log('[Database] Creating WebSocket connection to:', wsUrl.replace(/:[^:]*@/, ':****@'));
-
-  const ws = new WebSocket(wsUrl, {
-    perMessageDeflate: false,
-    skipUTF8Validation: true,
-    handshakeTimeout: 30000,
-    maxPayload: 100 * 1024 * 1024,
-    headers: {
-      'User-Agent': 'neon-serverless',
-      Upgrade: 'websocket',
-      Connection: 'Upgrade',
-      'Sec-WebSocket-Protocol': 'neon',
-    },
-  });
-
-  ws.on('error', (error) => {
-    console.error(
-      '[Database] WebSocket error:',
-      error instanceof Error ? error.message : String(error),
-    );
-  });
-
-  ws.on('open', () => {
-    console.log('[Database] WebSocket connection established');
-  });
-
-  ws.on('close', (code, reason) => {
-    console.log('[Database] WebSocket connection closed:', code, reason.toString());
-  });
-
-  ws.on('ping', () => {
-    try {
-      ws.pong();
-    } catch (error) {
-      console.error(
-        '[Database] Error sending pong:',
-        error instanceof Error ? error.message : String(error),
-      );
-    }
-  });
-
-  return ws;
-};
-
-export const db = drizzle({
-  connection: process.env.DATABASE_URL,
-  schema,
-  ws: createWebSocket(process.env.DATABASE_URL!),
+// Create a postgres client with some default settings
+const client = postgres(process.env.DATABASE_URL, {
+  max: 10, // Max number of connections
+  idle_timeout: 20, // Max seconds to keep unused connections
+  connect_timeout: 10, // Max seconds to wait for connection
+  prepare: false, // Disable prepared statements for better compatibility
 });
 
+// Initialize database with drizzle
+export const db = drizzle(client, { schema });
+
+// Cleanup function for graceful shutdown
 export async function cleanup(): Promise<void> {
   try {
-    if (pool) {
-      await pool.end();
-      pool = null;
-      ws = null;
-      console.log('[Database] Connection pool closed successfully');
-    }
+    await client.end();
+    console.log('[Database] Connection pool closed successfully');
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Cleanup error:',
       error instanceof Error ? error.message : String(error),
@@ -82,7 +36,9 @@ export async function cleanup(): Promise<void> {
   }
 }
 
+// Register cleanup handlers
 process.once('SIGINT', cleanup);
 process.once('SIGTERM', cleanup);
 
+// Export sql helper
 export { sql };
