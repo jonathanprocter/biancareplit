@@ -1,4 +1,3 @@
-
 import { Configuration, OpenAIApi } from 'openai';
 
 export class OpenAIService {
@@ -38,7 +37,10 @@ export class OpenAIService {
 
       return response.data.choices[0]?.text?.trim() || 'No analysis generated';
     } catch (error) {
-      console.error('Code analysis error:', error instanceof Error ? error.message : 'Unknown error');
+      console.error(
+        'Code analysis error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw new Error('Failed to analyze code');
     }
   }

@@ -1,4 +1,3 @@
-
 import * as schema from '@db/schema';
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
@@ -31,12 +30,12 @@ export async function testConnection(retries = 3, delay = 2000): Promise<boolean
     } catch (error) {
       console.error(
         `[Database] Connection attempt ${attempt}/${retries} failed:`,
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : 'Unknown error',
       );
 
       if (attempt < retries) {
         console.log(`[Database] Waiting ${delay}ms before next attempt...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       } else {
         console.error('[Database] All connection attempts failed');
         return false;
@@ -51,9 +50,14 @@ async function cleanup() {
     await pool.end();
     console.log('[Database] Connection pool closed successfully');
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
-      error instanceof Error ? error.message : 'Unknown error'
+      error instanceof Error ? error.message : 'Unknown error',
     );
   }
 }
