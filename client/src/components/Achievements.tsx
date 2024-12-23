@@ -141,7 +141,7 @@ export const Achievements = () => {
     data: progress,
     isLoading,
     error,
-  } = useQuery<UserProgress>({
+  } = useQuery<UserProgress, Error>({
     queryKey: ['/api/users/progress/achievements'],
   });
 

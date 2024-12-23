@@ -10,9 +10,19 @@ if (!process.env.DATABASE_URL) {
 
 // Initialize WebSocket with robust configuration
 const wsConstructor = (url: string): WebSocket => {
+  console.log('[Database] Initializing WebSocket connection...');
+
   const ws = new WebSocket(url, {
     rejectUnauthorized: false,
-    handshakeTimeout: 30000
+    handshakeTimeout: 30000,
+    followRedirects: true,
+    headers: {
+      'User-Agent': 'drizzle-orm-neon',
+      'Accept-Encoding': 'gzip, deflate, br',
+      Connection: 'Upgrade',
+      Upgrade: 'websocket',
+      'Sec-WebSocket-Version': '13',
+    },
   });
 
   ws.on('error', (error) => {
@@ -54,8 +64,8 @@ export async function testConnection(retries = 3): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`[Database] Testing connection (attempt ${i + 1}/${retries})...`);
-      await db.execute(sql`SELECT current_timestamp`);
-      console.log('[Database] Connection test successful');
+      const result = await db.execute(sql`SELECT NOW()`);
+      console.log('[Database] Connection test successful:', result);
       return true;
     } catch (error) {
       console.error(
@@ -77,11 +87,6 @@ export async function cleanup(): Promise<void> {
     await pool.end();
     console.log('[Database] Connection pool closed successfully');
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Cleanup error:',
       error instanceof Error ? error.message : 'Unknown error'

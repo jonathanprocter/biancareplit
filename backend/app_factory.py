@@ -25,10 +25,14 @@ def create_app(env_path=None):
         CORS(app, resources={r"/*": {"origins": config_manager.get("CORS_ORIGINS", "*")}})
 
         # Initialize middleware stack
-        LoggingMiddleware().init_app(app)
-        ErrorMiddleware().init_app(app)
-        MetricsMiddleware().init_app(app)
-        HealthMiddleware().init_app(app)
+        if config_manager.get("MIDDLEWARE", {}).get("logging", True):
+            LoggingMiddleware().init_app(app)
+        if config_manager.get("MIDDLEWARE", {}).get("error_handling", True):
+            ErrorMiddleware().init_app(app)
+        if config_manager.get("MIDDLEWARE", {}).get("performance_tracking", True):
+            MetricsMiddleware().init_app(app)
+        if config_manager.get("MIDDLEWARE", {}).get("health", True):
+            HealthMiddleware().init_app(app)
 
         # Initialize database with proper error handling
         if not db_manager.init_app(app):
@@ -42,14 +46,15 @@ def create_app(env_path=None):
         @app.route("/health/db")
         def db_health():
             try:
-                if db_manager.verify_connection(app):
+                connection_info = db_manager.get_connection_info(app)
+                if "error" not in connection_info:
                     return jsonify({
                         "status": "healthy",
-                        "message": "Database connection verified"
+                        "connection_info": connection_info
                     })
                 return jsonify({
                     "status": "error",
-                    "message": "Database connection failed"
+                    "message": connection_info["error"]
                 }), 503
             except Exception as e:
                 logger.error(f"Database health check failed: {str(e)}")

@@ -11,7 +11,8 @@ import { Button } from './Button';
 describe('Button Component', () => {
   it('renders without crashing', () => {
     render(<Button>Test Button</Button>);
-    expect(screen.getByText('Test Button')).toBeInTheDocument();
+    const button = screen.getByText('Test Button');
+    expect(button).toBeInTheDocument();
   });
 
   it('applies primary variant styles by default', () => {
@@ -29,9 +30,8 @@ describe('Button Component', () => {
   it('handles click events', async () => {
     const handleClick = jest.fn();
     render(<Button onClick={handleClick}>Clickable Button</Button>);
-
-    // Use findBy instead of getBy for better async handling if needed
-    await userEvent.click(await screen.findByText('Clickable Button'));
+    const button = await screen.findByText('Clickable Button');
+    userEvent.click(button);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 });

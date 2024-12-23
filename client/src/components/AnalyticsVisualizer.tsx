@@ -78,19 +78,17 @@ export function AnalyticsVisualizer() {
       }
     };
 
-    void fetchData();
+    fetchData();
   }, []);
 
   const calculatePredictiveIndex = (data: PerformanceData[]) => {
     if (data.length === 0) return;
 
-    // Calculate trend based on recent performance
     const recentScores = data.slice(-5);
     const averageScore =
       recentScores.reduce((acc, curr) => acc + curr.score, 0) / recentScores.length;
     const trend = recentScores[recentScores.length - 1].score - recentScores[0].score;
 
-    // Predictive index formula: (average * 0.7) + (trend * 0.3)
     const index = averageScore * 0.7 + trend * 0.3;
     setPredictiveIndex(Math.round(index));
   };
@@ -139,7 +137,6 @@ export function AnalyticsVisualizer() {
       </CardHeader>
       <CardContent>
         <div className="space-y-8">
-          {/* Performance Trend Chart */}
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={performanceData}>
@@ -158,7 +155,6 @@ export function AnalyticsVisualizer() {
             </ResponsiveContainer>
           </div>
 
-          {/* NCLEX Category Distribution */}
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -178,7 +174,6 @@ export function AnalyticsVisualizer() {
             </ResponsiveContainer>
           </div>
 
-          {/* Predictive Index */}
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
             <h3 className="text-xl font-bold mb-2">Predictive Success Index</h3>
             <div className="text-3xl font-bold">{predictiveIndex}%</div>

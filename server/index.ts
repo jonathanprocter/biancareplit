@@ -15,6 +15,17 @@ let globalServer: Server | null = null;
 
 async function startServer() {
   try {
+    // Kill any existing server
+    if (globalServer) {
+      await new Promise<void>((resolve) => {
+        globalServer?.close(() => {
+          log('Existing server closed');
+          resolve();
+        });
+      });
+      globalServer = null;
+    }
+
     const app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
@@ -94,21 +105,45 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start server with health check
-    const PORT = parseInt(process.env.PORT || '5000', 10);
+    // Find an available port
+    const findAvailablePort = async (
+      startPort: number,
+      maxAttempts: number = 10,
+    ): Promise<number> => {
+      for (let port = startPort; port < startPort + maxAttempts; port++) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const testServer = app
+              .listen(port, '0.0.0.0')
+              .once('error', (err: any) => {
+                if (err.code === 'EADDRINUSE') {
+                  testServer.close();
+                  resolve();
+                } else {
+                  reject(err);
+                }
+              })
+              .once('listening', () => {
+                testServer.close();
+                reject(new Error('Port available'));
+              });
+          });
+        } catch (err) {
+          if (err.message === 'Port available') {
+            return port;
+          }
+        }
+      }
+      throw new Error('No available ports found');
+    };
 
-    // Close existing server if it exists
-    if (globalServer) {
-      await new Promise<void>((resolve) => {
-        globalServer?.close(() => resolve());
-      });
-    }
+    const PORT = await findAvailablePort(5000);
+    log(`[Server] Found available port: ${PORT}`);
 
     server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
       log(`Server started on port ${PORT}`);
 
-      // Log successful startup
       if (isConnected) {
         log('Application started successfully with database connection');
       } else {

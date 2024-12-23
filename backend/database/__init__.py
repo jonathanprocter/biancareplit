@@ -1,13 +1,5 @@
 """Database initialization module."""
 
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+from .core import db, migrate, db_manager
 
-# Initialize SQLAlchemy and Migrate instances
-db = SQLAlchemy()
-migrate = Migrate()
-
-def init_db(app):
-    """Initialize database with Flask application."""
-    db.init_app(app)
-    migrate.init_app(app, db)
+__all__ = ['db', 'migrate', 'db_manager']
