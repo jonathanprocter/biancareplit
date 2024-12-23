@@ -6,12 +6,14 @@ import { type Server, createServer } from 'http';
 import { CodeReviewService } from './services/code-review';
 import { submitQuizResponses } from './services/learning-style-assessment';
 import { sanitizeMedicalData } from './utils/sanitize';
+import { log } from './vite';
 
 export function registerRoutes(app: Express): Server {
   // Health check endpoint
   app.get('/api/health', async (_req, res) => {
     try {
-      await db.execute(sql`SELECT 1`);
+      const dbInstance = await db();
+      await dbInstance.execute(sql`SELECT 1`);
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
