@@ -1,4 +1,5 @@
-import { db, sql } from '@db';
+import { db } from '@db';
+import { sql } from 'drizzle-orm';
 import type { Express, Request, Response } from 'express';
 import { type Server, createServer } from 'http';
 

@@ -9,29 +9,28 @@ export interface SystemCheckResult {
     static: boolean;
     env: boolean;
     migrations: boolean;
+    dependencies: boolean;
   };
   details: {
     missingEnvVars?: string[];
     databaseError?: string;
     apiErrors?: string[];
     migrationErrors?: string[];
+    dependencyErrors?: string[];
     timestamp: string;
   };
 }
 
-export const requiredEnvVars = [
-  'DATABASE_URL',
-  'NODE_ENV',
-  'PORT',
-  // Add more required env vars as needed
-];
+export const requiredEnvVars = ['DATABASE_URL', 'NODE_ENV', 'PORT'];
 
 export async function validateDatabaseSchema(): Promise<boolean> {
   try {
     // Check if essential tables exist
-    await db.execute('SELECT 1 FROM content LIMIT 1');
-    await db.execute('SELECT 1 FROM study_material LIMIT 1');
-    return true;
+    const result = await db.execute(
+      'SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = $1)',
+      ['content'],
+    );
+    return result.rows[0]?.exists || false;
   } catch (error) {
     log('[SystemCheck] Schema validation error:', error);
     return false;
@@ -59,6 +58,40 @@ export async function checkAPIEndpoints(): Promise<{ success: boolean; errors: s
   };
 }
 
+export async function checkDependencyVersions(): Promise<{ success: boolean; errors: string[] }> {
+  const errors: string[] = [];
+  try {
+    const pkg = require('../../package.json');
+    const requiredVersions = {
+      react: '18.2.0',
+      'react-dom': '18.2.0',
+      '@types/react': '18.2.0',
+      '@types/react-dom': '18.2.0',
+    };
+
+    Object.entries(requiredVersions).forEach(([dep, version]) => {
+      const installedVersion = pkg.dependencies[dep] || pkg.devDependencies[dep];
+      if (!installedVersion) {
+        errors.push(`Missing dependency: ${dep}`);
+      } else if (!installedVersion.includes(version)) {
+        errors.push(`Version mismatch for ${dep}: expected ${version}, got ${installedVersion}`);
+      }
+    });
+
+    return {
+      success: errors.length === 0,
+      errors,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      errors: [
+        `Failed to check dependencies: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      ],
+    };
+  }
+}
+
 export async function performSystemCheck(): Promise<SystemCheckResult> {
   const result: SystemCheckResult = {
     status: 'ok',
@@ -68,6 +101,7 @@ export async function performSystemCheck(): Promise<SystemCheckResult> {
       static: false,
       env: true,
       migrations: false,
+      dependencies: false,
     },
     details: {
       timestamp: new Date().toISOString(),
@@ -81,6 +115,15 @@ export async function performSystemCheck(): Promise<SystemCheckResult> {
     result.details.missingEnvVars = missingEnvVars;
     result.status = 'error';
     log('[SystemCheck] Missing environment variables:', missingEnvVars);
+  }
+
+  // Check dependencies
+  const depCheck = await checkDependencyVersions();
+  result.checks.dependencies = depCheck.success;
+  if (!depCheck.success) {
+    result.status = 'error';
+    result.details.dependencyErrors = depCheck.errors;
+    log('[SystemCheck] Dependency check errors:', depCheck.errors);
   }
 
   // Check database connection with retries
