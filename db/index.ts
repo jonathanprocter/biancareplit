@@ -16,59 +16,43 @@ let dbInstance: ReturnType<typeof drizzle> | null = null;
 
 // Initialize WebSocket with robust configuration
 function createWebSocket(url: string): WebSocket {
-  try {
-    console.log('[Database] Creating WebSocket connection...');
+  const wsUrl = url.replace(/^postgres:\/\//, 'wss://').replace(/^postgresql:\/\//, 'wss://').split('?')[0];
+  console.log('[Database] Creating WebSocket connection to:', wsUrl.replace(/:[^:]*@/, ':****@'));
 
-    // Parse database URL to WebSocket URL
-    const wsUrl = url
-      .replace(/^postgres:\/\//, 'wss://')
-      .replace(/^postgresql:\/\//, 'wss://')
-      .split('?')[0];
+  const ws = new WebSocket(wsUrl, {
+    perMessageDeflate: false,
+    skipUTF8Validation: true,
+    handshakeTimeout: 30000,
+    maxPayload: 100 * 1024 * 1024,
+    headers: {
+      'User-Agent': 'neon-serverless',
+      'Upgrade': 'websocket',
+      'Connection': 'Upgrade',
+      'Sec-WebSocket-Protocol': 'neon'
+    }
+  });
 
-    // Log sanitized URL for debugging
-    const sanitizedUrl = wsUrl.replace(/:[^:]*@/, ':****@');
-    console.log('[Database] WebSocket URL:', sanitizedUrl);
+  ws.on('error', (error) => {
+    console.error('[Database] WebSocket error:', error instanceof Error ? error.message : String(error));
+  });
 
-    const ws = new WebSocket(wsUrl, {
-      perMessageDeflate: false,
-      skipUTF8Validation: true,
-      handshakeTimeout: 60000, // 60 seconds
-      maxPayload: 100 * 1024 * 1024, // 100MB
-      headers: {
-        'User-Agent': 'neon-serverless',
-        'Upgrade': 'websocket',
-        'Connection': 'Upgrade'
-      },
-      rejectUnauthorized: false // Allow self-signed certificates in development
-    });
+  ws.on('open', () => {
+    console.log('[Database] WebSocket connection established');
+  });
 
-    // Enhanced error handling
-    ws.on('error', (error) => {
-      console.error('[Database] WebSocket error:', error instanceof Error ? error.message : String(error));
-      console.error('[Database] Error details:', error);
-    });
+  ws.on('close', (code, reason) => {
+    console.log('[Database] WebSocket connection closed:', code, reason.toString());
+  });
 
-    ws.on('open', () => {
-      console.log('[Database] WebSocket connection established');
-    });
+  ws.on('ping', () => {
+    try {
+      ws.pong();
+    } catch (error) {
+      console.error('[Database] Error sending pong:', error instanceof Error ? error.message : String(error));
+    }
+  });
 
-    ws.on('close', (code, reason) => {
-      console.log('[Database] WebSocket connection closed:', code, reason.toString());
-    });
-
-    ws.on('ping', () => {
-      try {
-        ws.pong();
-      } catch (error) {
-        console.error('[Database] Error sending pong:', error instanceof Error ? error.message : String(error));
-      }
-    });
-
-    return ws;
-  } catch (error) {
-    console.error('[Database] Error creating WebSocket:', error instanceof Error ? error.message : String(error));
-    throw error;
-  }
+  return ws;
 }
 
 // Initialize database connection with enhanced retry mechanism
@@ -80,7 +64,6 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
     while (attempt <= retries) {
       try {
         console.log(`[Database] Initializing connection (attempt ${attempt}/${retries})...`);
-        console.log('[Database] Using database URL format:', dbUrl.replace(/:[^:]*@/, ':****@'));
 
         // Cleanup previous pool if it exists
         if (pool) {
@@ -88,18 +71,12 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
           pool = null;
         }
 
-        // Create new pool with enhanced configuration
         pool = new Pool({
           connectionString: dbUrl,
-          webSocketConstructor: createWebSocket,
+          connectionTimeoutMillis: 30000,
+          idleTimeoutMillis: 30000,
           max: 1,
-          connectionTimeoutMillis: 60000, // 60 seconds
-          idleTimeoutMillis: 60000,
-          maxUses: 5000,
-          keepAlive: true,
-          ssl: {
-            rejectUnauthorized: false // Required for Neon database connection
-          }
+          webSocketConstructor: createWebSocket
         });
 
         // Test the connection
@@ -117,7 +94,6 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         console.error(`[Database] Connection attempt ${attempt} failed:`, lastError.message);
-        console.error('[Database] Error details:', error);
 
         // Cleanup on failure
         if (pool) {
@@ -130,7 +106,7 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
           throw lastError;
         }
 
-        // Wait before next attempt (exponential backoff with jitter)
+        // Exponential backoff with jitter
         const baseDelay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
         const jitter = Math.random() * 1000;
         const delay = baseDelay + jitter;
@@ -140,18 +116,15 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
       }
     }
   }
-
   return dbInstance!;
 }
 
-// Export database instance getter with connection verification
+// Get database instance with connection verification
 export async function getDb(): Promise<ReturnType<typeof drizzle>> {
   try {
     if (!dbInstance) {
       return initializeDatabase();
     }
-
-    // Verify existing connection
     await dbInstance.execute(sql`SELECT 1`);
     return dbInstance;
   } catch (error) {
@@ -174,7 +147,7 @@ export async function cleanup(): Promise<void> {
   }
 }
 
-// Test database connection with enhanced error reporting
+// Test database connection
 export async function testConnection(): Promise<boolean> {
   try {
     const db = await getDb();
