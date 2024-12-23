@@ -32,10 +32,18 @@ class CodeReviewService:
 
         try:
             self.client = OpenAI(api_key=self.api_key)
+            self.last_api_call = 0
+            self.min_delay = 1.0  # Minimum delay between API calls in seconds
+            self.batch_size = 5   # Number of files to process in parallel
+            self.api_timeout = 60  # API call timeout in seconds
             logger.info("OpenAI client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise
+
+        # Initialize rate limiting state
+        self._rate_limit_remaining = 3000  # Default RPM limit
+        self._rate_limit_reset = time.time() + 60
 
         self.supported_languages = {
             # JavaScript/TypeScript ecosystem
@@ -155,22 +163,29 @@ Code to review:
 {code}
 """
             try:
+                # Implement rate limiting
+                now = time.time()
+                if now - self.last_api_call < self.min_delay:
+                    wait_time = self.min_delay - (now - self.last_api_call)
+                    logger.info(f"Rate limiting: waiting {wait_time:.2f}s before next API call")
+                    time.sleep(wait_time)
+                
                 start_time = time.time()
                 response = self.client.chat.completions.create(
                     model="gpt-4",
                     messages=[
                         {
                             "role": "system",
-                            "content": "You are a focused code reviewer. Find only critical issues.",
+                            "content": "You are a focused code reviewer. Analyze the code and return ONLY a valid JSON response containing your findings.",
                         },
                         {"role": "user", "content": prompt},
                     ],
-                    response_format={"type": "json_object"},
-                    max_tokens=1500,
-                    temperature=0.2,
-                    timeout=60
+                    max_tokens=2000,
+                    temperature=0.1,
+                    timeout=self.api_timeout
                 )
                 end_time = time.time()
+                self.last_api_call = end_time
                 logger.info(f"Code review completed in {end_time-start_time:.2f} seconds")
                 
                 result = json.loads(response.choices[0].message.content)
@@ -201,17 +216,43 @@ Code to review:
     async def review_file_async(self, file_path: Path, results, stats):
         """Asynchronously review a single file."""
         try:
+            logger.info(f"Starting review of {file_path}")
+            
+            # Skip files that are too large or empty early
+            file_size = file_path.stat().st_size
+            if file_size > 100 * 1024:  # 100KB
+                logger.warning(f"Skipping large file: {file_path} ({file_size/1024:.1f}KB)")
+                stats["skipped"] += 1
+                return
+                
+            if file_size == 0:
+                logger.warning(f"Skipping empty file: {file_path}")
+                stats["skipped"] += 1
+                return
+
+            # Perform the review
+            start_time = time.time()
             review_result = self.review_file(file_path)
+            duration = time.time() - start_time
+            
+            # Update results and stats
             results[str(file_path)] = review_result
             stats["processed"] += 1
+            
             if "error" in review_result:
                 stats["errors"] += 1
+                logger.error(f"Review failed for {file_path}: {review_result['error']}")
+            else:
+                logger.info(f"Successfully reviewed {file_path} in {duration:.1f}s")
             
         except Exception as e:
             logger.error(f"Error processing {file_path}: {str(e)}")
-            results[str(file_path)] = {"error": str(e)}
+            results[str(file_path)] = {
+                "error": str(e),
+                "status": "failed"
+            }
             stats["errors"] += 1
-            stats["skipped"] +=1
+            stats["skipped"] += 1
 
     def process_directory(self, directory: str) -> Dict[str, Any]:
         """Process all supported files in the directory recursively."""
@@ -260,12 +301,57 @@ Code to review:
             results["stats"]["total_files"] = len(files_to_process)
 
             async def process_files():
-                tasks = [self.review_file_async(file_path, results["files"], results["stats"]) for file_path in files_to_process]
-                await asyncio.gather(*tasks)
+                # Process files in batches to avoid rate limits
+                total_batches = (len(files_to_process) + self.batch_size - 1) // self.batch_size
+                
+                for batch_num, i in enumerate(range(0, len(files_to_process), self.batch_size)):
+                    batch = files_to_process[i:i + self.batch_size]
+                    batch_start_time = time.time()
+                    
+                    logger.info(f"\nProcessing batch {batch_num + 1}/{total_batches}")
+                    logger.info(f"Files in batch: {len(batch)}")
+                    
+                    tasks = []
+                    for file_path in batch:
+                        # Add small delay between task creation to prevent API rate limiting
+                        if tasks:
+                            await asyncio.sleep(0.1)
+                        tasks.append(self.review_file_async(file_path, results["files"], results["stats"]))
+                    
+                    try:
+                        await asyncio.gather(*tasks)
+                        batch_duration = time.time() - batch_start_time
+                        
+                        # Calculate and log progress
+                        processed = i + len(batch)
+                        progress = (processed / len(files_to_process)) * 100
+                        remaining = len(files_to_process) - processed
+                        
+                        logger.info(f"Progress: {progress:.1f}% ({processed}/{len(files_to_process)} files)")
+                        logger.info(f"Batch completed in {batch_duration:.1f}s")
+                        logger.info(f"Remaining files: {remaining}")
+                        
+                        # Add delay between batches if not the last batch
+                        if batch_num < total_batches - 1:
+                            await asyncio.sleep(1)
+                            
+                    except Exception as batch_error:
+                        logger.error(f"Error in batch {batch_num + 1}: {str(batch_error)}")
+                        results["stats"]["errors"] += 1
+                        # Continue with next batch instead of failing completely
+                        continue
 
-            asyncio.run(process_files())
-            results["status"] = "completed"
-            results["stats"]["end_time"] = time.time()
+            try:
+                asyncio.run(process_files())
+                results["status"] = "completed"
+                results["stats"]["end_time"] = time.time()
+                duration = results["stats"]["end_time"] - results["stats"]["start_time"]
+                logger.info(f"Review completed in {duration:.1f} seconds")
+            except Exception as e:
+                logger.error(f"Failed to process files: {str(e)}")
+                results["status"] = "failed"
+                results["error"] = str(e)
+
             return results
 
         except Exception as e:
@@ -278,7 +364,6 @@ Code to review:
 def main():
     """Main function to handle command line execution."""
     import argparse
-    import time
 
     parser = argparse.ArgumentParser(description='Code Review Service')
     parser.add_argument('path', nargs='?', help='Path to file or directory to review')
