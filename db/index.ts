@@ -45,46 +45,11 @@ export async function testConnection(retries = 3, delay = 2000): Promise<boolean
   return false;
 }
 
-async function cleanup() {
+async function cleanup(): Promise<void> {
   try {
     await pool.end();
     console.log('[Database] Connection pool closed successfully');
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     console.error(
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error',
