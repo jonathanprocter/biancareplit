@@ -11,12 +11,7 @@ function Navigation() {
   const [location] = useLocation();
   const { toast } = useToast();
 
-  // Don't show navigation on public routes
-  const publicRoutes = ['/', '/register'];
-  if (publicRoutes.includes(location)) {
-    return null;
-  }
-
+  // Show navigation on all routes for testing
   const handleLogout = async () => {
     if (isLoggingOut) return;
 
@@ -24,6 +19,10 @@ function Navigation() {
       setIsLoggingOut(true);
       localStorage.removeItem('userId');
       localStorage.removeItem('username');
+      toast({
+        title: 'Success',
+        description: 'Logged out successfully',
+      });
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
@@ -38,29 +37,39 @@ function Navigation() {
   };
 
   return (
-    <nav className="border-b border-border bg-background">
+    <nav className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link
-              href="/dashboard"
-              className={`text-lg font-semibold ${
-                location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'
-              }`}
-            >
-              Dashboard
+            <Link href="/" className="text-lg font-bold text-primary">
+              Medical Education
             </Link>
-            <Link
-              href="/progress"
-              className={`text-lg font-semibold ${
-                location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'
-              }`}
-            >
-              My Progress
-            </Link>
+            <div className="hidden md:flex space-x-4">
+              <Link
+                href="/dashboard"
+                className={`text-sm font-medium ${
+                  location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/progress"
+                className={`text-sm font-medium ${
+                  location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'
+                }`}
+              >
+                My Progress
+              </Link>
+            </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={handleLogout} disabled={isLoggingOut}>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="text-sm"
+            >
               {isLoggingOut ? 'Logging out...' : 'Logout'}
             </Button>
           </div>

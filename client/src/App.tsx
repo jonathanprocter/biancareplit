@@ -28,8 +28,12 @@ function ErrorFallback({ error }: { error: Error }) {
 function Dashboard() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Welcome to Medical Education Platform</h1>
-      <p className="text-muted-foreground">Your personalized learning experience starts here.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Welcome to Medical Education Platform</h1>
+          <p className="text-muted-foreground">Your personalized learning experience starts here.</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -55,9 +59,9 @@ function NotFound() {
 function App() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
-        <main className="container mx-auto px-4 py-8">
+        <main className="flex-1 container mx-auto px-4 py-8">
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route component={NotFound} />
@@ -65,7 +69,6 @@ function App() {
         </main>
       </div>
       <Toaster />
-      {/* ToastViewport is rendered by Toaster */}
     </ErrorBoundary>
   );
 }
