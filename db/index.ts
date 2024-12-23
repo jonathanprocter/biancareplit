@@ -52,8 +52,8 @@ async function cleanup() {
       '[Database] Failed to close connection pool:',
       error instanceof Error ? error.message : 'Unknown error',
     );
-    process.exit(1);
   }
+  process.exit(1);
 }
 
 // Register cleanup handlers

@@ -6,10 +6,15 @@ import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { AddressInfo } from 'net';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 import { registerRoutes } from './routes';
-import { serverPaths } from './utils/server-paths';
+import { paths } from './utils/paths';
 import { log, serveStatic, setupVite } from './vite';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Cleanup handlers collection
 const cleanupHandlers = new Set<() => Promise<void>>();
