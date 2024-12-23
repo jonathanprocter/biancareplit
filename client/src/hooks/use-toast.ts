@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { type ToastActionElement, type ToastProps } from '@/components/ui/toast';
 
 const TOAST_LIMIT = 1;
@@ -79,9 +80,7 @@ const reducer = (state: State, action: Action): State => {
     case 'UPDATE_TOAST':
       return {
         ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === action.id ? { ...t, ...action.toast } : t,
-        ),
+        toasts: state.toasts.map((t) => (t.id === action.id ? { ...t, ...action.toast } : t)),
       };
 
     case 'DISMISS_TOAST': {
