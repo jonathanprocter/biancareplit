@@ -18,8 +18,8 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["node", "react", "react-dom"],
-    "typeRoots": ["../node_modules/@types", "../node_modules/vite/client"]
+    "types": ["node", "vite/client"],
+    "esModuleInterop": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "build", "dist"]
