@@ -3,6 +3,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
+import { Toaster } from '@/components/ui/toaster';
 
 import Navigation from '@/components/Navigation';
 
@@ -63,6 +64,7 @@ function App() {
           </Switch>
         </main>
       </div>
+      <Toaster />
     </ErrorBoundary>
   );
 }

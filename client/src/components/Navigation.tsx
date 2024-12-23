@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-import { useToast } from '@/contexts/toast-context';
+import { useToast } from '@/hooks/use-toast';
 
 function Navigation() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
