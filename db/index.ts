@@ -28,10 +28,7 @@ function createWebSocket(url: string): WebSocket {
   });
 
   ws.on('error', (error) => {
-    console.error(
-      '[Database] WebSocket error:',
-      error instanceof Error ? error.message : String(error),
-    );
+    console.error('[Database] WebSocket error:', error instanceof Error ? error.message : String(error));
   });
 
   ws.on('open', () => {
@@ -46,15 +43,7 @@ function createWebSocket(url: string): WebSocket {
     try {
       ws.pong();
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-      console.error(
-        '[Database] Error sending pong:',
-        error instanceof Error ? error.message : String(error),
-      );
+      console.error('[Database] Error sending pong:', error instanceof Error ? error.message : String(error));
     }
   });
 
@@ -75,7 +64,6 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
           pool = null;
         }
 
-        // Configure pool with optimized options
         pool = new Pool({
           connectionString: process.env.DATABASE_URL,
           webSocketConstructor: createWebSocket,
@@ -100,10 +88,7 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
         return dbInstance;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        console.error(
-          `[Database] Connection attempt ${attempt} failed:`,
-          error instanceof Error ? error.message : String(error),
-        );
+        console.error('[Database] Connection attempt failed:', lastError.message);
 
         // Cleanup on failure
         if (pool) {
@@ -113,9 +98,7 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
 
         if (attempt === retries) {
           console.error('[Database] All connection attempts failed');
-          throw new Error(
-            `Failed to initialize database after ${retries} attempts: ${lastError.message}`,
-          );
+          throw lastError;
         }
 
         // Wait before next attempt (exponential backoff with jitter)
@@ -123,7 +106,7 @@ async function initializeDatabase(retries = 3): Promise<ReturnType<typeof drizzl
         const jitter = Math.random() * 1000;
         const delay = baseDelay + jitter;
         console.log(`[Database] Waiting ${Math.round(delay)}ms before next attempt...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
@@ -138,15 +121,7 @@ export async function testConnection(retries = 3): Promise<boolean> {
     await db.execute(sql`SELECT 1`);
     return true;
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    console.error(
-      '[Database] Connection test failed:',
-      error instanceof Error ? error.message : String(error),
-    );
+    console.error('[Database] Connection test failed:', error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -161,10 +136,7 @@ export async function cleanup(): Promise<void> {
       console.log('[Database] Connection pool closed successfully');
     }
   } catch (error) {
-    console.error(
-      '[Database] Cleanup error:',
-      error instanceof Error ? error.message : String(error),
-    );
+    console.error('[Database] Cleanup error:', error instanceof Error ? error.message : String(error));
   }
 }
 

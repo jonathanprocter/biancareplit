@@ -35,13 +35,14 @@ async function startServer() {
 
     // Enhanced CORS configuration
     const corsOptions = {
-      origin: process.env.NODE_ENV === 'production'
-        ? process.env.CORS_ORIGIN?.split(',') || 'https://your-domain.com'
-        : ['http://localhost:5000', 'http://0.0.0.0:5000'],
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? process.env.CORS_ORIGIN?.split(',') || 'https://your-domain.com'
+          : ['http://localhost:5000', 'http://0.0.0.0:5000'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
-      maxAge: 86400 // 24 hours
+      maxAge: 86400, // 24 hours
     };
     app.use(cors(corsOptions));
 
@@ -64,10 +65,8 @@ async function startServer() {
         maxAge: 24 * 60 * 60 * 1000, // 24h
         sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         path: '/',
-        domain: process.env.NODE_ENV === 'production'
-          ? process.env.COOKIE_DOMAIN
-          : undefined
-      }
+        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
+      },
     };
 
     if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
@@ -93,9 +92,10 @@ async function startServer() {
     // Global error handler with enhanced security
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       const status = (err as any).status || (err as any).statusCode || 500;
-      const message = process.env.NODE_ENV === 'production'
-        ? 'Internal Server Error'
-        : err.message || 'Internal Server Error';
+      const message =
+        process.env.NODE_ENV === 'production'
+          ? 'Internal Server Error'
+          : err.message || 'Internal Server Error';
 
       // Log full error details in development
       if (process.env.NODE_ENV !== 'production') {
@@ -137,7 +137,6 @@ async function startServer() {
         console.error('[Server] Server error:', error);
       }
     });
-
   } catch (error) {
     console.error('[Server] Fatal error during startup:', error);
     process.exit(1);
@@ -152,6 +151,11 @@ async function handleShutdown(signal: string) {
     await dbCleanup();
     process.exit(0);
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
     console.error('[Server] Error during shutdown:', error);
     process.exit(1);
   }
@@ -168,6 +172,11 @@ process.on('uncaughtException', async (error) => {
     await cleanupServer();
     await dbCleanup();
   } catch (cleanupError) {
+    if (cleanupError instanceof Error) {
+      console.error(`Error: ${cleanupError.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', cleanupError); {
     console.error('[Server] Error during cleanup:', cleanupError);
   }
   process.exit(1);
