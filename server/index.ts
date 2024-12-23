@@ -1,13 +1,14 @@
+import { db } from '@db';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from 'express-fileupload';
 import session from 'express-session';
-import { Server } from 'http';
+import { Server, createServer } from 'http';
 import MemoryStore from 'memorystore';
+import { type NetServer, createServer as createNetServer } from 'net';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { db } from '@db';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
@@ -34,13 +35,14 @@ async function startServer() {
 
     // CORS configuration - Allow all origins in development
     const corsOptions = {
-      origin: process.env.NODE_ENV === 'production' 
-        ? ['https://your-production-domain.com'] // Replace with actual production domain
-        : true, // Allow all origins in development
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? ['https://your-production-domain.com'] // Replace with actual production domain
+          : true, // Allow all origins in development
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-      maxAge: 86400 // CORS preflight cache time in seconds
+      maxAge: 86400, // CORS preflight cache time in seconds
     };
     app.use(cors(corsOptions));
 
@@ -54,7 +56,7 @@ async function startServer() {
         cookie: {
           secure: process.env.NODE_ENV === 'production',
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
-          sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+          sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         },
       }),
     );
@@ -72,7 +74,7 @@ async function startServer() {
     );
 
     // Create HTTP server
-    const server = new Server(app);
+    const server = createServer(app);
 
     // Register routes
     registerRoutes(app);
@@ -93,10 +95,32 @@ async function startServer() {
       });
     });
 
-    // Start server
-    const PORT = 5000;
-    server.listen(PORT, '0.0.0.0', () => {
-      log(`Server started successfully on port ${PORT}`);
+    // Function to find an available port
+    const findAvailablePort = async (startPort: number): Promise<number> => {
+      return new Promise((resolve, reject) => {
+        const testServer: NetServer = createNetServer();
+        testServer.unref();
+
+        testServer.on('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE') {
+            testServer.close(() => resolve(findAvailablePort(startPort + 1)));
+          } else {
+            reject(err);
+          }
+        });
+
+        testServer.listen(startPort, '0.0.0.0', () => {
+          testServer.close(() => resolve(startPort));
+        });
+      });
+    };
+
+    // Start server with port fallback
+    const desiredPort = 5000;
+    const port = await findAvailablePort(desiredPort);
+
+    server.listen(port, '0.0.0.0', () => {
+      log(`Server started successfully on port ${port}`);
     });
 
     // Graceful shutdown
