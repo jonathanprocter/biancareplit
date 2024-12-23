@@ -4,11 +4,12 @@ import os
 import logging
 import json
 import sys
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from pathlib import Path
-import asyncio
-from openai import OpenAI, OpenAIError
 import time
+import asyncio
+from openai import OpenAI
+from openai.types.error import OpenAIError
 
 # Configure logging
 logging.basicConfig(
@@ -23,30 +24,17 @@ class CodeReviewService:
     def __init__(self):
         """Initialize the code review service."""
         try:
-            self.api_key = os.getenv("OPENAI_API_KEY")
-            if not self.api_key:
-                raise ValueError("OPENAI_API_KEY not found in environment variables")
-
             # Initialize OpenAI client with configuration
-            self.client = OpenAI(
-                api_key=self.api_key,
-                timeout=60.0,  # API timeout
-                max_retries=2  # Retry failed requests
-            )
-            
-            # Verify API connection
-            self.client.models.list()
-            logger.info("OpenAI client initialized and verified successfully")
+            self.client = OpenAI(timeout=60.0)
+            logger.info("OpenAI client initialized")
 
             # Initialize rate limiting and configuration
             self.last_api_call = 0
-            self.min_delay = 1.0  # Minimum delay between API calls in seconds
-            self.batch_size = 5   # Number of files to process in parallel
-            self.api_timeout = 60  # API call timeout in seconds
-            
-        except OpenAIError as api_err:
-            logger.error(f"OpenAI API Error: {str(api_err)}")
-            raise
+            self.min_delay = 1.0  # Minimum delay between API calls
+            self.batch_size = 5   # Files per batch
+            self.max_file_size = 100 * 1024  # 100KB limit
+            self.api_timeout = 60.0 #Adding api timeout for better error handling
+
         except Exception as e:
             logger.error(f"Failed to initialize code review service: {str(e)}")
             raise
@@ -93,74 +81,88 @@ class CodeReviewService:
         try:
             logger.info(f"Starting review for file: {file_path}")
             
-            if not file_path.exists():
-                logger.error(f"File not found: {file_path}")
-                return {
-                    "status": "error",
-                    "error": f"File not found: {file_path}",
-                    "file": str(file_path)
-                }
-
-            extension = file_path.suffix.lower()
-            language = self.supported_languages.get(extension)
-            if not language:
-                logger.warning(f"Unsupported file type: {extension} for {file_path}")
+            # Basic file validation
+            if not self._validate_file(file_path):
                 return {
                     "status": "skipped",
-                    "error": f"Unsupported file type: {extension}",
+                    "error": "File validation failed",
                     "file": str(file_path)
                 }
 
-            # Check file size
-            file_size = file_path.stat().st_size
-            size_limit = 100 * 1024  # 100KB limit
-            if file_size > size_limit:
-                logger.warning(f"File too large: {file_path} ({file_size/1024:.1f}KB)")
-                return {
-                    "status": "skipped",
-                    "error": f"File too large (limit: {size_limit/1024:.0f}KB)",
-                    "file": str(file_path),
-                    "file_size": file_size
-                }
-
-            try:
-                with open(file_path, "r", encoding="utf-8") as file:
-                    code = file.read().strip()
-            except UnicodeDecodeError:
-                logger.error(f"Failed to read file {file_path}: Unicode decode error")
-                return {
-                    "status": "error",
-                    "error": "File encoding not supported",
-                    "file": str(file_path)
-                }
-
+            # Read file content
+            code = self._read_file_content(file_path)
             if not code:
-                logger.warning(f"Empty file: {file_path}")
                 return {
                     "status": "skipped",
-                    "error": "File is empty",
+                    "error": "Empty or unreadable file",
                     "file": str(file_path)
                 }
             
-            logger.info(f"Successfully loaded file: {file_path} ({len(code)} bytes)")
+            # Get language for file
+            language = self.supported_languages.get(file_path.suffix.lower(), "text")
+            
+            prompt = self._create_review_prompt(language, code)
+            review_result = self._get_review_from_openai(prompt)
+            
+            if review_result:
+                return {
+                    "status": "success",
+                    "file": str(file_path),
+                    "review": review_result
+                }
+            else:
+                return {
+                    "status": "error",
+                    "error": "Failed to get review results",
+                    "file": str(file_path)
+                }
 
-            prompt = f"""Perform a comprehensive code review of this {language} code. Focus on:
-1. Code Quality
-   - Maintainability and readability
-   - Best practices and patterns
-   - Documentation completeness
-2. Security
-   - Input validation
-   - Authentication/authorization
-   - Data protection
-3. Performance
-   - Algorithmic efficiency
-   - Resource usage
-   - Optimization opportunities
-4. Testing
-   - Test coverage
-   - Error handling
-   - Edge cases
+        except Exception as e:
+            logger.error(f"Error reviewing file {file_path}: {str(e)}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "file": str(file_path)
+            }
+
+    def _validate_file(self, file_path: Path) -> bool:
+        """Validate if file is reviewable."""
+        try:
+            if not file_path.exists():
+                logger.error(f"File not found: {file_path}")
+                return False
+
+            if not file_path.suffix.lower() in self.supported_languages:
+                logger.warning(f"Unsupported file type: {file_path.suffix}")
+                return False
+
+            file_size = file_path.stat().st_size
+            if file_size > self.max_file_size:
+                logger.warning(f"File too large: {file_path} ({file_size/1024:.1f}KB)")
+                return False
+
+            return True
+        except Exception as e:
+            logger.error(f"File validation error: {str(e)}")
+            return False
+
+    def _read_file_content(self, file_path: Path) -> Optional[str]:
+        """Read and validate file content."""
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                content = file.read().strip()
+                return content if content else None
+        except Exception as e:
+            logger.error(f"Error reading file {file_path}: {str(e)}")
+            return None
+
+    def _create_review_prompt(self, language: str, code: str) -> str:
+        """Create the review prompt for OpenAI."""
+        return f"""Review this {language} code focusing on:
+1. Code Quality (maintainability, readability, best practices)
+2. Security (input validation, auth, data protection)
+3. Performance (efficiency, resource usage, optimization)
+4. Testing (coverage, error handling, edge cases)
 
 Return JSON with:
 {{
@@ -183,80 +185,45 @@ Return JSON with:
 Code to review:
 {code}
 """
+
+    def _get_review_from_openai(self, prompt: str) -> Optional[Dict[str, Any]]:
+        """Get code review from OpenAI API."""
+        try:
+            # Rate limiting
+            now = time.time()
+            if now - self.last_api_call < self.min_delay:
+                time.sleep(self.min_delay - (now - self.last_api_call))
+
+            logger.info("Making OpenAI API request...")
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert code reviewer. Analyze the code and provide a detailed review in JSON format."
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=2000,
+                temperature=0.1
+            )
+            
+            self.last_api_call = time.time()
+            
             try:
-                # Implement rate limiting
-                now = time.time()
-                if now - self.last_api_call < self.min_delay:
-                    wait_time = self.min_delay - (now - self.last_api_call)
-                    logger.info(f"Rate limiting: waiting {wait_time:.2f}s")
-                    time.sleep(wait_time)
-
-                start_time = time.time()
-                logger.info(f"Starting code review for {file_path}")
-                
-                # Implement rate limiting
-                current_time = time.time()
-                if current_time - self.last_api_call < self.min_delay:
-                    wait_time = self.min_delay - (current_time - self.last_api_call)
-                    logger.info(f"Rate limiting: waiting {wait_time:.2f}s")
-                    time.sleep(wait_time)
-
-                logger.info("Making OpenAI API request...")
-                try:
-                    response = self.client.chat.completions.create(
-                        model="gpt-4",  # Using standard GPT-4 for better compatibility
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": "You are an expert code reviewer. Analyze the code and provide a detailed review in JSON format. Include a summary with score (0-10), severity level, and key recommendations. Also list specific issues found with their type, severity, description, and suggested fixes."
-                            },
-                            {"role": "user", "content": prompt}
-                        ],
-                        max_tokens=2000,
-                        temperature=0.1,
-                        timeout=self.api_timeout
-                    )
-                    self.last_api_call = time.time()
-                    logger.info("OpenAI API request completed successfully")
-                except Exception as e:
-                    logger.error(f"OpenAI API request failed: {str(e)}")
-                    raise
-                end_time = time.time()
-                self.last_api_call = end_time
-                logger.info(f"Review completed in {end_time-start_time:.2f}s")
-
                 result = json.loads(response.choices[0].message.content)
-                return {
-                    "status": "success",
-                    "file": str(file_path),
-                    "review": result
-                }
-
-            except json.JSONDecodeError as json_err:
-                logger.error(f"Failed to parse OpenAI response: {json_err}")
-                return {
-                    "status": "error",
-                    "error": "Invalid response format",
-                    "details": str(json_err),
-                    "file": str(file_path)
-                }
-
-            except OpenAIError as api_err:
-                logger.error(f"OpenAI API error: {api_err}")
-                return {
-                    "status": "error",
-                    "error": "Failed to analyze code",
-                    "details": str(api_err),
-                    "file": str(file_path)
-                }
-
+                return result
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse OpenAI response: {str(e)}")
+                return None
+                
+        except OpenAIError as e:
+            logger.error(f"OpenAI API error: {str(e)}")
+            return None
         except Exception as e:
-            logger.error(f"Error reviewing file {file_path}: {e}")
-            return {
-                "status": "error",
-                "error": str(e),
-                "file": str(file_path)
-            }
+            logger.error(f"Unexpected error in code review: {str(e)}")
+            return None
+
 
     async def review_file_async(self, file_path: Path, results, stats):
         """Asynchronously review a single file."""
@@ -428,6 +395,7 @@ def main():
         path = Path(args.path)
 
         if not path.exists():
+            logger.error(f"Path does not exist: {args.path}")
             print(json.dumps({
                 "success": False,
                 "error": f"Path does not exist: {args.path}"
@@ -437,60 +405,81 @@ def main():
         logger.info(f"Starting review for: {path}")
         start_time = time.time()
 
-        results = service.review_file(path) if path.is_file() else service.process_directory(str(path))
+        try:
+            if path.is_file():
+                logger.info(f"Reviewing single file: {path}")
+                results = service.review_file(path)
+            else:
+                logger.info(f"Processing directory: {path}")
+                results = service.process_directory(str(path))
 
-        end_time = time.time()
-        duration = round(end_time - start_time, 2)
+            end_time = time.time()
+            duration = round(end_time - start_time, 2)
+            logger.info(f"Review completed in {duration} seconds")
 
-        if args.format == 'json':
-            print(json.dumps({
+            output = {
                 "success": True,
                 "results": results,
                 "execution_time": duration
-            }, indent=2))
-        else:
-            print(f"Code Review Results for {args.path}")
-            print("=" * 50)
-            print(f"Execution time: {duration} seconds\n")
+            }
 
-            if results.get("status") == "error":
-                print(f"Error: {results['error']}")
-            elif path.is_file():
-                review = results.get("review", {})
-                if "summary" in review:
-                    print(f"Score: {review['summary']['score']}/10")
-                    print(f"Severity: {review['summary']['severity']}")
-                    print("\nRecommendations:")
-                    for rec in review['summary']['recommendations']:
-                        print(f"- {rec}")
-                if "issues" in review:
-                    print("\nIssues:")
-                    for issue in review['issues']:
-                        print(f"\n[{issue['severity']}] {issue['type']}")
-                        print(f"Description: {issue['description']}")
-                        print(f"Suggestion: {issue['suggestion']}")
-                        if 'line_number' in issue:
-                            print(f"Line: {issue['line_number']}")
+            if args.format == 'json':
+                print(json.dumps(output, indent=2))
             else:
-                for file_path, file_results in results.get("files", {}).items():
-                    if file_results.get("status") == "success":
-                        review = file_results.get("review", {})
-                        print(f"\nFile: {file_path}")
-                        print("-" * 30)
+                print(f"Code Review Results for {args.path}")
+                print("=" * 50)
+                print(f"Execution time: {duration} seconds\n")
+
+                if isinstance(results, dict) and results.get("status") == "error":
+                    print(f"Error: {results.get('error', 'Unknown error')}")
+                elif path.is_file():
+                    review = results.get("review", {})
+                    if isinstance(review, dict):
                         if "summary" in review:
-                            print(f"Score: {review['summary']['score']}/10")
-                            print(f"Severity: {review['summary']['severity']}")
+                            print(f"Score: {review['summary'].get('score', 'N/A')}/10")
+                            print(f"Severity: {review['summary'].get('severity', 'N/A')}")
                             print("\nRecommendations:")
-                            for rec in review['summary']['recommendations']:
+                            for rec in review['summary'].get('recommendations', []):
                                 print(f"- {rec}")
                         if "issues" in review:
                             print("\nIssues:")
-                            for issue in review['issues']:
-                                print(f"\n[{issue['severity']}] {issue['type']}")
-                                print(f"Description: {issue['description']}")
-                                print(f"Suggestion: {issue['suggestion']}")
+                            for issue in review.get('issues', []):
+                                print(f"\n[{issue.get('severity', 'unknown')}] {issue.get('type', 'unknown')}")
+                                print(f"Description: {issue.get('description', 'No description')}")
+                                print(f"Suggestion: {issue.get('suggestion', 'No suggestion')}")
                                 if 'line_number' in issue:
                                     print(f"Line: {issue['line_number']}")
+                else:
+                    files = results.get("files", {})
+                    if isinstance(files, dict):
+                        for file_path, file_results in files.items():
+                            if file_results.get("status") == "success":
+                                review = file_results.get("review", {})
+                                if isinstance(review, dict):
+                                    print(f"\nFile: {file_path}")
+                                    print("-" * 30)
+                                    if "summary" in review:
+                                        print(f"Score: {review['summary'].get('score', 'N/A')}/10")
+                                        print(f"Severity: {review['summary'].get('severity', 'N/A')}")
+                                        print("\nRecommendations:")
+                                        for rec in review['summary'].get('recommendations', []):
+                                            print(f"- {rec}")
+                                    if "issues" in review:
+                                        print("\nIssues:")
+                                        for issue in review.get('issues', []):
+                                            print(f"\n[{issue.get('severity', 'unknown')}] {issue.get('type', 'unknown')}")
+                                            print(f"Description: {issue.get('description', 'No description')}")
+                                            print(f"Suggestion: {issue.get('suggestion', 'No suggestion')}")
+                                            if 'line_number' in issue:
+                                                print(f"Line: {issue['line_number']}")
+
+        except Exception as review_error:
+            logger.error(f"Review process failed: {str(review_error)}")
+            print(json.dumps({
+                "success": False,
+                "error": str(review_error)
+            }, indent=2))
+            sys.exit(1)
 
     except Exception as e:
         print(json.dumps({
