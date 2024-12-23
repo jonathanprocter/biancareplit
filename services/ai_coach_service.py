@@ -3,9 +3,12 @@ from datetime import datetime, timedelta
 from models import CyberContent
 
 
+from backend.core.memory_manager import process_memory
+
 class AICoachService:
     def __init__(self):
         self.model = "gpt-4"
+        self.memory = process_memory
         self.context = {
             "role": "system",
             "content": """You are an expert cybersecurity tutor. Help students understand:
