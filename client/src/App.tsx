@@ -69,7 +69,7 @@ function App() {
         <main className="flex-1 container mx-auto px-4 py-8">
           <Switch>
             <Route path="/" component={Dashboard} />
-            <Route component={NotFound} />
+            <Route path="/:rest*" component={NotFound} />
           </Switch>
         </main>
         <Toaster />

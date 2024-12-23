@@ -1,87 +1,49 @@
-import { db } from '@db';
+import { db, testConnection } from '@db';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
-import fileUpload from 'express-fileupload';
 import session from 'express-session';
 import { Server } from 'http';
 import MemoryStore from 'memorystore';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-// Get server directory path for ES modules
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// Global server instance for cleanup
 let globalServer: Server | null = null;
-
-// Cleanup function for graceful shutdown
-async function cleanup() {
-  if (globalServer) {
-    try {
-      await new Promise<void>((resolve) => {
-        globalServer?.close(() => {
-          log('Server closed');
-          resolve();
-        });
-      });
-    } catch (error) {
-      console.error('Error during cleanup:', error);
-    }
-  }
-  process.exit(0);
-}
-
-// Setup cleanup handlers
-process.on('SIGINT', cleanup);
-process.on('SIGTERM', cleanup);
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  cleanup();
-});
 
 async function startServer() {
   try {
-    // Initialize Express
     const app = express();
-
-    // Basic middleware
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Initialize database
-    log('[Server] Starting database initialization...');
-    const isConnected = await db.execute(sql`SELECT 1`).then(() => true).catch(() => false);
+    // Initialize database connection
+    log('[Server] Initializing database connection...');
+    const isConnected = await testConnection(3);
 
     if (!isConnected && process.env.NODE_ENV === 'production') {
-      log('[Server] FATAL: Cannot start server without database in production mode');
-      process.exit(1);
-    } else if (!isConnected) {
+      throw new Error('Cannot start server without database in production');
+    }
+
+    if (!isConnected) {
       log('[Server] WARNING: Starting in development mode without database');
-      log('[Server] Some features may be unavailable');
     } else {
       log('[Server] Database connection verified');
     }
 
-    // CORS configuration
-    const corsOptions = {
-      origin: process.env.NODE_ENV === 'production' 
-        ? ['https://your-production-domain.com'] 
-        : ['http://localhost:5000'],
+    // Simple CORS setup
+    app.use(cors({
+      origin: true,
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    };
-    app.use(cors(corsOptions));
+    }));
 
-    // Session store configuration
-    const MemoryStoreConstructor = MemoryStore(session);
-    const sessionStore = new MemoryStoreConstructor({
-      checkPeriod: 86400000, // 24 hours
+    // Session setup
+    const sessionStore = new (MemoryStore(session))({
+      checkPeriod: 86400000,
     });
 
-    // Session middleware
     app.use(session({
       secret: process.env.SESSION_SECRET || 'development_secret',
       resave: false,
@@ -89,20 +51,9 @@ async function startServer() {
       store: sessionStore,
       cookie: {
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'lax',
       },
-    }));
-
-    // File upload middleware
-    app.use(fileUpload({
-      createParentPath: true,
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-      useTempFiles: true,
-      tempFileDir: '/tmp/',
-      safeFileNames: true,
-      preserveExtension: true,
-      abortOnLimit: true,
     }));
 
     // Register routes
@@ -111,22 +62,18 @@ async function startServer() {
       throw new Error('Failed to register routes');
     }
 
-    // Error handling middleware
+    // Error handling
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Error:', err);
       const status = (err as any).status || (err as any).statusCode || 500;
       const message = err.message || 'Internal Server Error';
 
       if (!res.headersSent) {
-        res.status(status).json({
-          status: 'error',
-          message,
-          timestamp: new Date().toISOString(),
-        });
+        res.status(status).json({ error: message, status });
       }
     });
 
-    // Setup frontend serving
+    // Setup frontend
     if (app.get('env') === 'development') {
       await setupVite(app, server);
     } else {
@@ -134,18 +81,46 @@ async function startServer() {
     }
 
     // Start server
-    const PORT = process.env.PORT || 5000;
+    const PORT = parseInt(process.env.PORT || '5000', 10);
     server.listen(PORT, '0.0.0.0', () => {
       globalServer = server;
-      log(`Server started successfully on port ${PORT}`);
+      log(`Server started on port ${PORT}`);
     });
 
   } catch (error) {
     console.error('Fatal error during server startup:', error);
-    await cleanup();
     process.exit(1);
   }
 }
+
+// Cleanup handlers
+process.on('SIGTERM', () => {
+  if (globalServer) {
+    globalServer.close(() => {
+      log('Server closed');
+      process.exit(0);
+    });
+  }
+});
+
+process.on('SIGINT', () => {
+  if (globalServer) {
+    globalServer.close(() => {
+      log('Server closed');
+      process.exit(0);
+    });
+  }
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  if (globalServer) {
+    globalServer.close(() => {
+      log('Server closed');
+      process.exit(1);
+    });
+  }
+});
 
 // Start the server
 startServer().catch((error) => {

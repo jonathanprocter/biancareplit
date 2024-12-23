@@ -4,7 +4,6 @@ import logging
 import time
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, current_app
-from prometheus_client import generate_latest
 from sqlalchemy import text
 
 from backend.monitoring.metrics import (
@@ -16,17 +15,14 @@ from backend.monitoring.metrics import (
 )
 from backend.models.analytics import db
 
-# Configure route-specific logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# Initialize blueprint
 analytics_bp = Blueprint("analytics", __name__)
 
-# Define constants
 PROMETHEUS_AVAILABLE = True
 try:
-    from prometheus_client import generate_latest  # noqa: F811
+    from prometheus_client import generate_latest
 except ImportError:
     PROMETHEUS_AVAILABLE = False
     logger.warning("Prometheus client not available. Metrics collection disabled.")
@@ -34,7 +30,6 @@ except ImportError:
 
 @analytics_bp.route("/study-session", methods=["POST"])
 def record_study_session():
-    """Record a study session."""
     try:
         data = request.get_json()
         if not data:
@@ -49,7 +44,6 @@ def record_study_session():
             "questions_correct": data.get("questionsCorrect", 0),
         }
 
-        # Record metrics if Prometheus is available
         if PROMETHEUS_AVAILABLE:
             duration = (
                 session_data["end_time"] - session_data["start_time"]
@@ -78,7 +72,6 @@ def record_study_session():
 
 @analytics_bp.route("/performance", methods=["GET"])
 def get_performance_metrics():
-    """Get user performance metrics."""
     try:
         user_id = request.args.get("userId", "default_user")
         if not user_id:
@@ -122,7 +115,6 @@ def get_performance_metrics():
 
 @analytics_bp.route("/report", methods=["GET"])
 def generate_analytics_report():
-    """Generate an analytics report with actual data from database."""
     try:
         user_id = request.args.get("userId", "default_user")
         if not user_id:
@@ -238,7 +230,6 @@ def generate_analytics_report():
 
 @analytics_bp.route("/daily-summary", methods=["GET"])
 def get_daily_summary():
-    """Get daily study summary with actual metrics."""
     try:
         user_id = request.args.get("userId", "default_user")
         if not user_id:
@@ -409,7 +400,6 @@ def get_daily_summary():
 
 @analytics_bp.route("/metrics", methods=["GET"])
 def metrics():
-    """Expose Prometheus metrics."""
     if not PROMETHEUS_AVAILABLE:
         logger.warning("Metrics endpoint called but Prometheus is not available")
         return (
@@ -448,7 +438,6 @@ def metrics():
 
 @analytics_bp.route("/dashboard", methods=["GET"])
 def get_analytics_dashboard():
-    """Get analytics dashboard data with actual metrics."""
     try:
         user_id = request.args.get("userId", "default_user")
         if not user_id:

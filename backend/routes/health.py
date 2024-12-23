@@ -5,7 +5,7 @@ from datetime import datetime
 bp = Blueprint("health", __name__)
 
 
-@bp.route("/health")
+@bp.route("/health", methods=["GET"])
 def health_check():
     try:
         health_status = {
@@ -18,7 +18,7 @@ def health_check():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@bp.route("/api/health")
+@bp.route("/api/health", methods=["GET"])
 def api_health():
     try:
         metrics = {

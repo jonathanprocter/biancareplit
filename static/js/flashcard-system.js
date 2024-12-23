@@ -2,22 +2,15 @@ import { configManager } from './config/system.config.js';
 import { initializeMiddlewareSystem } from './middleware/system.middleware.js';
 import EventEmitter from './utils/EventEmitter';
 
-// Singleton middleware system instance
 let middlewareSystem = null;
 
-// Get or initialize middleware system
 const getMiddlewareSystem = async () => {
   if (!middlewareSystem) {
     try {
       middlewareSystem = await initializeMiddlewareSystem(configManager.get());
-      console.log(
-        '[FlashcardSystem] Middleware system initialized successfully',
-      );
+      console.log('[FlashcardSystem] Middleware system initialized successfully');
     } catch (error) {
-      console.error(
-        '[FlashcardSystem] Failed to initialize middleware system:',
-        error,
-      );
+      console.error('[FlashcardSystem] Failed to initialize middleware system:', error);
       throw error;
     }
   }
@@ -28,7 +21,6 @@ class EnhancedFlashcardSystem extends EventEmitter {
   constructor() {
     super();
     if (!EnhancedFlashcardSystem.instance) {
-      // Initialize state
       this.initialized = false;
       this.analyticsReady = false;
       this.studyMaterialHandler = null;
@@ -41,11 +33,7 @@ class EnhancedFlashcardSystem extends EventEmitter {
         categoryProgress: {},
         lastUpdate: null,
       };
-
-      // Initialize configuration
       this.config = configManager;
-
-      // Set instance
       EnhancedFlashcardSystem.instance = this;
     }
     return EnhancedFlashcardSystem.instance;
@@ -108,10 +96,7 @@ class EnhancedFlashcardSystem extends EventEmitter {
         this.analyticsReady = true;
         return true;
       } catch (error) {
-        console.error(
-          '[FlashcardSystem] Analytics initialization failed:',
-          error,
-        );
+        console.error('[FlashcardSystem] Analytics initialization failed:', error);
         this.analyticsReady = false;
         throw error;
       }
@@ -180,10 +165,8 @@ class EnhancedFlashcardSystem extends EventEmitter {
   }
 }
 
-// Create singleton instance
 const flashcardSystem = new EnhancedFlashcardSystem();
 
-// Export instance as default and other utilities as named exports
 const flashcardSystemExports = {
   ...flashcardSystem,
   getMiddlewareSystem,
@@ -191,7 +174,6 @@ const flashcardSystemExports = {
 
 export default flashcardSystemExports;
 
-// Development mode exports
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   window.flashcardSystem = flashcardSystemExports;
 }
