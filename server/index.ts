@@ -1,9 +1,6 @@
 import { db, cleanup as dbCleanup, sql } from '@db';
-import cors from 'cors';
 import express, { NextFunction, type Request, Response } from 'express';
-import session from 'express-session';
 import http from 'http';
-import MemoryStore from 'memorystore';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -25,6 +22,21 @@ async function cleanupServer(): Promise<void> {
   }
 }
 
+async function waitForDatabase(retries = 3, delay = 5000): Promise<void> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      log(`[Server] Attempting database connection (attempt ${i + 1}/${retries})...`);
+      await db.execute(sql`SELECT 1`);
+      log('[Server] Database connection successful');
+      return;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      log(`[Server] Database connection failed, retrying in ${delay / 1000}s...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
 async function startServer() {
   try {
     // Clean up any existing server instance
@@ -35,28 +47,9 @@ async function startServer() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // Enhanced CORS configuration
-    const corsOptions = {
-      origin:
-        process.env.NODE_ENV === 'production'
-          ? process.env.CORS_ORIGIN?.split(',') || 'https://your-domain.com'
-          : ['http://localhost:5000', 'http://0.0.0.0:5000'],
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      maxAge: 86400,
-    };
-    app.use(cors(corsOptions));
-
     // Test database connection before proceeding
     log('[Server] Testing database connection...');
-    try {
-      await db.execute(sql`SELECT 1`);
-      log('[Server] Database connection verified');
-    } catch (error) {
-      log('[Server] Database connection check failed:', error);
-      throw error;
-    }
+    await waitForDatabase();
 
     // Register routes and create server
     const server = await registerRoutes(app);
@@ -68,10 +61,7 @@ async function startServer() {
     if (process.env.NODE_ENV === 'development') {
       await setupVite(app, server);
     } else {
-      app.use(express.static(path.join(__dirname, '../dist/public')));
-      app.get('*', (_req, res) => {
-        res.sendFile(path.join(__dirname, '../dist/public/index.html'));
-      });
+      serveStatic(app);
     }
 
     // Start server with proper error handling and port management
