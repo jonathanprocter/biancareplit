@@ -19,20 +19,25 @@ const __dirname = path.dirname(__filename);
 let globalServer: Server | null = null;
 
 // Cleanup function for graceful shutdown
-function cleanup() {
+async function cleanup() {
   if (globalServer) {
-    const address = globalServer.address() as AddressInfo;
-    if (address) {
-      log(`Closing server on port ${address.port}`);
-    }
+    try {
+      const address = globalServer.address() as AddressInfo;
+      if (address) {
+        log(`Closing server on port ${address.port}`);
+      }
 
-    globalServer.close(() => {
-      log('Server closed');
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
+      await new Promise<void>((resolve) => {
+        globalServer?.close(() => {
+          log('Server closed');
+          resolve();
+        });
+      });
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+    }
   }
+  process.exit(0);
 }
 
 // Setup cleanup handlers
@@ -108,20 +113,8 @@ async function startServer() {
       }),
     );
 
-    // Ensure cleanup of any existing server
-    if (globalServer) {
-      await new Promise<void>((resolve) => {
-        globalServer?.close(() => {
-          log('Closed existing server instance');
-          resolve();
-        });
-      });
-      globalServer = null;
-    }
-
-    // Create and configure HTTP server
+    // Create HTTP server
     const server = createServer(app);
-    globalServer = server;
 
     // Register routes
     registerRoutes(app);
@@ -143,7 +136,10 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Ensure only one server instance
+    // Start server
+    const PORT = process.env.PORT || 5000;
+
+    // Close existing server if any
     if (globalServer) {
       await new Promise<void>((resolve) => {
         globalServer?.close(() => {
@@ -154,41 +150,28 @@ async function startServer() {
       globalServer = null;
     }
 
-    // Start server with proper error handling
-    const PORT = process.env.PORT || 5000;
+    // Start new server
     await new Promise<void>((resolve, reject) => {
-      // Close any existing server instance
-      if (globalServer) {
-        globalServer.close(() => {
-          globalServer = null;
-          startNewServer();
-        });
-      } else {
-        startNewServer();
-      }
+      server.listen(PORT, '0.0.0.0', () => {
+        globalServer = server;
+        const address = server.address();
+        const actualPort = typeof address === 'object' ? address?.port : PORT;
+        log(`Server started successfully on port ${actualPort}`);
+        resolve();
+      });
 
-      function startNewServer() {
-        server.listen(PORT, '0.0.0.0', () => {
-          globalServer = server;
-          const address = server.address();
-          const actualPort = typeof address === 'object' ? address?.port : PORT;
-          log(`Server started successfully on port ${actualPort}`);
-          resolve();
-        });
-
-        server.once('error', (error: NodeJS.ErrnoException) => {
-          if (error.code === 'EADDRINUSE') {
-            log(`Port ${PORT} is in use, letting OS assign an available port`);
-            server.listen(0, '0.0.0.0');
-          } else {
-            reject(error);
-          }
-        });
-      }
+      server.once('error', (error: NodeJS.ErrnoException) => {
+        if (error.code === 'EADDRINUSE') {
+          log(`Port ${PORT} is in use, trying random port`);
+          server.listen(0, '0.0.0.0');
+        } else {
+          reject(error);
+        }
+      });
     });
   } catch (error) {
     console.error('Fatal error during server startup:', error);
-    cleanup();
+    await cleanup();
     process.exit(1);
   }
 }

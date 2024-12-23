@@ -1,9 +1,6 @@
 import { Link, useLocation } from 'wouter';
-
 import { useState } from 'react';
-
 import { Button } from '@/components/ui/button';
-
 import { useToast } from '@/hooks/use-toast';
 
 function Navigation() {
@@ -18,9 +15,7 @@ function Navigation() {
   }
 
   const handleLogout = async () => {
-    if (isLoggingOut) {
-      return;
-    }
+    if (isLoggingOut) return;
 
     try {
       setIsLoggingOut(true);
