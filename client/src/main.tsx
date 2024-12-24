@@ -5,9 +5,11 @@ import { StrictMode } from 'react';
 
 import { Toaster } from '@/components/ui/toaster';
 
-import App from './App';
-import './index.css';
-import { queryClient } from './lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
+
+import App from '@/App';
+// Import CSS using the @/ alias to match our path configuration
+import '@/index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

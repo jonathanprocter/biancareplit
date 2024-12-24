@@ -3,8 +3,6 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
-import { FlashcardSystem } from '@/lib/flashcard-system';
-
 interface AnalyticsData {
   totalStudyTime: number;
   completedCards: number;
@@ -13,7 +11,6 @@ interface AnalyticsData {
 }
 
 const ContentFlashcardIntegration = () => {
-  const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [progress, setProgress] = useState(0);
@@ -28,13 +25,14 @@ const ContentFlashcardIntegration = () => {
     const initializeSystem = async () => {
       try {
         setLoading(true);
-        const system = new FlashcardSystem();
-        await system.initialize();
-        setInitialized(true);
+        // Initialize with default data for now
         setProgress(0);
-
-        const analyticsData = system.getAnalyticsData();
-        setAnalytics(analyticsData);
+        setAnalytics({
+          totalStudyTime: 0,
+          completedCards: 0,
+          accuracy: 0,
+          categoryProgress: {},
+        });
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to initialize'));
       } finally {
