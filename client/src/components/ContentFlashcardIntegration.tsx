@@ -80,7 +80,7 @@ const ContentFlashcardIntegration: React.FC = () => {
         description: message,
       });
     }
-  }, []);
+  }, [toast]);
 
   const updateAnalytics = useCallback(async () => {
     if (!initialized || !flashcardSystem.isInitialized()) return;

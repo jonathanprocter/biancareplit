@@ -1,3 +1,4 @@
+
 import { Configuration, OpenAIApi } from 'openai';
 
 export class OpenAIService {
@@ -6,7 +7,6 @@ export class OpenAIService {
   constructor() {
     const configuration = new Configuration({
       apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-      basePath: import.meta.env.VITE_API_BASE_URL,
     });
     this.openai = new OpenAIApi(configuration);
   }
@@ -14,37 +14,16 @@ export class OpenAIService {
   async generateResponse(prompt: string): Promise<string> {
     try {
       const response = await this.openai.createCompletion({
-        model: 'gpt-3.5-turbo',
+        model: "text-davinci-003",
         prompt,
-        max_tokens: 150,
-        temperature: 0.7,
+        max_tokens: 150
       });
-
-      return response.data.choices[0]?.text?.trim() || 'No response generated';
+      return response.data.choices[0]?.text || '';
     } catch (error) {
-      console.error('OpenAI API error:', error instanceof Error ? error.message : 'Unknown error');
-      throw new Error('Failed to generate response');
-    }
-  }
-
-  async analyzeCode(code: string): Promise<string> {
-    try {
-      const response = await this.openai.createCompletion({
-        model: 'gpt-3.5-turbo',
-        prompt: `Review this code and provide suggestions:\n${code}`,
-        max_tokens: 300,
-        temperature: 0.3,
-      });
-
-      return response.data.choices[0]?.text?.trim() || 'No analysis generated';
-    } catch (error) {
-      console.error(
-        'Code analysis error:',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
-      throw new Error('Failed to analyze code');
+      console.error('OpenAI API error:', error);
+      throw error;
     }
   }
 }
 
-export const openAIService = new OpenAIService();
+export default new OpenAIService();
