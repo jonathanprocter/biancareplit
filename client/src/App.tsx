@@ -2,8 +2,8 @@ import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
+import { Card, CardContent } from '@/components/ui';
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
-import { Card, CardContent } from './components/ui/card';
 import { Toaster } from './components/ui/toaster';
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -25,8 +25,8 @@ function ErrorFallback({ error }: { error: Error }) {
 function App() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="min-h-screen flex flex-col bg-background text-foreground">
-        <main className="flex-1">
+      <div className="min-h-screen w-full flex flex-col bg-background">
+        <main className="flex-1 flex items-center justify-center p-4">
           <Switch>
             <Route path="/" component={Home} />
             <Route component={NotFound} />
@@ -40,7 +40,7 @@ function App() {
 
 function Home() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background">
+    <div className="w-full">
       <ContentFlashcardIntegration />
     </div>
   );
@@ -48,8 +48,8 @@ function Home() {
 
 function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md mx-4">
+    <div className="w-full">
+      <Card className="w-full max-w-md mx-auto">
         <CardContent className="pt-6">
           <div className="flex mb-4 gap-2">
             <AlertCircle className="h-8 w-8 text-destructive" />
