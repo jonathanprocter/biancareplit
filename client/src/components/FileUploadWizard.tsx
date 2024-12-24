@@ -9,16 +9,24 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 
 interface UploadResult {
-  topics?: string[];
-  flashcards?: Array<{
-    front: string;
-    back: string;
-  }>;
-  quiz_questions?: Array<{
+  success: boolean;
+  message: string;
+  questions?: Array<{
     question: string;
     options: string[];
     correct_answer: number;
   }>;
+  flashcards?: Array<{
+    front: string;
+    back: string;
+  }>;
+  analysis?: {
+    topics: string[];
+    key_concepts: string[];
+    learning_objectives: string[];
+    difficulty_level: string;
+    estimated_duration_minutes: number;
+  };
 }
 
 interface UploadStatus {
@@ -60,28 +68,47 @@ export function FileUploadWizard() {
         const formData = new FormData();
         formData.append('file', upload.file);
 
+        // Create XMLHttpRequest for progress tracking
         const xhr = new XMLHttpRequest();
+        const promise = new Promise<UploadResult>((resolve, reject) => {
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const progress = Math.round((event.loaded * 100) / event.total);
+              setUploads((prev) =>
+                prev.map((u) => (u.file.name === upload.file.name ? { ...u, progress } : u)),
+              );
+            }
+          };
 
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded * 100) / event.total);
-            setUploads((prev) =>
-              prev.map((u) => (u.file.name === upload.file.name ? { ...u, progress } : u)),
-            );
-          }
-        };
+          xhr.onload = async () => {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              if (xhr.status >= 200 && xhr.status < 300 && response.success) {
+                resolve(response);
+              } else {
+                reject(new Error(response.error || response.message || 'Upload failed'));
+              }
+            } catch (error) {
+              reject(new Error('Failed to parse server response'));
+            }
+          };
 
-        const response = await fetch('/api/content/upload', {
-          method: 'POST',
-          body: formData,
-          credentials: 'include',
+          xhr.onerror = () => {
+            reject(new Error('Network error occurred'));
+          };
         });
 
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
+        xhr.open('POST', '/api/instructor/upload');
+        xhr.send(formData);
 
-        const result = await response.json();
+        // Update status to processing
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.file.name === upload.file.name ? { ...u, status: 'processing', progress: 100 } : u,
+          ),
+        );
+
+        const result = await promise;
 
         setUploads((prev) =>
           prev.map((u) =>
@@ -126,6 +153,8 @@ export function FileUploadWizard() {
         });
       }
 
+      if (newFiles.length === 0) return;
+
       const newUploads = newFiles.map((file) => ({
         file,
         progress: 0,
@@ -147,7 +176,7 @@ export function FileUploadWizard() {
       'text/plain': ['.txt'],
     },
     multiple: true,
-    maxSize: 10485760, // 10MB
+    maxSize: 10 * 1024 * 1024, // 10MB
   });
 
   return (
@@ -193,7 +222,15 @@ export function FileUploadWizard() {
                 </div>
 
                 {(upload.status === 'uploading' || upload.status === 'processing') && (
-                  <Progress value={upload.progress} className="h-2" />
+                  <>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>
+                        {upload.status === 'processing' ? 'Processing...' : 'Uploading...'}
+                      </span>
+                      <span>{upload.progress}%</span>
+                    </div>
+                    <Progress value={upload.progress} className="h-2" />
+                  </>
                 )}
 
                 {upload.status === 'error' && (
@@ -202,9 +239,22 @@ export function FileUploadWizard() {
 
                 {upload.status === 'complete' && upload.result && (
                   <div className="mt-2 text-sm text-gray-600">
-                    <p>Extracted {upload.result.topics?.length || 0} topics</p>
-                    <p>Generated {upload.result.flashcards?.length || 0} flashcards</p>
-                    <p>Created {upload.result.quiz_questions?.length || 0} quiz questions</p>
+                    {upload.result.analysis && (
+                      <>
+                        <p>Extracted {upload.result.analysis.topics.length} topics</p>
+                        <p>Identified {upload.result.analysis.key_concepts.length} key concepts</p>
+                        <p>
+                          Generated {upload.result.analysis.learning_objectives.length} learning
+                          objectives
+                        </p>
+                      </>
+                    )}
+                    {upload.result.questions && (
+                      <p>Generated {upload.result.questions.length} quiz questions</p>
+                    )}
+                    {upload.result.flashcards && (
+                      <p>Created {upload.result.flashcards.length} flashcards</p>
+                    )}
                   </div>
                 )}
               </div>
