@@ -326,6 +326,11 @@ export class CodeReviewService {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
         console.error(`Error analyzing file ${file}:`, error);
         issues.push({
           type: 'error',
