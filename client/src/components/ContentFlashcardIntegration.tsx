@@ -73,7 +73,7 @@ const ContentFlashcardIntegration: React.FC = () => {
             variant: 'destructive',
             title: 'Error',
             description: error.message,
-            duration: 3000
+            duration: 3000,
           });
         } else {
           console.error('An unknown error occurred:', error);
@@ -81,7 +81,7 @@ const ContentFlashcardIntegration: React.FC = () => {
             variant: 'destructive',
             title: 'Error',
             description: 'An unknown error occurred',
-            duration: 3000
+            duration: 3000,
           });
         }
         setProgress(0);
