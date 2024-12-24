@@ -38,18 +38,23 @@ export interface FlashcardSystemEvents {
   error: { message: string; timestamp: number };
 }
 
-export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
-  private initialized = false;
-  private analyticsReady = false;
-  private cards: any[] = [];
-  private currentIndex = 0;
-  private studySlots: StudySession[] = [];
+class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
+  private initialized: boolean;
+  private analyticsReady: boolean;
+  private cards: any[];
+  private currentIndex: number;
+  private studySlots: StudySession[];
   private config: FlashcardSystemConfig;
   private analyticsData: AnalyticsData;
-  private cleanupFunctions: Array<() => void> = [];
+  private cleanupFunctions: Array<() => void>;
 
   constructor(config: Partial<FlashcardSystemConfig> = {}) {
     super();
+    this.initialized = false;
+    this.analyticsReady = false;
+    this.cards = [];
+    this.currentIndex = 0;
+    this.studySlots = [];
     this.config = {
       analyticsEnabled: true,
       autoSave: true,
@@ -62,15 +67,21 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       accuracy: 0,
       categoryProgress: {},
     };
+    this.cleanupFunctions = [];
     this.addCleanupListener();
   }
 
-  private addCleanupListener = (): void => {
+  private addCleanupListener(): void {
     if (typeof window !== 'undefined') {
       const cleanup = () => {
         try {
           this.cleanup();
         } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
           const message = error instanceof Error ? error.message : 'Unknown error during cleanup';
           console.error('Error during cleanup:', message);
           this.emit('error', { message, timestamp: Date.now() });
@@ -80,9 +91,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       window.addEventListener('beforeunload', cleanup);
       this.cleanupFunctions.push(() => window.removeEventListener('beforeunload', cleanup));
     }
-  };
+  }
 
-  public initialize = async (): Promise<{ success: boolean; error?: string; status?: string }> => {
+  public async initialize(): Promise<{ success: boolean; error?: string; status?: string }> {
     if (this.initialized) {
       return { success: true, status: 'already_initialized' };
     }
@@ -111,9 +122,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       this.emit('error', { message, timestamp: Date.now() });
       return { success: false, error: message };
     }
-  };
+  }
 
-  private initializeAnalytics = async (): Promise<AnalyticsData | null> => {
+  private async initializeAnalytics(): Promise<AnalyticsData | null> {
     if (!this.config.analyticsEnabled) {
       return null;
     }
@@ -131,9 +142,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       console.error('Analytics initialization failed:', error);
       return null;
     }
-  };
+  }
 
-  public startNewSession = (type = 'study'): StudySession => {
+  public startNewSession(type = 'study'): StudySession {
     this.endCurrentSession();
 
     const session: StudySession = {
@@ -150,13 +161,23 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
     this.studySlots.push(session);
     this.emit('sessionStarted', session);
     return session;
-  };
+  }
 
-  public saveResult = async (result: {
+  private endCurrentSession(): void {
+    const currentSlot = this.getCurrentSession();
+    if (currentSlot && !currentSlot.completed) {
+      currentSlot.endTime = Date.now();
+      currentSlot.duration = currentSlot.endTime - currentSlot.startTime;
+      currentSlot.completed = true;
+      this.emit('sessionEnded', currentSlot);
+    }
+  }
+
+  public async saveResult(result: {
     duration: number;
     accuracy?: number;
     categoryProgress?: Record<string, number>;
-  }): Promise<AnalyticsData | null> => {
+  }): Promise<AnalyticsData | null> {
     if (!this.initialized) {
       throw new Error('FlashcardSystem not initialized');
     }
@@ -181,19 +202,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       this.emit('error', { message, timestamp: Date.now() });
       return null;
     }
-  };
+  }
 
-  private endCurrentSession = (): void => {
-    const currentSlot = this.getCurrentSession();
-    if (currentSlot && !currentSlot.completed) {
-      currentSlot.endTime = Date.now();
-      currentSlot.duration = currentSlot.endTime - currentSlot.startTime;
-      currentSlot.completed = true;
-      this.emit('sessionEnded', currentSlot);
-    }
-  };
-
-  public cleanup = (): void => {
+  public cleanup(): void {
     try {
       this.endCurrentSession();
       this.cleanupFunctions.forEach((cleanup) => cleanup());
@@ -206,20 +217,20 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       console.error('Cleanup error:', message);
       this.emit('error', { message, timestamp: Date.now() });
     }
-  };
+  }
 
-  public isInitialized = (): boolean => {
+  public isInitialized(): boolean {
     return this.initialized;
-  };
+  }
 
-  public getAnalyticsData = (): AnalyticsData => {
+  public getAnalyticsData(): AnalyticsData {
     return { ...this.analyticsData };
-  };
+  }
 
-  public getCurrentSession = (): StudySession | null => {
+  public getCurrentSession(): StudySession | null {
     const currentSlot = this.studySlots[this.studySlots.length - 1];
     return currentSlot ? { ...currentSlot } : null;
-  };
+  }
 }
 
 const flashcardSystem = new FlashcardSystem();
