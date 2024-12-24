@@ -1,4 +1,3 @@
-
 import { EventEmitter } from './EventEmitter';
 
 interface FlashcardSystemConfig {
@@ -58,7 +57,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
 
   private async initializeAnalytics(): Promise<boolean> {
     if (!this.config.analyticsEnabled) return false;
-    
+
     try {
       // Analytics initialization logic would go here
       return true;
