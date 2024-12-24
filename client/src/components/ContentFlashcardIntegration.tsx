@@ -77,7 +77,7 @@ const ContentFlashcardIntegration: React.FC = () => {
         setProgress(0);
       }
     },
-    [toast]
+    [toast],
   );
 
   const updateAnalytics = useCallback(async () => {
