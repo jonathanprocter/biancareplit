@@ -9,6 +9,16 @@ class AdaptiveLearningService:
     def __init__(self, ai_service: AIService):
         self.ai_service = ai_service
         self.scaler = StandardScaler()
+        self.initialized = False
+
+    async def initialize(self):
+        if not self.initialized:
+            await self.ai_service.initialize()
+            self.initialized = True
+
+    async def ensure_initialized(self):
+        if not self.initialized:
+            await self.initialize()
 
     async def generate_adaptive_content(
         self, user_id: int, performance_history: List[Dict]

@@ -4,10 +4,10 @@ export class OpenAIService {
   private openai: OpenAIApi;
 
   constructor() {
-    const configuration = new Configuration({
-      apiKey: process.env.VITE_OPENAI_API_KEY,
+    this.openai = new OpenAI({
+      apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+      baseURL: import.meta.env.VITE_API_BASE_URL
     });
-    this.openai = new OpenAIApi(configuration);
   }
 
   async generateResponse(prompt: string): Promise<string> {
