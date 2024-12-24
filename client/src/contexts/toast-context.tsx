@@ -16,14 +16,13 @@ type ToastContextType = {
   removeToast: (id: string) => void;
 };
 
-export const ToastContext = createContext<ToastContextType | undefined>(undefined);
+const ToastContext = createContext<ToastContextType | null>(null);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToasterToast[]>([]);
 
   const addToast = useCallback((props: Omit<ToasterToast, 'id'>) => {
     const id = Math.random().toString(36).slice(2, 9);
-
     setToasts((prev) => [...prev, { id, ...props }]);
 
     setTimeout(() => {
@@ -44,7 +43,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export function useToast() {
   const context = useContext(ToastContext);
-
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
