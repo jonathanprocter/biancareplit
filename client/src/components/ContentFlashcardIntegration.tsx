@@ -43,8 +43,8 @@ const LoadingSpinner: React.FC = () => (
 
 const ContentFlashcardIntegration: React.FC = () => {
   const { toast } = useToast();
-  const [initialized, setInitialized] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [analytics, setAnalytics] = useState<ComponentAnalytics>({
     totalStudyTime: 0,
@@ -54,7 +54,7 @@ const ContentFlashcardIntegration: React.FC = () => {
     lastUpdate: null,
   });
   const [studySlots, setStudySlots] = useState<StudySession[]>([]);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<number>(0);
 
   const updateProgress = useCallback((completedCards: number, accuracy = 0): void => {
     try {
@@ -66,6 +66,11 @@ const ContentFlashcardIntegration: React.FC = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       const message = error instanceof Error ? error.message : 'Error updating progress';
       console.error('Progress update failed:', message);
       setProgress(0);

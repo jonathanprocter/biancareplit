@@ -21,16 +21,15 @@ export interface AnalyticsData {
   completedCards: number;
   accuracy: number;
   categoryProgress: Record<string, number>;
-  lastUpdate: number | null;
 }
 
-interface FlashcardSystemConfig {
+export interface FlashcardSystemConfig {
   analyticsEnabled: boolean;
   autoSave: boolean;
   reviewInterval: number;
 }
 
-interface FlashcardSystemEvents {
+export interface FlashcardSystemEvents {
   initialized: { timestamp: number; analyticsReady: boolean };
   sessionStarted: StudySession;
   sessionEnded: StudySession;
@@ -39,7 +38,7 @@ interface FlashcardSystemEvents {
   error: { message: string; timestamp: number };
 }
 
-class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
+export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
   private initialized: boolean = false;
   private analyticsReady: boolean = false;
   private cards: any[] = [];
@@ -62,33 +61,28 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       completedCards: 0,
       accuracy: 0,
       categoryProgress: {},
-      lastUpdate: null,
     };
     this.addCleanupListener();
   }
 
-  private addCleanupListener(): void {
+  private addCleanupListener = (): void => {
     if (typeof window !== 'undefined') {
-      const cleanup = (): void => {
+      const cleanup = () => {
         try {
           this.cleanup();
         } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
           const message = error instanceof Error ? error.message : 'Unknown error during cleanup';
           console.error('Error during cleanup:', message);
           this.emit('error', { message, timestamp: Date.now() });
         }
       };
+
       window.addEventListener('beforeunload', cleanup);
       this.cleanupFunctions.push(() => window.removeEventListener('beforeunload', cleanup));
     }
-  }
+  };
 
-  async initialize(): Promise<{ success: boolean; status?: string; error?: string }> {
+  initialize = async (): Promise<{ success: boolean; error?: string; status?: string }> => {
     if (this.initialized) {
       return { success: true, status: 'already_initialized' };
     }
@@ -97,7 +91,7 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       console.log('Starting FlashcardSystem initialization...');
       const analytics = await this.initializeAnalytics();
 
-      if (!analytics) {
+      if (!analytics && this.config.analyticsEnabled) {
         throw new Error('Failed to initialize analytics');
       }
 
@@ -117,9 +111,9 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       this.emit('error', { message, timestamp: Date.now() });
       return { success: false, error: message };
     }
-  }
+  };
 
-  private async initializeAnalytics(): Promise<AnalyticsData | null> {
+  private initializeAnalytics = async (): Promise<AnalyticsData | null> => {
     if (!this.config.analyticsEnabled) {
       return null;
     }
@@ -130,7 +124,6 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
         completedCards: 0,
         accuracy: 0,
         categoryProgress: {},
-        lastUpdate: Date.now(),
       };
       this.analyticsReady = true;
       return this.analyticsData;
@@ -138,9 +131,9 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       console.error('Analytics initialization failed:', error);
       return null;
     }
-  }
+  };
 
-  startNewSession(type = 'study'): StudySession {
+  startNewSession = (type = 'study'): StudySession => {
     this.endCurrentSession();
 
     const session: StudySession = {
@@ -157,13 +150,13 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
     this.studySlots.push(session);
     this.emit('sessionStarted', session);
     return session;
-  }
+  };
 
-  async saveResult(result: {
+  saveResult = async (result: {
     duration: number;
     accuracy?: number;
     categoryProgress?: Record<string, number>;
-  }): Promise<AnalyticsData | null> {
+  }): Promise<AnalyticsData | null> => {
     if (!this.initialized) {
       throw new Error('FlashcardSystem not initialized');
     }
@@ -178,7 +171,6 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
           ...this.analyticsData.categoryProgress,
           ...(result.categoryProgress || {}),
         },
-        lastUpdate: Date.now(),
       };
 
       this.analyticsData = updatedAnalytics;
@@ -191,9 +183,9 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       this.emit('error', { message, timestamp: Date.now() });
       return null;
     }
-  }
+  };
 
-  private endCurrentSession(): void {
+  private endCurrentSession = (): void => {
     const currentSlot = this.getCurrentSession();
     if (currentSlot && !currentSlot.completed) {
       currentSlot.endTime = Date.now();
@@ -201,9 +193,9 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       currentSlot.completed = true;
       this.emit('sessionEnded', currentSlot);
     }
-  }
+  };
 
-  cleanup(): void {
+  cleanup = (): void => {
     try {
       this.endCurrentSession();
       this.cleanupFunctions.forEach((cleanup) => cleanup());
@@ -216,23 +208,22 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       console.error('Cleanup error:', message);
       this.emit('error', { message, timestamp: Date.now() });
     }
-  }
+  };
 
-  isInitialized(): boolean {
+  isInitialized = (): boolean => {
     return this.initialized;
-  }
+  };
 
-  getAnalyticsData(): AnalyticsData {
+  getAnalyticsData = (): AnalyticsData => {
     return { ...this.analyticsData };
-  }
+  };
 
-  getCurrentSession(): StudySession | null {
+  getCurrentSession = (): StudySession | null => {
     const currentSlot = this.studySlots[this.studySlots.length - 1];
     return currentSlot ? { ...currentSlot } : null;
-  }
+  };
 }
 
 const flashcardSystem = new FlashcardSystem();
 
 export default flashcardSystem;
-export type { StudySession, AnalyticsData, FlashcardSystemEvents, FlashcardSystemConfig };
