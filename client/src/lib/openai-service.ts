@@ -1,4 +1,3 @@
-
 import { Configuration, OpenAIApi } from 'openai';
 
 export class OpenAIService {
@@ -14,9 +13,9 @@ export class OpenAIService {
   async generateResponse(prompt: string): Promise<string> {
     try {
       const response = await this.openai.createCompletion({
-        model: "text-davinci-003",
+        model: 'text-davinci-003',
         prompt,
-        max_tokens: 150
+        max_tokens: 150,
       });
       return response.data.choices[0]?.text || '';
     } catch (error) {
