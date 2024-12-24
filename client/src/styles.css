@@ -1,4 +1,2 @@
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+// This file is no longer used. All styles are now in client/src/styles/index.css
+// Please import from "@/styles/index.css" instead
