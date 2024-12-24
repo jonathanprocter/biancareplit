@@ -5,8 +5,7 @@ import React, { useCallback, useState } from 'react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-
-import { useToast } from '@/lib/toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface UploadResult {
   topics?: string[];
@@ -100,7 +99,6 @@ export const FileUploadWizard = () => {
       }));
 
       setUploads((prev) => [...prev, ...newUploads]);
-
       await Promise.all(newUploads.map(processFileUpload));
     },
     [processFileUpload],
@@ -108,7 +106,11 @@ export const FileUploadWizard = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: ['.pdf', '.docx', '.txt'],
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc', '.docx'],
+      'text/plain': ['.txt'],
+    },
     multiple: true,
   });
 

@@ -1,5 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
-
+import { createContext, useCallback, useContext, useState } from 'react';
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
 const TOAST_REMOVE_DELAY = 5000;
@@ -11,19 +10,20 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement;
 };
 
-type ToasterContext = {
+type ToastContextType = {
   toasts: ToasterToast[];
   addToast: (props: Omit<ToasterToast, 'id'>) => void;
   removeToast: (id: string) => void;
 };
 
-export const ToastContext = createContext<ToasterContext | undefined>(undefined);
+export const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export function ToastContextProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToasterToast[]>([]);
 
-  const addToast = useCallback(({ ...props }: Omit<ToasterToast, 'id'>) => {
+  const addToast = useCallback((props: Omit<ToasterToast, 'id'>) => {
     const id = Math.random().toString(36).slice(2, 9);
+
     setToasts((prev) => [...prev, { id, ...props }]);
 
     setTimeout(() => {
@@ -35,30 +35,23 @@ export function ToastContextProvider({ children }: { children: React.ReactNode }
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const value = useMemo(
-    () => ({
-      toasts,
-      addToast,
-      removeToast,
-    }),
-    [toasts, addToast, removeToast],
+  return (
+    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+      {children}
+    </ToastContext.Provider>
   );
-
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
 }
 
 export function useToast() {
   const context = useContext(ToastContext);
 
   if (!context) {
-    throw new Error('useToast must be used within a ToastContextProvider');
+    throw new Error('useToast must be used within a ToastProvider');
   }
 
   return {
-    ...context,
     toast: context.addToast,
+    toasts: context.toasts,
+    removeToast: context.removeToast,
   };
 }
-
-// For backward compatibility
-export const ToastProvider = ToastContextProvider;

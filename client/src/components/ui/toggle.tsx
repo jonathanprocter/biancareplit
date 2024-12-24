@@ -1,9 +1,7 @@
-The code provided doesn't seem to have any syntax errors, bugs, security vulnerabilities, performance issues, or integration problems. It also follows TypeScript best practices and style guidelines. Therefore, the code doesn't need any changes. Here it is again for reference:
-
-```typescript
+import * as React from 'react';
 import * as TogglePrimitive from '@radix-ui/react-toggle';
 import { VariantProps, cva } from 'class-variance-authority';
-import * as React from 'react';
+
 import { cn } from '@/lib/utils';
 
 const toggleVariants = cva(
@@ -12,7 +10,8 @@ const toggleVariants = cva(
     variants: {
       variant: {
         default: 'bg-transparent',
-        outline: 'border border-input bg-transparent hover:bg-accent hover:text-accent-foreground',
+        outline:
+          'border border-input bg-transparent hover:bg-accent hover:text-accent-foreground',
       },
       size: {
         default: 'h-10 px-3',
@@ -29,7 +28,8 @@ const toggleVariants = cva(
 
 const Toggle = React.forwardRef<
   React.ElementRef<typeof TogglePrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root> & VariantProps<typeof toggleVariants>
+  React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root> &
+    VariantProps<typeof toggleVariants>
 >(({ className, variant, size, ...props }, ref) => (
   <TogglePrimitive.Root
     ref={ref}
@@ -41,6 +41,3 @@ const Toggle = React.forwardRef<
 Toggle.displayName = TogglePrimitive.Root.displayName;
 
 export { Toggle, toggleVariants };
-```
-
-Please note that the correctness of this code depends on the correct implementation and export of the imported modules and functions.

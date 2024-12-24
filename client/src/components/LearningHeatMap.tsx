@@ -4,8 +4,7 @@ import { Award, Brain, Calendar, Sparkles } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { Card, CardContent } from '@/components/ui/card';
-
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface ActivityData {
   date: Date;

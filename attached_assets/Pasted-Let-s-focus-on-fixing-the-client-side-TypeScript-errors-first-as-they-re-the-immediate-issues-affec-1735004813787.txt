@@ -1,0 +1,100 @@
+Let's focus on fixing the client-side TypeScript errors first, as they're the immediate issues affecting the codebase.
+
+```typescript
+// components/ui/avatar.tsx
+import * as React from "react";
+import * as AvatarPrimitive from "@radix-ui/react-avatar";
+import { cn } from "@/lib/utils";
+
+const Avatar = React.forwardRef
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Root
+    ref={ref}
+    className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)}
+    {...props}
+  />
+));
+Avatar.displayName = AvatarPrimitive.Root.displayName;
+
+const AvatarImage = React.forwardRef
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Image
+    ref={ref}
+    className={cn("aspect-square h-full w-full", className)}
+    {...props}
+  />
+));
+AvatarImage.displayName = AvatarPrimitive.Image.displayName;
+
+const AvatarFallback = React.forwardRef
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Fallback
+    ref={ref}
+    className={cn("flex h-full w-full items-center justify-center rounded-full bg-muted", className)}
+    {...props}
+  />
+));
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
+
+export { Avatar, AvatarImage, AvatarFallback };
+```
+
+```typescript
+// components/ui/carousel.tsx
+import * as React from "react";
+import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
+import { cn } from "@/lib/utils";
+
+type CarouselApi = UseEmblaCarouselType[1];
+type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
+type CarouselOptions = UseCarouselParameters[0];
+type CarouselPlugin = UseCarouselParameters[1];
+
+interface CarouselProps {
+  opts?: CarouselOptions;
+  plugins?: CarouselPlugin;
+  orientation?: "horizontal" | "vertical";
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function Carousel({
+  opts,
+  plugins,
+  orientation = "horizontal",
+  className,
+  children,
+}: CarouselProps) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    ...opts,
+    axis: orientation === "horizontal" ? "x" : "y",
+  }, plugins);
+
+  return (
+    <div
+      ref={emblaRef}
+      className={cn("overflow-hidden", className)}
+      dir="ltr"
+    >
+      <div className="flex">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export { type CarouselApi };
+```
+
+Would you like me to:
+1. Address any other client-side component errors?
+2. Add error boundaries to these components?
+3. Show how to test these components?
+
+Let me know which aspect you'd like me to focus on next.

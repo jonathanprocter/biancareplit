@@ -1,3 +1,42 @@
-The given TypeScript code is already well-written and follows best practices. There are no syntax errors, bugs, security vulnerabilities, or performance issues. The code is properly integrated and follows style guidelines. Therefore, no changes are needed. 
+import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react';
 
-However, if you have any specific issues or errors while running this code, please provide the error details or describe the issue for a more accurate solution.
+import * as React from 'react';
+
+import { cn } from '@/lib/utils';
+
+type CarouselApi = UseEmblaCarouselType[1];
+type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
+type CarouselOptions = UseCarouselParameters[0];
+type CarouselPlugin = UseCarouselParameters[1];
+
+interface CarouselProps {
+  opts?: CarouselOptions;
+  plugins?: CarouselPlugin;
+  orientation?: 'horizontal' | 'vertical';
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function Carousel({
+  opts,
+  plugins,
+  orientation = 'horizontal',
+  className,
+  children,
+}: CarouselProps) {
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      ...opts,
+      axis: orientation === 'horizontal' ? 'x' : 'y',
+    },
+    plugins,
+  );
+
+  return (
+    <div ref={emblaRef} className={cn('overflow-hidden', className)} dir="ltr">
+      <div className="flex">{children}</div>
+    </div>
+  );
+}
+
+export { type CarouselApi };
