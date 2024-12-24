@@ -4,9 +4,10 @@ import os
 import sys
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List, Union, TypeVar, Type
 import yaml
 from datetime import timedelta
+from logging.handlers import RotatingFileHandler
 
 # Initial basic logging setup
 logging.basicConfig(
@@ -16,8 +17,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+T = TypeVar('T')
+
 class ConfigurationError(Exception):
-    """Custom exception for configuration errors."""
+    """Base exception for configuration errors."""
+    pass
+
+class EnvironmentConfigError(ConfigurationError):
+    """Exception raised for environment-specific configuration errors."""
+    pass
+
+class ValidationError(ConfigurationError):
+    """Exception raised for configuration validation errors."""
     pass
 
 class ConfigurationManager:
@@ -46,11 +57,11 @@ class ConfigurationManager:
             self._setup_logging()
             self._initialized = True
             logger.info(f"Configuration initialized for environment: {self.env}")
-        except Exception as e:
+        except ConfigurationError as e:
             logger.error(f"Configuration initialization failed: {str(e)}")
             if self.env == "development":
                 logger.exception("Detailed error trace:")
-            raise ConfigurationError(f"Failed to initialize configuration: {str(e)}")
+            raise
 
     def _load_base_config(self) -> None:
         """Load base configuration with proper validation."""
@@ -95,7 +106,11 @@ class ConfigurationManager:
                     "logging": {
                         "enabled": True,
                         "level": os.getenv("LOG_LEVEL", "INFO"),
-                        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                        "rotation": {
+                            "max_bytes": 10485760,  # 10MB
+                            "backup_count": 5
+                        }
                     },
                     "error_handling": {
                         "enabled": True,
@@ -111,17 +126,18 @@ class ConfigurationManager:
                         "enabled": True,
                         "rate_limit": "60/minute",
                         "cors_enabled": True,
-                        "jwt_required": True
+                        "jwt_required": True,
+                        "allowed_origins": os.getenv("CORS_ORIGINS", "*").split(",")
                     }
                 }
             })
         except ValueError as e:
-            raise ConfigurationError(f"Invalid environment variable value: {str(e)}")
+            raise ValidationError(f"Invalid environment variable value: {str(e)}")
         except Exception as e:
             raise ConfigurationError(f"Error loading base configuration: {str(e)}")
 
     def _load_env_config(self) -> None:
-        """Load environment-specific configuration."""
+        """Load environment-specific configuration with enhanced error handling."""
         try:
             env_config_path = self.config_dir / f"{self.env}.yaml"
             if env_config_path.exists():
@@ -130,22 +146,36 @@ class ConfigurationManager:
                     self._validate_env_config(env_config)
                     self.config.update(env_config)
                     logger.info(f"Loaded environment config from {env_config_path}")
+        except yaml.YAMLError as e:
+            raise EnvironmentConfigError(f"Invalid YAML in environment config: {str(e)}")
         except Exception as e:
             logger.warning(f"Failed to load environment config: {str(e)}, continuing with base configuration")
 
     def _validate_env_config(self, config: Dict[str, Any]) -> None:
-        """Validate environment-specific configuration."""
+        """Validate environment-specific configuration with type checking."""
         if not isinstance(config, dict):
-            raise ConfigurationError("Environment configuration must be a dictionary")
+            raise ValidationError("Environment configuration must be a dictionary")
 
-        # Validate critical sections
-        critical_sections = ["SQLALCHEMY_DATABASE_URI", "SECRET_KEY"]
-        for section in critical_sections:
-            if section in config and not config[section]:
-                raise ConfigurationError(f"Invalid {section} in environment configuration")
+        # Validate critical sections with type checking
+        critical_sections = {
+            "SQLALCHEMY_DATABASE_URI": str,
+            "SECRET_KEY": str,
+            "JWT_SECRET_KEY": str,
+            "API_TIMEOUT": int,
+            "LOG_LEVEL": str
+        }
+
+        for section, expected_type in critical_sections.items():
+            if section in config:
+                value = config[section]
+                if not isinstance(value, expected_type):
+                    raise ValidationError(
+                        f"Invalid type for {section} in environment configuration. "
+                        f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                    )
 
     def _validate_config(self) -> None:
-        """Validate configuration integrity."""
+        """Validate configuration integrity with comprehensive checks."""
         # Validate middleware configuration
         middleware_config = self.config.get("MIDDLEWARE", {})
         required_middleware = ["metrics", "logging", "error_handling", "security", "health"]
@@ -162,6 +192,25 @@ class ConfigurationManager:
             # Validate enabled flag exists
             if "enabled" not in middleware_config[middleware]:
                 middleware_config[middleware]["enabled"] = True
+
+            # Validate specific middleware configurations
+            if middleware == "logging":
+                self._validate_logging_config(middleware_config[middleware])
+
+    def _validate_logging_config(self, config: Dict[str, Any]) -> None:
+        """Validate logging configuration specifically."""
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if config.get("level") not in valid_levels:
+            logger.warning(f"Invalid log level: {config.get('level')}, defaulting to INFO")
+            config["level"] = "INFO"
+
+        rotation = config.get("rotation", {})
+        if not isinstance(rotation.get("max_bytes", 0), int):
+            logger.warning("Invalid rotation max_bytes, using default")
+            rotation["max_bytes"] = 10485760
+        if not isinstance(rotation.get("backup_count", 0), int):
+            logger.warning("Invalid rotation backup_count, using default")
+            rotation["backup_count"] = 5
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value with optional default."""
@@ -182,7 +231,7 @@ class ConfigurationManager:
             raise ConfigurationError(f"Failed to initialize application: {str(e)}")
 
     def _setup_logging(self) -> None:
-        """Configure logging based on environment."""
+        """Configure logging with rotation and proper error handling."""
         try:
             log_level = self.config.get("LOG_LEVEL", "INFO")
             log_dir = Path("logs")
@@ -198,10 +247,17 @@ class ConfigurationManager:
             ))
             handlers.append(stdout_handler)
 
-            # Add file handler for persistent logging in non-development environments
+            # Add rotating file handler for persistent logging in non-development environments
             if self.env != "development":
                 try:
-                    file_handler = logging.FileHandler(str(log_dir / f"{self.env}.log"))
+                    log_config = self.config["MIDDLEWARE"]["logging"]
+                    rotation_config = log_config.get("rotation", {})
+
+                    file_handler = RotatingFileHandler(
+                        str(log_dir / f"{self.env}.log"),
+                        maxBytes=rotation_config.get("max_bytes", 10485760),
+                        backupCount=rotation_config.get("backup_count", 5)
+                    )
                     file_handler.setFormatter(logging.Formatter(
                         "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
                     ))
