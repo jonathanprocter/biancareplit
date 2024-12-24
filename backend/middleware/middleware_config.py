@@ -36,10 +36,9 @@ class MiddlewareConfig:
         return {
             "metrics": {
                 "enabled": True,
-                "endpoint": "/metrics",
-                "exclude_paths": ["/metrics", "/health", "/static"],
-                "buckets": [0.1, 0.5, 1.0, 2.0, 5.0],  # Latency buckets in seconds
-                "namespace": "medical_edu"  # Prefix for all metrics
+                "namespace": "medical_edu",
+                "buckets": [0.1, 0.5, 1.0, 2.0, 5.0],
+                "exclude_paths": ["/metrics", "/health", "/static"]
             },
             "logging": {
                 "enabled": True,
@@ -59,26 +58,22 @@ class MiddlewareConfig:
 
         for middleware in required_middleware:
             if middleware not in self.config:
-                raise MiddlewareConfigError(f"Required middleware '{middleware}' not configured")
+                logger.warning(f"Required middleware '{middleware}' not configured, using defaults")
+                self.config[middleware] = self._get_default_config()[middleware]
 
             if not isinstance(self.config[middleware], dict):
                 raise MiddlewareConfigError(f"Invalid configuration for middleware '{middleware}'")
 
             if "enabled" not in self.config[middleware]:
-                raise MiddlewareConfigError(f"Missing 'enabled' flag for middleware '{middleware}'")
+                self.config[middleware]["enabled"] = True
 
-    def get_middleware_config(self, middleware_name: str) -> Dict[str, Any]:
+    def get_middleware_settings(self, middleware_name: str) -> Dict[str, Any]:
         """Get configuration for specific middleware."""
         config = self.config.get(middleware_name, {})
         if not config:
             logger.warning(f"No configuration found for middleware: {middleware_name}")
             return {"enabled": False}
         return config
-
-    def is_middleware_enabled(self, middleware_name: str) -> bool:
-        """Check if middleware is enabled."""
-        config = self.get_middleware_config(middleware_name)
-        return config.get("enabled", False)
 
     def get_enabled_middleware(self) -> List[str]:
         """Get list of enabled middleware components."""

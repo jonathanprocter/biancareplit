@@ -8,7 +8,6 @@ from .middleware_config import middleware_registry
 
 logger = logging.getLogger(__name__)
 
-
 class MiddlewareManager:
     """Manages middleware initialization and execution."""
 
@@ -28,36 +27,42 @@ class MiddlewareManager:
 
     def init_app(self, app: Flask) -> None:
         """Initialize middleware with Flask app."""
-        enabled_middleware = middleware_registry.get_enabled_middleware()
+        try:
+            enabled_middleware = middleware_registry.get_enabled_middleware()
+            logger.info(f"Initializing middleware: {enabled_middleware}")
 
-        for name in enabled_middleware:
-            if name not in self._registry:
-                logger.warning(f"Middleware {name} not found in registry")
-                continue
+            for name in enabled_middleware:
+                if name not in self._registry:
+                    logger.warning(f"Middleware {name} not found in registry")
+                    continue
 
-            try:
-                settings = middleware_registry.get_middleware_settings(name)
-                middleware = self._registry[name](app, **settings)
-                self._middleware[name] = middleware
+                try:
+                    settings = middleware_registry.get_middleware_settings(name)
+                    middleware = self._registry[name](app, **settings)
+                    self._middleware[name] = middleware
 
-                if hasattr(middleware, "before_request"):
-                    app.before_request(middleware.before_request)
+                    # Register request handlers in correct order
+                    if hasattr(middleware, "before_request"):
+                        app.before_request(middleware.before_request)
 
-                if hasattr(middleware, "after_request"):
-                    app.after_request(middleware.after_request)
+                    if hasattr(middleware, "after_request"):
+                        app.after_request(middleware.after_request)
 
-                if hasattr(middleware, "teardown_request"):
-                    app.teardown_request(middleware.teardown_request)
+                    if hasattr(middleware, "teardown_request"):
+                        app.teardown_request(middleware.teardown_request)
 
-                logger.info(f"Initialized middleware: {name}")
-            except Exception as e:
-                logger.error(
-                    f"Failed to initialize middleware {name}: {e}", exc_info=True
-                )
+                    logger.info(f"Initialized middleware: {name}")
+                except Exception as e:
+                    logger.error(f"Failed to initialize middleware {name}: {e}", exc_info=True)
+                    # Continue with other middleware even if one fails
+
+        except Exception as e:
+            logger.error(f"Failed to initialize middleware manager: {str(e)}", exc_info=True)
+            raise
 
     def get_middleware(self, name: str) -> Optional[BaseMiddleware]:
         """Get initialized middleware instance."""
         return self._middleware.get(name)
 
-
+# Create singleton instance
 middleware_manager = MiddlewareManager()
