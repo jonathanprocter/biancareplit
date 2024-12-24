@@ -1,7 +1,8 @@
 import express, { NextFunction, type Request, Response } from 'express';
-
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
+import { createServer } from 'http';
+import { WebSocket, WebSocketServer } from 'ws';
 
 const app = express();
 app.use(express.json());
@@ -35,7 +36,35 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    const server = registerRoutes(app);
+    const server = createServer(app);
+
+    // Create WebSocket server
+    const wss = new WebSocketServer({ noServer: true });
+
+    // Handle WebSocket connections
+    wss.on('connection', (ws: WebSocket) => {
+      ws.on('message', (message: string) => {
+        // Handle WebSocket messages
+        console.log('received: %s', message);
+      });
+    });
+
+    // Handle upgrades while ignoring vite-hmr
+    server.on('upgrade', (request, socket, head) => {
+      const protocol = request.headers['sec-websocket-protocol'];
+
+      // Ignore vite-hmr upgrade requests
+      if (protocol === 'vite-hmr') {
+        return;
+      }
+
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    });
+
+    // Register routes
+    registerRoutes(app);
 
     // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

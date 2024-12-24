@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, Progress } from '@/components/ui';
-
-import { cn } from '@/lib/utils';
-
-import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle, Progress } from '../components/ui';
+import { useToast } from '../hooks/use-toast';
+import { cn } from '../lib/utils';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -45,7 +43,13 @@ const ContentFlashcardIntegration = () => {
         ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
       );
       setProgress(Math.round(progressValue));
-    } catch (error) {
+    } catch (err) {
+    if (err instanceof Error) {
+      console.error(`Error: ${err.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', err); {
+      const error = err instanceof Error ? err : new Error('Failed to update progress');
       console.error('Error updating progress:', error);
       setProgress(0);
     }
