@@ -1,11 +1,12 @@
 import { AlertCircle, CheckCircle, FileText, Upload } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/components/ui/use-toast';
+
+import { useToast } from '@/hooks/use-toast';
 
 interface UploadResult {
   topics?: string[];
@@ -28,23 +29,47 @@ interface UploadStatus {
   error?: string;
 }
 
-export const FileUploadWizard = () => {
+export function FileUploadWizard() {
   const [uploads, setUploads] = useState<UploadStatus[]>([]);
   const { toast } = useToast();
+
+  // Cleanup function for unmounting
+  useEffect(() => {
+    return () => {
+      uploads.forEach((upload) => {
+        if (upload.status === 'uploading') {
+          toast({
+            title: 'Upload Cancelled',
+            description: `${upload.file.name} upload was cancelled due to navigation.`,
+            variant: 'destructive',
+          });
+        }
+      });
+    };
+  }, [uploads, toast]);
 
   const processFileUpload = useCallback(
     async (upload: UploadStatus) => {
       try {
         setUploads((prev) =>
           prev.map((u) =>
-            u.file.name === upload.file.name && u.file.size === upload.file.size
-              ? { ...u, status: 'uploading' }
-              : u,
+            u.file.name === upload.file.name ? { ...u, status: 'uploading', progress: 0 } : u,
           ),
         );
 
         const formData = new FormData();
         formData.append('file', upload.file);
+
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded * 100) / event.total);
+            setUploads((prev) =>
+              prev.map((u) => (u.file.name === upload.file.name ? { ...u, progress } : u)),
+            );
+          }
+        };
 
         const response = await fetch('/api/content/upload', {
           method: 'POST',
@@ -60,9 +85,7 @@ export const FileUploadWizard = () => {
 
         setUploads((prev) =>
           prev.map((u) =>
-            u.file.name === upload.file.name && u.file.size === upload.file.size
-              ? { ...u, status: 'complete', result }
-              : u,
+            u.file.name === upload.file.name ? { ...u, status: 'complete', result } : u,
           ),
         );
 
@@ -74,16 +97,14 @@ export const FileUploadWizard = () => {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         setUploads((prev) =>
           prev.map((u) =>
-            u.file.name === upload.file.name && u.file.size === upload.file.size
-              ? { ...u, status: 'error', error: errorMessage }
-              : u,
+            u.file.name === upload.file.name ? { ...u, status: 'error', error: errorMessage } : u,
           ),
         );
 
         toast({
           variant: 'destructive',
           title: 'Upload Failed',
-          description: `Failed to process ${upload.file.name}. Please try again.`,
+          description: `Failed to process ${upload.file.name}: ${errorMessage}`,
         });
       }
     },
@@ -92,7 +113,20 @@ export const FileUploadWizard = () => {
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      const newUploads = acceptedFiles.map((file) => ({
+      // Filter out files that are already being uploaded
+      const newFiles = acceptedFiles.filter(
+        (file) => !uploads.some((u) => u.file.name === file.name),
+      );
+
+      if (newFiles.length < acceptedFiles.length) {
+        toast({
+          title: 'Duplicate Files',
+          description: 'Some files were skipped as they are already being uploaded.',
+          variant: 'default',
+        });
+      }
+
+      const newUploads = newFiles.map((file) => ({
         file,
         progress: 0,
         status: 'pending' as const,
@@ -101,17 +135,19 @@ export const FileUploadWizard = () => {
       setUploads((prev) => [...prev, ...newUploads]);
       await Promise.all(newUploads.map(processFileUpload));
     },
-    [processFileUpload],
+    [processFileUpload, uploads, toast],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
-      'application/msword': ['.doc', '.docx'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'text/plain': ['.txt'],
     },
     multiple: true,
+    maxSize: 10485760, // 10MB
   });
 
   return (
@@ -130,7 +166,9 @@ export const FileUploadWizard = () => {
           <p className="mt-2 text-sm text-gray-600">
             Drag and drop your files here, or click to select files
           </p>
-          <p className="text-xs text-gray-500">Supported formats: PDF, DOCX, TXT</p>
+          <p className="text-xs text-gray-500">
+            Supported formats: PDF, DOCX, DOC, TXT (Max size: 10MB)
+          </p>
         </div>
 
         {uploads.length > 0 && (
@@ -144,6 +182,9 @@ export const FileUploadWizard = () => {
                   <div className="flex items-center space-x-2">
                     <FileText className="h-5 w-5 text-gray-500" />
                     <span className="font-medium">{upload.file.name}</span>
+                    <span className="text-sm text-gray-500">
+                      ({Math.round(upload.file.size / 1024)} KB)
+                    </span>
                   </div>
                   {upload.status === 'complete' && (
                     <CheckCircle className="h-5 w-5 text-green-500" />
@@ -151,7 +192,7 @@ export const FileUploadWizard = () => {
                   {upload.status === 'error' && <AlertCircle className="h-5 w-5 text-red-500" />}
                 </div>
 
-                {upload.status === 'uploading' && (
+                {(upload.status === 'uploading' || upload.status === 'processing') && (
                   <Progress value={upload.progress} className="h-2" />
                 )}
 
@@ -173,6 +214,6 @@ export const FileUploadWizard = () => {
       </CardContent>
     </Card>
   );
-};
+}
 
 export default FileUploadWizard;
