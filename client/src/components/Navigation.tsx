@@ -41,12 +41,14 @@ export function Navigation() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/">
-              <a className="text-lg font-bold text-primary">Medical Education</a>
+              <a className="text-lg font-bold text-foreground hover:text-primary">
+                Medical Education
+              </a>
             </Link>
             <div className="hidden md:flex space-x-4">
               <Link href="/dashboard">
                 <a
-                  className={`text-sm font-medium ${
+                  className={`text-sm font-medium transition-colors ${
                     location === '/dashboard'
                       ? 'text-primary'
                       : 'text-foreground hover:text-primary'
@@ -57,7 +59,7 @@ export function Navigation() {
               </Link>
               <Link href="/upload">
                 <a
-                  className={`text-sm font-medium ${
+                  className={`text-sm font-medium transition-colors ${
                     location === '/upload' ? 'text-primary' : 'text-foreground hover:text-primary'
                   }`}
                 >
@@ -66,7 +68,7 @@ export function Navigation() {
               </Link>
               <Link href="/progress">
                 <a
-                  className={`text-sm font-medium ${
+                  className={`text-sm font-medium transition-colors ${
                     location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'
                   }`}
                 >

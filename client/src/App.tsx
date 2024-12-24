@@ -3,8 +3,9 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
-import Navigation from '@/components/Navigation';
+
 import { FileUploadWizard } from '@/components/FileUploadWizard';
+import Navigation from '@/components/Navigation';
 
 // Error fallback component
 function ErrorFallback({ error }: { error: Error }) {
@@ -63,7 +64,7 @@ function NotFound() {
 function App() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
         <Navigation />
         <main className="flex-1 container mx-auto px-4 py-8">
           <Switch>
