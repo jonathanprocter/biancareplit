@@ -18,40 +18,49 @@ class MiddlewareInitializer:
             "metrics": MetricsMiddleware,
         }
         self._initialized: Dict[str, BaseMiddleware] = {}
+        self._setup_logging()
 
         if app:
             self.init_app(app)
+
+    def _setup_logging(self) -> None:
+        """Set up logging for middleware initialization."""
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
 
     def init_app(self, app: Flask) -> None:
         """Initialize all registered middleware with Flask app."""
         try:
             self.app = app
-            self._initialize_middleware()
+
+            # Wait for configuration to be ready
+            if not app.config.get('MIDDLEWARE'):
+                logger.warning("No middleware configuration found, using defaults")
+
+            # Initialize middleware components
+            enabled = middleware_registry.get_enabled_middleware()
+            for name in enabled:
+                try:
+                    if name not in self._registry:
+                        logger.warning(f"Middleware {name} is not registered.")
+                        continue
+
+                    settings = middleware_registry.get_middleware_config(name)
+                    middleware = self._registry[name](self.app, **settings)
+                    self._initialized[name] = middleware
+                    logger.info(f"Initialized middleware: {name}")
+                except Exception as e:
+                    logger.error(f"Failed to initialize middleware {name}: {e}")
+                    # Continue with other middleware even if one fails
+
             logger.info("Middleware initialization completed successfully")
         except Exception as e:
             logger.error(f"Failed to initialize middleware: {str(e)}")
-            raise
-
-    def _initialize_middleware(self) -> None:
-        """Initialize all registered middleware components."""
-        if not self.app:
-            logger.error("No Flask app configured")
-            return
-
-        enabled = middleware_registry.get_enabled_middleware()
-
-        for name in enabled:
-            if name not in self._registry:
-                logger.warning(f"Middleware {name} is not registered.")
-                continue
-
-            try:
-                settings = middleware_registry.get_middleware_config(name)
-                middleware = self._registry[name](self.app, **settings)
-                self._initialized[name] = middleware
-                logger.info(f"Initialized middleware: {name}")
-            except Exception as e:
-                logger.error(f"Failed to initialize middleware {name}: {e}")
+            # Don't raise the exception to allow the application to continue
+            # with reduced functionality
 
     def get_middleware(self, name: str) -> Optional[BaseMiddleware]:
         """Get initialized middleware instance."""

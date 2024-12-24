@@ -61,12 +61,19 @@ class DatabaseManager:
             db.init_app(app)
             migrate.init_app(app, db)
 
-            # Test connection and create tables
+            # Test connection and create tables if needed
             with app.app_context():
-                db.session.execute("SELECT 1")
-                logger.info("Database connection verified")
-                db.create_all()
-                logger.info("Database tables created")
+                try:
+                    db.session.execute("SELECT 1")
+                    logger.info("Database connection verified")
+
+                    # Only create tables in development or if explicitly configured
+                    if app.config.get('FLASK_ENV') == 'development' or app.config.get('AUTO_CREATE_TABLES'):
+                        db.create_all()
+                        logger.info("Database tables created")
+                except Exception as e:
+                    logger.error(f"Database initialization error: {str(e)}")
+                    return False
 
             self._initialized = True
             return True

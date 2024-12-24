@@ -24,52 +24,46 @@ def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
 
+    # Initialize configuration first
     try:
-        # Initialize configuration first
         config_manager.init_app(app)
         logger.info("Configuration initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize configuration: {str(e)}")
         # Continue with default configuration
-
-    # Configure the Flask app
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JSON_SORT_KEYS'] = False
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Initialize extensions
     CORS(app)
     db.init_app(app)
     migrate = Migrate(app, db)
 
-    # Create Prometheus registry before middleware initialization
+    # Create Prometheus registry
     prometheus_registry = CollectorRegistry()
     logger.info("Prometheus registry created")
 
-    # Initialize models and middleware
-    with app.app_context():
-        try:
-            # Initialize database models
+    try:
+        # Initialize models and middleware
+        with app.app_context():
+            # Initialize database models first
             init_models()
             logger.info("Database models initialized")
 
-            # Initialize middleware after database and models are ready
+            # Then initialize middleware
             middleware_initializer.init_app(app)
             logger.info("Middleware initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize middleware: {str(e)}", exc_info=True)
-            # Continue app initialization even if middleware fails
 
-    # Add Prometheus WSGI middleware after all other middleware
+    except Exception as e:
+        logger.error(f"Failed during initialization: {str(e)}", exc_info=True)
+        # Continue app initialization even if middleware fails
+
+    # Add Prometheus WSGI middleware
     app.wsgi_app = DispatcherMiddleware(
         app.wsgi_app, 
         {'/metrics': make_wsgi_app(registry=prometheus_registry)}
     )
     logger.info("Prometheus metrics endpoint configured")
-
-    # Register blueprints
-    from routes.adaptive_content_routes import adaptive_content_bp
-    app.register_blueprint(adaptive_content_bp)
 
     @app.route("/")
     def index():
