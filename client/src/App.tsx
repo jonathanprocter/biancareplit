@@ -5,9 +5,6 @@ import { Route, Switch } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/toaster';
 
-import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
-
-// Error fallback component
 function ErrorFallback({ error }: { error: Error }) {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">
@@ -30,13 +27,27 @@ function App() {
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <main className="flex-1">
           <Switch>
-            <Route path="/" component={ContentFlashcardIntegration} />
+            <Route path="/" component={Home} />
             <Route component={NotFound} />
           </Switch>
         </main>
         <Toaster />
       </div>
     </ErrorBoundary>
+  );
+}
+
+// Temporary Home component until we implement ContentFlashcardIntegration
+function Home() {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
+      <Card className="w-full max-w-md mx-4">
+        <CardContent className="pt-6">
+          <h1 className="text-2xl font-bold mb-4">Medical Education Platform</h1>
+          <p className="text-muted-foreground">Welcome to the platform.</p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
