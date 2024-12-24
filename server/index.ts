@@ -1,11 +1,11 @@
 import express, { NextFunction, type Request, Response } from 'express';
 import fs from 'fs';
+import { type Server } from 'http';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
-import { setupWebSocketServer } from './websocket';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,25 +17,6 @@ async function ensurePublicDir(): Promise<void> {
   } catch (error) {
     await fs.promises.mkdir(distPath, { recursive: true });
     log('[Server] Created public directory:', distPath);
-
-    const indexPath = path.join(distPath, 'index.html');
-    try {
-      await fs.promises.access(indexPath);
-    } catch (error) {
-      const basicHtml = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Medical Education Platform</title>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`;
-      await fs.promises.writeFile(indexPath, basicHtml, 'utf-8');
-      log('[Server] Created basic index.html in public directory');
-    }
   }
 }
 
@@ -51,34 +32,17 @@ async function startServer() {
     app.use((req, res, next) => {
       const start = Date.now();
       const path = req.path;
-      let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-      const originalResJson = res.json;
-      res.json = function (bodyJson, ...args) {
-        capturedJsonResponse = bodyJson;
-        return originalResJson.apply(res, [bodyJson, ...args]);
-      };
-
       res.on('finish', () => {
         const duration = Date.now() - start;
         if (path.startsWith('/api')) {
-          let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-          if (capturedJsonResponse) {
-            logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-          }
-          if (logLine.length > 80) {
-            logLine = logLine.slice(0, 79) + '…';
-          }
-          log(logLine);
+          log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
         }
       });
-
       next();
     });
 
     // Create and set up server with routes
     const server = registerRoutes(app);
-    setupWebSocketServer(server);
 
     // Global error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -95,20 +59,52 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start the server
-    const PORT = 5000;
-    server.listen(PORT, '0.0.0.0', () => {
-      log(`Server started on port ${PORT}`);
-    });
+    // Try to start server with port fallback
+    const startServerWithFallback = async (initialPort: number, maxRetries = 5): Promise<void> => {
+      let currentPort = initialPort;
+      let retries = 0;
 
-    // Graceful shutdown handler
-    process.on('SIGTERM', () => {
-      log('Received SIGTERM signal');
+      while (retries < maxRetries) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            server.on('error', (error: NodeJS.ErrnoException) => {
+              if (error.code === 'EADDRINUSE') {
+                currentPort++;
+                retries++;
+                log(`Port ${currentPort - 1} in use, trying ${currentPort}`);
+                server.close();
+              } else {
+                reject(error);
+              }
+            });
+
+            server.listen(currentPort, '0.0.0.0', () => {
+              log(`Server started on port ${currentPort}`);
+              resolve();
+            });
+          });
+          break;
+        } catch (error) {
+          if (retries >= maxRetries) {
+            throw new Error(`Failed to start server after ${maxRetries} retries`);
+          }
+        }
+      }
+    };
+
+    await startServerWithFallback(5000);
+
+    // Graceful shutdown
+    const cleanup = () => {
+      log('Shutting down gracefully...');
       server.close(() => {
         log('Server closed');
         process.exit(0);
       });
-    });
+    };
+
+    process.on('SIGTERM', cleanup);
+    process.on('SIGINT', cleanup);
   } catch (error) {
     log('[Server] Fatal error during startup:', error);
     process.exit(1);

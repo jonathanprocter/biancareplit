@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+
+import { FlashcardSystem } from '@/lib/flashcard-system';
+
 interface AnalyticsData {
   totalStudyTime: number;
   completedCards: number;
@@ -23,8 +28,13 @@ const ContentFlashcardIntegration = () => {
     const initializeSystem = async () => {
       try {
         setLoading(true);
+        const system = new FlashcardSystem();
+        await system.initialize();
         setInitialized(true);
         setProgress(0);
+
+        const analyticsData = system.getAnalyticsData();
+        setAnalytics(analyticsData);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to initialize'));
       } finally {
@@ -37,60 +47,65 @@ const ContentFlashcardIntegration = () => {
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto mt-8 bg-white shadow-lg rounded-lg">
-        <div className="p-6">
+      <Card className="max-w-md mx-auto mt-8">
+        <CardContent className="p-6">
           <div className="text-center">Loading system...</div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-md mx-auto mt-8 bg-white shadow-lg rounded-lg">
-        <div className="p-6">
-          <div className="text-red-500">
+      <Card className="max-w-md mx-auto mt-8">
+        <CardContent className="p-6">
+          <div className="text-destructive">
             <h3 className="font-semibold mb-2">Error Occurred</h3>
             <p>{error.message}</p>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <div className="mb-6 bg-white shadow-lg rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Study Progress</h2>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <p className="text-sm text-gray-600 mt-2">{progress}% Complete</p>
-      </div>
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <h2 className="text-xl font-semibold mb-4">Study Progress</h2>
+          <Progress value={progress} />
+          <p className="text-sm text-muted-foreground mt-2">{progress}% Complete</p>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h3 className="font-semibold mb-2">Study Time</h3>
-          <p>{Math.floor(analytics.totalStudyTime / 60)}m</p>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2">Study Time</h3>
+            <p>{Math.floor(analytics.totalStudyTime / 60)}m</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h3 className="font-semibold mb-2">Cards Completed</h3>
-          <p>{analytics.completedCards}</p>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2">Cards Completed</h3>
+            <p>{analytics.completedCards}</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h3 className="font-semibold mb-2">Accuracy</h3>
-          <p>{Math.round(analytics.accuracy * 100)}%</p>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2">Accuracy</h3>
+            <p>{Math.round(analytics.accuracy * 100)}%</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h3 className="font-semibold mb-2">Categories</h3>
-          <p>{Object.keys(analytics.categoryProgress).length}</p>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2">Categories</h3>
+            <p>{Object.keys(analytics.categoryProgress).length}</p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
