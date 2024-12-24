@@ -128,7 +128,7 @@
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.4",
     "recharts": "^2.15.0",
-    "tailwind-merge": "^2.5.5",
+    "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "terser-webpack-plugin": "^5.3.11",
     "ts-jest": "^29.2.5",
