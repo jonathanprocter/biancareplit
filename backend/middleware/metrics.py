@@ -20,6 +20,7 @@ class MetricsMiddleware(BaseMiddleware):
         self._registry = CollectorRegistry()
         self._setup_metrics()
         self._setup_logging()
+        self.exclude_paths = set()
         super().__init__(app)
 
     def _setup_logging(self) -> None:
@@ -91,7 +92,7 @@ class MetricsMiddleware(BaseMiddleware):
 
         except Exception as e:
             logger.error(f"Failed to initialize metrics middleware: {str(e)}")
-            if app.debug:
+            if app and app.debug:
                 logger.exception("Detailed error trace:")
             raise
 
@@ -137,7 +138,7 @@ class MetricsMiddleware(BaseMiddleware):
 
         except Exception as e:
             logger.error(f"Error recording metrics: {str(e)}")
-            if hasattr(self, "app") and self.app.debug:
+            if hasattr(self, "app") and self.app and self.app.debug:
                 logger.exception("Detailed error trace:")
 
         return response
