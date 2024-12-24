@@ -1,3 +1,5 @@
+/* This file is deprecated. All styles are now in client/src/index.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
