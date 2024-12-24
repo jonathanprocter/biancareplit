@@ -67,7 +67,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
 
   private addCleanupListener(): void {
     if (typeof window !== 'undefined') {
-      const cleanup = (): void => {
+      const cleanup = () => {
         try {
           this.cleanup();
         } catch (error) {
@@ -82,7 +82,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
     }
   }
 
-  public async initialize(): Promise<{ success: boolean; error?: string; status?: string }> {
+  async initialize(): Promise<{ success: boolean; error?: string; status?: string }> {
     if (this.initialized) {
       return { success: true, status: 'already_initialized' };
     }
