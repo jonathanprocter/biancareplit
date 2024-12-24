@@ -821,26 +821,6 @@ export class CodeReviewService {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
         console.error(`Error analyzing file ${file}:`, error);
         issues.push({
           type: 'error',
@@ -882,7 +862,7 @@ export class CodeReviewService {
     return files;
   }
 
-  private checkSecurityIssues(content: string, file: string, issues: CodeIssue[]): void {
+  checkSecurityIssues(content: string, file: string, issues: CodeIssue[]): void {
     Object.entries(SECURITY_PATTERNS).forEach(([type, pattern]) => {
       const matches = content.match(pattern);
       if (matches) {
