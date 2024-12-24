@@ -1,14 +1,14 @@
-import { db, sql } from '@db';
 import express, { NextFunction, type Request, Response } from 'express';
-import http from 'http';
+import { createServer } from 'http';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { db } from '@db';
 
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-let globalServer: http.Server | null = null;
+let globalServer: ReturnType<typeof createServer> | null = null;
 
 async function cleanupServer(): Promise<void> {
   if (globalServer) {
@@ -22,19 +22,31 @@ async function cleanupServer(): Promise<void> {
   }
 }
 
-async function waitForDatabase(retries = 3, delay = 5000): Promise<void> {
-  for (let i = 0; i < retries; i++) {
+async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<number> {
+  for (let port = startPort; port < startPort + maxAttempts; port++) {
     try {
-      log(`[Server] Attempting database connection (attempt ${i + 1}/${retries})...`);
-      await db.execute(sql`SELECT 1`);
-      log('[Server] Database connection successful');
-      return;
+      const server = createServer();
+      await new Promise<void>((resolve, reject) => {
+        server.listen(port, '0.0.0.0')
+          .once('listening', () => {
+            server.close(() => resolve());
+          })
+          .once('error', (err: NodeJS.ErrnoException) => {
+            if (err.code === 'EADDRINUSE') {
+              log(`[Server] Port ${port} is in use, trying next port...`);
+              resolve(); // Port is in use, try next one
+            } else {
+              reject(err);
+            }
+          });
+      });
+      return port;
     } catch (error) {
-      if (i === retries - 1) throw error;
-      log(`[Server] Database connection failed, retrying in ${delay / 1000}s...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      log(`[Server] Error checking port ${port}:`, error);
+      continue;
     }
   }
+  throw new Error(`Could not find available port after ${maxAttempts} attempts`);
 }
 
 async function startServer() {
@@ -45,10 +57,6 @@ async function startServer() {
     const app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
-
-    // Test database connection before proceeding
-    log('[Server] Testing database connection...');
-    await waitForDatabase();
 
     // Register routes and create server
     const server = await registerRoutes(app);
@@ -63,37 +71,34 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start server with proper error handling and port management
-    const PORT = process.env.PORT || 5000;
-    await new Promise<void>((resolve, reject) => {
-      const handleError = (error: NodeJS.ErrnoException) => {
-        if (error.code === 'EADDRINUSE') {
-          log(`[Server] Port ${PORT} is already in use, trying to close existing connections...`);
-          cleanupServer()
-            .then(() => {
-              server
-                .listen(PORT, '0.0.0.0', () => {
-                  globalServer = server;
-                  log(`[Server] Started on port ${PORT} after cleanup`);
-                  resolve();
-                })
-                .on('error', reject);
-            })
-            .catch(reject);
-        } else {
-          log('[Server] Server error:', error);
-          reject(error);
-        }
-      };
+    // Find available port
+    const desiredPort = Number(process.env.PORT) || 5000;
+    const port = await findAvailablePort(desiredPort);
 
-      server
-        .listen(PORT, '0.0.0.0', () => {
+    // Error handling middleware
+    app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+      const status = (err as any).status || (err as any).statusCode || 500;
+      const message = process.env.NODE_ENV === 'production' 
+        ? 'Internal Server Error' 
+        : err.message;
+
+      res.status(status).json({ error: message });
+    });
+
+    // Start server with proper error handling
+    await new Promise<void>((resolve, reject) => {
+      server.listen(port, '0.0.0.0')
+        .once('listening', () => {
           globalServer = server;
-          log(`[Server] Started on port ${PORT}`);
+          log(`[Server] Started on port ${port}`);
           resolve();
         })
-        .on('error', handleError);
+        .once('error', (error) => {
+          log('[Server] Error starting server:', error);
+          reject(error);
+        });
     });
+
   } catch (error) {
     log('[Server] Fatal error during startup:', error);
     await cleanupServer();
@@ -101,7 +106,10 @@ async function startServer() {
   }
 }
 
-// Handle cleanup
+// Handle cleanup on process signals
+process.once('SIGTERM', () => handleShutdown('SIGTERM'));
+process.once('SIGINT', () => handleShutdown('SIGINT'));
+
 async function handleShutdown(signal: string) {
   log(`[Server] Received ${signal}, cleaning up...`);
   try {
@@ -112,10 +120,6 @@ async function handleShutdown(signal: string) {
     process.exit(1);
   }
 }
-
-// Register signal handlers
-process.once('SIGTERM', () => handleShutdown('SIGTERM'));
-process.once('SIGINT', () => handleShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', async (error) => {
