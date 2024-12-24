@@ -1,179 +1,129 @@
-import { configManager } from './config/system.config.js';
-import { initializeMiddlewareSystem } from './middleware/system.middleware.js';
-import EventEmitter from './utils/EventEmitter';
+import { EventEmitter } from 'events';
 
-let middlewareSystem = null;
-
-const getMiddlewareSystem = async () => {
-  if (!middlewareSystem) {
-    try {
-      middlewareSystem = await initializeMiddlewareSystem(configManager.get());
-      console.log('[FlashcardSystem] Middleware system initialized successfully');
-    } catch (error) {
-      console.error('[FlashcardSystem] Failed to initialize middleware system:', error);
-      throw error;
-    }
-  }
-  return middlewareSystem;
-};
-
-class EnhancedFlashcardSystem extends EventEmitter {
+class FlashcardSystem extends EventEmitter {
   constructor() {
     super();
-    if (!EnhancedFlashcardSystem.instance) {
-      this.initialized = false;
-      this.analyticsReady = false;
-      this.studyMaterialHandler = null;
-      this.studySlots = [];
-      this.currentSlot = null;
-      this.analyticsData = {
-        totalStudyTime: 0,
-        completedCards: 0,
-        accuracy: 0,
-        categoryProgress: {},
-        lastUpdate: null,
-      };
-      this.config = configManager;
-      EnhancedFlashcardSystem.instance = this;
-    }
-    return EnhancedFlashcardSystem.instance;
+    this.initialized = false;
+    this.analyticsReady = false;
+    this.cards = [];
+    this.currentIndex = 0;
+    this.studySlots = [];
+    this.analyticsData = {
+      totalStudyTime: 0,
+      completedCards: 0,
+      accuracy: 0,
+      categoryProgress: {},
+      lastUpdate: null,
+    };
   }
 
   async initialize() {
     if (this.initialized) {
-      console.log('[FlashcardSystem] System already initialized');
+      console.log('FlashcardSystem already initialized');
       return { success: true, status: 'already_initialized' };
     }
 
     try {
-      const context = {
-        operation: 'system_initialization',
-        system: this,
-        timestamp: new Date().toISOString(),
-      };
+      console.log('Starting FlashcardSystem initialization...');
 
-      const middleware = await getMiddlewareSystem();
-      await middleware.execute(context);
+      // Initialize analytics
+      await this.initializeAnalytics();
 
-      if (!this.analyticsReady) {
-        await this.initializeAnalytics();
-      }
-
-      const initialSlot = this.createNewSession('initial');
+      // Create initial study session
+      const initialSlot = this.startNewSession('initial');
       this.studySlots.push(initialSlot);
 
       this.initialized = true;
-
       this.emit('initialized', {
         timestamp: Date.now(),
         analyticsReady: this.analyticsReady,
-        config: this.config.get('analytics'),
       });
 
       return { success: true, status: 'initialized' };
     } catch (error) {
-      console.error('[FlashcardSystem] Initialization failed:', error);
+      console.error('FlashcardSystem initialization failed:', error);
       throw error;
     }
   }
 
   async initializeAnalytics() {
-    if (!this.analyticsReady) {
-      try {
-        const middleware = await getMiddlewareSystem();
-        await middleware.execute({
-          operation: 'analytics_initialization',
-          system: this,
-          timestamp: new Date().toISOString(),
-        });
+    try {
+      const analytics = {
+        totalStudyTime: 0,
+        completedCards: 0,
+        accuracy: 0,
+        categoryProgress: {},
+        timestamp: new Date().toISOString(),
+        sessions: [],
+        results: [],
+      };
 
-        const analyticsConfig = this.config.get('analytics');
-        if (!analyticsConfig?.enabled) {
-          console.log('[FlashcardSystem] Analytics disabled in configuration');
-          return false;
-        }
-
-        this.analyticsReady = true;
-        return true;
-      } catch (error) {
-        console.error('[FlashcardSystem] Analytics initialization failed:', error);
-        this.analyticsReady = false;
-        throw error;
-      }
+      this.analyticsData = analytics;
+      this.analyticsReady = true;
+      return analytics;
+    } catch (error) {
+      console.error('Analytics initialization failed:', error);
+      throw error;
     }
-    return this.analyticsReady;
   }
 
-  createNewSession(type = 'study') {
-    return {
+  startNewSession(type = 'study') {
+    const session = {
       id: Date.now(),
       type,
       startTime: Date.now(),
       endTime: null,
+      duration: 0,
       completed: false,
+      category: 'general',
       results: [],
     };
+
+    this.studySlots.push(session);
+    return session;
   }
 
   async saveResult(result) {
     if (!this.initialized) {
-      throw new Error('[FlashcardSystem] System not initialized');
+      throw new Error('FlashcardSystem not initialized');
     }
 
-    const context = {
-      operation: 'save_result',
-      system: this,
-      data: result,
-      timestamp: new Date().toISOString(),
-    };
-
     try {
-      const middleware = await getMiddlewareSystem();
-      await middleware.execute(context);
-
-      if (!this.currentSlot) {
-        throw new Error('No active study slot');
-      }
-
-      const savedResult = {
-        ...result,
-        timestamp: new Date().toISOString(),
+      // Update analytics data
+      const updatedAnalytics = {
+        ...this.analyticsData,
+        totalStudyTime: this.analyticsData.totalStudyTime + (result.duration || 0),
+        completedCards: this.analyticsData.completedCards + 1,
+        accuracy: result.accuracy || this.analyticsData.accuracy,
+        categoryProgress: {
+          ...this.analyticsData.categoryProgress,
+          ...result.categoryProgress,
+        },
+        lastUpdate: Date.now(),
       };
 
-      this.currentSlot.results.push(savedResult);
-      this.emit('resultSaved', savedResult);
+      this.analyticsData = updatedAnalytics;
+      this.emit('resultSaved', result);
 
-      return { success: true, data: savedResult };
+      return updatedAnalytics;
     } catch (error) {
-      const errorDetails = {
-        type: 'save_result_error',
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      };
-      console.error('[FlashcardSystem] Failed to save result:', errorDetails);
-      this.emit('error', errorDetails);
+      console.error('Failed to save result:', error);
       throw error;
     }
   }
 
   endCurrentSession() {
-    if (this.currentSlot) {
-      this.currentSlot.endTime = Date.now();
-      this.currentSlot.completed = true;
-      this.emit('sessionEnded', this.currentSlot);
+    const currentSlot = this.studySlots[this.studySlots.length - 1];
+    if (currentSlot) {
+      currentSlot.endTime = Date.now();
+      currentSlot.duration = currentSlot.endTime - currentSlot.startTime;
+      currentSlot.completed = true;
+      this.emit('sessionEnded', currentSlot);
     }
   }
 }
 
-const flashcardSystem = new EnhancedFlashcardSystem();
+// Create singleton instance
+const flashcardSystem = new FlashcardSystem();
 
-const flashcardSystemExports = {
-  ...flashcardSystem,
-  getMiddlewareSystem,
-};
-
-export default flashcardSystemExports;
-
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  window.flashcardSystem = flashcardSystemExports;
-}
+export default flashcardSystem;

@@ -60,10 +60,12 @@ const ContentFlashcardIntegration = () => {
       const validCompletedCards = Math.max(0, Number(completedCards) || 0);
       const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
 
-      // Simple progress calculation based on cards completed
-      const progressValue = Math.min(100, (validCompletedCards / 20) * 100);
+      // Calculate progress based on completed cards and accuracy
+      const progressValue = Math.min(
+        100,
+        ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100
+      );
       setProgress(Math.round(progressValue));
-
     } catch (error) {
       console.error('Error updating progress:', error);
       setProgress(0);
@@ -97,7 +99,11 @@ const ContentFlashcardIntegration = () => {
       });
 
       // Update progress
-      updateProgress(initialAnalytics.completedCards || 0);
+      updateProgress(
+        initialAnalytics.completedCards,
+        initialAnalytics.accuracy,
+        initialAnalytics.categoryProgress
+      );
 
       // Create new study session
       const session = flashcardSystem.startNewSession('content');
@@ -106,7 +112,7 @@ const ContentFlashcardIntegration = () => {
 
     } catch (err) {
       console.error('Failed to initialize:', err);
-      setError(err.message || 'Failed to initialize flashcard system');
+      setError(err);
       toast({
         variant: "destructive",
         title: "Initialization Failed",
@@ -149,7 +155,11 @@ const ContentFlashcardIntegration = () => {
         lastUpdate: now,
       }));
 
-      updateProgress(updatedAnalytics.completedCards || 0);
+      updateProgress(
+        updatedAnalytics.completedCards,
+        updatedAnalytics.accuracy,
+        updatedAnalytics.categoryProgress
+      );
     } catch (err) {
       console.error('Analytics update failed:', err);
       toast({
@@ -243,7 +253,8 @@ const ContentFlashcardIntegration = () => {
                 <span className="font-medium">Study Session</span>
               </div>
               <span className="text-sm text-gray-600">
-                {Math.floor(slot.duration / 60)}m {slot.duration % 60}s
+                {Math.floor((slot.endTime || Date.now() - slot.startTime) / 60000)}m{' '}
+                {Math.floor(((slot.endTime || Date.now() - slot.startTime) % 60000) / 1000)}s
               </span>
             </div>
           ))}
