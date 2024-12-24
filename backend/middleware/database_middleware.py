@@ -8,6 +8,7 @@ from ..database.core import db_manager
 from ..database.migration_manager import MigrationManager
 from ..config.unified_config import config_manager, ConfigurationError
 
+logger = logging.getLogger(__name__)
 
 class DatabaseMiddleware:
     """Handles database operations and migrations in middleware layer."""
@@ -16,6 +17,7 @@ class DatabaseMiddleware:
         self.logger = logging.getLogger(__name__)
         self._setup_logging()
         self.migration_manager = None
+        self._app = None
 
     def _setup_logging(self) -> None:
         """Initialize logging configuration."""
@@ -36,32 +38,36 @@ class DatabaseMiddleware:
             # Get database configuration from unified config
             db_config = config_manager.get("SQLALCHEMY_DATABASE_URI")
             if not db_config:
-                raise ConfigurationError("Database URL not configured")
+                db_config = app.config.get("SQLALCHEMY_DATABASE_URI")
+                if not db_config:
+                    raise ConfigurationError("Database URL not configured")
 
             app.config["SQLALCHEMY_DATABASE_URI"] = db_config
-            app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config_manager.get(
-                "SQLALCHEMY_TRACK_MODIFICATIONS", False
-            )
-            app.config["SQLALCHEMY_ENGINE_OPTIONS"] = config_manager.get(
-                "SQLALCHEMY_ENGINE_OPTIONS", {}
-            )
+            app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
             with app.app_context():
                 try:
-                    db_manager.init_app(app)
-                    self.logger.info("Database connection verified successfully")
-
-                    self.migration_manager = MigrationManager()
-                    if not self.migration_manager.init_app(app):
-                        self.logger.error("Failed to initialize migration manager")
+                    # Initialize database manager
+                    if not db_manager.init_app(app):
+                        logger.error("Failed to initialize database manager")
                         return
 
+                    # Verify database connection
+                    if not db_manager.verify_connection(app):
+                        logger.error("Failed to verify database connection")
+                        return
+
+                    # Initialize migration manager if needed
+                    if app.config.get("ENABLE_MIGRATIONS", True):
+                        self.migration_manager = MigrationManager()
+                        self.migration_manager.init_app(app)
+                        logger.info("Migration manager initialized")
+
                 except Exception as e:
-                    self.logger.error(
-                        f"Database connection verification failed: {str(e)}"
-                    )
+                    logger.error(f"Database initialization error: {str(e)}")
                     return
 
+            # Register request handlers
             @app.before_request
             def before_request():
                 g.db = db_manager.session
@@ -72,6 +78,7 @@ class DatabaseMiddleware:
                 if db is not None:
                     db.close()
 
+            # Register error handler for database errors
             @app.errorhandler(SQLAlchemyError)
             def handle_db_error(error):
                 self.logger.error(f"Database error occurred: {str(error)}")
@@ -81,6 +88,8 @@ class DatabaseMiddleware:
 
         except Exception as e:
             self.logger.error(f"Database middleware initialization failed: {str(e)}")
+            if hasattr(app, 'debug') and app.debug:
+                self.logger.exception("Detailed error trace:")
 
     def verify_database_state(self) -> Dict[str, Any]:
         """Verify database and migration state."""
@@ -92,11 +101,14 @@ class DatabaseMiddleware:
         }
 
         try:
+            if not self._app:
+                return status
+
             status["database_initialized"] = db_manager.verify_connection(self._app)
 
             if self.migration_manager:
                 migration_health = self.migration_manager.run_health_check()
-                status["migrations_initialized"] = migration_health["overall_health"]
+                status["migrations_initialized"] = migration_health.get("overall_health", False)
                 status["migration_status"] = migration_health
 
             status["connection_valid"] = db_manager.verify_connection(self._app)
@@ -117,5 +129,5 @@ class DatabaseMiddleware:
             self.logger.error(f"Failed to get migration status: {str(e)}")
             return None
 
-
+# Create singleton instance
 database_middleware = DatabaseMiddleware()

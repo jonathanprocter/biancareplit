@@ -30,11 +30,14 @@ def create_app():
         logger.info("Configuration initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize configuration: {str(e)}")
-        # Continue with default configuration
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        # Set minimal required configuration
+        app.config.update({
+            'SQLALCHEMY_DATABASE_URI': os.getenv('DATABASE_URL'),
+            'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+            'SECRET_KEY': os.urandom(24)
+        })
 
-    # Initialize extensions
+    # Initialize extensions with proper error handling
     CORS(app)
     db.init_app(app)
     migrate = Migrate(app, db)
@@ -44,11 +47,16 @@ def create_app():
     logger.info("Prometheus registry created")
 
     try:
-        # Initialize models and middleware
+        # Initialize database and models first
         with app.app_context():
-            # Initialize database models first
+            db.create_all()
             init_models()
-            logger.info("Database models initialized")
+            logger.info("Database models initialized successfully")
+
+            # Verify database connection
+            db.session.execute('SELECT 1')
+            db.session.commit()
+            logger.info("Database connection verified")
 
             # Then initialize middleware
             middleware_initializer.init_app(app)
@@ -56,7 +64,7 @@ def create_app():
 
     except Exception as e:
         logger.error(f"Failed during initialization: {str(e)}", exc_info=True)
-        # Continue app initialization even if middleware fails
+        # Allow application to continue with reduced functionality
 
     # Add Prometheus WSGI middleware
     app.wsgi_app = DispatcherMiddleware(
