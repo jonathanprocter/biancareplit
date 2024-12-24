@@ -3,8 +3,9 @@
 import time
 import logging
 from typing import Optional, Dict, Any
-from flask import current_app, request
+from flask import Flask, request, jsonify
 from .config.unified_config import config_manager, ConfigurationError
+from .middleware.base import BaseMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -92,29 +93,28 @@ class BasicMetricsCollector:
             "app_info": self.app_info
         }
 
-class MetricsMiddleware:
+class MetricsMiddleware(BaseMiddleware):
     """Middleware for collecting metrics about request handling."""
 
-    def __init__(self, app=None):
-        self.app = app
-        self.config = {}
+    def __init__(self, app: Optional[Flask] = None, **kwargs):
         self.basic_metrics = BasicMetricsCollector()
-        if app is not None:
-            self.init_app(app)
+        super().__init__(app, **kwargs)
 
-    def init_app(self, app):
+    def init_app(self, app: Flask) -> None:
         """Initialize the middleware with the Flask app."""
         try:
+            super().init_app(app)
+
             # Load configuration from unified config
             metrics_config = config_manager.get("MIDDLEWARE", {}).get("metrics", {})
-            self.config = {
+            self.update_config(**{
                 "enabled": metrics_config.get("enabled", True),
                 "endpoint": metrics_config.get("endpoint", "/metrics"),
                 "include_paths": metrics_config.get("include_paths", ["/api"]),
                 "exclude_paths": metrics_config.get("exclude_paths", ["/metrics", "/health"]),
-            }
+            })
 
-            if not self.config["enabled"]:
+            if not self.get_config("enabled"):
                 logger.info("Metrics collection is disabled")
                 return
 
@@ -129,13 +129,23 @@ class MetricsMiddleware:
             else:
                 self.basic_metrics.set_app_info(app_info)
 
+            # Register before_request handler
+            app.before_request(self.before_request)
+            app.after_request(self.after_request)
+
             # Register metrics endpoint
-            @app.route(self.config["endpoint"])
+            @app.route(self.get_config("endpoint"))
             def metrics():
-                if PROMETHEUS_AVAILABLE:
-                    return generate_latest(REGISTRY), 200, {"Content-Type": CONTENT_TYPE_LATEST}
-                else:
-                    return self.basic_metrics.get_metrics(), 200, {"Content-Type": "application/json"}
+                try:
+                    if PROMETHEUS_AVAILABLE:
+                        return generate_latest(REGISTRY), 200, {"Content-Type": CONTENT_TYPE_LATEST}
+                    else:
+                        return jsonify(self.basic_metrics.get_metrics()), 200
+                except Exception as e:
+                    logger.error(f"Error serving metrics: {str(e)}")
+                    return jsonify({"error": str(e)}), 500
+
+            logger.info("Metrics middleware initialized successfully")
 
         except Exception as e:
             logger.error(f"Error initializing metrics middleware: {str(e)}")
@@ -143,78 +153,61 @@ class MetricsMiddleware:
                 ERROR_COUNT.labels(type="middleware_initialization").inc()
             else:
                 self.basic_metrics.record_error("middleware_initialization")
-
-    def __call__(self, environ, start_response):
-        """Process each request and collect metrics."""
-        if not self.config.get("enabled", True):
-            return self.app(environ, start_response)
-
-        path = environ.get("PATH_INFO", "")
-        if not any(path.startswith(p) for p in self.config["include_paths"]):
-            return self.app(environ, start_response)
-
-        if any(path.startswith(p) for p in self.config["exclude_paths"]):
-            return self.app(environ, start_response)
-
-        request_start = time.time()
-
-        def metrics_start_response(status, headers):
-            try:
-                status_code = int(status.split()[0])
-                request_time = time.time() - request_start
-
-                if PROMETHEUS_AVAILABLE:
-                    # Record request count
-                    REQUEST_COUNT.labels(
-                        method=environ.get("REQUEST_METHOD", ""),
-                        endpoint=path,
-                        status=status_code,
-                    ).inc()
-
-                    # Record request latency
-                    REQUEST_LATENCY.labels(
-                        method=environ.get("REQUEST_METHOD", ""),
-                        endpoint=path,
-                    ).observe(request_time)
-                else:
-                    # Use basic metrics collection
-                    self.basic_metrics.record_request(
-                        environ.get("REQUEST_METHOD", ""),
-                        path,
-                        status_code
-                    )
-                    self.basic_metrics.record_latency(
-                        environ.get("REQUEST_METHOD", ""),
-                        path,
-                        request_time
-                    )
-
-            except Exception as e:
-                logger.error(f"Error recording metrics: {str(e)}")
-                if PROMETHEUS_AVAILABLE:
-                    ERROR_COUNT.labels(type="metrics_recording").inc()
-                else:
-                    self.basic_metrics.record_error("metrics_recording")
-
-            return start_response(status, headers)
-
-        try:
-            return self.app(environ, metrics_start_response)
-        except Exception as e:
-            logger.error(f"Error in metrics middleware: {str(e)}")
-            if PROMETHEUS_AVAILABLE:
-                ERROR_COUNT.labels(type="middleware_error").inc()
-            else:
-                self.basic_metrics.record_error("middleware_error")
             raise
 
-def get_metrics():
-    """Get current metrics."""
-    if PROMETHEUS_AVAILABLE:
+    def before_request(self):
+        """Set request start time."""
+        if not self.get_config("enabled"):
+            return
+
+        request.start_time = time.time()
+
+    def after_request(self, response):
+        """Record request metrics."""
+        if not self.get_config("enabled"):
+            return response
+
         try:
-            return generate_latest(REGISTRY)
+            path = request.path
+            if not any(path.startswith(p) for p in self.get_config("include_paths")):
+                return response
+
+            if any(path.startswith(p) for p in self.get_config("exclude_paths")):
+                return response
+
+            duration = time.time() - request.start_time
+            status_code = response.status_code
+
+            if PROMETHEUS_AVAILABLE:
+                REQUEST_COUNT.labels(
+                    method=request.method,
+                    endpoint=path,
+                    status=status_code,
+                ).inc()
+
+                REQUEST_LATENCY.labels(
+                    method=request.method,
+                    endpoint=path,
+                ).observe(duration)
+            else:
+                self.basic_metrics.record_request(
+                    request.method,
+                    path,
+                    status_code
+                )
+                self.basic_metrics.record_latency(
+                    request.method,
+                    path,
+                    duration
+                )
         except Exception as e:
-            logger.error(f"Error generating Prometheus metrics: {str(e)}")
-            return None
-    else:
-        return  self.basic_metrics.get_metrics()
+            logger.error(f"Error recording metrics: {str(e)}")
+            if PROMETHEUS_AVAILABLE:
+                ERROR_COUNT.labels(type="metrics_recording").inc()
+            else:
+                self.basic_metrics.record_error("metrics_recording")
+
+        return response
+
+# Create singleton instance
+metrics_middleware = MetricsMiddleware()

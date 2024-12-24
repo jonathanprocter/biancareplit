@@ -39,6 +39,12 @@ class MiddlewareConfig:
                 "level": "INFO",
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             },
+            "metrics": {
+                "enabled": True,
+                "endpoint": "/metrics",
+                "include_paths": ["/api"],
+                "exclude_paths": ["/metrics", "/health"]
+            },
             "error_handling": {
                 "enabled": True,
                 "log_errors": True,
@@ -50,22 +56,12 @@ class MiddlewareConfig:
                     "enabled": True,
                     "default_limits": ["200 per day", "50 per hour"]
                 }
-            },
-            "performance_tracking": {
-                "enabled": True,
-                "warning_threshold_ms": 1000,
-                "critical_threshold_ms": 3000
-            },
-            "database": {
-                "enabled": True,
-                "connection_timeout": 30,
-                "pool_size": 5
             }
         }
 
     def _validate_config(self) -> None:
         """Validate middleware configuration structure."""
-        required_middleware = ["logging", "error_handling", "security"]
+        required_middleware = ["logging", "metrics", "error_handling"]
 
         for middleware in required_middleware:
             if middleware not in self.config:
@@ -94,15 +90,6 @@ class MiddlewareConfig:
         """Get list of enabled middleware components."""
         return [name for name, config in self.config.items() 
                 if isinstance(config, dict) and config.get("enabled", False)]
-
-    def validate_middleware_settings(self, middleware_name: str, required_settings: List[str]) -> bool:
-        """Validate specific middleware settings."""
-        try:
-            config = self.get_middleware_config(middleware_name)
-            return all(setting in config for setting in required_settings)
-        except Exception as e:
-            logger.error(f"Error validating middleware settings: {str(e)}")
-            return False
 
     def __str__(self) -> str:
         """String representation of middleware configuration."""

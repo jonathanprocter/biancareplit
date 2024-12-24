@@ -6,6 +6,8 @@ import os
 import logging
 import psutil
 from models import db, init_models
+from backend.middleware.initializer import middleware_initializer
+from backend.config.unified_config import config_manager
 
 # Configure logging
 logging.basicConfig(
@@ -23,6 +25,14 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JSON_SORT_KEYS'] = False
 
+    # Initialize configuration first
+    try:
+        config_manager.init_app(app)
+        logger.info("Configuration initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize configuration: {str(e)}")
+        # Continue with default configuration
+
     # Initialize extensions
     CORS(app)
     db.init_app(app)
@@ -31,6 +41,14 @@ def create_app():
     # Initialize models
     with app.app_context():
         init_models()
+
+        # Initialize middleware after database and models are ready
+        try:
+            middleware_initializer.init_app(app)
+            logger.info("Middleware initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize middleware: {str(e)}", exc_info=True)
+            # Continue app initialization even if middleware fails
 
     # Register blueprints
     from routes.adaptive_content_routes import adaptive_content_bp
