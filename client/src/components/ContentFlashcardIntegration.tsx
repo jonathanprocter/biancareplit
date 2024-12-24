@@ -14,7 +14,7 @@ interface ComponentAnalytics extends AnalyticsData {
   lastUpdate: number | null;
 }
 
-const ErrorMessage = ({ error, onRetry }: { error: Error; onRetry: () => void }) => (
+const ErrorMessage: React.FC<{ error: Error; onRetry: () => void }> = ({ error, onRetry }) => (
   <Card className="max-w-4xl mx-auto p-4">
     <CardContent className="p-6">
       <div className="text-center">
@@ -30,7 +30,7 @@ const ErrorMessage = ({ error, onRetry }: { error: Error; onRetry: () => void })
   </Card>
 );
 
-const LoadingSpinner = () => (
+const LoadingSpinner: React.FC = () => (
   <Card className="max-w-4xl mx-auto p-4">
     <CardContent className="p-6 flex flex-col items-center justify-center">
       <div className="flex items-center justify-center">
@@ -41,7 +41,7 @@ const LoadingSpinner = () => (
   </Card>
 );
 
-const ContentFlashcardIntegration = () => {
+const ContentFlashcardIntegration: React.FC = () => {
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,7 @@ const ContentFlashcardIntegration = () => {
   const [studySlots, setStudySlots] = useState<StudySession[]>([]);
   const [progress, setProgress] = useState(0);
 
-  const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
+  const updateProgress = useCallback((completedCards: number, accuracy = 0): void => {
     try {
       const validCompletedCards = Math.max(0, Number(completedCards) || 0);
       const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
@@ -106,8 +106,8 @@ const ContentFlashcardIntegration = () => {
       }));
 
       updateProgress(updatedAnalytics.completedCards, updatedAnalytics.accuracy);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update analytics';
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update analytics';
       console.error('Analytics update failed:', message);
       toast({
         variant: 'destructive',
@@ -150,14 +150,14 @@ const ContentFlashcardIntegration = () => {
         title: 'System Initialized',
         description: 'Flashcard system ready to use',
       });
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to initialize');
-      console.error('Failed to initialize:', error);
-      setError(error);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to initialize');
+      console.error('Failed to initialize:', err);
+      setError(err);
       toast({
         variant: 'destructive',
         title: 'Initialization Failed',
-        description: error.message,
+        description: err.message,
       });
     } finally {
       setLoading(false);

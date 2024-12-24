@@ -1,6 +1,6 @@
 import { EventEmitter } from './EventEmitter';
 
-interface StudySession {
+export interface StudySession {
   id: number;
   type: string;
   startTime: number;
@@ -8,10 +8,15 @@ interface StudySession {
   duration: number;
   completed: boolean;
   category: string;
-  results: any[];
+  results: Array<{
+    questionId: string;
+    correct: boolean;
+    timeSpent: number;
+    timestamp: number;
+  }>;
 }
 
-interface AnalyticsData {
+export interface AnalyticsData {
   totalStudyTime: number;
   completedCards: number;
   accuracy: number;
@@ -25,29 +30,23 @@ interface FlashcardSystemConfig {
   reviewInterval: number;
 }
 
-type FlashcardSystemEvents = {
+interface FlashcardSystemEvents {
   initialized: { timestamp: number; analyticsReady: boolean };
   sessionStarted: StudySession;
   sessionEnded: StudySession;
   cleanup: { timestamp: number };
-  resultSaved: any;
+  resultSaved: { success: boolean; data: AnalyticsData };
   error: { message: string; timestamp: number };
-};
+}
 
-class FlashcardSystem extends EventEmitter {
+class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
   private initialized: boolean = false;
   private analyticsReady: boolean = false;
   private cards: any[] = [];
   private currentIndex: number = 0;
   private studySlots: StudySession[] = [];
   private config: FlashcardSystemConfig;
-  private analyticsData: AnalyticsData = {
-    totalStudyTime: 0,
-    completedCards: 0,
-    accuracy: 0,
-    categoryProgress: {},
-    lastUpdate: null,
-  };
+  private analyticsData: AnalyticsData;
   private cleanupFunctions: Array<() => void> = [];
 
   constructor(config: Partial<FlashcardSystemConfig> = {}) {
@@ -58,6 +57,13 @@ class FlashcardSystem extends EventEmitter {
       reviewInterval: 30000,
       ...config,
     };
+    this.analyticsData = {
+      totalStudyTime: 0,
+      completedCards: 0,
+      accuracy: 0,
+      categoryProgress: {},
+      lastUpdate: null,
+    };
     this.addCleanupListener();
   }
 
@@ -67,11 +73,6 @@ class FlashcardSystem extends EventEmitter {
         try {
           this.cleanup();
         } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
     if (error instanceof Error) {
       console.error(`Error: ${error.message}`);
       // Add proper error handling here
@@ -124,17 +125,15 @@ class FlashcardSystem extends EventEmitter {
     }
 
     try {
-      const analytics: AnalyticsData = {
+      this.analyticsData = {
         totalStudyTime: 0,
         completedCards: 0,
         accuracy: 0,
         categoryProgress: {},
         lastUpdate: Date.now(),
       };
-
-      this.analyticsData = analytics;
       this.analyticsReady = true;
-      return analytics;
+      return this.analyticsData;
     } catch (error) {
       console.error('Analytics initialization failed:', error);
       return null;
@@ -155,11 +154,16 @@ class FlashcardSystem extends EventEmitter {
       results: [],
     };
 
+    this.studySlots.push(session);
     this.emit('sessionStarted', session);
     return session;
   }
 
-  async saveResult(result: any): Promise<AnalyticsData | null> {
+  async saveResult(result: {
+    duration: number;
+    accuracy?: number;
+    categoryProgress?: Record<string, number>;
+  }): Promise<AnalyticsData | null> {
     if (!this.initialized) {
       throw new Error('FlashcardSystem not initialized');
     }
@@ -178,7 +182,7 @@ class FlashcardSystem extends EventEmitter {
       };
 
       this.analyticsData = updatedAnalytics;
-      this.emit('resultSaved', result);
+      this.emit('resultSaved', { success: true, data: updatedAnalytics });
 
       return updatedAnalytics;
     } catch (error) {
@@ -212,17 +216,6 @@ class FlashcardSystem extends EventEmitter {
       console.error('Cleanup error:', message);
       this.emit('error', { message, timestamp: Date.now() });
     }
-  }
-
-  on<K extends keyof FlashcardSystemEvents>(
-    event: K,
-    callback: (data: FlashcardSystemEvents[K]) => void,
-  ): () => void {
-    return super.on(event, callback as Function);
-  }
-
-  emit<K extends keyof FlashcardSystemEvents>(event: K, data: FlashcardSystemEvents[K]): void {
-    super.emit(event, data);
   }
 
   isInitialized(): boolean {

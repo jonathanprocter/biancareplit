@@ -1,23 +1,27 @@
-export class EventEmitter {
-  private events: { [key: string]: Function[] } = {};
+export class EventEmitter<T extends Record<string, any>> {
+  private events: { [K in keyof T]?: Array<(data: T[K]) => void> } = {};
 
-  on(event: string, callback: Function) {
+  on<K extends keyof T>(event: K, callback: (data: T[K]) => void): () => void {
     if (!this.events[event]) {
       this.events[event] = [];
     }
-    this.events[event].push(callback);
+    this.events[event]?.push(callback);
     return () => this.off(event, callback);
   }
 
-  off(event: string, callback: Function) {
+  off<K extends keyof T>(event: K, callback: (data: T[K]) => void): void {
     if (!this.events[event]) return;
-    this.events[event] = this.events[event].filter((cb) => cb !== callback);
+    const callbacks = this.events[event];
+    if (callbacks) {
+      this.events[event] = callbacks.filter((cb) => cb !== callback);
+    }
   }
 
-  emit(event: string, data?: any) {
-    if (!this.events[event]) return;
+  emit<K extends keyof T>(event: K, data: T[K]): void {
+    const callbacks = this.events[event];
+    if (!callbacks) return;
 
-    this.events[event].forEach((callback) => {
+    callbacks.forEach((callback) => {
       try {
         callback(data);
       } catch (error) {
@@ -26,18 +30,13 @@ export class EventEmitter {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-        console.error(`Error in event handler for ${event}:`, error);
-        // Log the error but continue execution for other handlers
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Error in event handler for ${String(event)}:`, message);
       }
     });
   }
 
-  removeAllListeners(event?: string) {
+  removeAllListeners(event?: keyof T): void {
     if (event) {
       delete this.events[event];
     } else {
@@ -45,7 +44,7 @@ export class EventEmitter {
     }
   }
 
-  getListenerCount(event: string): number {
+  getListenerCount(event: keyof T): number {
     return this.events[event]?.length || 0;
   }
 }
