@@ -1,4 +1,3 @@
-
 import { EventEmitter } from './EventEmitter';
 
 interface FlashcardSystemConfig {
