@@ -1,20 +1,4 @@
-// Custom EventEmitter implementation for browser
-class EventEmitter {
-  private events: { [key: string]: Function[] } = {};
-
-  on(event: string, callback: Function) {
-    if (!this.events[event]) {
-      this.events[event] = [];
-    }
-    this.events[event].push(callback);
-  }
-
-  emit(event: string, data?: any) {
-    if (this.events[event]) {
-      this.events[event].forEach((callback) => callback(data));
-    }
-  }
-}
+import { EventEmitter } from './EventEmitter';
 
 interface StudySession {
   id: number;
@@ -36,27 +20,33 @@ interface AnalyticsData {
 }
 
 class FlashcardSystem extends EventEmitter {
-  initialized: boolean;
-  analyticsReady: boolean;
-  cards: any[];
-  currentIndex: number;
-  studySlots: StudySession[];
-  analyticsData: AnalyticsData;
+  private initialized: boolean = false;
+  private analyticsReady: boolean = false;
+  private cards: any[] = [];
+  private currentIndex: number = 0;
+  private studySlots: StudySession[] = [];
+  private analyticsData: AnalyticsData = {
+    totalStudyTime: 0,
+    completedCards: 0,
+    accuracy: 0,
+    categoryProgress: {},
+    lastUpdate: null,
+  };
+  private cleanupFunctions: (() => void)[] = [];
 
   constructor() {
     super();
-    this.initialized = false;
-    this.analyticsReady = false;
-    this.cards = [];
-    this.currentIndex = 0;
-    this.studySlots = [];
-    this.analyticsData = {
-      totalStudyTime: 0,
-      completedCards: 0,
-      accuracy: 0,
-      categoryProgress: {},
-      lastUpdate: null,
-    };
+    this.addCleanupListener();
+  }
+
+  private addCleanupListener() {
+    if (typeof window !== 'undefined') {
+      const cleanup = () => this.cleanup();
+      window.addEventListener('beforeunload', cleanup);
+      this.cleanupFunctions.push(() => 
+        window.removeEventListener('beforeunload', cleanup)
+      );
+    }
   }
 
   async initialize() {
@@ -68,13 +58,11 @@ class FlashcardSystem extends EventEmitter {
     try {
       console.log('Starting FlashcardSystem initialization...');
 
-      // Initialize analytics
       const analytics = await this.initializeAnalytics();
       if (!analytics) {
         throw new Error('Failed to initialize analytics');
       }
 
-      // Create initial study session
       const initialSlot = this.startNewSession('initial');
       this.studySlots.push(initialSlot);
 
@@ -114,6 +102,8 @@ class FlashcardSystem extends EventEmitter {
   }
 
   startNewSession(type = 'study'): StudySession {
+    this.endCurrentSession(); // End any existing session
+
     const session: StudySession = {
       id: Date.now(),
       type,
@@ -135,7 +125,6 @@ class FlashcardSystem extends EventEmitter {
     }
 
     try {
-      // Update analytics data
       const updatedAnalytics: AnalyticsData = {
         ...this.analyticsData,
         totalStudyTime: Math.max(0, this.analyticsData.totalStudyTime + (result.duration || 0)),
@@ -160,12 +149,35 @@ class FlashcardSystem extends EventEmitter {
 
   endCurrentSession() {
     const currentSlot = this.studySlots[this.studySlots.length - 1];
-    if (currentSlot) {
+    if (currentSlot && !currentSlot.completed) {
       currentSlot.endTime = Date.now();
       currentSlot.duration = currentSlot.endTime - currentSlot.startTime;
       currentSlot.completed = true;
       this.emit('sessionEnded', currentSlot);
     }
+  }
+
+  cleanup() {
+    this.endCurrentSession();
+    this.cleanupFunctions.forEach(cleanup => cleanup());
+    this.cleanupFunctions = [];
+    this.initialized = false;
+    this.analyticsReady = false;
+    this.emit('cleanup', { timestamp: Date.now() });
+  }
+
+  // Public getters for internal state
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  getAnalyticsData(): AnalyticsData {
+    return { ...this.analyticsData };
+  }
+
+  getCurrentSession(): StudySession | null {
+    const currentSlot = this.studySlots[this.studySlots.length - 1];
+    return currentSlot ? { ...currentSlot } : null;
   }
 }
 

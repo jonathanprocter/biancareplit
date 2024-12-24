@@ -10,7 +10,14 @@ import { useToast } from '@/hooks/use-toast';
 
 import flashcardSystem from '../lib/flashcard-system';
 
-// Error message component
+type Analytics = {
+  totalStudyTime: number;
+  completedCards: number;
+  accuracy: number;
+  categoryProgress: Record<string, any>;
+  lastUpdate: number | null;
+};
+
 const ErrorMessage = ({ error, onRetry }: { error: Error; onRetry: () => void }) => (
   <Card className="max-w-4xl mx-auto p-4">
     <CardContent className="p-6">
@@ -27,7 +34,6 @@ const ErrorMessage = ({ error, onRetry }: { error: Error; onRetry: () => void })
   </Card>
 );
 
-// Loading spinner component
 const LoadingSpinner = () => (
   <Card className="max-w-4xl mx-auto p-4">
     <CardContent className="p-6 flex flex-col items-center justify-center">
@@ -44,12 +50,12 @@ const ContentFlashcardIntegration = () => {
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [analytics, setAnalytics] = useState({
+  const [analytics, setAnalytics] = useState<Analytics>({
     totalStudyTime: 0,
     completedCards: 0,
     accuracy: 0,
     categoryProgress: {},
-    lastUpdate: null as number | null,
+    lastUpdate: null,
   });
   const [studySlots, setStudySlots] = useState<any[]>([]);
   const [progress, setProgress] = useState(0);
@@ -69,6 +75,54 @@ const ContentFlashcardIntegration = () => {
     }
   }, []);
 
+  const updateAnalytics = useCallback(async () => {
+    if (!initialized || !flashcardSystem.isInitialized()) return;
+
+    try {
+      const currentSlot = flashcardSystem.getCurrentSession();
+      if (!currentSlot?.id) return;
+
+      const now = Date.now();
+      const analyticsPayload = {
+        duration: Math.max(0, now - currentSlot.startTime),
+        category: String(currentSlot.category || 'general').toLowerCase(),
+        slotId: currentSlot.id,
+        completedCards: analytics.completedCards,
+        accuracy: analytics.accuracy,
+        categoryProgress: analytics.categoryProgress,
+        timestamp: now,
+      };
+
+      const updatedAnalytics = await flashcardSystem.saveResult(analyticsPayload);
+      if (!updatedAnalytics) return;
+
+      setAnalytics((prev) => ({
+        ...prev,
+        totalStudyTime: Math.max(prev.totalStudyTime, updatedAnalytics.totalStudyTime || 0),
+        completedCards: Math.max(prev.completedCards, updatedAnalytics.completedCards || 0),
+        accuracy: Math.min(1, Math.max(0, updatedAnalytics.accuracy || 0)),
+        categoryProgress: {
+          ...prev.categoryProgress,
+          ...(updatedAnalytics.categoryProgress || {}),
+        },
+        lastUpdate: now,
+      }));
+
+      updateProgress(
+        updatedAnalytics.completedCards,
+        updatedAnalytics.accuracy,
+        updatedAnalytics.categoryProgress,
+      );
+    } catch (err) {
+      console.error('Analytics update failed:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Analytics Update Failed',
+        description: 'Failed to update study progress',
+      });
+    }
+  }, [initialized, analytics, toast, updateProgress]);
+
   const initializeSystem = useCallback(async () => {
     if (loading && initialized) return;
 
@@ -76,22 +130,18 @@ const ContentFlashcardIntegration = () => {
       setLoading(true);
       setError(null);
 
-      if (!flashcardSystem.initialized) {
+      if (!flashcardSystem.isInitialized()) {
         const initResult = await flashcardSystem.initialize();
         if (!initResult?.success) {
           throw new Error(initResult?.error || 'Failed to initialize flashcard system');
         }
       }
 
-      const initialAnalytics = await flashcardSystem.initializeAnalytics();
-      if (!initialAnalytics) {
-        throw new Error('Failed to initialize analytics');
-      }
-
+      const initialAnalytics = flashcardSystem.getAnalyticsData();
       setAnalytics({
-        totalStudyTime: Math.max(0, Number(initialAnalytics.totalStudyTime) || 0),
-        completedCards: Math.max(0, Number(initialAnalytics.completedCards) || 0),
-        accuracy: Math.min(1, Math.max(0, Number(initialAnalytics.accuracy) || 0)),
+        totalStudyTime: Math.max(0, initialAnalytics.totalStudyTime || 0),
+        completedCards: Math.max(0, initialAnalytics.completedCards || 0),
+        accuracy: Math.min(1, Math.max(0, initialAnalytics.accuracy || 0)),
         categoryProgress: initialAnalytics.categoryProgress || {},
         lastUpdate: Date.now(),
       });
@@ -125,65 +175,23 @@ const ContentFlashcardIntegration = () => {
 
   useEffect(() => {
     initializeSystem();
-  }, [initializeSystem]);
+
+    return () => {
+      if (initialized) {
+        flashcardSystem.cleanup();
+      }
+    };
+  }, [initializeSystem, initialized]);
 
   useEffect(() => {
     if (initialized) {
-      const timer = setInterval(updateAnalytics, 30000); // Update every 30 seconds
+      const timer = setInterval(updateAnalytics, 30000);
       return () => {
         clearInterval(timer);
         updateAnalytics();
       };
     }
   }, [initialized, updateAnalytics]);
-
-  const updateAnalytics = useCallback(async () => {
-    if (!initialized || !flashcardSystem.initialized) return;
-
-    try {
-      const currentSlot = studySlots[studySlots.length - 1];
-      if (!currentSlot?.id) return;
-
-      const now = Date.now();
-      const analyticsPayload = {
-        duration: Math.max(0, now - currentSlot.startTime),
-        category: String(currentSlot.category || 'general').toLowerCase(),
-        slotId: currentSlot.id,
-        completedCards: analytics.completedCards,
-        accuracy: analytics.accuracy,
-        categoryProgress: analytics.categoryProgress,
-        timestamp: now,
-      };
-
-      const updatedAnalytics = await flashcardSystem.saveResult(analyticsPayload);
-      if (!updatedAnalytics) return;
-
-      setAnalytics((prev) => ({
-        ...prev,
-        totalStudyTime: Math.max(prev.totalStudyTime, updatedAnalytics.totalStudyTime || 0),
-        completedCards: Math.max(prev.completedCards, updatedAnalytics.completedCards || 0),
-        accuracy: Math.min(1, Math.max(0, Number(updatedAnalytics.accuracy) || 0)),
-        categoryProgress: {
-          ...prev.categoryProgress,
-          ...(updatedAnalytics.categoryProgress || {}),
-        },
-        lastUpdate: now,
-      }));
-
-      updateProgress(
-        updatedAnalytics.completedCards,
-        updatedAnalytics.accuracy,
-        updatedAnalytics.categoryProgress,
-      );
-    } catch (err) {
-      console.error('Analytics update failed:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Analytics Update Failed',
-        description: 'Failed to update study progress',
-      });
-    }
-  }, [initialized, studySlots, analytics, toast, updateProgress]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage error={error} onRetry={initializeSystem} />;
