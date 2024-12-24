@@ -1,6 +1,3 @@
-The code provided doesn't seem to have any syntax errors, bugs, security vulnerabilities, performance issues, integration problems, or violations of best practices and style guidelines. Therefore, the fixed code would be the same as the original:
-
-```typescript
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 
@@ -62,9 +59,7 @@ const Calendar: React.FC<CalendarProps> = ({
     />
   );
 };
+
 Calendar.displayName = 'Calendar';
 
 export { Calendar };
-```
-
-Please note that the correctness of this code depends on the correct implementation and import of the used modules and components, which are not provided in the task.

@@ -18,8 +18,12 @@ export const viteConfig = defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5000,
-    hmr: true
+    port: 3000,
+    hmr: {
+      port: 3001,
+      clientPort: 443,
+      protocol: 'wss'
+    }
   }
 });
 

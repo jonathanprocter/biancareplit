@@ -1,0 +1,159 @@
+Let's address these issues in order of criticality. We should start with the server port conflict since it's preventing proper startup, then fix the component issues.
+
+First, let's fix the server port conflict:
+
+typescriptCopy// server/index.ts
+import http from 'http';
+
+async function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = http.createServer()
+      .listen(port, '0.0.0.0', () => {
+        server.close(() => resolve(true));
+      })
+      .on('error', () => resolve(false));
+  });
+}
+
+async function findAvailablePort(startPort: number): Promise<number> {
+  let port = startPort;
+  while (!(await isPortAvailable(port))) {
+    port++;
+    if (port > startPort + 100) {
+      throw new Error('Unable to find available port');
+    }
+  }
+  return port;
+}
+
+async function startServer() {
+  try {
+    const PORT = await findAvailablePort(process.env.PORT ? parseInt(process.env.PORT) : 5000);
+    console.log(`[Server] Using port ${PORT}`);
+    
+    // ... rest of server startup code
+    
+    server.listen(PORT, '0.0.0.0', () => {
+      log(`[Server] Started on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('[Server] Startup error:', error);
+    process.exit(1);
+  }
+}
+
+Then fix the component syntax errors:
+
+typescriptCopy// components/ui/calendar.tsx
+import * as React from "react";
+import { DayPicker } from "react-day-picker";
+import { cn } from "@/lib/utils";
+
+export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+
+export function Calendar({ className, classNames, ...props }: CalendarProps) {
+  return (
+    <DayPicker
+      className={cn("p-3", className)}
+      classNames={{
+        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+        month: "space-y-4",
+        caption: "flex justify-center pt-1 relative items-center",
+        caption_label: "text-sm font-medium",
+        nav: "space-x-1 flex items-center",
+        nav_button: cn(
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+        ),
+        nav_button_previous: "absolute left-1",
+        nav_button_next: "absolute right-1",
+        table: "w-full border-collapse space-y-1",
+        head_row: "flex",
+        head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+        row: "flex w-full mt-2",
+        cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent",
+        day: cn("h-9 w-9 p-0 font-normal aria-selected:opacity-100"),
+        day_today: "bg-accent text-accent-foreground",
+        day_outside: "text-muted-foreground opacity-50",
+        day_disabled: "text-muted-foreground opacity-50",
+        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+        day_hidden: "invisible",
+        ...classNames,
+      }}
+      {...props}
+    />
+  );
+}
+typescriptCopy// components/ui/carousel.tsx
+import * as React from "react";
+import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
+import { cn } from "@/lib/utils";
+
+type CarouselApi = UseEmblaCarouselType[1];
+type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
+type CarouselOptions = UseCarouselParameters[0];
+type CarouselPlugin = UseCarouselParameters[1];
+
+interface CarouselProps {
+  opts?: CarouselOptions;
+  plugins?: CarouselPlugin;
+  orientation?: "horizontal" | "vertical";
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function Carousel({
+  opts,
+  plugins,
+  orientation = "horizontal",
+  className,
+  children,
+}: CarouselProps) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    ...opts,
+    axis: orientation === "horizontal" ? "x" : "y",
+  }, plugins);
+
+  return (
+    <div
+      ref={emblaRef}
+      className={cn("overflow-hidden", className)}
+      dir="ltr"
+    >
+      <div className="flex">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+Let's handle the unused variables in sidebar:
+
+typescriptCopy// components/ui/sidebar.tsx
+import React from 'react';
+import { cn } from "@/lib/utils";
+
+interface SidebarProps {
+  className?: string;
+  children?: React.ReactNode;
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ 
+  className, 
+  children, 
+  isOpen = true,
+  onClose 
+}: SidebarProps) {
+  return (
+    <div 
+      className={cn(
+        "flex flex-col h-full transition-all duration-300",
+        isOpen ? "w-64" : "w-0",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}

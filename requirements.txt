@@ -69,3 +69,5 @@ flask-sqlalchemy
 numpy
 scikit-learn
 sqlalchemy
+aiohttp
+backoff
