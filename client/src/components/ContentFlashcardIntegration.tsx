@@ -30,7 +30,7 @@ const ErrorMessage = ({ error, onRetry }: { error: Error; onRetry: () => void })
 // Loading spinner component
 const LoadingSpinner = () => (
   <Card className="max-w-4xl mx-auto p-4">
-    <CardContent className="p-6">
+    <CardContent className="p-6 flex flex-col items-center justify-center">
       <div className="flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
@@ -58,8 +58,6 @@ const ContentFlashcardIntegration = () => {
     try {
       const validCompletedCards = Math.max(0, Number(completedCards) || 0);
       const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
-
-      // Calculate progress based on completed cards and accuracy
       const progressValue = Math.min(
         100,
         ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
@@ -72,19 +70,24 @@ const ContentFlashcardIntegration = () => {
   }, []);
 
   const initializeSystem = useCallback(async () => {
+    if (loading && initialized) return;
+
     try {
       setLoading(true);
       setError(null);
 
       if (!flashcardSystem.initialized) {
-        await flashcardSystem.initialize();
-        toast({
-          title: 'System Initialized',
-          description: 'Flashcard system ready to use',
-        });
+        const initResult = await flashcardSystem.initialize();
+        if (!initResult?.success) {
+          throw new Error(initResult?.error || 'Failed to initialize flashcard system');
+        }
       }
 
       const initialAnalytics = await flashcardSystem.initializeAnalytics();
+      if (!initialAnalytics) {
+        throw new Error('Failed to initialize analytics');
+      }
+
       setAnalytics({
         totalStudyTime: Math.max(0, Number(initialAnalytics.totalStudyTime) || 0),
         completedCards: Math.max(0, Number(initialAnalytics.completedCards) || 0),
@@ -102,9 +105,14 @@ const ContentFlashcardIntegration = () => {
       const session = flashcardSystem.startNewSession('content');
       setStudySlots([session]);
       setInitialized(true);
+
+      toast({
+        title: 'System Initialized',
+        description: 'Flashcard system ready to use',
+      });
     } catch (err) {
       console.error('Failed to initialize:', err);
-      setError(err as Error);
+      setError(err instanceof Error ? err : new Error('Failed to initialize'));
       toast({
         variant: 'destructive',
         title: 'Initialization Failed',
@@ -113,10 +121,24 @@ const ContentFlashcardIntegration = () => {
     } finally {
       setLoading(false);
     }
-  }, [updateProgress, toast]);
+  }, [loading, initialized, toast, updateProgress]);
+
+  useEffect(() => {
+    initializeSystem();
+  }, [initializeSystem]);
+
+  useEffect(() => {
+    if (initialized) {
+      const timer = setInterval(updateAnalytics, 30000); // Update every 30 seconds
+      return () => {
+        clearInterval(timer);
+        updateAnalytics();
+      };
+    }
+  }, [initialized, updateAnalytics]);
 
   const updateAnalytics = useCallback(async () => {
-    if (!initialized) return;
+    if (!initialized || !flashcardSystem.initialized) return;
 
     try {
       const currentSlot = studySlots[studySlots.length - 1];
@@ -134,6 +156,7 @@ const ContentFlashcardIntegration = () => {
       };
 
       const updatedAnalytics = await flashcardSystem.saveResult(analyticsPayload);
+      if (!updatedAnalytics) return;
 
       setAnalytics((prev) => ({
         ...prev,
@@ -142,7 +165,7 @@ const ContentFlashcardIntegration = () => {
         accuracy: Math.min(1, Math.max(0, Number(updatedAnalytics.accuracy) || 0)),
         categoryProgress: {
           ...prev.categoryProgress,
-          ...updatedAnalytics.categoryProgress,
+          ...(updatedAnalytics.categoryProgress || {}),
         },
         lastUpdate: now,
       }));
@@ -160,85 +183,72 @@ const ContentFlashcardIntegration = () => {
         description: 'Failed to update study progress',
       });
     }
-  }, [initialized, studySlots, analytics, updateProgress, toast]);
-
-  useEffect(() => {
-    initializeSystem();
-  }, [initializeSystem]);
-
-  useEffect(() => {
-    if (initialized) {
-      const timer = setInterval(updateAnalytics, 300000); // 5 minutes
-      return () => {
-        clearInterval(timer);
-        updateAnalytics();
-      };
-    }
-  }, [initialized, updateAnalytics]);
+  }, [initialized, studySlots, analytics, toast, updateProgress]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage error={error} onRetry={initializeSystem} />;
 
   return (
-    <Card className="max-w-4xl mx-auto p-4 bg-white shadow-sm">
-      <CardHeader>
-        <CardTitle>Study Progress</CardTitle>
-        <Progress value={progress} className="mt-4" />
-        <p className="text-sm text-gray-500 mt-2">{progress}% Complete</p>
-      </CardHeader>
+    <div className="container mx-auto px-4 py-8">
+      <Card className="max-w-4xl mx-auto p-4 bg-white shadow-sm">
+        <CardHeader>
+          <CardTitle>Study Progress</CardTitle>
+          <Progress value={progress} className="mt-4" />
+          <p className="text-sm text-gray-500 mt-2">{progress}% Complete</p>
+        </CardHeader>
 
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-600">Study Time</h4>
-            <p className="text-2xl font-bold">{Math.floor(analytics.totalStudyTime / 60)}m</p>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-600">Cards Completed</h4>
-            <p className="text-2xl font-bold">{analytics.completedCards}</p>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-600">Accuracy</h4>
-            <p className="text-2xl font-bold">{Math.round(analytics.accuracy * 100)}%</p>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-600">Categories</h4>
-            <p className="text-2xl font-bold">{Object.keys(analytics.categoryProgress).length}</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h4 className="font-semibold text-sm text-gray-600">Study Sessions</h4>
-          {studySlots.map((slot) => (
-            <div
-              key={slot.id}
-              className={cn(
-                'flex justify-between items-center p-4 rounded-lg border',
-                slot.id === studySlots[studySlots.length - 1]?.id
-                  ? 'bg-blue-50 border-blue-200'
-                  : 'bg-gray-50 border-gray-200',
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    'w-3 h-3 rounded-full',
-                    slot.id === studySlots[studySlots.length - 1]?.id
-                      ? 'bg-blue-500 animate-pulse'
-                      : 'bg-gray-400',
-                  )}
-                />
-                <span className="font-medium">Study Session</span>
-              </div>
-              <span className="text-sm text-gray-600">
-                {Math.floor((slot.endTime || Date.now() - slot.startTime) / 60000)}m{' '}
-                {Math.floor(((slot.endTime || Date.now() - slot.startTime) % 60000) / 1000)}s
-              </span>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-sm text-gray-600">Study Time</h4>
+              <p className="text-2xl font-bold">{Math.floor(analytics.totalStudyTime / 60)}m</p>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-sm text-gray-600">Cards Completed</h4>
+              <p className="text-2xl font-bold">{analytics.completedCards}</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-sm text-gray-600">Accuracy</h4>
+              <p className="text-2xl font-bold">{Math.round(analytics.accuracy * 100)}%</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-sm text-gray-600">Categories</h4>
+              <p className="text-2xl font-bold">{Object.keys(analytics.categoryProgress).length}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-semibold text-sm text-gray-600">Study Sessions</h4>
+            {studySlots.map((slot) => (
+              <div
+                key={slot.id}
+                className={cn(
+                  'flex justify-between items-center p-4 rounded-lg border',
+                  slot.id === studySlots[studySlots.length - 1]?.id
+                    ? 'bg-blue-50 border-blue-200'
+                    : 'bg-gray-50 border-gray-200',
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'w-3 h-3 rounded-full',
+                      slot.id === studySlots[studySlots.length - 1]?.id
+                        ? 'bg-blue-500 animate-pulse'
+                        : 'bg-gray-400',
+                    )}
+                  />
+                  <span className="font-medium">Study Session</span>
+                </div>
+                <span className="text-sm text-gray-600">
+                  {Math.floor((Date.now() - slot.startTime) / 60000)}m
+                </span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

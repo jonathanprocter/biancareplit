@@ -1,4 +1,3 @@
-import { QueryClientProvider } from '@tanstack/react-query';
 import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
@@ -7,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/toaster';
 
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
-import { queryClient } from './lib/queryClient';
 
 // Error fallback component
 function ErrorFallback({ error }: { error: Error }) {
@@ -29,17 +27,15 @@ function ErrorFallback({ error }: { error: Error }) {
 function App() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen flex flex-col bg-background text-foreground">
-          <main className="flex-1">
-            <Switch>
-              <Route path="/" component={ContentFlashcardIntegration} />
-              <Route component={NotFound} />
-            </Switch>
-          </main>
-          <Toaster />
-        </div>
-      </QueryClientProvider>
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <main className="flex-1">
+          <Switch>
+            <Route path="/" component={ContentFlashcardIntegration} />
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+        <Toaster />
+      </div>
     </ErrorBoundary>
   );
 }

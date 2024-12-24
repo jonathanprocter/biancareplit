@@ -69,7 +69,10 @@ class FlashcardSystem extends EventEmitter {
       console.log('Starting FlashcardSystem initialization...');
 
       // Initialize analytics
-      await this.initializeAnalytics();
+      const analytics = await this.initializeAnalytics();
+      if (!analytics) {
+        throw new Error('Failed to initialize analytics');
+      }
 
       // Create initial study session
       const initialSlot = this.startNewSession('initial');
@@ -84,20 +87,21 @@ class FlashcardSystem extends EventEmitter {
       return { success: true, status: 'initialized' };
     } catch (error) {
       console.error('FlashcardSystem initialization failed:', error);
-      throw error;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Initialization failed',
+      };
     }
   }
 
-  async initializeAnalytics() {
+  async initializeAnalytics(): Promise<AnalyticsData | null> {
     try {
-      const analytics = {
+      const analytics: AnalyticsData = {
         totalStudyTime: 0,
         completedCards: 0,
         accuracy: 0,
         categoryProgress: {},
-        timestamp: new Date().toISOString(),
-        sessions: [],
-        results: [],
+        lastUpdate: Date.now(),
       };
 
       this.analyticsData = analytics;
@@ -105,12 +109,12 @@ class FlashcardSystem extends EventEmitter {
       return analytics;
     } catch (error) {
       console.error('Analytics initialization failed:', error);
-      throw error;
+      return null;
     }
   }
 
   startNewSession(type = 'study'): StudySession {
-    const session = {
+    const session: StudySession = {
       id: Date.now(),
       type,
       startTime: Date.now(),
@@ -132,14 +136,14 @@ class FlashcardSystem extends EventEmitter {
 
     try {
       // Update analytics data
-      const updatedAnalytics = {
+      const updatedAnalytics: AnalyticsData = {
         ...this.analyticsData,
-        totalStudyTime: this.analyticsData.totalStudyTime + (result.duration || 0),
-        completedCards: this.analyticsData.completedCards + 1,
-        accuracy: result.accuracy || this.analyticsData.accuracy,
+        totalStudyTime: Math.max(0, this.analyticsData.totalStudyTime + (result.duration || 0)),
+        completedCards: Math.max(0, this.analyticsData.completedCards + 1),
+        accuracy: Math.min(1, Math.max(0, result.accuracy || this.analyticsData.accuracy)),
         categoryProgress: {
           ...this.analyticsData.categoryProgress,
-          ...result.categoryProgress,
+          ...(result.categoryProgress || {}),
         },
         lastUpdate: Date.now(),
       };
@@ -150,7 +154,7 @@ class FlashcardSystem extends EventEmitter {
       return updatedAnalytics;
     } catch (error) {
       console.error('Failed to save result:', error);
-      throw error;
+      return null;
     }
   }
 
