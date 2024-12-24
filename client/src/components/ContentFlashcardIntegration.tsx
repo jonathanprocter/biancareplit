@@ -56,25 +56,33 @@ const ContentFlashcardIntegration: React.FC = () => {
   const [studySlots, setStudySlots] = useState<StudySession[]>([]);
   const [progress, setProgress] = useState<number>(0);
 
-  const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
-    try {
-      const validCompletedCards = Math.max(0, Number(completedCards) || 0);
-      const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
-      const progressValue = Math.min(
-        100,
-        ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
-      );
-      setProgress(Math.round(progressValue));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.error('Progress update failed:', message);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: message,
-      });
-    }
-  }, [toast]);
+  const updateProgress = useCallback(
+    (completedCards: number, accuracy = 0) => {
+      try {
+        const validCompletedCards = Math.max(0, Number(completedCards) || 0);
+        const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
+        const progressValue = Math.min(
+          100,
+          ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
+        );
+        setProgress(Math.round(progressValue));
+      } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred';
+        console.error('Progress update failed:', message);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: message,
+        });
+      }
+    },
+    [toast],
+  );
 
   const updateAnalytics = useCallback(async () => {
     if (!initialized || !flashcardSystem.isInitialized()) return;
