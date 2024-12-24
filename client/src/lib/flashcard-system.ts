@@ -1,9 +1,16 @@
 import { EventEmitter } from './EventEmitter';
 
-interface FlashcardSystemConfig {
-  analyticsEnabled: boolean;
-  autoSave: boolean;
-  reviewInterval: number;
+export interface StudySession {
+  id: string;
+  startTime: number;
+  category?: string;
+}
+
+export interface AnalyticsData {
+  totalStudyTime: number;
+  completedCards: number;
+  accuracy: number;
+  categoryProgress: Record<string, number>;
 }
 
 interface FlashcardSystemEvents {
@@ -18,54 +25,78 @@ interface FlashcardSystemEvents {
 export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
   private initialized = false;
   private analyticsReady = false;
-  private cards: any[] = [];
-  private config: FlashcardSystemConfig;
+  private currentSession: StudySession | null = null;
+  private analytics: AnalyticsData = {
+    totalStudyTime: 0,
+    completedCards: 0,
+    accuracy: 0,
+    categoryProgress: {},
+  };
 
-  constructor(config: Partial<FlashcardSystemConfig> = {}) {
+  constructor() {
     super();
-    this.config = {
-      analyticsEnabled: true,
-      autoSave: true,
-      reviewInterval: 30000,
-      ...config,
-    };
     this.addCleanupListener();
   }
 
-  async initialize(): Promise<{ success: boolean; error?: string; status?: string }> {
+  public isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  async initialize(): Promise<{ success: boolean; error?: string }> {
     if (this.initialized) {
-      return { success: true, status: 'already_initialized' };
+      return { success: true };
     }
 
     try {
-      const analytics = await this.initializeAnalytics();
-      this.analyticsReady = analytics;
       this.initialized = true;
-
-      this.emit('initialized', {
-        timestamp: Date.now(),
-        analyticsReady: this.analyticsReady,
-      });
-
-      return { success: true, status: 'initialized' };
+      return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown initialization error';
-      this.emit('error', { message, timestamp: Date.now() });
       return { success: false, error: message };
     }
   }
 
-  private async initializeAnalytics(): Promise<boolean> {
-    if (!this.config.analyticsEnabled) return false;
+  startNewSession(category?: string): StudySession {
+    const session = {
+      id: crypto.randomUUID(),
+      startTime: Date.now(),
+      category,
+    };
+    this.currentSession = session;
+    return session;
+  }
 
+  getCurrentSession(): StudySession | null {
+    return this.currentSession;
+  }
+
+  getAnalyticsData(): AnalyticsData {
+    return { ...this.analytics };
+  }
+
+  async saveResult(data: any): Promise<AnalyticsData | null> {
     try {
-      // Analytics initialization logic would go here
-      return true;
+      // Update analytics with new data
+      this.analytics = {
+        ...this.analytics,
+        totalStudyTime: (this.analytics.totalStudyTime || 0) + (data.duration || 0),
+        completedCards: (this.analytics.completedCards || 0) + 1,
+        accuracy: data.accuracy || this.analytics.accuracy,
+        categoryProgress: {
+          ...this.analytics.categoryProgress,
+          [data.category]: (this.analytics.categoryProgress[data.category] || 0) + 1,
+        },
+      };
+      return this.analytics;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.emit('error', { message, timestamp: Date.now() });
-      return false;
+      console.error('Failed to save result:', error);
+      return null;
     }
+  }
+
+  cleanup(): void {
+    this.initialized = false;
+    this.currentSession = null;
   }
 
   private addCleanupListener() {

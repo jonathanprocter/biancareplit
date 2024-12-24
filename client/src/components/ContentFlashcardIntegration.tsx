@@ -4,11 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
+import flashcardSystem, { type AnalyticsData, type StudySession } from '@/lib/flashcard-system';
 import { cn } from '@/lib/utils';
 
 import { useToast } from '@/hooks/use-toast';
-
-import flashcardSystem, { type AnalyticsData, type StudySession } from '../lib/flashcard-system';
 
 interface ComponentAnalytics extends AnalyticsData {
   lastUpdate: number | null;
@@ -72,13 +71,8 @@ const ContentFlashcardIntegration: React.FC = () => {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
         if (error instanceof Error) {
-          console.error(`Error: ${error.message}`);
+          console.error(`Error updating progress: ${error.message}`);
           toast({
             variant: 'destructive',
             title: 'Error',
@@ -86,11 +80,11 @@ const ContentFlashcardIntegration: React.FC = () => {
             duration: 3000,
           });
         } else {
-          console.error('An unknown error occurred:', error);
+          console.error('An unknown error occurred while updating progress:', error);
           toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'An unknown error occurred',
+            description: 'An unknown error occurred while updating progress',
             duration: 3000,
           });
         }
