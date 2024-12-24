@@ -3,18 +3,36 @@ import { sql } from 'drizzle-orm';
 import type { Express, Request, Response } from 'express';
 import { type Server, createServer } from 'http';
 
+import { performSystemCheck } from './utils/systemCheck';
 import { log } from './vite';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Test database connection before registering routes
   try {
-    // Verify database connection
     await db.execute(sql`SELECT 1`);
     log('[Server] Database connection verified');
   } catch (error) {
     log('[Server] Failed to verify database connection:', error);
-    throw error;
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
+    log('[Server] Continuing in development mode without database connection');
   }
+
+  // System check endpoint
+  app.get('/api/system-check', async (_req, res) => {
+    try {
+      const systemStatus = await performSystemCheck();
+      res.json(systemStatus);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({
+        status: 'error',
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
 
   // Health check endpoint
   app.get('/api/health', async (_req, res) => {

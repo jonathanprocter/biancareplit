@@ -22,26 +22,24 @@ const client = postgres(process.env.DATABASE_URL, {
     log('[Database] Notice:', notice.message);
   },
   ssl: {
-    rejectUnauthorized: process.env.NODE_ENV === 'production',
+    rejectUnauthorized: false // Allow self-signed certificates in all environments for Replit
   },
+  // Add retry configuration
   connection_retries: 5,
-  retry_on: ['ECONNRESET', 'ECONNREFUSED', 'CONNECTION_ENDED', 'ETIMEDOUT'],
+  retry_on: ['ECONNRESET', 'ECONNREFUSED', 'CONNECTION_ENDED', 'ETIMEDOUT']
 });
 
 // Initialize database with drizzle
 export const db = drizzle(client, { schema });
 
-// Export the raw client for direct queries when needed
-export const rawClient = client;
-
 // Export sql helper for raw queries
 export { sql };
 
-// Enhanced connection test function with retries and detailed logging
+// Enhanced connection test function with retries
 export async function testConnection(retries = 5): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     try {
-      await client.query(sql`SELECT 1`);
+      await db.execute(sql`SELECT 1`);
       log('[Database] Connection test successful');
       return true;
     } catch (error) {
@@ -49,7 +47,7 @@ export async function testConnection(retries = 5): Promise<boolean> {
       log(`[Database] Connection attempt ${i + 1}/${retries} failed: ${errorMessage}`);
 
       if (i < retries - 1) {
-        const delay = Math.min(1000 * Math.pow(2, i), 5000);
+        const delay = Math.min(1000 * Math.pow(2, i), 5000); // Exponential backoff
         log(`[Database] Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -59,34 +57,47 @@ export async function testConnection(retries = 5): Promise<boolean> {
   return false;
 }
 
-// Cleanup function for graceful shutdown
-export async function cleanup(): Promise<void> {
+// Initialize application with proper error handling
+export async function initializeDatabase() {
   try {
-    await client.end();
-    log('[Database] Connection pool closed successfully');
+    const isConnected = await testConnection();
+    if (!isConnected && process.env.NODE_ENV === 'production') {
+      throw new Error('Database connection required in production');
+    }
+    if (!isConnected) {
+      log('[Database] Warning: Starting in development mode without database connection');
+    }
+    return isConnected;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    log('[Database] Error during cleanup:', errorMessage);
+    log('[Database] Initialization error:', errorMessage);
+    throw error;
   }
 }
 
 // Register cleanup handlers
-process.once('SIGINT', cleanup);
-process.once('SIGTERM', cleanup);
+process.once('SIGINT', async () => {
+  try {
+    await client.end();
+    log('[Database] Connection pool closed successfully');
+  } catch (error) {
+    log('[Database] Error during cleanup:', error);
+  }
+});
 
-// Verify connection on startup with proper error handling
-testConnection()
-  .then((connected) => {
-    if (!connected && process.env.NODE_ENV === 'production') {
-      log('[Database] Fatal: Could not establish database connection in production');
-      process.exit(1);
-    } else if (!connected) {
-      log('[Database] Warning: Could not establish database connection in development');
-    }
-  })
-  .catch((error) => {
-    log('[Database] Unexpected error during initial connection test:', error);
-    if (process.env.NODE_ENV === 'production') {
-      process.exit(1);
-    }
-  });
+process.once('SIGTERM', async () => {
+  try {
+    await client.end();
+    log('[Database] Connection pool closed successfully');
+  } catch (error) {
+    log('[Database] Error during cleanup:', error);
+  }
+});
+
+// Start initialization
+initializeDatabase().catch(error => {
+  log('[Database] Fatal error during startup:', error);
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
+});

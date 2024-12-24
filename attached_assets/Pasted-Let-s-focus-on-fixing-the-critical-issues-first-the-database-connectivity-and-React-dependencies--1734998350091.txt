@@ -1,0 +1,68 @@
+Let's focus on fixing the critical issues first - the database connectivity and React dependencies. This will establish a stable foundation before proceeding with the broader code review.
+Let's tackle this step by step:
+
+First, let's fix the React dependency issues:
+
+bashCopy# Clean install with correct React versions
+rm -rf node_modules package-lock.json
+npm install react@18.2.0 react-dom@18.2.0 @types/react@18.2.0 @types/react-dom@18.2.0
+npm install
+
+Let's implement a proper database connection check:
+
+typescriptCopy// server/db/connection.ts
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { neon } from '@neondatabase/serverless';
+
+export async function testConnection(retries = 5): Promise<boolean> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const sql = neon(process.env.DATABASE_URL!);
+      const db = drizzle(sql);
+      await db.execute('SELECT 1');
+      console.log('Database connection successful');
+      return true;
+    } catch (error) {
+      console.error(`Connection attempt ${i + 1} failed:`, error);
+      if (i < retries - 1) await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  return false;
+}
+
+// Add development mode fallback
+export function initializeDatabase() {
+  return async () => {
+    const isConnected = await testConnection(5);
+    if (!isConnected && process.env.NODE_ENV === 'production') {
+      throw new Error('Database connection required in production');
+    }
+    if (!isConnected) {
+      console.warn('Starting in development mode without database connection');
+    }
+    return isConnected;
+  };
+}
+
+Add a basic health check endpoint to verify both:
+
+typescriptCopy// server/routes/health.ts
+import { Router } from 'express';
+import { testConnection } from '../db/connection';
+
+const router = Router();
+
+router.get('/health', async (req, res) => {
+  const status = {
+    database: await testConnection(1),
+    environment: process.env.NODE_ENV,
+    reactVersion: require('react').version
+  };
+  res.json(status);
+});
+
+export default router;
+After implementing these changes, we should verify they work:
+bashCopy# Test database connection
+curl http://localhost:5000/api/health
+Would you like me to proceed with fixing these issues, or would you prefer to see more details about any specific part first

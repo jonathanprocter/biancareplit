@@ -1,4 +1,4 @@
-import { db, cleanup as dbCleanup, sql } from '@db';
+import { db, sql } from '@db';
 import express, { NextFunction, type Request, Response } from 'express';
 import http from 'http';
 import path, { dirname } from 'path';
@@ -41,7 +41,6 @@ async function startServer() {
   try {
     // Clean up any existing server instance
     await cleanupServer();
-    await dbCleanup();
 
     const app = express();
     app.use(express.json());
@@ -98,7 +97,6 @@ async function startServer() {
   } catch (error) {
     log('[Server] Fatal error during startup:', error);
     await cleanupServer();
-    await dbCleanup();
     process.exit(1);
   }
 }
@@ -108,7 +106,6 @@ async function handleShutdown(signal: string) {
   log(`[Server] Received ${signal}, cleaning up...`);
   try {
     await cleanupServer();
-    await dbCleanup();
     process.exit(0);
   } catch (error) {
     log('[Server] Error during shutdown:', error);
@@ -125,7 +122,6 @@ process.on('uncaughtException', async (error) => {
   log('[Server] Uncaught Exception:', error);
   try {
     await cleanupServer();
-    await dbCleanup();
   } catch (cleanupError) {
     log('[Server] Error during cleanup:', cleanupError);
   }
