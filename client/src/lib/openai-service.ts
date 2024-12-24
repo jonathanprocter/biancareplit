@@ -6,7 +6,7 @@ export class OpenAIService {
   constructor() {
     const configuration = new Configuration({
       apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-      basePath: import.meta.env.VITE_API_BASE_URL
+      basePath: import.meta.env.VITE_API_BASE_URL,
     });
     this.openai = new OpenAIApi(configuration);
   }

@@ -71,6 +71,11 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       console.error('Analytics initialization failed:', error);
       return false;
     }
