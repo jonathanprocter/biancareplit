@@ -76,6 +76,10 @@ args = "Start application"
 task = "workflow.run"
 args = "Code Review"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Test ContentParsing"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -104,3 +108,30 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx tsx scripts/code_review.ts"
+
+[[workflows.workflow]]
+name = "Test ContentParsing"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = """
+python3 -c \"
+import asyncio
+from services.ContentParsingService import ContentParsingService
+
+async def test_parsing():
+    service = ContentParsingService()
+    content = await service.parse_file('test_medical_content.txt')
+    analysis = await service.analyze_content(content)
+    print('Content parsed and analyzed successfully')
+    print(f'Found {len(analysis.learning_objectives)} learning objectives')
+
+asyncio.run(test_parsing())
+\""""

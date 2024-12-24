@@ -71,3 +71,10 @@ scikit-learn
 sqlalchemy
 aiohttp
 backoff
+openai
+PyMuPDF
+python-docx
+python-magic
+PyMuPDF
+python-docx
+python-magic

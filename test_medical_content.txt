@@ -1,0 +1,15 @@
+Medical Education Module: Cardiovascular System
+
+Learning Objectives:
+1. Understand the basic anatomy of the heart
+2. Identify major blood vessels
+3. Explain the cardiac cycle
+
+Key Concepts:
+- Four chambers of the heart
+- Systole and diastole
+- Blood flow patterns
+
+Prerequisites:
+- Basic anatomy knowledge
+- Understanding of cell biology
