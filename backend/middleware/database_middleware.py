@@ -6,6 +6,7 @@ from flask import Flask, g, request
 from sqlalchemy.exc import SQLAlchemyError
 from ..database.core import db_manager
 from ..database.migration_manager import MigrationManager
+from ..config.unified_config import config_manager, ConfigurationError
 
 
 class DatabaseMiddleware:
@@ -32,14 +33,25 @@ class DatabaseMiddleware:
         try:
             self._app = app
 
-            from ..models.analytics import db
+            # Get database configuration from unified config
+            db_config = config_manager.get("SQLALCHEMY_DATABASE_URI")
+            if not db_config:
+                raise ConfigurationError("Database URL not configured")
+
+            app.config["SQLALCHEMY_DATABASE_URI"] = db_config
+            app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config_manager.get(
+                "SQLALCHEMY_TRACK_MODIFICATIONS", False
+            )
+            app.config["SQLALCHEMY_ENGINE_OPTIONS"] = config_manager.get(
+                "SQLALCHEMY_ENGINE_OPTIONS", {}
+            )
 
             with app.app_context():
                 try:
-                    db.session.execute("SELECT 1")
+                    db_manager.init_app(app)
                     self.logger.info("Database connection verified successfully")
 
-                    self.migration_manager = MigrationManager(db)
+                    self.migration_manager = MigrationManager()
                     if not self.migration_manager.init_app(app):
                         self.logger.error("Failed to initialize migration manager")
                         return
@@ -80,14 +92,14 @@ class DatabaseMiddleware:
         }
 
         try:
-            status["database_initialized"] = db_manager.verify_connection()
+            status["database_initialized"] = db_manager.verify_connection(self._app)
 
             if self.migration_manager:
                 migration_health = self.migration_manager.run_health_check()
                 status["migrations_initialized"] = migration_health["overall_health"]
                 status["migration_status"] = migration_health
 
-            status["connection_valid"] = db_manager.verify_connection()
+            status["connection_valid"] = db_manager.verify_connection(self._app)
 
             return status
 

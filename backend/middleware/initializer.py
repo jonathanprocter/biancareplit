@@ -8,7 +8,6 @@ from .middleware_config import middleware_registry
 
 logger = logging.getLogger(__name__)
 
-
 class MiddlewareInitializer:
     """Handles middleware initialization and registration."""
 
@@ -46,7 +45,7 @@ class MiddlewareInitializer:
                 continue
 
             try:
-                settings = middleware_registry.get_middleware_settings(name)
+                settings = middleware_registry.get_middleware_config(name)
                 middleware = self._registry[name](self.app, **settings)
                 self._initialized[name] = middleware
                 logger.info(f"Initialized middleware: {name}")
@@ -57,5 +56,5 @@ class MiddlewareInitializer:
         """Get initialized middleware instance."""
         return self._initialized.get(name)
 
-
+# Create singleton instance
 middleware_initializer = MiddlewareInitializer()
