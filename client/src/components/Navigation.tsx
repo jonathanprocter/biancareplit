@@ -1,9 +1,13 @@
 import { Link, useLocation } from 'wouter';
-
 import { useState } from 'react';
-
 import { Button } from '@/components/ui/button';
-
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu';
 import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
@@ -36,60 +40,66 @@ export function Navigation() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background">
+    <div className="sticky top-0 z-50 w-full border-b border-border bg-background">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/">
-              <a className="text-lg font-bold text-foreground hover:text-primary">
-                Medical Education
-              </a>
-            </Link>
-            <div className="hidden md:flex space-x-4">
-              <Link href="/dashboard">
-                <a
-                  className={`text-sm font-medium transition-colors ${
-                    location === '/dashboard'
-                      ? 'text-primary'
-                      : 'text-foreground hover:text-primary'
-                  }`}
-                >
-                  Dashboard
-                </a>
-              </Link>
-              <Link href="/upload">
-                <a
-                  className={`text-sm font-medium transition-colors ${
-                    location === '/upload' ? 'text-primary' : 'text-foreground hover:text-primary'
-                  }`}
-                >
-                  Upload Content
-                </a>
-              </Link>
-              <Link href="/progress">
-                <a
-                  className={`text-sm font-medium transition-colors ${
-                    location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'
-                  }`}
-                >
-                  My Progress
-                </a>
-              </Link>
+        <NavigationMenu>
+          <NavigationMenuList className="flex h-16 items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <NavigationMenuItem>
+                <Link href="/">
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Medical Education
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+
+              <div className="hidden md:flex space-x-4">
+                <NavigationMenuItem>
+                  <Link href="/dashboard">
+                    <NavigationMenuLink
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      Dashboard
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <Link href="/upload">
+                    <NavigationMenuLink
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      Upload Content
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <Link href="/progress">
+                    <NavigationMenuLink
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      My Progress
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="text-sm"
-            >
-              {isLoggingOut ? 'Logging out...' : 'Logout'}
-            </Button>
-          </div>
-        </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="text-sm"
+              >
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </Button>
+            </div>
+          </NavigationMenuList>
+        </NavigationMenu>
       </div>
-    </nav>
+    </div>
   );
 }
 

@@ -4,17 +4,16 @@ import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
 
-import { FileUploadWizard } from '@/components/FileUploadWizard';
-import Navigation from '@/components/Navigation';
+import { Navigation } from '@/components/Navigation';
 
 // Error fallback component
 function ErrorFallback({ error }: { error: Error }) {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
       <Card className="w-full max-w-md mx-4">
         <CardContent className="pt-6">
           <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
+            <AlertCircle className="h-8 w-8 text-destructive" />
             <h1 className="text-2xl font-bold">Something went wrong</h1>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">{error.message}</p>
@@ -45,11 +44,11 @@ function Dashboard() {
 // NotFound component
 function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
       <Card className="w-full max-w-md mx-4">
         <CardContent className="pt-6">
           <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
+            <AlertCircle className="h-8 w-8 text-destructive" />
             <h1 className="text-2xl font-bold">404 Page Not Found</h1>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
@@ -70,7 +69,6 @@ function App() {
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/dashboard" component={Dashboard} />
-            <Route path="/upload" component={FileUploadWizard} />
             <Route component={NotFound} />
           </Switch>
         </main>
