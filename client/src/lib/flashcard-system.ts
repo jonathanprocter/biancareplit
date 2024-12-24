@@ -65,7 +65,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
     this.addCleanupListener();
   }
 
-  private addCleanupListener(): void {
+  private addCleanupListener = (): void => {
     if (typeof window !== 'undefined') {
       const cleanup = () => {
         try {
@@ -80,9 +80,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       window.addEventListener('beforeunload', cleanup);
       this.cleanupFunctions.push(() => window.removeEventListener('beforeunload', cleanup));
     }
-  }
+  };
 
-  async initialize(): Promise<{ success: boolean; error?: string; status?: string }> {
+  public initialize = async (): Promise<{ success: boolean; error?: string; status?: string }> => {
     if (this.initialized) {
       return { success: true, status: 'already_initialized' };
     }
@@ -111,9 +111,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       this.emit('error', { message, timestamp: Date.now() });
       return { success: false, error: message };
     }
-  }
+  };
 
-  private async initializeAnalytics(): Promise<AnalyticsData | null> {
+  private initializeAnalytics = async (): Promise<AnalyticsData | null> => {
     if (!this.config.analyticsEnabled) {
       return null;
     }
@@ -131,9 +131,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       console.error('Analytics initialization failed:', error);
       return null;
     }
-  }
+  };
 
-  public startNewSession(type = 'study'): StudySession {
+  public startNewSession = (type = 'study'): StudySession => {
     this.endCurrentSession();
 
     const session: StudySession = {
@@ -150,13 +150,13 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
     this.studySlots.push(session);
     this.emit('sessionStarted', session);
     return session;
-  }
+  };
 
-  public async saveResult(result: {
+  public saveResult = async (result: {
     duration: number;
     accuracy?: number;
     categoryProgress?: Record<string, number>;
-  }): Promise<AnalyticsData | null> {
+  }): Promise<AnalyticsData | null> => {
     if (!this.initialized) {
       throw new Error('FlashcardSystem not initialized');
     }
@@ -181,9 +181,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       this.emit('error', { message, timestamp: Date.now() });
       return null;
     }
-  }
+  };
 
-  private endCurrentSession(): void {
+  private endCurrentSession = (): void => {
     const currentSlot = this.getCurrentSession();
     if (currentSlot && !currentSlot.completed) {
       currentSlot.endTime = Date.now();
@@ -191,9 +191,9 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       currentSlot.completed = true;
       this.emit('sessionEnded', currentSlot);
     }
-  }
+  };
 
-  public cleanup(): void {
+  public cleanup = (): void => {
     try {
       this.endCurrentSession();
       this.cleanupFunctions.forEach((cleanup) => cleanup());
@@ -206,20 +206,20 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       console.error('Cleanup error:', message);
       this.emit('error', { message, timestamp: Date.now() });
     }
-  }
+  };
 
-  public isInitialized(): boolean {
+  public isInitialized = (): boolean => {
     return this.initialized;
-  }
+  };
 
-  public getAnalyticsData(): AnalyticsData {
+  public getAnalyticsData = (): AnalyticsData => {
     return { ...this.analyticsData };
-  }
+  };
 
-  public getCurrentSession(): StudySession | null {
+  public getCurrentSession = (): StudySession | null => {
     const currentSlot = this.studySlots[this.studySlots.length - 1];
     return currentSlot ? { ...currentSlot } : null;
-  }
+  };
 }
 
 const flashcardSystem = new FlashcardSystem();
