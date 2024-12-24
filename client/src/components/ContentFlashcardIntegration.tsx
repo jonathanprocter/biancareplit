@@ -67,12 +67,13 @@ const ContentFlashcardIntegration: React.FC = () => {
         );
         setProgress(Math.round(progressValue));
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'An unknown error occurred';
-        console.error('Progress update failed:', message);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        console.error('Progress update failed:', errorMessage);
         toast({
           variant: 'destructive',
           title: 'Progress Update Failed',
-          description: message
+          description: errorMessage,
+          duration: 3000
         });
         setProgress(0);
       }
