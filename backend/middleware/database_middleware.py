@@ -5,7 +5,6 @@ from typing import Dict, Any, Optional
 from flask import Flask, g, request
 from sqlalchemy.exc import SQLAlchemyError
 from ..database.core import db_manager
-from ..database.migration_manager import MigrationManager
 from ..config.unified_config import config_manager, ConfigurationError
 
 logger = logging.getLogger(__name__)
@@ -16,8 +15,8 @@ class DatabaseMiddleware:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self._setup_logging()
-        self.migration_manager = None
         self._app = None
+        self._initialized = False
 
     def _setup_logging(self) -> None:
         """Initialize logging configuration."""
@@ -25,13 +24,17 @@ class DatabaseMiddleware:
         if not self.logger.handlers:
             handler = logging.StreamHandler()
             formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
             )
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
 
     def init_app(self, app: Flask) -> None:
         """Initialize database middleware with Flask application."""
+        if self._initialized:
+            self.logger.warning("Database middleware already initialized")
+            return
+
         try:
             self._app = app
 
@@ -42,6 +45,8 @@ class DatabaseMiddleware:
                 if not db_config:
                     raise ConfigurationError("Database URL not configured")
 
+            # Validate and set database configuration
+            self._validate_db_config(db_config)
             app.config["SQLALCHEMY_DATABASE_URI"] = db_config
             app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -57,77 +62,92 @@ class DatabaseMiddleware:
                         logger.error("Failed to verify database connection")
                         return
 
-                    # Initialize migration manager if needed
-                    if app.config.get("ENABLE_MIGRATIONS", True):
-                        self.migration_manager = MigrationManager()
-                        self.migration_manager.init_app(app)
-                        logger.info("Migration manager initialized")
-
                 except Exception as e:
                     logger.error(f"Database initialization error: {str(e)}")
+                    if app.debug:
+                        logger.exception("Detailed error trace:")
                     return
 
             # Register request handlers
             @app.before_request
             def before_request():
-                g.db = db_manager.session
+                if not hasattr(g, 'db_connections'):
+                    g.db_connections = []
+                g.db = db.session #Assumed db is available globally as per edited code.
+                g.db_connections.append(g.db)
 
             @app.teardown_request
             def teardown_request(exception=None):
-                db = g.pop("db", None)
-                if db is not None:
-                    db.close()
+                if hasattr(g, 'db_connections'):
+                    for db_session in g.db_connections:
+                        try:
+                            if exception:
+                                db_session.rollback()
+                            db_session.close()
+                        except Exception as e:
+                            logger.error(f"Error closing database session: {str(e)}")
 
             # Register error handler for database errors
             @app.errorhandler(SQLAlchemyError)
             def handle_db_error(error):
                 self.logger.error(f"Database error occurred: {str(error)}")
+                if app.debug:
+                    self.logger.exception("Detailed error trace:")
                 return {"error": "Database error occurred"}, 500
 
+            self._initialized = True
             self.logger.info("Database middleware initialized successfully")
 
         except Exception as e:
             self.logger.error(f"Database middleware initialization failed: {str(e)}")
             if hasattr(app, 'debug') and app.debug:
                 self.logger.exception("Detailed error trace:")
+            raise
+
+    def _validate_db_config(self, db_url: str) -> None:
+        """Validate database configuration."""
+        if not db_url:
+            raise ConfigurationError("Database URL cannot be empty")
+
+        if db_url.startswith("sqlite"):
+            self.logger.warning("SQLite is not recommended for production use")
 
     def verify_database_state(self) -> Dict[str, Any]:
         """Verify database and migration state."""
         status = {
             "database_initialized": False,
-            "migrations_initialized": False,
             "connection_valid": False,
-            "migration_status": None,
         }
 
         try:
-            if not self._app:
+            if not self._app or not self._initialized:
                 return status
 
             status["database_initialized"] = db_manager.verify_connection(self._app)
-
-            if self.migration_manager:
-                migration_health = self.migration_manager.run_health_check()
-                status["migrations_initialized"] = migration_health.get("overall_health", False)
-                status["migration_status"] = migration_health
-
             status["connection_valid"] = db_manager.verify_connection(self._app)
 
             return status
 
         except Exception as e:
             self.logger.error(f"Database state verification failed: {str(e)}")
+            if self._app and self._app.debug:
+                self.logger.exception("Detailed error trace:")
             return status
 
-    def get_migration_status(self) -> Optional[Dict[str, Any]]:
-        """Get current migration status."""
+    def cleanup(self) -> None:
+        """Cleanup database resources."""
         try:
-            if self.migration_manager:
-                return self.migration_manager.run_health_check()
-            return None
+            if hasattr(g, 'db_connections'):
+                for db_session in g.db_connections:
+                    try:
+                        db_session.close()
+                    except Exception as e:
+                        self.logger.error(f"Error closing database session during cleanup: {str(e)}")
+            self._initialized = False
         except Exception as e:
-            self.logger.error(f"Failed to get migration status: {str(e)}")
-            return None
+            self.logger.error(f"Database cleanup failed: {str(e)}")
+            if self._app and self._app.debug:
+                self.logger.exception("Detailed error trace:")
 
 # Create singleton instance
 database_middleware = DatabaseMiddleware()

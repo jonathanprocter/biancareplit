@@ -84,6 +84,10 @@ class DatabaseManager:
                 logger.exception("Detailed error trace:")
             return False
 
+    def get_session(self):
+        """Get a new database session."""
+        return db.session()
+
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope around operations with proper cleanup."""
