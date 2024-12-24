@@ -24,9 +24,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Create HTTP server
-  const httpServer = createServer(app);
-
   // Global error handling middleware with proper typing
   app.use(
     (err: Error, _req: Express.Request, res: Express.Response, _next: Express.NextFunction) => {
@@ -37,6 +34,18 @@ export function registerRoutes(app: Express): Server {
       });
     },
   );
+
+  // Create HTTP server with proper error handling
+  const httpServer = createServer(app);
+
+  // Add error handler for the HTTP server
+  httpServer.on('error', (error: NodeJS.ErrnoException) => {
+    console.error('Server error:', error);
+    if (error.code === 'EADDRINUSE') {
+      console.error('Address already in use, please check port availability');
+    }
+    process.exit(1);
+  });
 
   return httpServer;
 }
