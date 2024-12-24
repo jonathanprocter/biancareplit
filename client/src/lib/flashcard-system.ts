@@ -38,36 +38,32 @@ export interface FlashcardSystemEvents {
   error: { message: string; timestamp: number };
 }
 
-class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
-  private initialized: boolean;
-  private analyticsReady: boolean;
-  private cards: any[];
-  private currentIndex: number;
-  private studySlots: StudySession[];
+export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
+  private initialized = false;
+  private analyticsReady = false;
+  private cards: any[] = [];
+  private currentIndex = 0;
+  private studySlots: StudySession[] = [];
   private config: FlashcardSystemConfig;
   private analyticsData: AnalyticsData;
-  private cleanupFunctions: Array<() => void>;
+  private cleanupFunctions: Array<() => void> = [];
 
   constructor(config: Partial<FlashcardSystemConfig> = {}) {
     super();
-    this.initialized = false;
-    this.analyticsReady = false;
-    this.cards = [];
-    this.currentIndex = 0;
-    this.studySlots = [];
     this.config = {
       analyticsEnabled: true,
       autoSave: true,
       reviewInterval: 30000,
-      ...config,
+      ...config
     };
+
     this.analyticsData = {
       totalStudyTime: 0,
       completedCards: 0,
       accuracy: 0,
-      categoryProgress: {},
+      categoryProgress: {}
     };
-    this.cleanupFunctions = [];
+
     this.addCleanupListener();
   }
 
@@ -77,11 +73,6 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
         try {
           this.cleanup();
         } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
           const message = error instanceof Error ? error.message : 'Unknown error during cleanup';
           console.error('Error during cleanup:', message);
           this.emit('error', { message, timestamp: Date.now() });
@@ -112,7 +103,7 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       this.initialized = true;
       this.emit('initialized', {
         timestamp: Date.now(),
-        analyticsReady: this.analyticsReady,
+        analyticsReady: this.analyticsReady
       });
 
       return { success: true, status: 'initialized' };
@@ -134,7 +125,7 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
         totalStudyTime: 0,
         completedCards: 0,
         accuracy: 0,
-        categoryProgress: {},
+        categoryProgress: {}
       };
       this.analyticsReady = true;
       return this.analyticsData;
@@ -155,7 +146,7 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       duration: 0,
       completed: false,
       category: 'general',
-      results: [],
+      results: []
     };
 
     this.studySlots.push(session);
@@ -189,8 +180,8 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
         accuracy: Math.min(1, Math.max(0, result.accuracy || this.analyticsData.accuracy)),
         categoryProgress: {
           ...this.analyticsData.categoryProgress,
-          ...(result.categoryProgress || {}),
-        },
+          ...(result.categoryProgress || {})
+        }
       };
 
       this.analyticsData = updatedAnalytics;
@@ -207,7 +198,7 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
   public cleanup(): void {
     try {
       this.endCurrentSession();
-      this.cleanupFunctions.forEach((cleanup) => cleanup());
+      this.cleanupFunctions.forEach(cleanup => cleanup());
       this.cleanupFunctions = [];
       this.initialized = false;
       this.analyticsReady = false;
