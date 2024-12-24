@@ -1,65 +1,25 @@
-export class EventEmitter<T extends Record<string, any>> {
-  private events: { [K in keyof T]?: Array<(data: T[K]) => void> } = {};
 
-  on<K extends keyof T>(event: K, callback: (data: T[K]) => void): () => void {
-    if (!this.events[event]) {
-      this.events[event] = [];
+type EventCallback<T> = (data: T) => void;
+
+export class EventEmitter<Events extends Record<string, any>> {
+  private events: Map<keyof Events, Set<EventCallback<Events[keyof Events]>>>;
+
+  constructor() {
+    this.events = new Map();
+  }
+
+  on<K extends keyof Events>(event: K, callback: EventCallback<Events[K]>): void {
+    if (!this.events.has(event)) {
+      this.events.set(event, new Set());
     }
-    this.events[event]?.push(callback);
-    return () => this.off(event, callback);
+    this.events.get(event)?.add(callback);
   }
 
-  off<K extends keyof T>(event: K, callback: (data: T[K]) => void): void {
-    const callbacks = this.events[event];
-    if (!callbacks) return;
-    this.events[event] = callbacks.filter((cb) => cb !== callback);
+  off<K extends keyof Events>(event: K, callback: EventCallback<Events[K]>): void {
+    this.events.get(event)?.delete(callback);
   }
 
-  emit<K extends keyof T>(event: K, data: T[K]): void {
-    const callbacks = this.events[event];
-    if (!callbacks) return;
-
-    callbacks.forEach((callback) => {
-      try {
-        callback(data);
-      } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`Error in event handler for ${String(event)}:`, message);
-      }
-    });
-  }
-
-  removeAllListeners(event?: keyof T): void {
-    if (event) {
-      delete this.events[event];
-    } else {
-      this.events = {};
-    }
-  }
-
-  getListenerCount(event: keyof T): number {
-    return this.events[event]?.length || 0;
+  emit<K extends keyof Events>(event: K, data: Events[K]): void {
+    this.events.get(event)?.forEach(callback => callback(data));
   }
 }
-
-export default EventEmitter;
