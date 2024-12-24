@@ -9,22 +9,18 @@ interface FlashcardSystemConfig {
 
 interface FlashcardSystemEvents {
   initialized: { timestamp: number; analyticsReady: boolean };
-  sessionStarted: any;
-  sessionEnded: any;
+  sessionStarted: { timestamp: number };
+  sessionEnded: { timestamp: number; stats: any };
   cleanup: { timestamp: number };
   resultSaved: { success: boolean; data: any };
   error: { message: string; timestamp: number };
 }
 
-class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
+export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
   private initialized = false;
   private analyticsReady = false;
   private cards: any[] = [];
-  private currentIndex = 0;
-  private studySlots: any[] = [];
   private config: FlashcardSystemConfig;
-  private analyticsData: any;
-  private cleanupFunctions: Array<() => void> = [];
 
   constructor(config: Partial<FlashcardSystemConfig> = {}) {
     super();
@@ -33,12 +29,6 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       autoSave: true,
       reviewInterval: 30000,
       ...config,
-    };
-    this.analyticsData = {
-      totalStudyTime: 0,
-      completedCards: 0,
-      accuracy: 0,
-      categoryProgress: {},
     };
     this.addCleanupListener();
   }
@@ -50,11 +40,9 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
 
     try {
       const analytics = await this.initializeAnalytics();
-      if (!analytics && this.config.analyticsEnabled) {
-        throw new Error('Failed to initialize analytics');
-      }
-      
+      this.analyticsReady = analytics;
       this.initialized = true;
+      
       this.emit('initialized', {
         timestamp: Date.now(),
         analyticsReady: this.analyticsReady,
@@ -68,20 +56,23 @@ class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
     }
   }
 
+  private async initializeAnalytics(): Promise<boolean> {
+    if (!this.config.analyticsEnabled) return false;
+    try {
+      // Analytics initialization logic here
+      return true;
+    } catch (error) {
+      console.error('Analytics initialization failed:', error);
+      return false;
+    }
+  }
+
   private addCleanupListener(): void {
     if (typeof window !== 'undefined') {
       const cleanup = () => {
-        try {
-          this.cleanup();
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error during cleanup';
-          console.error('Error during cleanup:', message);
-          this.emit('error', { message, timestamp: Date.now() });
-        }
+        this.emit('cleanup', { timestamp: Date.now() });
       };
-
       window.addEventListener('beforeunload', cleanup);
-      this.cleanupFunctions.push(() => window.removeEventListener('beforeunload', cleanup));
     }
   }
 }
