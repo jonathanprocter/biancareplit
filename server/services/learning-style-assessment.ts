@@ -4,11 +4,35 @@ import { desc, eq } from 'drizzle-orm';
 
 // Initialize Anthropic client settings
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+if (!ANTHROPIC_API_KEY) {
+  console.warn('Warning: ANTHROPIC_API_KEY not set. AI-powered analysis will be limited.');
+}
 
 export async function getQuizQuestions() {
   return await db.query.learningStyleQuestions.findMany({
     orderBy: desc(learningStyleQuestions.id),
   });
+}
+
+async function generateAIAnalysis(questionsWithResponses: any[]) {
+  if (!ANTHROPIC_API_KEY) {
+    return {
+      learningStyleAnalysis: 'AI analysis not available - Anthropic API key not configured',
+      recommendations: ['Configure AI analysis for personalized recommendations'],
+      strengths: ['Self-assessment completion'],
+      areasForImprovement: ['Enable AI-powered analysis for detailed insights'],
+    };
+  }
+
+  // TODO: Implement actual Anthropic API integration
+  const analysis = {
+    learningStyleAnalysis: 'Detailed AI analysis will be provided when integration is complete',
+    recommendations: ['Focus on varied learning materials', 'Try different study methods'],
+    strengths: ['Self-awareness in taking this assessment'],
+    areasForImprovement: ['Consider exploring multiple learning approaches'],
+  };
+
+  return analysis;
 }
 
 export async function submitQuizResponses(
@@ -41,12 +65,9 @@ export async function submitQuizResponses(
     // Calculate scores based on responses
     const scores = calculateScores(questionsWithResponses);
     const dominantStyle = getDominantStyle(scores);
-    const analysis = {
-      learningStyleAnalysis: 'Analysis will be provided when Anthropic API key is configured',
-      recommendations: ['Focus on varied learning materials', 'Try different study methods'],
-      strengths: ['Self-awareness in taking this assessment'],
-      areasForImprovement: ['Consider exploring multiple learning approaches'],
-    };
+
+    // Get AI-powered analysis
+    const analysis = await generateAIAnalysis(questionsWithResponses);
 
     // Save results
     const [result] = await db

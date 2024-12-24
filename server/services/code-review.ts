@@ -42,8 +42,8 @@ const SECURITY_PATTERNS = {
 } as const;
 
 export class CodeReviewService {
-  private readonly rootDir: string;
-  private metrics: CodeMetrics;
+  protected rootDir: string;
+  protected metrics: CodeMetrics;
 
   constructor(rootDir: string) {
     this.rootDir = rootDir;
@@ -81,825 +81,9 @@ export class CodeReviewService {
         // Generate suggestions
         this.generateSuggestions(content, file, suggestions);
       } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-        console.error(`Error analyzing file ${file}:`, error);
-        issues.push({
-          type: 'error',
-          message: `Failed to analyze file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          file,
-          line: 0,
-          column: 0,
-          autoFixable: false,
-        });
+        this.handleError(error, file, issues);
       }
     }
-
-    // Calculate final metrics
-    this.metrics = await this.calculateMetrics(files);
 
     return {
       issues,
@@ -909,17 +93,30 @@ export class CodeReviewService {
     };
   }
 
-  private getAllTypeScriptFiles(dir: string): string[] {
+  protected handleError(error: unknown, file: string, issues: CodeIssue[]): void {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`Error processing ${file}: ${errorMessage}`);
+
+    issues.push({
+      type: 'error',
+      message: `Error processing file: ${errorMessage}`,
+      file,
+      line: 0,
+      column: 0,
+      autoFixable: false,
+    });
+  }
+
+  protected getAllTypeScriptFiles(dir: string): string[] {
     const files: string[] = [];
-    const entries = readdirSync(dir);
+    const entries = readdirSync(dir, { withFileTypes: true });
 
     for (const entry of entries) {
-      const fullPath = join(dir, entry);
-      const stat = statSync(fullPath);
+      const fullPath = join(dir, entry.name);
 
-      if (stat.isDirectory() && !entry.startsWith('.') && entry !== 'node_modules') {
+      if (entry.isDirectory() && !this.shouldSkipDirectory(entry.name)) {
         files.push(...this.getAllTypeScriptFiles(fullPath));
-      } else if (stat.isFile() && (entry.endsWith('.ts') || entry.endsWith('.tsx'))) {
+      } else if (this.isTypeScriptFile(entry.name)) {
         files.push(fullPath);
       }
     }
@@ -927,179 +124,104 @@ export class CodeReviewService {
     return files;
   }
 
-  checkSecurityIssues(content: string, file: string, issues: CodeIssue[]): void {
+  protected shouldSkipDirectory(dirName: string): boolean {
+    const skipDirs = ['node_modules', 'dist', 'build', '.git'];
+    return skipDirs.includes(dirName);
+  }
+
+  protected isTypeScriptFile(fileName: string): boolean {
+    return /\.(ts|tsx)$/.test(fileName);
+  }
+
+  protected checkSecurityIssues(content: string, file: string, issues: CodeIssue[]): void {
     Object.entries(SECURITY_PATTERNS).forEach(([type, pattern]) => {
       const matches = content.match(pattern);
       if (matches) {
         issues.push({
           type: 'warning',
-          message: `Potential security issue (${type}) detected`,
+          message: `Potential security issue (${type}): Found potentially unsafe pattern`,
           file,
-          line: this.findLineNumber(content, matches[0]),
-          column: 0,
+          line: this.getLineNumber(content, matches.index || 0),
+          column: this.getColumnNumber(content, matches.index || 0),
           autoFixable: false,
         });
       }
     });
   }
 
-  private checkMedicalCompliance(content: string, file: string, issues: CodeIssue[]): void {
-    const sensitiveDataMatches = content.match(MEDICAL_PATTERNS.sensitiveData);
-    if (sensitiveDataMatches) {
-      const hipaaMatches = content.match(MEDICAL_PATTERNS.hipaaCompliance);
-      if (!hipaaMatches) {
+  protected checkMedicalCompliance(content: string, file: string, issues: CodeIssue[]): void {
+    Object.entries(MEDICAL_PATTERNS).forEach(([type, pattern]) => {
+      const matches = content.match(pattern);
+      if (matches) {
         issues.push({
-          type: 'warning',
-          message: 'Medical data handling detected without proper HIPAA compliance measures',
+          type: 'info',
+          message: `Medical compliance check (${type}): Found pattern that may require review`,
           file,
-          line: this.findLineNumber(content, sensitiveDataMatches[0]),
-          column: 0,
+          line: this.getLineNumber(content, matches.index || 0),
+          column: this.getColumnNumber(content, matches.index || 0),
           autoFixable: false,
         });
       }
-    }
+    });
   }
 
-  private async calculateMetrics(files: string[]): Promise<CodeMetrics> {
-    let totalAccessibility = 0;
-    let totalSecurity = 0;
-    let totalMaintainability = 0;
-    let totalMedicalCompliance = 0;
-
-    for (const file of files) {
-      const content = readFileSync(file, 'utf-8');
-
-      // Calculate accessibility score
-      totalAccessibility += this.calculateAccessibilityScore(content);
-
-      // Calculate security score
-      totalSecurity += this.calculateSecurityScore(content);
-
-      // Calculate maintainability
-      totalMaintainability += this.calculateMaintainabilityScore(content);
-
-      // Calculate medical compliance
-      totalMedicalCompliance += this.calculateMedicalComplianceScore(content);
-    }
-
-    const fileCount = files.length;
-    return {
-      accessibility: totalAccessibility / fileCount,
-      security: totalSecurity / fileCount,
-      maintainability: totalMaintainability / fileCount,
-      testCoverage: await this.calculateTestCoverage(),
-      medicalComplianceScore: totalMedicalCompliance / fileCount,
-      lastUpdated: new Date().toISOString(),
-    };
+  protected analyzeNode(node: ts.Node, issues: CodeIssue[], file: string): void {
+    ts.forEachChild(node, (child) => {
+      this.checkNodeForIssues(child, issues, file);
+      this.analyzeNode(child, issues, file);
+    });
   }
 
-  private calculateAccessibilityScore(content: string): number {
-    const patterns = {
-      ariaLabels: (content.match(/aria-label/g) || []).length,
-      roleAttributes: (content.match(/role=/g) || []).length,
-      altTexts: (content.match(/alt=/g) || []).length,
-    };
-
-    return Object.values(patterns).reduce((acc, val) => acc + val, 0) / (content.length / 1000);
-  }
-
-  private calculateSecurityScore(content: string): number {
-    const securityIssues = Object.values(SECURITY_PATTERNS)
-      .map((pattern) => (content.match(pattern) || []).length)
-      .reduce((acc, val) => acc + val, 0);
-
-    return Math.max(0, 100 - securityIssues * 10);
-  }
-
-  private calculateMaintainabilityScore(content: string): number {
-    const metrics = {
-      lineLength: content.split('\n').filter((line) => line.length > 100).length,
-      complexity: (content.match(/if|else|for|while|switch|catch/g) || []).length,
-      comments: (content.match(/\/\*|\*\/|\/\//g) || []).length,
-    };
-
-    return Math.max(
-      0,
-      100 - (metrics.lineLength * 0.5 + metrics.complexity * 2 - metrics.comments * 0.5),
+  protected checkNodeForIssues(node: ts.Node, issues: CodeIssue[], file: string): void {
+    const { line, character } = ts.getLineAndCharacterOfPosition(
+      node.getSourceFile(),
+      node.getStart(),
     );
-  }
 
-  private calculateMedicalComplianceScore(content: string): number {
-    const sensitiveData = (content.match(MEDICAL_PATTERNS.sensitiveData) || []).length;
-    const compliance = (content.match(MEDICAL_PATTERNS.hipaaCompliance) || []).length;
-
-    return sensitiveData > 0 ? Math.min(100, (compliance / sensitiveData) * 100) : 100;
-  }
-
-  private async calculateTestCoverage(): Promise<number> {
-    // Mock implementation - replace with actual test coverage calculation
-    return 75;
-  }
-
-  private findLineNumber(content: string, searchString: string): number {
-    const lines = content.split('\n');
-    const lineIndex = lines.findIndex((line) => line.includes(searchString));
-    return lineIndex >= 0 ? lineIndex + 1 : 1;
-  }
-
-  private analyzeNode(node: ts.Node, issues: CodeIssue[], file: string): void {
-    if (ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node)) {
-      this.analyzeFunctionComplexity(node, issues, file);
-    }
-
-    ts.forEachChild(node, (child) => this.analyzeNode(child, issues, file));
-  }
-
-  private analyzeFunctionComplexity(
-    node: ts.FunctionDeclaration | ts.MethodDeclaration,
-    issues: CodeIssue[],
-    file: string,
-  ): void {
-    const functionName = node.name?.getText() || 'anonymous';
-    const complexity = this.calculateCyclomaticComplexity(node.getText());
-
-    if (complexity > 10) {
+    if (ts.isAnyKeyword(node)) {
       issues.push({
         type: 'warning',
-        message: `Function "${functionName}" has high cyclomatic complexity (${complexity})`,
+        message: 'Usage of "any" type detected - consider using a more specific type',
         file,
-        line: node.getStartLine(),
-        column: node.getStartColumn(),
+        line: line + 1,
+        column: character + 1,
         autoFixable: false,
+      });
+    }
+
+    if (ts.isFunctionDeclaration(node) && !node.type) {
+      issues.push({
+        type: 'info',
+        message: 'Function is missing return type annotation',
+        file,
+        line: line + 1,
+        column: character + 1,
+        autoFixable: true,
       });
     }
   }
 
-  private calculateCyclomaticComplexity(content: string): number {
-    const controlFlowMatches = content.match(/if|else|for|while|case|catch|&&|\|\||[?:]/g);
-    return (controlFlowMatches?.length || 0) + 1;
+  protected generateSuggestions(content: string, file: string, suggestions: string[]): void {
+    const lines = content.split('\n');
+    const longLines = lines.filter((line) => line.length > 100);
+
+    if (longLines.length > 0) {
+      suggestions.push(
+        `${file}: Consider breaking down ${longLines.length} lines that exceed 100 characters`,
+      );
+    }
+
+    if (content.includes('TODO')) {
+      suggestions.push(`${file}: Contains TODO comments that should be addressed`);
+    }
   }
 
-  private generateSuggestions(content: string, file: string, suggestions: string[]): void {
-    // Add medical data handling suggestions
-    if (content.includes('patient') || content.includes('medical')) {
-      if (!content.includes('sanitizeMedicalData')) {
-        suggestions.push(
-          `Consider using sanitizeMedicalData utility in ${file} to ensure proper data handling`,
-        );
-      }
-      if (!content.includes('ErrorBoundary')) {
-        suggestions.push(
-          `Add ErrorBoundary component in ${file} for graceful error handling of medical data`,
-        );
-      }
-    }
+  protected getLineNumber(content: string, index: number): number {
+    return content.substring(0, index).split('\n').length;
+  }
 
-    // Add accessibility suggestions
-    if (!content.match(MEDICAL_PATTERNS.accessibility)) {
-      suggestions.push(`Improve accessibility in ${file} by adding ARIA labels and roles`);
-    }
-
-    // Add security suggestions
-    Object.entries(SECURITY_PATTERNS).forEach(([type, pattern]) => {
-      if (content.match(pattern)) {
-        suggestions.push(`Address ${type} security issue in ${file}`);
-      }
-    });
+  protected getColumnNumber(content: string, index: number): number {
+    const lines = content.substring(0, index).split('\n');
+    return lines[lines.length - 1].length + 1;
   }
 }

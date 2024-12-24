@@ -24,6 +24,11 @@ interface CodeIssue {
 
 export class CodeReviewService {
   private static instance: CodeReviewService;
+  private defaultConfig: CodeReviewConfig = {
+    excludePatterns: ['node_modules/', '.git/', 'dist/'],
+    maxIssues: 100,
+    severity: 'error',
+  };
 
   private constructor() {}
 
@@ -34,10 +39,18 @@ export class CodeReviewService {
     return CodeReviewService.instance;
   }
 
-  async analyzeDirectory(directoryPath: string, config?: CodeReviewConfig): Promise<CodeIssue[]> {
+  async analyzeDirectory(
+    directoryPath: string,
+    config?: Partial<CodeReviewConfig>,
+  ): Promise<CodeIssue[]> {
     try {
+      // Validate and merge config with defaults
+      const validatedConfig = config
+        ? codeReviewConfigSchema.parse({ ...this.defaultConfig, ...config })
+        : this.defaultConfig;
+
       const issues: CodeIssue[] = [];
-      const files = await this.getFilesToAnalyze(directoryPath, config);
+      const files = await this.getFilesToAnalyze(directoryPath, validatedConfig);
 
       for (const file of files) {
         const fileContent = await fs.readFile(file, 'utf-8');
@@ -45,7 +58,7 @@ export class CodeReviewService {
         issues.push(...fileIssues);
       }
 
-      return this.filterAndSortIssues(issues, config);
+      return this.filterAndSortIssues(issues, validatedConfig);
     } catch (error) {
       console.error('Error analyzing directory:', error);
       throw new Error('Failed to analyze directory');
@@ -54,26 +67,23 @@ export class CodeReviewService {
 
   private async getFilesToAnalyze(
     directoryPath: string,
-    config?: CodeReviewConfig,
+    config: CodeReviewConfig,
   ): Promise<string[]> {
     const allFiles = await this.getAllFiles(directoryPath);
 
     return allFiles.filter((file) => {
-      // Skip node_modules and hidden directories
-      if (file.includes('node_modules') || file.includes('/.')) {
+      // Apply exclude patterns
+      if (
+        config.excludePatterns?.some(
+          (pattern) => file.includes(pattern) || file.match(new RegExp(pattern)),
+        )
+      ) {
         return false;
       }
 
       // Apply include patterns if specified
-      if (config?.includeOnly?.length) {
+      if (config.includeOnly?.length) {
         return config.includeOnly.some(
-          (pattern) => file.endsWith(pattern) || file.includes(pattern),
-        );
-      }
-
-      // Apply exclude patterns
-      if (config?.excludePatterns?.length) {
-        return !config.excludePatterns.some(
           (pattern) => file.endsWith(pattern) || file.includes(pattern),
         );
       }
@@ -148,16 +158,16 @@ export class CodeReviewService {
     return issues;
   }
 
-  private filterAndSortIssues(issues: CodeIssue[], config?: CodeReviewConfig): CodeIssue[] {
+  private filterAndSortIssues(issues: CodeIssue[], config: CodeReviewConfig): CodeIssue[] {
     let filteredIssues = issues;
 
     // Filter by severity if specified
-    if (config?.severity) {
+    if (config.severity) {
       filteredIssues = filteredIssues.filter((issue) => issue.severity === config.severity);
     }
 
     // Limit number of issues if specified
-    if (config?.maxIssues) {
+    if (config.maxIssues) {
       filteredIssues = filteredIssues.slice(0, config.maxIssues);
     }
 
