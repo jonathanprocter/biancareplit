@@ -22,9 +22,9 @@ const ErrorMessage: React.FC<{ error: Error; onRetry: () => void }> = ({ error, 
           <h3 className="text-xl font-semibold mb-2">Error Occurred</h3>
           <p className="mb-2">{error?.message || 'An unexpected error occurred'}</p>
         </div>
-        <button className="mt-4" onClick={onRetry}>
+        <Button className="mt-4" onClick={onRetry}>
           Retry
-        </button>
+        </Button>
       </div>
     </CardContent>
   </Card>
@@ -66,6 +66,11 @@ const ContentFlashcardIntegration: React.FC = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       const message = error instanceof Error ? error.message : 'Error updating progress';
       console.error('Progress update failed:', message);
       setProgress(0);

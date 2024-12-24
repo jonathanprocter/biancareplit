@@ -39,23 +39,17 @@ export interface FlashcardSystemEvents {
 }
 
 export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
-  private initialized: boolean;
-  private analyticsReady: boolean;
-  private cards: any[];
-  private currentIndex: number;
-  private studySlots: StudySession[];
+  private initialized = false;
+  private analyticsReady = false;
+  private cards: any[] = [];
+  private currentIndex = 0;
+  private studySlots: StudySession[] = [];
   private config: FlashcardSystemConfig;
   private analyticsData: AnalyticsData;
-  private cleanupFunctions: Array<() => void>;
+  private cleanupFunctions: Array<() => void> = [];
 
   constructor(config: Partial<FlashcardSystemConfig> = {}) {
     super();
-    this.initialized = false;
-    this.analyticsReady = false;
-    this.cards = [];
-    this.currentIndex = 0;
-    this.studySlots = [];
-    this.cleanupFunctions = [];
     this.config = {
       analyticsEnabled: true,
       autoSave: true,
@@ -73,15 +67,10 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
 
   private addCleanupListener(): void {
     if (typeof window !== 'undefined') {
-      const cleanup = () => {
+      const cleanup = (): void => {
         try {
           this.cleanup();
         } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
           const message = error instanceof Error ? error.message : 'Unknown error during cleanup';
           console.error('Error during cleanup:', message);
           this.emit('error', { message, timestamp: Date.now() });
