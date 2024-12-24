@@ -67,29 +67,25 @@ const ContentFlashcardIntegration: React.FC = () => {
         );
         setProgress(Math.round(progressValue));
       } catch (error) {
-    try {
-  if (error instanceof Error) {
-    console.error(`Error: ${error.message}`);
-    toast({
-      variant: 'destructive',
-      title: 'Error',
-      description: error.message,
-      duration: 3000
-    });
-  } else {
-    console.error('An unknown error occurred:', error);
-    toast({
-      variant: 'destructive',
-      title: 'Error',
-      description: 'An unknown error occurred',
-      duration: 3000
-    });
-  }
-  setProgress(0);
-} catch (e) {
-  console.error('Error in error handler:', e);
-  setProgress(0);
-}
+        if (error instanceof Error) {
+          console.error(`Error: ${error.message}`);
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message,
+            duration: 3000
+          });
+        } else {
+          console.error('An unknown error occurred:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'An unknown error occurred',
+            duration: 3000
+          });
+        }
+        setProgress(0);
+      }
     },
     [toast],
   );
