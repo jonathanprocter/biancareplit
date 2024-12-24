@@ -22,9 +22,9 @@ const ErrorMessage: React.FC<{ error: Error; onRetry: () => void }> = ({ error, 
           <h3 className="text-xl font-semibold mb-2">Error Occurred</h3>
           <p className="mb-2">{error?.message || 'An unexpected error occurred'}</p>
         </div>
-        <Button className="mt-4" onClick={onRetry}>
+        <button className="mt-4" onClick={onRetry}>
           Retry
-        </Button>
+        </button>
       </div>
     </CardContent>
   </Card>
@@ -56,7 +56,7 @@ const ContentFlashcardIntegration: React.FC = () => {
   const [studySlots, setStudySlots] = useState<StudySession[]>([]);
   const [progress, setProgress] = useState<number>(0);
 
-  const updateProgress = useCallback((completedCards: number, accuracy = 0): void => {
+  const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
     try {
       const validCompletedCards = Math.max(0, Number(completedCards) || 0);
       const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
@@ -66,11 +66,6 @@ const ContentFlashcardIntegration: React.FC = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       const message = error instanceof Error ? error.message : 'Error updating progress';
       console.error('Progress update failed:', message);
       setProgress(0);
