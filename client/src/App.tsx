@@ -29,8 +29,12 @@ function Dashboard() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome to Medical Education Platform</h1>
-            <p className="text-muted-foreground">Your personalized learning experience starts here.</p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Welcome to Medical Education Platform
+            </h1>
+            <p className="text-muted-foreground">
+              Your personalized learning experience starts here.
+            </p>
           </div>
         </div>
       </div>

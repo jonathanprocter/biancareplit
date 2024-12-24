@@ -1,21 +1,14 @@
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
 
 import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
 
   const handleLogout = async () => {
@@ -29,7 +22,7 @@ export function Navigation() {
         title: 'Success',
         description: 'Logged out successfully',
       });
-      window.location.href = '/login';
+      setLocation('/login');
     } catch (error) {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
       toast({
@@ -45,48 +38,47 @@ export function Navigation() {
   return (
     <div className="sticky top-0 z-50 w-full border-b border-border bg-background">
       <div className="container mx-auto px-4">
-        <NavigationMenu>
-          <NavigationMenuList className="flex h-16 items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <NavigationMenuItem>
-                <Link href="/">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Medical Education
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
+        <nav className="flex h-16 items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setLocation('/')}
+              className="text-lg font-semibold hover:text-primary bg-transparent border-none p-0"
+            >
+              Medical Education
+            </button>
 
-              <div className="hidden md:flex space-x-4">
-                <NavigationMenuItem>
-                  <Link href="/dashboard">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Dashboard
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link href="/progress">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      My Progress
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="text-sm"
+            <div className="hidden md:flex space-x-4">
+              <button
+                onClick={() => setLocation('/dashboard')}
+                className={`hover:text-primary bg-transparent border-none p-0 ${
+                  location === '/dashboard' ? 'text-primary' : ''
+                }`}
               >
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
-              </Button>
+                Dashboard
+              </button>
+
+              <button
+                onClick={() => setLocation('/progress')}
+                className={`hover:text-primary bg-transparent border-none p-0 ${
+                  location === '/progress' ? 'text-primary' : ''
+                }`}
+              >
+                My Progress
+              </button>
             </div>
-          </NavigationMenuList>
-        </NavigationMenu>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="text-sm"
+            >
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </Button>
+          </div>
+        </nav>
       </div>
     </div>
   );
