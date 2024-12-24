@@ -5,12 +5,8 @@ import sys
 import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Union
-from dotenv import load_dotenv
 import yaml
 from datetime import timedelta
-
-# Load environment variables
-load_dotenv()
 
 # Initial basic logging setup
 logging.basicConfig(
@@ -52,6 +48,8 @@ class ConfigurationManager:
             logger.info(f"Configuration initialized for environment: {self.env}")
         except Exception as e:
             logger.error(f"Configuration initialization failed: {str(e)}")
+            if self.env == "development":
+                logger.exception("Detailed error trace:")
             raise ConfigurationError(f"Failed to initialize configuration: {str(e)}")
 
     def _load_base_config(self) -> None:
@@ -66,51 +64,61 @@ class ConfigurationManager:
         if missing_vars:
             raise ConfigurationError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
-        self.config.update({
-            "ENV": self.env,
-            "DEBUG": self.env == "development",
-            "TESTING": self.env == "testing",
-            "SECRET_KEY": os.getenv("SECRET_KEY"),
-            "SQLALCHEMY_DATABASE_URI": os.getenv("DATABASE_URL"),
-            "SQLALCHEMY_TRACK_MODIFICATIONS": False,
-            "SQLALCHEMY_ENGINE_OPTIONS": {
-                "pool_pre_ping": True,
-                "pool_size": int(os.getenv("DB_POOL_SIZE", "5")),
-                "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
-                "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
-                "pool_recycle": 300,
-            },
-            "SESSION_TYPE": "filesystem",
-            "PERMANENT_SESSION_LIFETIME": timedelta(hours=1),
-            "JWT_ACCESS_TOKEN_EXPIRES": int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", "3600")),
-            "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "*").split(","),
-            "API_TIMEOUT": int(os.getenv("API_TIMEOUT", "30")),
-            "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
-            "MIDDLEWARE": {
-                "metrics": {
-                    "enabled": True,
-                    "namespace": "medical_edu",
-                    "buckets": [0.1, 0.5, 1.0, 2.0, 5.0],
-                    "exclude_paths": ["/metrics", "/health", "/static"]
+        try:
+            self.config.update({
+                "ENV": self.env,
+                "DEBUG": self.env == "development",
+                "TESTING": self.env == "testing",
+                "SECRET_KEY": os.getenv("SECRET_KEY"),
+                "SQLALCHEMY_DATABASE_URI": os.getenv("DATABASE_URL"),
+                "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+                "SQLALCHEMY_ENGINE_OPTIONS": {
+                    "pool_pre_ping": True,
+                    "pool_size": int(os.getenv("DB_POOL_SIZE", "5")),
+                    "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
+                    "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+                    "pool_recycle": 300,
                 },
-                "logging": {
-                    "enabled": True,
-                    "level": os.getenv("LOG_LEVEL", "INFO"),
-                    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-                },
-                "error_handling": {
-                    "enabled": True,
-                    "log_errors": True,
-                    "include_traceback": self.env == "development"
-                },
-                "security": {
-                    "enabled": True,
-                    "rate_limit": "60/minute",
-                    "cors_enabled": True,
-                    "jwt_required": True
+                "SESSION_TYPE": "filesystem",
+                "PERMANENT_SESSION_LIFETIME": timedelta(hours=1),
+                "JWT_ACCESS_TOKEN_EXPIRES": int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", "3600")),
+                "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "*").split(","),
+                "API_TIMEOUT": int(os.getenv("API_TIMEOUT", "30")),
+                "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
+                "MIDDLEWARE": {
+                    "metrics": {
+                        "enabled": True,
+                        "namespace": "medical_edu",
+                        "buckets": [0.1, 0.5, 1.0, 2.0, 5.0],
+                        "exclude_paths": ["/metrics", "/health", "/static"]
+                    },
+                    "logging": {
+                        "enabled": True,
+                        "level": os.getenv("LOG_LEVEL", "INFO"),
+                        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                    },
+                    "error_handling": {
+                        "enabled": True,
+                        "log_errors": True,
+                        "include_traceback": self.env == "development"
+                    },
+                    "health": {
+                        "enabled": True,
+                        "endpoint": "/health",
+                        "detailed": self.env == "development"
+                    },
+                    "security": {
+                        "enabled": True,
+                        "rate_limit": "60/minute",
+                        "cors_enabled": True,
+                        "jwt_required": True
+                    }
                 }
-            }
-        })
+            })
+        except ValueError as e:
+            raise ConfigurationError(f"Invalid environment variable value: {str(e)}")
+        except Exception as e:
+            raise ConfigurationError(f"Error loading base configuration: {str(e)}")
 
     def _load_env_config(self) -> None:
         """Load environment-specific configuration."""
@@ -119,16 +127,28 @@ class ConfigurationManager:
             if env_config_path.exists():
                 with env_config_path.open() as f:
                     env_config = yaml.safe_load(f) or {}
+                    self._validate_env_config(env_config)
                     self.config.update(env_config)
                     logger.info(f"Loaded environment config from {env_config_path}")
         except Exception as e:
             logger.warning(f"Failed to load environment config: {str(e)}, continuing with base configuration")
 
+    def _validate_env_config(self, config: Dict[str, Any]) -> None:
+        """Validate environment-specific configuration."""
+        if not isinstance(config, dict):
+            raise ConfigurationError("Environment configuration must be a dictionary")
+
+        # Validate critical sections
+        critical_sections = ["SQLALCHEMY_DATABASE_URI", "SECRET_KEY"]
+        for section in critical_sections:
+            if section in config and not config[section]:
+                raise ConfigurationError(f"Invalid {section} in environment configuration")
+
     def _validate_config(self) -> None:
         """Validate configuration integrity."""
         # Validate middleware configuration
         middleware_config = self.config.get("MIDDLEWARE", {})
-        required_middleware = ["metrics", "logging", "error_handling", "security"]
+        required_middleware = ["metrics", "logging", "error_handling", "security", "health"]
 
         # Check if required middleware sections exist and are properly configured
         for middleware in required_middleware:
@@ -178,15 +198,16 @@ class ConfigurationManager:
             ))
             handlers.append(stdout_handler)
 
-            # Add file handler for persistent logging
-            try:
-                file_handler = logging.FileHandler(str(log_dir / f"{self.env}.log"))
-                file_handler.setFormatter(logging.Formatter(
-                    "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
-                ))
-                handlers.append(file_handler)
-            except Exception as e:
-                logger.warning(f"Failed to create file handler: {str(e)}, continuing with console logging only")
+            # Add file handler for persistent logging in non-development environments
+            if self.env != "development":
+                try:
+                    file_handler = logging.FileHandler(str(log_dir / f"{self.env}.log"))
+                    file_handler.setFormatter(logging.Formatter(
+                        "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+                    ))
+                    handlers.append(file_handler)
+                except Exception as e:
+                    logger.warning(f"Failed to create file handler: {str(e)}, continuing with console logging only")
 
             # Update root logger configuration
             root_logger = logging.getLogger()
@@ -203,6 +224,8 @@ class ConfigurationManager:
             logger.info(f"Logging configured at {log_level} level")
         except Exception as e:
             logger.error(f"Error configuring logging: {str(e)}")
+            if self.env == "development":
+                logger.exception("Detailed error trace:")
             raise ConfigurationError(f"Failed to configure logging: {str(e)}")
 
     def __str__(self) -> str:
