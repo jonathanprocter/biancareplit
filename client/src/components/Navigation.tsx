@@ -42,7 +42,7 @@ export function Navigation() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setLocation('/')}
-              className="text-lg font-semibold hover:text-primary bg-transparent border-none p-0"
+              className="text-lg font-semibold hover:text-primary bg-transparent border-none"
             >
               Medical Education
             </button>
@@ -50,7 +50,7 @@ export function Navigation() {
             <div className="hidden md:flex space-x-4">
               <button
                 onClick={() => setLocation('/dashboard')}
-                className={`hover:text-primary bg-transparent border-none p-0 ${
+                className={`hover:text-primary bg-transparent border-none ${
                   location === '/dashboard' ? 'text-primary' : ''
                 }`}
               >
@@ -59,7 +59,7 @@ export function Navigation() {
 
               <button
                 onClick={() => setLocation('/progress')}
-                className={`hover:text-primary bg-transparent border-none p-0 ${
+                className={`hover:text-primary bg-transparent border-none ${
                   location === '/progress' ? 'text-primary' : ''
                 }`}
               >
