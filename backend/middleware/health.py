@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional
 from flask import Flask, jsonify, make_response
 from datetime import datetime
 from .base import BaseMiddleware
+from ..config.unified_config import config_manager
 
 logger = logging.getLogger(__name__)
 
@@ -21,30 +22,59 @@ class HealthMiddleware(BaseMiddleware):
 
     def init_app(self, app: Flask) -> None:
         """Initialize health check endpoints."""
+        config = config_manager.get("MIDDLEWARE", {}).get("health", {})
+        endpoint = config.get("endpoint", "/health")
+        enabled = config.get("enabled", True)
 
-        @app.route("/health")
+        if not enabled:
+            logger.info("Health check middleware is disabled")
+            return
+
+        @app.route(endpoint)
         def health_check():
-            health_data = {
-                "status": "ok",
-                "timestamp": datetime.now().isoformat(),
-                "uptime": str(datetime.now() - self.start_time),
-                "memory": self._get_memory_usage(),
-                "cpu": self._get_cpu_usage(),
-            }
-            response = make_response(jsonify(health_data), 200)
-            response.headers["Content-Type"] = "application/json"
-            return response
+            try:
+                health_data = {
+                    "status": "ok",
+                    "timestamp": datetime.now().isoformat(),
+                    "uptime": str(datetime.now() - self.start_time),
+                    "memory": self._get_memory_usage(),
+                    "cpu": self._get_cpu_usage(),
+                    "environment": app.config.get("ENV", "production"),
+                    "debug_mode": app.debug
+                }
+                response = make_response(jsonify(health_data), 200)
+                response.headers["Content-Type"] = "application/json"
+                return response
+            except Exception as e:
+                logger.error(f"Health check failed: {str(e)}")
+                return jsonify({
+                    "status": "error",
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat()
+                }), 500
 
     @staticmethod
     def _get_memory_usage() -> Dict[str, Any]:
         """Get current memory usage."""
-        process = psutil.Process()
-        return {
-            "used_mb": round(process.memory_info().rss / 1024 / 1024, 2),
-            "percent": round(process.memory_percent(), 2),
-        }
+        try:
+            process = psutil.Process()
+            return {
+                "used_mb": round(process.memory_info().rss / 1024 / 1024, 2),
+                "percent": round(process.memory_percent(), 2),
+                "virtual_mb": round(process.memory_info().vms / 1024 / 1024, 2)
+            }
+        except Exception as e:
+            logger.error(f"Error getting memory usage: {str(e)}")
+            return {"error": str(e)}
 
     @staticmethod
     def _get_cpu_usage() -> Dict[str, float]:
         """Get current CPU usage."""
-        return {"percent": round(psutil.cpu_percent(interval=0.1), 2)}
+        try:
+            return {
+                "process_percent": round(psutil.Process().cpu_percent(interval=0.1), 2),
+                "system_percent": round(psutil.cpu_percent(interval=0.1), 2)
+            }
+        except Exception as e:
+            logger.error(f"Error getting CPU usage: {str(e)}")
+            return {"error": str(e)}
