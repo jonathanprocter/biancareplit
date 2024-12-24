@@ -3,13 +3,10 @@ import { createRoot } from 'react-dom/client';
 
 import { StrictMode } from 'react';
 
-import { Toaster } from '@/components/ui/toaster';
-
-import { queryClient } from '@/lib/queryClient';
-
-import App from '@/App';
-// Import CSS using the @/ alias to match our path configuration
-import '@/index.css';
+import App from './App';
+import { Toaster } from './components/ui/toaster';
+import './index.css';
+import { queryClient } from './lib/queryClient';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
