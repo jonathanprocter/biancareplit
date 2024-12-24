@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-import { useToast } from '@/lib/toast';
+import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -40,25 +40,38 @@ export function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/" className="text-lg font-bold text-primary">
-              Medical Education
+            <Link href="/">
+              <a className="text-lg font-bold text-primary">Medical Education</a>
             </Link>
             <div className="hidden md:flex space-x-4">
-              <Link
-                href="/dashboard"
-                className={`text-sm font-medium ${
-                  location === '/dashboard' ? 'text-primary' : 'text-foreground hover:text-primary'
-                }`}
-              >
-                Dashboard
+              <Link href="/dashboard">
+                <a
+                  className={`text-sm font-medium ${
+                    location === '/dashboard'
+                      ? 'text-primary'
+                      : 'text-foreground hover:text-primary'
+                  }`}
+                >
+                  Dashboard
+                </a>
               </Link>
-              <Link
-                href="/progress"
-                className={`text-sm font-medium ${
-                  location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'
-                }`}
-              >
-                My Progress
+              <Link href="/upload">
+                <a
+                  className={`text-sm font-medium ${
+                    location === '/upload' ? 'text-primary' : 'text-foreground hover:text-primary'
+                  }`}
+                >
+                  Upload Content
+                </a>
+              </Link>
+              <Link href="/progress">
+                <a
+                  className={`text-sm font-medium ${
+                    location === '/progress' ? 'text-primary' : 'text-foreground hover:text-primary'
+                  }`}
+                >
+                  My Progress
+                </a>
               </Link>
             </div>
           </div>
@@ -77,3 +90,5 @@ export function Navigation() {
     </nav>
   );
 }
+
+export default Navigation;
