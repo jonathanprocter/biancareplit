@@ -71,6 +71,11 @@ const ContentFlashcardIntegration: React.FC = () => {
         console.error('Progress update failed:', message);
         toast({
           variant: 'destructive',
+          title: 'Progress Update Failed',
+          description: message
+        });
+        setProgress(0);
+          variant: 'destructive',
           title: 'Error',
           description: message,
         });
