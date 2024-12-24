@@ -5,9 +5,9 @@ import { StrictMode } from 'react';
 
 import { Toaster } from '@/components/ui/toaster';
 
-import '@/styles/index.css';
-
 import App from './App';
+// Import main CSS file
+import './index.css';
 import { queryClient } from './lib/queryClient';
 
 createRoot(document.getElementById('root')!).render(
