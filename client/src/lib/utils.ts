@@ -20,7 +20,6 @@ export function isValidDate(date: Date): boolean {
 
 export function sanitizeMedicalData<T extends Record<string, unknown>>(data: T): T {
   return Object.entries(data).reduce((acc, [key, value]) => {
-    // Remove any potentially harmful HTML/script content
     if (typeof value === 'string') {
       acc[key] = value.replace(/<[^>]*>/g, '').trim() as unknown as T[keyof T];
     } else {

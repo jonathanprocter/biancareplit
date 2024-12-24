@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-
-import { cn } from '@/lib/utils';
-
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '../hooks/use-toast';
+import { cn } from '../lib/utils';
+import { Card, CardContent, CardHeader, CardTitle, Progress } from './ui';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -41,18 +38,12 @@ const ContentFlashcardIntegration = () => {
       const validCompletedCards = Math.max(0, Number(completedCards) || 0);
       const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
 
-      // Calculate progress based on completed cards and accuracy
       const progressValue = Math.min(
         100,
         ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       console.error('Error updating progress:', error);
       setProgress(0);
     }
@@ -64,7 +55,6 @@ const ContentFlashcardIntegration = () => {
         setLoading(true);
         setError(null);
 
-        // Initialize with default data for now
         const initialAnalytics: AnalyticsData = {
           totalStudyTime: 0,
           completedCards: 0,
@@ -76,7 +66,6 @@ const ContentFlashcardIntegration = () => {
         setAnalytics(initialAnalytics);
         updateProgress(initialAnalytics.completedCards, initialAnalytics.accuracy);
 
-        // Create initial study slot
         setStudySlots([
           {
             id: crypto.randomUUID(),
