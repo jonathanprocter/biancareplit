@@ -76,9 +76,6 @@ const ContentFlashcardIntegration: React.FC = () => {
         });
         setProgress(0);
       }
-          description: message,
-        });
-      }
     },
     [toast],
   );
