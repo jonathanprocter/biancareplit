@@ -1,0 +1,74 @@
+Yes, let's prioritize fixing these critical issues first. It's essential to establish a stable foundation before proceeding with the broader code review.
+Here's the systematic approach we should take:
+
+First, fix the React dependency issues:
+
+bashCopy# Clean up existing dependencies
+rm -rf node_modules package-lock.json
+
+# Install correct React versions
+npm install react@18.2.0 react-dom@18.2.0 @types/react@18.2.0 @types/react-dom@18.2.0
+
+# Reinstall all dependencies
+npm install
+
+Then address the database connectivity:
+
+typescriptCopy// server/db/connection.ts
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { neon } from '@neondatabase/serverless';
+
+export async function testConnection(retries = 5): Promise<boolean> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const sql = neon(process.env.DATABASE_URL!);
+      const db = drizzle(sql);
+      await db.execute('SELECT 1');
+      console.log('Database connection successful');
+      return true;
+    } catch (error) {
+      console.error(`Connection attempt ${i + 1} failed:`, error);
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+  return false;
+}
+
+// Add development mode fallback
+export async function initializeDatabase() {
+  const isConnected = await testConnection(5);
+  if (!isConnected && process.env.NODE_ENV === 'production') {
+    throw new Error('Database connection required in production');
+  }
+  if (!isConnected) {
+    console.warn('Starting in development mode without database connection');
+  }
+  return isConnected;
+}
+
+Add a verification endpoint:
+
+typescriptCopy// server/routes/health.ts
+import { Router } from 'express';
+import { testConnection } from '../db/connection';
+
+const router = Router();
+
+router.get('/health', async (req, res) => {
+  const status = {
+    database: await testConnection(1),
+    environment: process.env.NODE_ENV,
+    reactVersion: require('react').version
+  };
+  res.json(status);
+});
+
+export default router;
+After implementing these fixes, we can verify everything is working:
+bashCopy# Verify React versions
+npm ls react react-dom
+
+# Test database connection
+curl http://localhost:5000/api/health

@@ -1,7 +1,8 @@
 import * as schema from '@db/schema';
+import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { sql } from 'drizzle-orm';
+
 import { log } from '../server/vite';
 
 if (!process.env.DATABASE_URL) {
@@ -22,11 +23,11 @@ const client = postgres(process.env.DATABASE_URL, {
     log('[Database] Notice:', notice.message);
   },
   ssl: {
-    rejectUnauthorized: false // Allow self-signed certificates in all environments for Replit
+    rejectUnauthorized: false, // Required for Replit PostgreSQL
   },
   // Add retry configuration
   connection_retries: 5,
-  retry_on: ['ECONNRESET', 'ECONNREFUSED', 'CONNECTION_ENDED', 'ETIMEDOUT']
+  retry_on: ['ECONNRESET', 'ECONNREFUSED', 'CONNECTION_ENDED', 'ETIMEDOUT'],
 });
 
 // Initialize database with drizzle
@@ -49,7 +50,7 @@ export async function testConnection(retries = 5): Promise<boolean> {
       if (i < retries - 1) {
         const delay = Math.min(1000 * Math.pow(2, i), 5000); // Exponential backoff
         log(`[Database] Retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
@@ -71,7 +72,10 @@ export async function initializeDatabase() {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log('[Database] Initialization error:', errorMessage);
-    throw error;
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
+    return false;
   }
 }
 
@@ -95,7 +99,7 @@ process.once('SIGTERM', async () => {
 });
 
 // Start initialization
-initializeDatabase().catch(error => {
+initializeDatabase().catch((error) => {
   log('[Database] Fatal error during startup:', error);
   if (process.env.NODE_ENV === 'production') {
     process.exit(1);
