@@ -5,10 +5,10 @@ import { type Server, createServer } from 'http';
 
 import { log } from './vite';
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export function registerRoutes(app: Express): Server {
   // Test database connection before registering routes
   try {
-    await db.execute(sql`SELECT 1`);
+    db.execute(sql`SELECT 1`);
     log('[Database] Connection test successful');
   } catch (error) {
     log('[Database] Failed to verify connection:', error);
@@ -19,9 +19,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Register API routes
-  app.get('/api/health', async (_req, res) => {
+  app.get('/api/health', (_req, res) => {
     try {
-      await db.execute(sql`SELECT 1`);
+      db.execute(sql`SELECT 1`);
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -38,7 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create HTTP server without starting it
+  // Create HTTP server
   const server = createServer(app);
   return server;
 }
