@@ -7,7 +7,7 @@ from flask_cors import CORS
 import os
 import logging
 import psutil
-from models import db, init_models
+from backend.database.core import db, db_manager
 from backend.middleware.initializer import middleware_initializer
 from backend.config.unified_config import config_manager
 from prometheus_client import make_wsgi_app, CollectorRegistry
@@ -30,33 +30,44 @@ def create_app():
         logger.info("Configuration initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize configuration: {str(e)}")
-        # Set minimal required configuration
-        app.config.update({
-            'SQLALCHEMY_DATABASE_URI': os.getenv('DATABASE_URL'),
-            'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-            'SECRET_KEY': os.urandom(24)
-        })
+        raise
 
     # Initialize extensions with proper error handling
     CORS(app)
-    db.init_app(app)
-    migrate = Migrate(app, db)
+
+    # Initialize database first
+    try:
+        # Initialize Flask-SQLAlchemy
+        db.init_app(app)
+
+        # Initialize database manager
+        if not db_manager.init_app(app):
+            raise Exception("Failed to initialize database manager")
+
+        # Initialize migrations after database
+        migrate = Migrate(app, db)
+        logger.info("Database and migrations initialized successfully")
+
+    except Exception as e:
+        logger.error(f"Database initialization failed: {str(e)}", exc_info=True)
+        raise
 
     # Create Prometheus registry
     prometheus_registry = CollectorRegistry()
     logger.info("Prometheus registry created")
 
     try:
-        # Initialize database and models first
+        # Initialize database tables within app context
         with app.app_context():
-            db.create_all()
-            init_models()
-            logger.info("Database models initialized successfully")
-
-            # Verify database connection
+            # Verify database connection before creating tables
             db.session.execute('SELECT 1')
             db.session.commit()
             logger.info("Database connection verified")
+
+            # Only create tables in development
+            if app.config.get('FLASK_ENV') == 'development':
+                db.create_all()
+                logger.info("Database tables created successfully")
 
             # Then initialize middleware
             middleware_initializer.init_app(app)
@@ -64,7 +75,7 @@ def create_app():
 
     except Exception as e:
         logger.error(f"Failed during initialization: {str(e)}", exc_info=True)
-        # Allow application to continue with reduced functionality
+        raise
 
     # Add Prometheus WSGI middleware
     app.wsgi_app = DispatcherMiddleware(

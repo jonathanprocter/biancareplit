@@ -73,7 +73,7 @@ class DatabaseMiddleware:
             def before_request():
                 if not hasattr(g, 'db_connections'):
                     g.db_connections = []
-                g.db = db.session #Assumed db is available globally as per edited code.
+                g.db = db_manager.session
                 g.db_connections.append(g.db)
 
             @app.teardown_request
