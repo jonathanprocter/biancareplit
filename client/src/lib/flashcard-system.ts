@@ -83,6 +83,11 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
           const message = error instanceof Error ? error.message : 'Unknown error during cleanup';
           console.error('Error during cleanup:', message);
           this.emit('error', { message, timestamp: Date.now() });
