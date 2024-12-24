@@ -1,4 +1,3 @@
-
 import { EventEmitter } from './EventEmitter';
 
 interface FlashcardSystemConfig {
@@ -42,7 +41,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       const analytics = await this.initializeAnalytics();
       this.analyticsReady = analytics;
       this.initialized = true;
-      
+
       this.emit('initialized', {
         timestamp: Date.now(),
         analyticsReady: this.analyticsReady,
@@ -62,6 +61,11 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       // Analytics initialization logic here
       return true;
     } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       console.error('Analytics initialization failed:', error);
       return false;
     }

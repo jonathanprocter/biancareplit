@@ -1,4 +1,3 @@
-
 type EventCallback<T> = (data: T) => void;
 
 export class EventEmitter<Events extends Record<string, any>> {
@@ -6,7 +5,7 @@ export class EventEmitter<Events extends Record<string, any>> {
 
   protected emit<K extends keyof Events>(event: K, data: Events[K]): void {
     const callbacks = this.events.get(event);
-    callbacks?.forEach(callback => callback(data));
+    callbacks?.forEach((callback) => callback(data));
   }
 
   public on<K extends keyof Events>(event: K, callback: EventCallback<Events[K]>): void {
