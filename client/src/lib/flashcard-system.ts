@@ -54,14 +54,14 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       analyticsEnabled: true,
       autoSave: true,
       reviewInterval: 30000,
-      ...config
+      ...config,
     };
 
     this.analyticsData = {
       totalStudyTime: 0,
       completedCards: 0,
       accuracy: 0,
-      categoryProgress: {}
+      categoryProgress: {},
     };
 
     this.addCleanupListener();
@@ -73,6 +73,11 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
         try {
           this.cleanup();
         } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
           const message = error instanceof Error ? error.message : 'Unknown error during cleanup';
           console.error('Error during cleanup:', message);
           this.emit('error', { message, timestamp: Date.now() });
@@ -103,7 +108,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       this.initialized = true;
       this.emit('initialized', {
         timestamp: Date.now(),
-        analyticsReady: this.analyticsReady
+        analyticsReady: this.analyticsReady,
       });
 
       return { success: true, status: 'initialized' };
@@ -125,7 +130,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
         totalStudyTime: 0,
         completedCards: 0,
         accuracy: 0,
-        categoryProgress: {}
+        categoryProgress: {},
       };
       this.analyticsReady = true;
       return this.analyticsData;
@@ -146,7 +151,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       duration: 0,
       completed: false,
       category: 'general',
-      results: []
+      results: [],
     };
 
     this.studySlots.push(session);
@@ -180,8 +185,8 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
         accuracy: Math.min(1, Math.max(0, result.accuracy || this.analyticsData.accuracy)),
         categoryProgress: {
           ...this.analyticsData.categoryProgress,
-          ...(result.categoryProgress || {})
-        }
+          ...(result.categoryProgress || {}),
+        },
       };
 
       this.analyticsData = updatedAnalytics;
@@ -198,7 +203,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
   public cleanup(): void {
     try {
       this.endCurrentSession();
-      this.cleanupFunctions.forEach(cleanup => cleanup());
+      this.cleanupFunctions.forEach((cleanup) => cleanup());
       this.cleanupFunctions = [];
       this.initialized = false;
       this.analyticsReady = false;
