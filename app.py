@@ -1,3 +1,5 @@
+"""Flask application factory and configuration."""
+
 from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
@@ -8,6 +10,8 @@ import psutil
 from models import db, init_models
 from backend.middleware.initializer import middleware_initializer
 from backend.config.unified_config import config_manager
+from prometheus_client import make_wsgi_app, CollectorRegistry
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -20,35 +24,48 @@ def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
 
-    # Configure the Flask app
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JSON_SORT_KEYS'] = False
-
-    # Initialize configuration first
     try:
+        # Initialize configuration first
         config_manager.init_app(app)
         logger.info("Configuration initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize configuration: {str(e)}")
         # Continue with default configuration
 
+    # Configure the Flask app
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['JSON_SORT_KEYS'] = False
+
     # Initialize extensions
     CORS(app)
     db.init_app(app)
     migrate = Migrate(app, db)
 
-    # Initialize models
-    with app.app_context():
-        init_models()
+    # Create Prometheus registry before middleware initialization
+    prometheus_registry = CollectorRegistry()
+    logger.info("Prometheus registry created")
 
-        # Initialize middleware after database and models are ready
+    # Initialize models and middleware
+    with app.app_context():
         try:
+            # Initialize database models
+            init_models()
+            logger.info("Database models initialized")
+
+            # Initialize middleware after database and models are ready
             middleware_initializer.init_app(app)
             logger.info("Middleware initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize middleware: {str(e)}", exc_info=True)
             # Continue app initialization even if middleware fails
+
+    # Add Prometheus WSGI middleware after all other middleware
+    app.wsgi_app = DispatcherMiddleware(
+        app.wsgi_app, 
+        {'/metrics': make_wsgi_app(registry=prometheus_registry)}
+    )
+    logger.info("Prometheus metrics endpoint configured")
 
     # Register blueprints
     from routes.adaptive_content_routes import adaptive_content_bp
@@ -64,7 +81,6 @@ def create_app():
         })
 
     @app.route("/health")
-    @app.route("/api/health")
     def health():
         """Health check endpoint"""
         try:

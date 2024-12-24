@@ -3,71 +3,85 @@
 import time
 import logging
 from typing import Optional, Dict, Any
-from flask import Flask, request, g, Response
-from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
+from flask import Flask, request, g
+from prometheus_client import Counter, Histogram, CollectorRegistry
 from .base import BaseMiddleware
+from ..config.unified_config import config_manager
 
 logger = logging.getLogger(__name__)
-
-# Define Prometheus metrics
-REQUEST_COUNT = Counter(
-    "http_requests_total",
-    "Total number of HTTP requests",
-    ["method", "endpoint", "status"]
-)
-
-REQUEST_LATENCY = Histogram(
-    "http_request_duration_seconds",
-    "HTTP request latency in seconds",
-    ["method", "endpoint"]
-)
-
-ERROR_COUNT = Counter(
-    "http_errors_total",
-    "Total number of HTTP errors",
-    ["method", "endpoint", "error_type"]
-)
 
 class MetricsMiddleware(BaseMiddleware):
     """Collects and exposes Prometheus metrics."""
 
     def __init__(self, app: Optional[Flask] = None):
+        """Initialize metrics middleware with proper configuration."""
+        self._metrics: Dict[str, Any] = {}
+        self._registry = CollectorRegistry()
         super().__init__(app)
-        self.metrics_endpoint = "/metrics"
 
     def init_app(self, app: Flask) -> None:
-        """Initialize metrics collection."""
-        super().init_app(app)
+        """Initialize metrics collection with configuration."""
+        try:
+            super().init_app(app)
 
-        # Register metrics endpoint
-        @app.route(self.metrics_endpoint)
-        def metrics():
-            try:
-                return Response(generate_latest(REGISTRY), 
-                              mimetype="text/plain; version=0.0.4")
-            except Exception as e:
-                logger.error(f"Error generating metrics: {str(e)}")
-                return Response("Metrics collection failed", status=500)
+            # Get metrics configuration from unified config
+            config = config_manager.get("MIDDLEWARE", {}).get("metrics", {})
+            if not config.get("enabled", True):
+                logger.info("Metrics collection is disabled")
+                return
+
+            namespace = config.get("namespace", "medical_edu")
+            buckets = config.get("buckets", [0.1, 0.5, 1.0, 2.0, 5.0])
+            self.exclude_paths = set(config.get("exclude_paths", ["/metrics", "/health", "/static"]))
+
+            # Initialize metrics collectors with custom registry
+            self._metrics["requests"] = Counter(
+                f"{namespace}_http_requests_total",
+                "Total number of HTTP requests",
+                ["method", "endpoint", "status"],
+                registry=self._registry
+            )
+
+            self._metrics["latency"] = Histogram(
+                f"{namespace}_request_duration_seconds",
+                "HTTP request latency in seconds",
+                ["method", "endpoint"],
+                buckets=buckets,
+                registry=self._registry
+            )
+
+            self._metrics["errors"] = Counter(
+                f"{namespace}_http_errors_total",
+                "Total number of HTTP errors",
+                ["method", "endpoint", "error_type"],
+                registry=self._registry
+            )
+
+            logger.info("Metrics middleware initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize metrics middleware: {str(e)}")
+            raise
 
     def before_request(self):
         """Record request start time."""
-        if not request.path == self.metrics_endpoint:
+        if request.path not in self.exclude_paths:
             g.start_time = time.time()
 
     def after_request(self, response):
         """Record request metrics."""
         try:
-            if not request.path == self.metrics_endpoint:
+            if request.path not in self.exclude_paths:
                 # Record request duration
                 if hasattr(g, "start_time"):
                     duration = time.time() - g.start_time
-                    REQUEST_LATENCY.labels(
+                    self._metrics["latency"].labels(
                         method=request.method,
                         endpoint=request.path,
                     ).observe(duration)
 
                 # Record request count
-                REQUEST_COUNT.labels(
+                self._metrics["requests"].labels(
                     method=request.method,
                     endpoint=request.path,
                     status=response.status_code,
@@ -75,7 +89,7 @@ class MetricsMiddleware(BaseMiddleware):
 
                 # Record errors if any
                 if response.status_code >= 400:
-                    ERROR_COUNT.labels(
+                    self._metrics["errors"].labels(
                         method=request.method,
                         endpoint=request.path,
                         error_type=str(response.status_code),
@@ -85,3 +99,7 @@ class MetricsMiddleware(BaseMiddleware):
             logger.error(f"Error recording metrics: {str(e)}")
 
         return response
+
+    def get_registry(self) -> CollectorRegistry:
+        """Get the Prometheus registry for this middleware."""
+        return self._registry

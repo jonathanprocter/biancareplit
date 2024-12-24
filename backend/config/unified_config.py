@@ -89,20 +89,23 @@ class ConfigurationManager:
             "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
             "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
             "MIDDLEWARE": {
-                "logging": True,
-                "error_handling": True,
-                "performance_tracking": True,
-                "security": True,
-                "rate_limiting": {
+                "metrics": {
                     "enabled": True,
-                    "default_limits": ["200 per day", "50 per hour"]
+                    "endpoint": "/metrics",
+                    "exclude_paths": ["/metrics", "/health", "/static"],
+                    "buckets": [0.1, 0.5, 1.0, 2.0, 5.0],
+                    "namespace": "medical_edu"
+                },
+                "logging": {
+                    "enabled": True,
+                    "level": os.getenv("LOG_LEVEL", "INFO"),
+                    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                },
+                "error_handling": {
+                    "enabled": True,
+                    "log_errors": True,
+                    "include_traceback": self.env == "development"
                 }
-            },
-            "SECURITY": {
-                "password_hash_method": "pbkdf2:sha256",
-                "password_salt_length": 16,
-                "token_expiration": 3600,
-                "session_protection": "strong"
             }
         })
 

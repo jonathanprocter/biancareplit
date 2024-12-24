@@ -34,34 +34,28 @@ class MiddlewareConfig:
     def _get_default_config() -> Dict[str, Any]:
         """Get default middleware configuration."""
         return {
+            "metrics": {
+                "enabled": True,
+                "endpoint": "/metrics",
+                "exclude_paths": ["/metrics", "/health", "/static"],
+                "buckets": [0.1, 0.5, 1.0, 2.0, 5.0],  # Latency buckets in seconds
+                "namespace": "medical_edu"  # Prefix for all metrics
+            },
             "logging": {
                 "enabled": True,
                 "level": "INFO",
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             },
-            "metrics": {
-                "enabled": True,
-                "endpoint": "/metrics",
-                "include_paths": ["/api"],
-                "exclude_paths": ["/metrics", "/health"]
-            },
             "error_handling": {
                 "enabled": True,
                 "log_errors": True,
                 "include_traceback": False
-            },
-            "security": {
-                "enabled": True,
-                "rate_limiting": {
-                    "enabled": True,
-                    "default_limits": ["200 per day", "50 per hour"]
-                }
             }
         }
 
     def _validate_config(self) -> None:
         """Validate middleware configuration structure."""
-        required_middleware = ["logging", "metrics", "error_handling"]
+        required_middleware = ["metrics", "logging", "error_handling"]
 
         for middleware in required_middleware:
             if middleware not in self.config:

@@ -80,3 +80,5 @@ python-docx
 python-magic
 prometheus-client
 pytest
+flask-prometheus-metrics
+prometheus-client
