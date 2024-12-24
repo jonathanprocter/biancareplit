@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button } from '../../components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '../../components/ui/card';
-import { Progress } from '../../components/ui/progress';
-import { cn } from '../../lib/utils';
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import flashcardSystem from '../flashcard-system';
 
 // Error message component
@@ -40,6 +41,7 @@ const LoadingSpinner = () => (
 );
 
 const ContentFlashcardIntegration = () => {
+  const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,30 +56,18 @@ const ContentFlashcardIntegration = () => {
   const [progress, setProgress] = useState(0);
 
   const updateProgress = useCallback((completedCards, accuracy = 0, categories = {}) => {
-    const BASE_TARGET = 20;
-    const ACCURACY_WEIGHT = 0.3;
-    const COMPLETION_WEIGHT = 0.4;
-    const CATEGORY_WEIGHT = 0.3;
+    try {
+      const validCompletedCards = Math.max(0, Number(completedCards) || 0);
+      const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
 
-    // Calculate completion progress using logarithmic scale
-    const completionProgress = Math.min(
-      1,
-      Math.log(completedCards + 1) / Math.log(BASE_TARGET + 1),
-    );
+      // Simple progress calculation based on cards completed
+      const progressValue = Math.min(100, (validCompletedCards / 20) * 100);
+      setProgress(Math.round(progressValue));
 
-    // Calculate category coverage
-    const uniqueCategories = Object.keys(categories).length;
-    const TARGET_CATEGORIES = 5;
-    const categoryProgress = Math.min(1, uniqueCategories / TARGET_CATEGORIES);
-
-    // Weighted average of all components
-    const totalProgress =
-      (completionProgress * COMPLETION_WEIGHT +
-        accuracy * ACCURACY_WEIGHT +
-        categoryProgress * CATEGORY_WEIGHT) *
-      100;
-
-    setProgress(Math.min(100, Math.max(0, Math.round(totalProgress))));
+    } catch (error) {
+      console.error('Error updating progress:', error);
+      setProgress(0);
+    }
   }, []);
 
   const initializeSystem = useCallback(async () => {
@@ -85,11 +75,19 @@ const ContentFlashcardIntegration = () => {
       setLoading(true);
       setError(null);
 
+      // Initialize flashcard system
       if (!flashcardSystem.initialized) {
         await flashcardSystem.initialize();
+        toast({
+          title: "System Initialized",
+          description: "Flashcard system ready to use",
+        });
       }
 
+      // Get initial analytics
       const initialAnalytics = await flashcardSystem.initializeAnalytics();
+
+      // Set initial state
       setAnalytics({
         totalStudyTime: Math.max(0, Number(initialAnalytics.totalStudyTime) || 0),
         completedCards: Math.max(0, Number(initialAnalytics.completedCards) || 0),
@@ -98,17 +96,26 @@ const ContentFlashcardIntegration = () => {
         lastUpdate: Date.now(),
       });
 
+      // Update progress
       updateProgress(initialAnalytics.completedCards || 0);
+
+      // Create new study session
       const session = flashcardSystem.startNewSession('content');
       setStudySlots([session]);
       setInitialized(true);
+
     } catch (err) {
       console.error('Failed to initialize:', err);
       setError(err.message || 'Failed to initialize flashcard system');
+      toast({
+        variant: "destructive",
+        title: "Initialization Failed",
+        description: err.message || 'Failed to initialize flashcard system',
+      });
     } finally {
       setLoading(false);
     }
-  }, [updateProgress]);
+  }, [updateProgress, toast]);
 
   const updateAnalytics = useCallback(async () => {
     if (!initialized) return;
@@ -134,7 +141,7 @@ const ContentFlashcardIntegration = () => {
         ...prev,
         totalStudyTime: Math.max(prev.totalStudyTime, updatedAnalytics.totalStudyTime || 0),
         completedCards: Math.max(prev.completedCards, updatedAnalytics.completedCards || 0),
-        accuracy: Math.min(1, Math.max(0, updatedAnalytics.accuracy || 0)),
+        accuracy: Math.min(1, Math.max(0, Number(updatedAnalytics.accuracy) || 0)),
         categoryProgress: {
           ...prev.categoryProgress,
           ...updatedAnalytics.categoryProgress,
@@ -145,8 +152,13 @@ const ContentFlashcardIntegration = () => {
       updateProgress(updatedAnalytics.completedCards || 0);
     } catch (err) {
       console.error('Analytics update failed:', err);
+      toast({
+        variant: "destructive",
+        title: "Analytics Update Failed",
+        description: "Failed to update study progress",
+      });
     }
-  }, [initialized, studySlots, analytics, updateProgress]);
+  }, [initialized, studySlots, analytics, updateProgress, toast]);
 
   useEffect(() => {
     initializeSystem();
@@ -172,31 +184,34 @@ const ContentFlashcardIntegration = () => {
   if (error) return <ErrorMessage error={error} onRetry={initializeSystem} />;
 
   return (
-    <Card className="max-w-4xl mx-auto p-4">
+    <Card className="max-w-4xl mx-auto p-4 bg-white shadow-sm">
       <CardHeader>
         <CardTitle>Study Progress</CardTitle>
         <Progress value={progress} className="mt-4" />
+        <p className="text-sm text-gray-500 mt-2">
+          {progress}% Complete
+        </p>
       </CardHeader>
 
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div>
+          <div className="p-4 bg-gray-50 rounded-lg">
             <h4 className="font-semibold text-sm text-gray-600">Study Time</h4>
             <p className="text-2xl font-bold">
               {Math.floor(analytics.totalStudyTime / 60)}m
             </p>
           </div>
-          <div>
+          <div className="p-4 bg-gray-50 rounded-lg">
             <h4 className="font-semibold text-sm text-gray-600">Cards Completed</h4>
             <p className="text-2xl font-bold">{analytics.completedCards}</p>
           </div>
-          <div>
+          <div className="p-4 bg-gray-50 rounded-lg">
             <h4 className="font-semibold text-sm text-gray-600">Accuracy</h4>
             <p className="text-2xl font-bold">
               {Math.round(analytics.accuracy * 100)}%
             </p>
           </div>
-          <div>
+          <div className="p-4 bg-gray-50 rounded-lg">
             <h4 className="font-semibold text-sm text-gray-600">Categories</h4>
             <p className="text-2xl font-bold">
               {Object.keys(analytics.categoryProgress).length}
@@ -210,16 +225,16 @@ const ContentFlashcardIntegration = () => {
             <div
               key={slot.id}
               className={cn(
-                'flex justify-between items-center p-3 rounded-lg border',
+                'flex justify-between items-center p-4 rounded-lg border',
                 slot.id === studySlots[studySlots.length - 1]?.id
                   ? 'bg-blue-50 border-blue-200'
                   : 'bg-gray-50 border-gray-200'
               )}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div
                   className={cn(
-                    'w-2 h-2 rounded-full',
+                    'w-3 h-3 rounded-full',
                     slot.id === studySlots[studySlots.length - 1]?.id
                       ? 'bg-blue-500 animate-pulse'
                       : 'bg-gray-400'
