@@ -19,12 +19,28 @@ interface AnalyticsData {
   lastUpdate: number | null;
 }
 
+interface FlashcardSystemConfig {
+  analyticsEnabled: boolean;
+  autoSave: boolean;
+  reviewInterval: number;
+}
+
+type FlashcardSystemEvents = {
+  initialized: { timestamp: number; analyticsReady: boolean };
+  sessionStarted: StudySession;
+  sessionEnded: StudySession;
+  cleanup: { timestamp: number };
+  resultSaved: any;
+  error: { message: string; timestamp: number };
+};
+
 class FlashcardSystem extends EventEmitter {
   private initialized: boolean = false;
   private analyticsReady: boolean = false;
   private cards: any[] = [];
   private currentIndex: number = 0;
   private studySlots: StudySession[] = [];
+  private config: FlashcardSystemConfig;
   private analyticsData: AnalyticsData = {
     totalStudyTime: 0,
     completedCards: 0,
@@ -32,39 +48,60 @@ class FlashcardSystem extends EventEmitter {
     categoryProgress: {},
     lastUpdate: null,
   };
-  private cleanupFunctions: (() => void)[] = [];
+  private cleanupFunctions: Array<() => void> = [];
 
-  constructor() {
+  constructor(config: Partial<FlashcardSystemConfig> = {}) {
     super();
+    this.config = {
+      analyticsEnabled: true,
+      autoSave: true,
+      reviewInterval: 30000,
+      ...config,
+    };
     this.addCleanupListener();
   }
 
-  private addCleanupListener() {
+  private addCleanupListener(): void {
     if (typeof window !== 'undefined') {
-      const cleanup = () => this.cleanup();
+      const cleanup = (): void => {
+        try {
+          this.cleanup();
+        } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
+          const message = error instanceof Error ? error.message : 'Unknown error during cleanup';
+          console.error('Error during cleanup:', message);
+          this.emit('error', { message, timestamp: Date.now() });
+        }
+      };
       window.addEventListener('beforeunload', cleanup);
-      this.cleanupFunctions.push(() => 
-        window.removeEventListener('beforeunload', cleanup)
-      );
+      this.cleanupFunctions.push(() => window.removeEventListener('beforeunload', cleanup));
     }
   }
 
-  async initialize() {
+  async initialize(): Promise<{ success: boolean; status?: string; error?: string }> {
     if (this.initialized) {
-      console.log('FlashcardSystem already initialized');
       return { success: true, status: 'already_initialized' };
     }
 
     try {
       console.log('Starting FlashcardSystem initialization...');
-
       const analytics = await this.initializeAnalytics();
+
       if (!analytics) {
         throw new Error('Failed to initialize analytics');
       }
 
       const initialSlot = this.startNewSession('initial');
-      this.studySlots.push(initialSlot);
+      this.studySlots = [initialSlot];
 
       this.initialized = true;
       this.emit('initialized', {
@@ -74,15 +111,18 @@ class FlashcardSystem extends EventEmitter {
 
       return { success: true, status: 'initialized' };
     } catch (error) {
-      console.error('FlashcardSystem initialization failed:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Initialization failed',
-      };
+      const message = error instanceof Error ? error.message : 'Unknown initialization error';
+      console.error('FlashcardSystem initialization failed:', message);
+      this.emit('error', { message, timestamp: Date.now() });
+      return { success: false, error: message };
     }
   }
 
-  async initializeAnalytics(): Promise<AnalyticsData | null> {
+  private async initializeAnalytics(): Promise<AnalyticsData | null> {
+    if (!this.config.analyticsEnabled) {
+      return null;
+    }
+
     try {
       const analytics: AnalyticsData = {
         totalStudyTime: 0,
@@ -102,7 +142,7 @@ class FlashcardSystem extends EventEmitter {
   }
 
   startNewSession(type = 'study'): StudySession {
-    this.endCurrentSession(); // End any existing session
+    this.endCurrentSession();
 
     const session: StudySession = {
       id: Date.now(),
@@ -115,11 +155,11 @@ class FlashcardSystem extends EventEmitter {
       results: [],
     };
 
-    this.studySlots.push(session);
+    this.emit('sessionStarted', session);
     return session;
   }
 
-  async saveResult(result: any) {
+  async saveResult(result: any): Promise<AnalyticsData | null> {
     if (!this.initialized) {
       throw new Error('FlashcardSystem not initialized');
     }
@@ -142,13 +182,15 @@ class FlashcardSystem extends EventEmitter {
 
       return updatedAnalytics;
     } catch (error) {
-      console.error('Failed to save result:', error);
+      const message = error instanceof Error ? error.message : 'Failed to save result';
+      console.error('Error saving result:', message);
+      this.emit('error', { message, timestamp: Date.now() });
       return null;
     }
   }
 
-  endCurrentSession() {
-    const currentSlot = this.studySlots[this.studySlots.length - 1];
+  private endCurrentSession(): void {
+    const currentSlot = this.getCurrentSession();
     if (currentSlot && !currentSlot.completed) {
       currentSlot.endTime = Date.now();
       currentSlot.duration = currentSlot.endTime - currentSlot.startTime;
@@ -157,16 +199,32 @@ class FlashcardSystem extends EventEmitter {
     }
   }
 
-  cleanup() {
-    this.endCurrentSession();
-    this.cleanupFunctions.forEach(cleanup => cleanup());
-    this.cleanupFunctions = [];
-    this.initialized = false;
-    this.analyticsReady = false;
-    this.emit('cleanup', { timestamp: Date.now() });
+  cleanup(): void {
+    try {
+      this.endCurrentSession();
+      this.cleanupFunctions.forEach((cleanup) => cleanup());
+      this.cleanupFunctions = [];
+      this.initialized = false;
+      this.analyticsReady = false;
+      this.emit('cleanup', { timestamp: Date.now() });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error during cleanup';
+      console.error('Cleanup error:', message);
+      this.emit('error', { message, timestamp: Date.now() });
+    }
   }
 
-  // Public getters for internal state
+  on<K extends keyof FlashcardSystemEvents>(
+    event: K,
+    callback: (data: FlashcardSystemEvents[K]) => void,
+  ): () => void {
+    return super.on(event, callback as Function);
+  }
+
+  emit<K extends keyof FlashcardSystemEvents>(event: K, data: FlashcardSystemEvents[K]): void {
+    super.emit(event, data);
+  }
+
   isInitialized(): boolean {
     return this.initialized;
   }
@@ -181,7 +239,7 @@ class FlashcardSystem extends EventEmitter {
   }
 }
 
-// Create singleton instance
 const flashcardSystem = new FlashcardSystem();
 
 export default flashcardSystem;
+export type { StudySession, AnalyticsData, FlashcardSystemEvents, FlashcardSystemConfig };

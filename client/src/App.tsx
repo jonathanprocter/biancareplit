@@ -40,7 +40,7 @@ function App() {
   );
 }
 
-// fallback 404 not found page
+// Fallback 404 not found page
 function NotFound() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">
