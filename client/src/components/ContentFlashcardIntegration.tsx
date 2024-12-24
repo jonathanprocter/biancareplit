@@ -164,13 +164,7 @@ const ContentFlashcardIntegration = () => {
 
   useEffect(() => {
     initializeSystem();
-
-    return () => {
-      if (initialized && flashcardSystem.initialized) {
-        flashcardSystem.endCurrentSession();
-      }
-    };
-  }, [initializeSystem, initialized]);
+  }, [initializeSystem]);
 
   useEffect(() => {
     if (initialized) {

@@ -11,7 +11,7 @@ class EventEmitter {
 
   emit(event: string, data?: any) {
     if (this.events[event]) {
-      this.events[event].forEach(callback => callback(data));
+      this.events[event].forEach((callback) => callback(data));
     }
   }
 }
