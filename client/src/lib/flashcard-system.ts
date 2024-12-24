@@ -1,3 +1,4 @@
+
 import { EventEmitter } from './EventEmitter';
 
 interface FlashcardSystemConfig {
@@ -57,12 +58,12 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
 
   private async initializeAnalytics(): Promise<boolean> {
     if (!this.config.analyticsEnabled) return false;
+    
     try {
       // Analytics initialization logic would go here
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Analytics initialization failed:', message);
       this.emit('error', { message, timestamp: Date.now() });
       return false;
     }
