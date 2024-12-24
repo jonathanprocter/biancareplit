@@ -85,3 +85,7 @@ prometheus-client
 flask
 flask-cors
 werkzeug
+flask-migrate
+flask-sqlalchemy
+psycopg2-binary
+sqlalchemy
