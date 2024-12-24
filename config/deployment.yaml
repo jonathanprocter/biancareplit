@@ -10,6 +10,8 @@ autoscale:
 monitoring:
   enabled: true
   log_level: info
+database:
+  url: ${DATABASE_URL}
 health_check:
   path: '/health'
   interval: 30
