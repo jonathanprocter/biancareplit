@@ -7,6 +7,7 @@ from .base import BaseMiddleware
 from .middleware_config import middleware_registry
 from .metrics import MetricsMiddleware
 from .health import HealthMiddleware
+from .database_middleware import DatabaseMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,8 @@ class MiddlewareInitializer:
         self.app = app
         self._registry: Dict[str, Type[BaseMiddleware]] = {
             "metrics": MetricsMiddleware,
-            "health": HealthMiddleware
+            "health": HealthMiddleware,
+            "database": DatabaseMiddleware
         }
         self._initialized: Dict[str, BaseMiddleware] = {}
         self._setup_logging()
@@ -43,8 +45,14 @@ class MiddlewareInitializer:
             if not app.config.get('MIDDLEWARE'):
                 logger.warning("No middleware configuration found, using defaults")
 
-            # Initialize middleware components
+            # Initialize middleware components in correct order
             enabled = middleware_registry.get_enabled_middleware()
+
+            # Ensure database middleware is initialized first
+            if "database" in enabled:
+                enabled.remove("database")
+                enabled.insert(0, "database")
+
             for name in enabled:
                 try:
                     if name not in self._registry:
@@ -64,6 +72,7 @@ class MiddlewareInitializer:
                     if app.debug:
                         logger.exception("Detailed error trace:")
                     # Continue with other middleware even if one fails
+                    continue
 
             logger.info("Middleware initialization completed successfully")
         except Exception as e:
@@ -80,10 +89,11 @@ class MiddlewareInitializer:
     def cleanup(self) -> None:
         """Cleanup middleware resources."""
         try:
-            for name, middleware in self._initialized.items():
+            for name, middleware in list(self._initialized.items()):
                 try:
                     if hasattr(middleware, 'cleanup') and callable(getattr(middleware, 'cleanup')):
                         middleware.cleanup()
+                    self._initialized.pop(name, None)
                 except Exception as e:
                     logger.error(f"Error cleaning up middleware {name}: {e}")
             self._initialized.clear()
