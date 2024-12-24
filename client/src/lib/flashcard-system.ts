@@ -61,26 +61,17 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
       // Analytics initialization logic would go here
       return true;
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       if (error instanceof Error) {
-        console.error(`Analytics initialization failed: ${error.message}`);
+        console.error(`Error: ${error.message}`);
+        // Add proper error handling here
       } else {
-        console.error('Analytics initialization failed:', error);
+        console.error('An unknown error occurred:', error);
       }
       return false;
     }
   }
 
-  private addCleanupListener(): void {
+  private addCleanupListener() {
     if (typeof window !== 'undefined') {
       const cleanup = () => {
         this.emit('cleanup', { timestamp: Date.now() });
