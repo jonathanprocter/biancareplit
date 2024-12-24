@@ -24,65 +24,77 @@ def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
 
-    # Initialize configuration first
     try:
+        # Initialize configuration first
         config_manager.init_app(app)
         logger.info("Configuration initialized successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize configuration: {str(e)}")
-        raise
 
-    # Initialize extensions with proper error handling
-    CORS(app)
+        # Initialize CORS
+        CORS(app)
 
-    # Initialize database first
-    try:
-        # Initialize Flask-SQLAlchemy
+        # Initialize database
+        if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+            database_url = os.getenv("DATABASE_URL")
+            if not database_url:
+                raise ValueError("DATABASE_URL environment variable must be set")
+
+            # Handle postgres URLs for compatibility
+            if database_url.startswith("postgres://"):
+                database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+            app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+            app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+            app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+                "pool_pre_ping": True,
+                "pool_size": int(os.getenv("DB_POOL_SIZE", "5")),
+                "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
+                "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+                "pool_recycle": 300,
+            }
+
+        # Initialize SQLAlchemy
         db.init_app(app)
+        logger.info("SQLAlchemy initialized successfully")
 
         # Initialize database manager
         if not db_manager.init_app(app):
             raise Exception("Failed to initialize database manager")
+        logger.info("Database manager initialized successfully")
 
-        # Initialize migrations after database
+        # Initialize migrations
         migrate = Migrate(app, db)
-        logger.info("Database and migrations initialized successfully")
+        logger.info("Migrations initialized successfully")
 
-    except Exception as e:
-        logger.error(f"Database initialization failed: {str(e)}", exc_info=True)
-        raise
+        # Create Prometheus registry
+        prometheus_registry = CollectorRegistry()
+        logger.info("Prometheus registry created")
 
-    # Create Prometheus registry
-    prometheus_registry = CollectorRegistry()
-    logger.info("Prometheus registry created")
-
-    try:
-        # Initialize database tables within app context
+        # Initialize database tables and verify connection
         with app.app_context():
-            # Verify database connection before creating tables
+            # Test database connection first
             db.session.execute('SELECT 1')
             db.session.commit()
             logger.info("Database connection verified")
 
-            # Only create tables in development
+            # Create tables in development mode
             if app.config.get('FLASK_ENV') == 'development':
                 db.create_all()
                 logger.info("Database tables created successfully")
 
-            # Then initialize middleware
+            # Initialize middleware after database is ready
             middleware_initializer.init_app(app)
             logger.info("Middleware initialized successfully")
 
-    except Exception as e:
-        logger.error(f"Failed during initialization: {str(e)}", exc_info=True)
-        raise
+        # Add Prometheus WSGI middleware
+        app.wsgi_app = DispatcherMiddleware(
+            app.wsgi_app, 
+            {'/metrics': make_wsgi_app(registry=prometheus_registry)}
+        )
+        logger.info("Prometheus metrics endpoint configured")
 
-    # Add Prometheus WSGI middleware
-    app.wsgi_app = DispatcherMiddleware(
-        app.wsgi_app, 
-        {'/metrics': make_wsgi_app(registry=prometheus_registry)}
-    )
-    logger.info("Prometheus metrics endpoint configured")
+    except Exception as e:
+        logger.error(f"Application initialization failed: {str(e)}", exc_info=True)
+        raise
 
     @app.route("/")
     def index():
