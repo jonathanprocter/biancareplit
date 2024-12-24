@@ -72,11 +72,12 @@ const ContentFlashcardIntegration: React.FC = () => {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: message
+          description: message,
         });
         setProgress(0);
       }
-    }, [toast]
+    },
+    [toast],
   );
 
   const updateAnalytics = useCallback(async () => {
