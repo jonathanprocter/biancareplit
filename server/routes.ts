@@ -1,8 +1,8 @@
-import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import type { Express } from 'express';
 import { type Server, createServer } from 'http';
 
+import { db } from '../db';
 import { log } from './vite';
 
 export function registerRoutes(app: Express): Server {
