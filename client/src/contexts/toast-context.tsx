@@ -12,16 +12,20 @@ type ToasterToast = ToastProps & {
 
 type ToastContextType = {
   toasts: ToasterToast[];
-  addToast: (props: Omit<ToasterToast, 'id'>) => void;
+  toast: (props: Omit<ToasterToast, 'id'>) => void;
   removeToast: (id: string) => void;
 };
 
-const ToastContext = createContext<ToastContextType | null>(null);
+const ToastContext = createContext<ToastContextType>({
+  toasts: [],
+  toast: () => null,
+  removeToast: () => null,
+});
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToasterToast[]>([]);
 
-  const addToast = useCallback((props: Omit<ToasterToast, 'id'>) => {
+  const toast = useCallback((props: Omit<ToasterToast, 'id'>) => {
     const id = Math.random().toString(36).slice(2, 9);
     setToasts((prev) => [...prev, { id, ...props }]);
 
@@ -35,7 +39,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastContext.Provider value={{ toasts, toast, removeToast }}>
       {children}
     </ToastContext.Provider>
   );
@@ -46,10 +50,5 @@ export function useToast() {
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
-
-  return {
-    toast: context.addToast,
-    toasts: context.toasts,
-    removeToast: context.removeToast,
-  };
+  return context;
 }

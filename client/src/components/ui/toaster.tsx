@@ -1,7 +1,5 @@
 import React from 'react';
-
 import { useToast } from '@/hooks/use-toast';
-
 import {
   Toast,
   ToastClose,
@@ -11,7 +9,7 @@ import {
   ToastViewport,
 } from './toast';
 
-export const Toaster: React.FC = () => {
+export function Toaster() {
   const { toasts } = useToast();
 
   return (
@@ -22,11 +20,11 @@ export const Toaster: React.FC = () => {
             {title && <ToastTitle>{title}</ToastTitle>}
             {description && <ToastDescription>{description}</ToastDescription>}
           </div>
-          {action && action}
+          {action}
           <ToastClose />
         </Toast>
       ))}
       <ToastViewport />
     </ToastProvider>
   );
-};
+}
