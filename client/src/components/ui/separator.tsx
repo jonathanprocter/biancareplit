@@ -1,15 +1,14 @@
-The code provided doesn't seem to have any syntax errors, bugs, security vulnerabilities, performance issues, integration problems, or violations of best practices and style guidelines. Therefore, the fixed code would be the same as the original:
+import * as SeparatorPrimitive from '@radix-ui/react-separator';
 
-```typescript
-import { Root as SeparatorPrimitive } from '@radix-ui/react-separator';
-import { forwardRef } from 'react';
+import * as React from 'react';
+
 import { cn } from '@/lib/utils';
 
-const Separator = forwardRef<
-  React.ElementRef<typeof SeparatorPrimitive>,
-  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive>
+const Separator = React.forwardRef<
+  React.ElementRef<typeof SeparatorPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
 >(({ className, orientation = 'horizontal', decorative = true, ...props }, ref) => (
-  <SeparatorPrimitive
+  <SeparatorPrimitive.Root
     ref={ref}
     decorative={decorative}
     orientation={orientation}
@@ -22,9 +21,6 @@ const Separator = forwardRef<
   />
 ));
 
-Separator.displayName = 'Separator';
+Separator.displayName = SeparatorPrimitive.Root.displayName;
 
-export default Separator;
-```
-
-Please note that without the full context of the application, it's hard to say if there are any hidden issues. For example, the `cn` function or the `@/lib/utils` import could potentially cause problems if they are not correctly implemented or imported, but based on the provided code snippet, everything seems to be in order.
+export { Separator };

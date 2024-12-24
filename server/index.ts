@@ -1,6 +1,7 @@
 import { db } from '@db';
 import express, { NextFunction, type Request, Response } from 'express';
 import { createServer } from 'http';
+import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -27,7 +28,6 @@ async function cleanupServer(): Promise<void> {
       globalServer = null;
     } catch (error) {
       log('[Server] Error during cleanup:', error);
-      // Still set globalServer to null to ensure we don't keep reference
       globalServer = null;
       throw error;
     }
@@ -51,7 +51,7 @@ async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<n
           .once('error', (err: NodeJS.ErrnoException) => {
             if (err.code === 'EADDRINUSE') {
               log(`[Server] Port ${port} is in use, trying next port...`);
-              resolve(); // Continue to next port
+              resolve();
             } else {
               reject(err);
             }
@@ -68,9 +68,41 @@ async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<n
   throw new Error('Port finding failed unexpectedly');
 }
 
+async function ensurePublicDir(): Promise<void> {
+  const publicDir = path.resolve(__dirname, 'public');
+  try {
+    await fs.promises.access(publicDir);
+  } catch (error) {
+    // Directory doesn't exist, create it
+    await fs.promises.mkdir(publicDir, { recursive: true });
+    log('[Server] Created public directory:', publicDir);
+
+    // Create a basic index.html if it doesn't exist
+    const indexPath = path.join(publicDir, 'index.html');
+    try {
+      await fs.promises.access(indexPath);
+    } catch (error) {
+      const basicHtml = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medical Education Platform</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`;
+      await fs.promises.writeFile(indexPath, basicHtml, 'utf-8');
+      log('[Server] Created basic index.html in public directory');
+    }
+  }
+}
+
 async function startServer() {
   try {
     await cleanupServer();
+    await ensurePublicDir();
 
     const app = express();
     app.use(express.json());
@@ -79,12 +111,30 @@ async function startServer() {
     // Request logging middleware
     app.use((req, res, next) => {
       const start = Date.now();
+      let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+      const originalResJson = res.json;
+      res.json = function (bodyJson, ...args) {
+        capturedJsonResponse = bodyJson;
+        return originalResJson.apply(res, [bodyJson, ...args]);
+      };
+
       res.on('finish', () => {
         const duration = Date.now() - start;
         if (req.path.startsWith('/api')) {
-          log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
+          let logLine = `${req.method} ${req.path} ${res.statusCode} in ${duration}ms`;
+          if (capturedJsonResponse) {
+            logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+          }
+
+          if (logLine.length > 80) {
+            logLine = logLine.slice(0, 79) + '…';
+          }
+
+          log(logLine);
         }
       });
+
       next();
     });
 
@@ -117,9 +167,7 @@ async function startServer() {
         });
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('[Server Error]', err);
-      }
+      log('[Server Error]', err);
     });
 
     // Start server with proper error handling and retries
@@ -161,6 +209,9 @@ async function startServer() {
 }
 
 // Graceful shutdown handlers
+process.once('SIGTERM', () => handleShutdown('SIGTERM'));
+process.once('SIGINT', () => handleShutdown('SIGINT'));
+
 async function handleShutdown(signal: string) {
   log(`[Server] Received ${signal}, cleaning up...`);
   try {
@@ -171,9 +222,6 @@ async function handleShutdown(signal: string) {
     process.exit(1);
   }
 }
-
-process.once('SIGTERM', () => handleShutdown('SIGTERM'));
-process.once('SIGINT', () => handleShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', async (error) => {
