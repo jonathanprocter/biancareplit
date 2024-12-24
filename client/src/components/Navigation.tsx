@@ -1,5 +1,7 @@
 import { Link, useLocation } from 'wouter';
+
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   NavigationMenu,
@@ -8,6 +10,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
+
 import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
@@ -26,7 +29,7 @@ export function Navigation() {
         title: 'Success',
         description: 'Logged out successfully',
       });
-      window.location.href = '/';
+      window.location.href = '/login';
     } catch (error) {
       console.error('Logout error:', error instanceof Error ? error.message : 'Unknown error');
       toast({
@@ -56,29 +59,15 @@ export function Navigation() {
               <div className="hidden md:flex space-x-4">
                 <NavigationMenuItem>
                   <Link href="/dashboard">
-                    <NavigationMenuLink
-                      className={navigationMenuTriggerStyle()}
-                    >
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                       Dashboard
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
-                  <Link href="/upload">
-                    <NavigationMenuLink
-                      className={navigationMenuTriggerStyle()}
-                    >
-                      Upload Content
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
                   <Link href="/progress">
-                    <NavigationMenuLink
-                      className={navigationMenuTriggerStyle()}
-                    >
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                       My Progress
                     </NavigationMenuLink>
                   </Link>

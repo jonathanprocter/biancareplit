@@ -3,7 +3,6 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
 import { Card, CardContent } from '@/components/ui/card';
-
 import { Navigation } from '@/components/Navigation';
 
 // Error fallback component
@@ -26,17 +25,25 @@ function ErrorFallback({ error }: { error: Error }) {
 // Dashboard component
 function Dashboard() {
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Welcome to Medical Education Platform
-          </h1>
-          <p className="text-muted-foreground">
-            Your personalized learning experience starts here.
-          </p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome to Medical Education Platform</h1>
+            <p className="text-muted-foreground">Your personalized learning experience starts here.</p>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Progress component
+function Progress() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold tracking-tight mb-6">My Learning Progress</h1>
+      <p className="text-muted-foreground">Track your learning journey and achievements.</p>
     </div>
   );
 }
@@ -65,10 +72,11 @@ function App() {
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <Navigation />
-        <main className="flex-1 container mx-auto px-4 py-8">
+        <main className="flex-1">
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/dashboard" component={Dashboard} />
+            <Route path="/progress" component={Progress} />
             <Route component={NotFound} />
           </Switch>
         </main>
