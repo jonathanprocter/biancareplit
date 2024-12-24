@@ -63,6 +63,7 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Analytics initialization failed:', message);
+      this.emit('error', { message, timestamp: Date.now() });
       return false;
     }
   }
