@@ -2,8 +2,9 @@ import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Toaster } from '@/components/ui/toaster';
+import { Card } from './components/ui/card';
+import { CardContent } from './components/ui/card';
+import { Toaster } from './components/ui/toaster';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -37,7 +38,6 @@ function App() {
   );
 }
 
-// Temporary Home component until we implement ContentFlashcardIntegration
 function Home() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">
@@ -51,7 +51,6 @@ function Home() {
   );
 }
 
-// Fallback 404 not found page
 function NotFound() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">
