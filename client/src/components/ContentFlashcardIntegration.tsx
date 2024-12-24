@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { useToast } from '../hooks/use-toast';
-import { cn } from '../lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, Progress } from './ui';
+import { Card, CardContent, CardHeader, CardTitle, Progress } from '@/components/ui';
+
+import { cn } from '@/lib/utils';
+
+import { useToast } from '@/hooks/use-toast';
 
 interface AnalyticsData {
   totalStudyTime: number;
