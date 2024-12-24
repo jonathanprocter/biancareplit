@@ -1,58 +1,73 @@
-The code provided doesn't seem to have any syntax errors, bugs, security vulnerabilities, performance issues, or integration problems. It follows TypeScript best practices and style guidelines. Here is the same code:
-
-```typescript
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { render } from '@/lib/test-utils';
+import { useToast } from '@/hooks/use-toast';
 
-import { TestItem, TestPrettier } from './TestPrettier';
+interface TestItem {
+  id: number;
+  name: string;
+}
 
-let portalRoot: HTMLDivElement;
-
-beforeEach(() => {
-  portalRoot = document.createElement('div');
-  portalRoot.setAttribute('id', 'radix-portal');
-  document.body.appendChild(portalRoot);
-});
-
-afterEach(() => {
-  cleanup();
-  if (document.body.contains(portalRoot)) {
-    document.body.removeChild(portalRoot);
-  }
-});
-
+// Mock the toast hook
 jest.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({
+  useToast: jest.fn(() => ({
     toast: jest.fn(),
-  }),
+  })),
 }));
 
-describe('TestPrettier', () => {
+describe('TestPrettier Component', () => {
+  // Mock data for tests
   const mockItems: TestItem[] = [
-    { id: 1, name: 'Item 1' },
-    { id: 2, name: 'Item 2' },
+    { id: 1, name: 'Test Item 1' },
+    { id: 2, name: 'Test Item 2' },
   ];
 
-  it('renders correctly with title and items', () => {
-    render(<TestPrettier title="Test Title" items={mockItems} />);
-
-    const titleElement = screen.getByText('Test Title');
-    expect(titleElement).toBeInTheDocument();
-
-    expect(screen.getByRole('button', { name: /open dialog/i })).toBeInTheDocument();
+  beforeEach(() => {
+    // Reset all mocks before each test
+    jest.clearAllMocks();
   });
 
-  it('opens dialog when button is clicked', async () => {
-    render(<TestPrettier title="Test" items={mockItems} />);
+  afterEach(() => {
+    cleanup();
+  });
 
-    const openButton = screen.getByRole('button', { name: /open dialog/i });
-    await userEvent.click(openButton);
+  it('renders component with items correctly', () => {
+    render(<TestPrettier items={mockItems} />);
 
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/Test/i)).toBeInTheDocument();
+    // Check if items are rendered
+    mockItems.forEach((item) => {
+      expect(screen.getByText(item.name)).toBeInTheDocument();
+    });
+  });
+
+  it('handles item selection correctly', async () => {
+    const mockOnSelect = jest.fn();
+    render(<TestPrettier items={mockItems} onSelect={mockOnSelect} />);
+
+    // Click the first item
+    await userEvent.click(screen.getByText(mockItems[0].name));
+
+    expect(mockOnSelect).toHaveBeenCalledWith(mockItems[0]);
+  });
+
+  it('displays error message when items are empty', () => {
+    render(<TestPrettier items={[]} />);
+
+    expect(screen.getByText(/no items available/i)).toBeInTheDocument();
+  });
+
+  it('shows loading state correctly', () => {
+    render(<TestPrettier items={mockItems} isLoading={true} />);
+
+    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+  });
+
+  it('shows error state correctly', () => {
+    const errorMessage = 'Failed to load items';
+    render(<TestPrettier items={[]} error={errorMessage} />);
+
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
+    expect(useToast).toHaveBeenCalled();
   });
 });
-```
