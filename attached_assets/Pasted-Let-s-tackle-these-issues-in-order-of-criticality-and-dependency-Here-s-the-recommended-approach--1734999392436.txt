@@ -1,0 +1,125 @@
+Let's tackle these issues in order of criticality and dependency. Here's the recommended approach:
+
+First, let's fix the server build directory issue:
+
+bashCopy# Create required directories
+mkdir -p server/public
+mkdir -p server/public/assets
+
+# Add a .gitkeep to ensure directory is tracked
+touch server/public/.gitkeep
+
+Then systematically fix the component issues:
+
+typescriptCopy// components/ui/menubar.tsx
+import * as React from "react"
+import * as MenubarPrimitive from "@radix-ui/react-menubar"
+import { Check, ChevronRight, Circle } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const Menubar = MenubarPrimitive.Root;
+
+export {
+  Menubar,
+  // ... other exports
+};
+typescriptCopy// components/ui/sidebar.tsx
+import React from 'react';
+import { cn } from "@/lib/utils";
+
+interface SidebarProps {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function Sidebar({ className, children }: SidebarProps) {
+  return (
+    <div className={cn("flex h-full w-64 flex-col", className)}>
+      {children}
+    </div>
+  );
+}
+typescriptCopy// components/ui/pagination.tsx
+import * as React from "react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { ButtonProps, buttonVariants } from "@/components/ui/button";
+
+interface PaginationProps {
+  className?: string;
+  count: number;
+  page: number;
+  onPageChange: (page: number) => void;
+}
+
+export function Pagination({ className, count, page, onPageChange }: PaginationProps) {
+  // Implementation
+}
+typescriptCopy// components/ui/select.tsx
+import * as React from "react";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { Check, ChevronDown } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+const Select = SelectPrimitive.Root;
+const SelectGroup = SelectPrimitive.Group;
+const SelectValue = SelectPrimitive.Value;
+
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+};
+typescriptCopy// components/ui/separator.tsx
+import * as React from "react";
+import * as SeparatorPrimitive from "@radix-ui/react-separator";
+
+import { cn } from "@/lib/utils";
+
+const Separator = React.forwardRef
+  React.ElementRef<typeof SeparatorPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
+>(({ className, orientation = "horizontal", decorative = true, ...props }, ref) => (
+  <SeparatorPrimitive.Root
+    ref={ref}
+    decorative={decorative}
+    orientation={orientation}
+    className={cn(
+      "shrink-0 bg-border",
+      orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
+      className
+    )}
+    {...props}
+  />
+));
+Separator.displayName = SeparatorPrimitive.Root.displayName;
+
+export { Separator };
+
+Then verify the build process:
+
+typescriptCopy// Update build script in package.json
+{
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.server.json && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build:server": "tsc -p tsconfig.server.json && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist"
+  }
+}
+Would you like me to:
+
+Provide more detailed implementations for any of these components?
+Add error handling and validation?
+Show how to test these components?
+
+Also, we should verify all changes with:
+bashCopy# Run TypeScript checks
+npm run check
+
+# Test build process
+npm run build
+
+# Start development server
+npm run dev

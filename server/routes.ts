@@ -70,12 +70,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create HTTP server
-  try {
-    const httpServer = createServer(app);
-    return httpServer;
-  } catch (error) {
-    log('[Server] Failed to create HTTP server:', error);
-    throw error;
-  }
+  // Create HTTP server with retry logic for port conflicts
+  const createServerWithRetry = async (retries = 3, basePort = 5000): Promise<Server> => {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      const port = basePort + attempt;
+      try {
+        const httpServer = createServer(app);
+        await new Promise<void>((resolve, reject) => {
+          httpServer.listen(port, '0.0.0.0', () => {
+            log(`[Server] Server listening on port ${port}`);
+            resolve();
+          });
+          httpServer.once('error', (err: any) => {
+            if (err.code === 'EADDRINUSE') {
+              log(`[Server] Port ${port} is in use, trying next port...`);
+              httpServer.close();
+            }
+            reject(err);
+          });
+        });
+        return httpServer;
+      } catch (error) {
+        if (attempt === retries - 1) throw error;
+      }
+    }
+    throw new Error('Failed to start server after multiple attempts');
+  };
+
+  return createServerWithRetry();
 }
