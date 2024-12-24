@@ -75,11 +75,6 @@ const ContentFlashcardIntegration: React.FC = () => {
           description: message
         });
         setProgress(0);
-          variant: 'destructive',
-          title: 'Error',
-          description: message,
-        });
-        setProgress(0);
       }
     },
     [toast],
