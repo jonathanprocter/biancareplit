@@ -4,7 +4,7 @@ import os
 import sys
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Union
 from dotenv import load_dotenv
 import yaml
 from datetime import timedelta
@@ -27,27 +27,27 @@ class ConfigurationError(Exception):
 class ConfigurationManager:
     """Unified configuration manager with singleton pattern and comprehensive validation."""
 
-    _instance = None
-    _initialized = False
+    _instance: Optional["ConfigurationManager"] = None
+    _initialized: bool = False
 
-    def __new__(cls):
+    def __new__(cls) -> "ConfigurationManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if self._initialized:
             return
 
-        self.env = os.getenv("FLASK_ENV", "development")
-        self.config_dir = Path(__file__).parent.parent.parent / "config"
+        self.env: str = os.getenv("FLASK_ENV", "development")
+        self.config_dir: Path = Path(__file__).parent.parent.parent / "config"
         self.config: Dict[str, Any] = {}
 
         try:
             self._load_base_config()
             self._load_env_config()
             self._validate_config()
-            self._setup_logging() #Added this line to setup logging after config is loaded
+            self._setup_logging()
             self._initialized = True
             logger.info(f"Configuration initialized for environment: {self.env}")
         except Exception as e:
@@ -56,7 +56,7 @@ class ConfigurationManager:
 
     def _load_base_config(self) -> None:
         """Load base configuration with proper validation."""
-        required_vars = [
+        required_vars: List[str] = [
             "DATABASE_URL",
             "SECRET_KEY"
         ]
@@ -130,7 +130,7 @@ class ConfigurationManager:
         middleware_config = self.config.get("MIDDLEWARE", {})
         required_middleware = ["metrics", "logging", "error_handling", "security"]
 
-        # Check if required middleware sections exist, create if missing
+        # Check if required middleware sections exist and are properly configured
         for middleware in required_middleware:
             if middleware not in middleware_config:
                 logger.warning(f"Missing middleware configuration: {middleware}, using defaults")
@@ -139,13 +139,17 @@ class ConfigurationManager:
                 logger.warning(f"Invalid middleware configuration for: {middleware}, using defaults")
                 middleware_config[middleware] = self.config["MIDDLEWARE"][middleware]
 
+            # Validate enabled flag exists
+            if "enabled" not in middleware_config[middleware]:
+                middleware_config[middleware]["enabled"] = True
+
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value with optional default."""
         if not self._initialized:
             raise ConfigurationError("Configuration manager not initialized")
         return self.config.get(key, default)
 
-    def init_app(self, app) -> None:
+    def init_app(self, app: Any) -> None:
         """Initialize Flask application with configuration."""
         if not self._initialized:
             raise ConfigurationError("Configuration manager not initialized")
@@ -157,10 +161,6 @@ class ConfigurationManager:
             logger.error(f"Failed to initialize application configuration: {str(e)}")
             raise ConfigurationError(f"Failed to initialize application: {str(e)}")
 
-    def __str__(self) -> str:
-        """String representation of configuration."""
-        return f"ConfigurationManager(env={self.env}, initialized={self._initialized})"
-
     def _setup_logging(self) -> None:
         """Configure logging based on environment."""
         try:
@@ -168,22 +168,46 @@ class ConfigurationManager:
             log_dir = Path("logs")
             log_dir.mkdir(exist_ok=True)
 
-            handlers = [
-                logging.StreamHandler(sys.stdout),
-                logging.FileHandler(str(log_dir / f"{self.env}.log"))
-            ]
+            # Create handlers with proper error handling
+            handlers = []
 
-            logging.basicConfig(
-                level=getattr(logging, log_level),
-                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                handlers=handlers,
-                force=True
-            )
+            # Always add stdout handler for visibility
+            stdout_handler = logging.StreamHandler(sys.stdout)
+            stdout_handler.setFormatter(logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            ))
+            handlers.append(stdout_handler)
+
+            # Add file handler for persistent logging
+            try:
+                file_handler = logging.FileHandler(str(log_dir / f"{self.env}.log"))
+                file_handler.setFormatter(logging.Formatter(
+                    "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+                ))
+                handlers.append(file_handler)
+            except Exception as e:
+                logger.warning(f"Failed to create file handler: {str(e)}, continuing with console logging only")
+
+            # Update root logger configuration
+            root_logger = logging.getLogger()
+            root_logger.setLevel(getattr(logging, log_level))
+
+            # Remove existing handlers to prevent duplication
+            for handler in root_logger.handlers[:]:
+                root_logger.removeHandler(handler)
+
+            # Add new handlers
+            for handler in handlers:
+                root_logger.addHandler(handler)
+
             logger.info(f"Logging configured at {log_level} level")
         except Exception as e:
             logger.error(f"Error configuring logging: {str(e)}")
             raise ConfigurationError(f"Failed to configure logging: {str(e)}")
 
+    def __str__(self) -> str:
+        """String representation of configuration."""
+        return f"ConfigurationManager(env={self.env}, initialized={self._initialized})"
 
 # Create singleton instance
 config_manager = ConfigurationManager()
