@@ -38,6 +38,11 @@ export class EventEmitter<T extends Record<string, any>> {
       // Add proper error handling here
     } else {
       console.error('An unknown error occurred:', error); {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
         const message = error instanceof Error ? error.message : 'Unknown error';
         console.error(`Error in event handler for ${String(event)}:`, message);
       }
