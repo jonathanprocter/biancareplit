@@ -13,10 +13,10 @@ from backend.config.unified_config import config_manager
 from prometheus_client import make_wsgi_app, CollectorRegistry
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
-# Configure logging
+# Configure logging with proper format
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def create_app():
         # Initialize CORS
         CORS(app)
 
-        # Initialize database
+        # Initialize database configuration
         if not app.config.get("SQLALCHEMY_DATABASE_URI"):
             database_url = os.getenv("DATABASE_URL")
             if not database_url:
@@ -42,26 +42,29 @@ def create_app():
             if database_url.startswith("postgres://"):
                 database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-            app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-            app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-            app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-                "pool_pre_ping": True,
-                "pool_size": int(os.getenv("DB_POOL_SIZE", "5")),
-                "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
-                "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
-                "pool_recycle": 300,
-            }
+            app.config.update({
+                "SQLALCHEMY_DATABASE_URI": database_url,
+                "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+                "SQLALCHEMY_ENGINE_OPTIONS": {
+                    "pool_pre_ping": True,
+                    "pool_size": int(os.getenv("DB_POOL_SIZE", "5")),
+                    "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
+                    "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+                    "pool_recycle": 300,
+                }
+            })
 
-        # Initialize SQLAlchemy
+        # Initialize SQLAlchemy first
         db.init_app(app)
         logger.info("SQLAlchemy initialized successfully")
 
-        # Initialize database manager
+        # Initialize database manager after SQLAlchemy
         if not db_manager.init_app(app):
-            raise Exception("Failed to initialize database manager")
+            logger.error("Failed to initialize database manager")
+            raise Exception("Database manager initialization failed")
         logger.info("Database manager initialized successfully")
 
-        # Initialize migrations
+        # Initialize migrations after database setup
         migrate = Migrate(app, db)
         logger.info("Migrations initialized successfully")
 
@@ -69,17 +72,21 @@ def create_app():
         prometheus_registry = CollectorRegistry()
         logger.info("Prometheus registry created")
 
-        # Initialize database tables and verify connection
+        # Verify database connection before proceeding
         with app.app_context():
-            # Test database connection first
-            db.session.execute('SELECT 1')
-            db.session.commit()
-            logger.info("Database connection verified")
+            try:
+                # Test database connection
+                db.session.execute('SELECT 1')
+                db.session.commit()
+                logger.info("Database connection verified")
 
-            # Create tables in development mode
-            if app.config.get('FLASK_ENV') == 'development':
-                db.create_all()
-                logger.info("Database tables created successfully")
+                # Create tables in development mode
+                if app.config.get('FLASK_ENV') == 'development':
+                    db.create_all()
+                    logger.info("Database tables created successfully")
+            except Exception as e:
+                logger.error(f"Database verification failed: {str(e)}")
+                raise
 
             # Initialize middleware after database is ready
             middleware_initializer.init_app(app)
@@ -144,7 +151,7 @@ def create_app():
     def before_request():
         """Log requests in development"""
         if app.debug:
-            logger.info(f"{request.method} {request.path}")
+            logger.info(f"{request.method} {request.path} {request.data}")
 
     return app
 
