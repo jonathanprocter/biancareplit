@@ -19,28 +19,21 @@ const toastVariants = cva(
   }
 );
 
-type ToastProps = React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & {
+interface Toast {
+  id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactNode;
   variant?: 'default' | 'destructive';
-};
-
-interface Toast extends ToastProps {
-  id: string;
 }
 
-interface ToastContextType {
+type ToastContextType = {
   toasts: Toast[];
   toast: (props: Omit<Toast, 'id'>) => void;
   dismiss: (id: string) => void;
-}
+};
 
-const ToastContext = React.createContext<ToastContextType>({
-  toasts: [],
-  toast: () => {},
-  dismiss: () => {},
-});
+const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
 
 export function useToast() {
   const context = React.useContext(ToastContext);
@@ -66,23 +59,47 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const value = React.useMemo(
+    () => ({
+      toasts,
+      toast,
+      dismiss,
+    }),
+    [toasts, toast, dismiss]
+  );
+
   return (
-    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+    <ToastContext.Provider value={value}>
       <ToastPrimitives.Provider swipeDirection="right">
         {children}
-        <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:right-0 sm:top-auto md:max-w-[420px]" />
+        <ToastViewport />
       </ToastPrimitives.Provider>
     </ToastContext.Provider>
   );
 }
+
+export const ToastViewport = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Viewport>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Viewport
+    ref={ref}
+    className={cn(
+      'fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:top-auto md:max-w-[420px]',
+      className
+    )}
+    {...props}
+  />
+));
+ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 export function Toaster() {
   const { toasts, dismiss } = useToast();
 
   return (
     <>
-      {toasts.map(({ id, title, description, action, variant, ...props }) => (
-        <Toast key={id} variant={variant} {...props}>
+      {toasts.map(({ id, title, description, action, variant }) => (
+        <Toast key={id} variant={variant}>
           <div className="grid gap-1">
             {title && <ToastTitle>{title}</ToastTitle>}
             {description && <ToastDescription>{description}</ToastDescription>}
@@ -97,7 +114,7 @@ export function Toaster() {
 
 export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
-  ToastProps & VariantProps<typeof toastVariants>
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
 >(({ className, variant, children, ...props }, ref) => (
   <ToastPrimitives.Root
     ref={ref}
@@ -107,7 +124,7 @@ export const Toast = React.forwardRef<
     {children}
   </ToastPrimitives.Root>
 ));
-Toast.displayName = 'Toast';
+Toast.displayName = ToastPrimitives.Root.displayName;
 
 export const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
@@ -124,30 +141,30 @@ export const ToastClose = React.forwardRef<
     <X className="h-4 w-4" />
   </ToastPrimitives.Close>
 ));
-ToastClose.displayName = 'ToastClose';
+ToastClose.displayName = ToastPrimitives.Close.displayName;
 
 export const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title
-    ref={ref}
-    className={cn('text-sm font-semibold', className)}
-    {...props}
+  <ToastPrimitives.Title 
+    ref={ref} 
+    className={cn('text-sm font-semibold', className)} 
+    {...props} 
   />
 ));
-ToastTitle.displayName = 'ToastTitle';
+ToastTitle.displayName = ToastPrimitives.Title.displayName;
 
 export const ToastDescription = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Description>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Description
-    ref={ref}
-    className={cn('text-sm opacity-90', className)}
-    {...props}
+  <ToastPrimitives.Description 
+    ref={ref} 
+    className={cn('text-sm opacity-90', className)} 
+    {...props} 
   />
 ));
-ToastDescription.displayName = 'ToastDescription';
+ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
-export type { ToastProps };
+export type { Toast as ToastType };
