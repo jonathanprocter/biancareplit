@@ -1,2 +1,2 @@
-// This file is deprecated and has been replaced by the new toast implementation
-// Import from '@/components/ui/toast' instead
+// This file has been deprecated. Import from './toast' instead
+export * from './toast';
