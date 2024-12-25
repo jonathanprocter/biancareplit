@@ -1,7 +1,8 @@
 import { type ReactNode, createContext, useCallback, useContext, useState } from 'react';
+import { ToastProvider as ToastPrimitiveProvider } from '@radix-ui/react-toast';
 import type { ToasterToast, ToastContextType } from '../types/toast';
 
-export const ToastContext = createContext<ToastContextType | undefined>(undefined);
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToasterToast[]>([]);
@@ -20,21 +21,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [dismiss],
   );
 
-  const value = {
-    toasts,
-    toast,
-    dismiss,
-  };
-
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+  return (
+    <ToastPrimitiveProvider>
+      <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+        {children}
+      </ToastContext.Provider>
+    </ToastPrimitiveProvider>
+  );
 }
 
-export function useToast(): ToastContextType {
+export function useToast() {
   const context = useContext(ToastContext);
-
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
-
   return context;
 }
