@@ -14,11 +14,7 @@ export interface ToastContextType {
   dismiss: (toastId: string) => void;
 }
 
-export const ToastContext = createContext<ToastContextType>({
-  toasts: [],
-  toast: () => {},
-  dismiss: () => {},
-});
+export const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToasterToast[]>([]);
@@ -34,8 +30,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setTimeout(() => dismiss(id), 5000);
   }, [dismiss]);
 
+  const value = {
+    toasts,
+    toast,
+    dismiss
+  };
+
   return (
-    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+    <ToastContext.Provider value={value}>
       {children}
     </ToastContext.Provider>
   );

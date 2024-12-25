@@ -40,17 +40,14 @@ const ContentFlashcardIntegration = () => {
     try {
       const validCompletedCards = Math.max(0, Number(completedCards) || 0);
       const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
-
       const progressValue = Math.min(
         100,
         ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
       );
       setProgress(Math.round(progressValue));
-    } catch (err) {
-      console.error(
-        'Error updating progress:',
-        err instanceof Error ? err.message : 'Unknown error',
-      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error updating progress:', errorMessage);
       setProgress(0);
     }
   }, []);
@@ -80,18 +77,20 @@ const ContentFlashcardIntegration = () => {
 
         setStudySlots([newStudySlot]);
         setInitialized(true);
+
         toast({
           title: 'System Initialized',
           description: 'Flashcard system ready to use',
         });
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Failed to initialize system');
-        console.error('Failed to initialize:', error);
-        setError(error);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize system';
+        console.error('Failed to initialize:', errorMessage);
+        setError(error instanceof Error ? error : new Error(errorMessage));
+
         toast({
           variant: 'destructive',
           title: 'Initialization Failed',
-          description: error.message,
+          description: errorMessage,
         });
       } finally {
         setLoading(false);

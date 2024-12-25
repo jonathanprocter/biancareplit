@@ -25,8 +25,8 @@ function ErrorFallback({ error }: { error: Error }) {
 
 function App() {
   return (
-    <ToastProvider>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ToastProvider>
         <div className="min-h-screen w-full flex flex-col bg-background">
           <main className="flex-1 flex items-center justify-center p-4">
             <Switch>
@@ -36,8 +36,8 @@ function App() {
           </main>
           <Toaster />
         </div>
-      </ErrorBoundary>
-    </ToastProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
