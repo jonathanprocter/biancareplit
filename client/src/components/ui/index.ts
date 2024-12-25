@@ -15,3 +15,9 @@ export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 export { Progress } from './progress';
 export { Toast, ToastAction } from './toast';
 export { Toaster } from './toaster';
+export { Button } from './button';
+export { Input } from './input';
+export { Badge } from './badge';
+export { Select } from './select';
+export { Separator } from './separator';
+export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';

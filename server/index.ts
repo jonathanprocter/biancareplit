@@ -40,25 +40,21 @@ app.use((req, res, next) => {
     const server = createServer(app);
 
     // Create WebSocket server
-    const wss = new WebSocketServer({ noServer: true });
+    const wss = new WebSocketServer({
+      noServer: true,
+      perMessageDeflate: false, // Disable per-message deflate to avoid upgrade issues
+    });
 
     // Handle WebSocket connections
     wss.on('connection', (ws: WebSocket) => {
       ws.on('message', (message: string) => {
-        // Handle WebSocket messages
         console.log('received: %s', message);
       });
     });
 
-    // Handle upgrades while ignoring vite-hmr
+    // Handle upgrades
     server.on('upgrade', (request, socket, head) => {
-      const protocol = request.headers['sec-websocket-protocol'];
-
-      // Ignore vite-hmr upgrade requests
-      if (protocol === 'vite-hmr') {
-        return;
-      }
-
+      // Accept all upgrade requests - this fixes the "upgrade required" issue
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
       });

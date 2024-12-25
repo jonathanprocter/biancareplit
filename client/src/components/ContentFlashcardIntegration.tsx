@@ -1,8 +1,12 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { useCallback, useEffect, useState } from 'react';
 
-import { useToast } from '../hooks/use-toast';
-import { cn } from '../lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, Progress } from './ui';
+import { Card, CardContent, CardHeader, CardTitle, Progress } from '@/components/ui';
+
+import { cn } from '@/lib/utils';
+
+import { useToast } from '@/hooks/use-toast';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -44,11 +48,6 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       console.error('Error updating progress:', error);
       setProgress(0);
     }
@@ -73,7 +72,7 @@ const ContentFlashcardIntegration = () => {
 
         setStudySlots([
           {
-            id: crypto.randomUUID(),
+            id: uuidv4(),
             startTime: Date.now(),
             category: 'content',
           },
@@ -98,8 +97,10 @@ const ContentFlashcardIntegration = () => {
       }
     };
 
-    initializeSystem();
-  }, [toast, updateProgress]);
+    if (!initialized) {
+      initializeSystem();
+    }
+  }, [initialized, toast, updateProgress]);
 
   if (loading) {
     return (
