@@ -2,7 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, Progress } from '@/components/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 import { cn } from '@/lib/utils';
 
@@ -23,12 +24,12 @@ interface StudySlot {
   category?: string;
 }
 
-const ContentFlashcardIntegration = () => {
+const ContentFlashcardIntegration = (): JSX.Element => {
   const { toast } = useToast();
-  const [initialized, setInitialized] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<number>(0);
   const [studySlots, setStudySlots] = useState<StudySlot[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalStudyTime: 0,
@@ -37,7 +38,7 @@ const ContentFlashcardIntegration = () => {
     categoryProgress: {},
   });
 
-  const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
+  const updateProgress = useCallback((completedCards: number, accuracy = 0): void => {
     try {
       const validCompletedCards = Math.max(0, Number(completedCards) || 0);
       const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
@@ -55,7 +56,7 @@ const ContentFlashcardIntegration = () => {
   }, []);
 
   useEffect(() => {
-    const initializeSystem = async () => {
+    const initializeSystem = async (): Promise<void> => {
       try {
         setLoading(true);
         setError(null);
@@ -99,7 +100,7 @@ const ContentFlashcardIntegration = () => {
     };
 
     if (!initialized) {
-      initializeSystem();
+      void initializeSystem();
     }
   }, [initialized, toast, updateProgress]);
 
