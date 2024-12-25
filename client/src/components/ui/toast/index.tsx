@@ -2,4 +2,9 @@
 export { ToastProvider, useToast } from './provider';
 export { Toast, ToastClose, ToastDescription, ToastTitle, ToastViewport } from './toast';
 export { Toaster } from './toaster';
-export type { Toast as ToastType, ToastContextValue, ToastProps } from './types';
+export type {
+  Toast as ToastType,
+  ToastContextValue,
+  ToastProps,
+  ToastActionElement,
+} from './types';

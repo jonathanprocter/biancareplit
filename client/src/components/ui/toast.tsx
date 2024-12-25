@@ -1,2 +1,2 @@
-// Re-export everything from the toast directory
+// Re-export from toast directory
 export * from './toast/index';

@@ -1,2 +1,2 @@
-// This file is deprecated. Import from '@/components/ui/toast' instead.
-export { ToastProvider, useToast } from './toast';
+// This file is being removed as part of toast implementation cleanup
+// Import from '@/components/ui/toast' instead

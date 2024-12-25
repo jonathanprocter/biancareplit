@@ -18,4 +18,4 @@ export type ToastProps = Toast & {
   className?: string;
 };
 
-export type ToastActionElement = React.ReactElement<any>;
+export type ToastActionElement = React.ReactElement;
