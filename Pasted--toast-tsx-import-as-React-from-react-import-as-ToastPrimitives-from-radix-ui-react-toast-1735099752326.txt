@@ -1,0 +1,178 @@
+// toast.tsx
+import * as React from 'react';
+import * as ToastPrimitives from '@radix-ui/react-toast';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const toastVariants = cva(
+  'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
+  {
+    variants: {
+      variant: {
+        default: 'border bg-background text-foreground',
+        destructive: 'border-red-500 bg-red-500 text-white',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
+
+// Define the toast context type
+interface ToastContextType {
+  toasts: Toast[];
+  addToast: (toast: ToastProps) => void;
+  removeToast: (id: string) => void;
+}
+
+// Define Toast and ToastProps types
+interface Toast extends ToastProps {
+  id: string;
+}
+
+interface ToastProps {
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+  variant?: 'default' | 'destructive';
+}
+
+// Create the context with a default value
+const ToastContext = React.createContext<ToastContextType>({
+  toasts: [],
+  addToast: () => {},
+  removeToast: () => {},
+});
+
+// Custom hook to use toast
+export function useToast() {
+  const context = React.useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return context;
+}
+
+// Toast provider component
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
+
+  const addToast = React.useCallback((toast: ToastProps) => {
+    const id = Math.random().toString(36).substring(2);
+    setToasts((prevToasts) => [...prevToasts, { ...toast, id }]);
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
+    }, 5000);
+  }, []);
+
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+  }, []);
+
+  const value = React.useMemo(
+    () => ({
+      toasts,
+      addToast,
+      removeToast,
+    }),
+    [toasts, addToast, removeToast]
+  );
+
+  return (
+    <ToastContext.Provider value={value}>
+      <ToastPrimitives.Provider>
+        {children}
+        <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />
+      </ToastPrimitives.Provider>
+    </ToastContext.Provider>
+  );
+}
+
+// Toast components
+export const Toast = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Root>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
+>(({ className, variant, ...props }, ref) => (
+  <ToastPrimitives.Root
+    ref={ref}
+    className={cn(toastVariants({ variant }), className)}
+    {...props}
+  />
+));
+Toast.displayName = ToastPrimitives.Root.displayName;
+
+export const ToastClose = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Close>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Close
+    ref={ref}
+    className={cn(
+      'absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100',
+      className
+    )}
+    toast-close=""
+    {...props}
+  >
+    <X className="h-4 w-4" />
+  </ToastPrimitives.Close>
+));
+ToastClose.displayName = ToastPrimitives.Close.displayName;
+
+export const ToastTitle = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Title>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Title
+    ref={ref}
+    className={cn('text-sm font-semibold', className)}
+    {...props}
+  />
+));
+ToastTitle.displayName = ToastPrimitives.Title.displayName;
+
+export const ToastDescription = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Description>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Description
+    ref={ref}
+    className={cn('text-sm opacity-90', className)}
+    {...props}
+  />
+));
+ToastDescription.displayName = ToastPrimitives.Description.displayName;
+
+// Create a component to render all toasts
+export function Toaster() {
+  const { toasts } = useToast();
+
+  return (
+    <>
+      {toasts.map(({ id, title, description, action, variant }) => (
+        <Toast key={id} variant={variant}>
+          <div className="grid gap-1">
+            {title && <ToastTitle>{title}</ToastTitle>}
+            {description && <ToastDescription>{description}</ToastDescription>}
+          </div>
+          {action}
+          <ToastClose />
+        </Toast>
+      ))}
+    </>
+  );
+}
+
+// Example usage wrapper component
+export function ToastWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <ToastProvider>
+      {children}
+      <Toaster />
+    </ToastProvider>
+  );
+}

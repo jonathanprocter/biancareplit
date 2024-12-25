@@ -2,7 +2,7 @@ import * as ToastPrimitives from '@radix-ui/react-toast';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import * as React from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 const toastVariants = cva(
   'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
@@ -15,21 +15,9 @@ const toastVariants = cva(
         warning: 'border-yellow-500 bg-yellow-500 text-white',
         info: 'border-blue-500 bg-blue-500 text-white',
       },
-      swipe: {
-        default: 'data-[swipe=move]:transition-none',
-        move: 'translate-x-[var(--radix-toast-swipe-move-x)]',
-        cancel: 'translate-x-0',
-        end: 'translate-x-[var(--radix-toast-swipe-end-x)]',
-      },
-      state: {
-        open: 'animate-in slide-in-from-top-full sm:slide-in-from-bottom-full',
-        closed: 'animate-out fade-out-80 slide-out-to-right-full',
-      },
     },
     defaultVariants: {
       variant: 'default',
-      swipe: 'default',
-      state: 'open',
     },
   },
 );
@@ -45,7 +33,7 @@ interface Toast {
 
 interface ToastContextValue {
   toasts: Toast[];
-  toast: (props: Omit<Toast, 'id'>) => string;
+  addToast: (props: Omit<Toast, 'id'>) => string;
   dismiss: (toastId: string) => void;
   update: (toastId: string, props: Partial<Omit<Toast, 'id'>>) => void;
 }
@@ -61,7 +49,7 @@ export function ToastProvider({
 }) {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
 
-  const toast = React.useCallback(
+  const addToast = React.useCallback(
     (props: Omit<Toast, 'id'>) => {
       const id = `toast-${Math.random().toString(36).slice(2)}-${Date.now()}`;
       const duration = props.duration ?? defaultDuration;
@@ -88,11 +76,8 @@ export function ToastProvider({
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toasts, toast, dismiss, update }}>
-      <ToastPrimitives.Provider>
-        {children}
-        <ToastPrimitives.Viewport className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]" />
-      </ToastPrimitives.Provider>
+    <ToastContext.Provider value={{ toasts, addToast, dismiss, update }}>
+      {children}
     </ToastContext.Provider>
   );
 }
@@ -108,14 +93,11 @@ export function useToast() {
 export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants> & {
-      onSwipeEnd?: () => void;
-    }
->(({ className, variant, onSwipeEnd, ...props }, ref) => (
+    VariantProps<typeof toastVariants>
+>(({ className, variant, ...props }, ref) => (
   <ToastPrimitives.Root
     ref={ref}
     className={cn(toastVariants({ variant }), className)}
-    onSwipeEnd={onSwipeEnd}
     {...props}
   />
 ));
@@ -128,20 +110,13 @@ export const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      'absolute right-2 top-2 rounded-md p-1 opacity-0 transition-opacity',
-      'text-foreground/50 hover:text-foreground',
-      'focus:opacity-100 focus:outline-none focus:ring-2',
-      'group-hover:opacity-100',
-      'group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50',
-      'group-[.success]:text-green-300 group-[.success]:hover:text-green-50',
-      'group-[.warning]:text-yellow-300 group-[.warning]:hover:text-yellow-50',
-      'group-[.info]:text-blue-300 group-[.info]:hover:text-blue-50',
+      'absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100',
       className,
     )}
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" aria-hidden="true" />
+    <X className="h-4 w-4" />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
@@ -152,7 +127,7 @@ export const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn('text-sm font-semibold leading-none tracking-tight', className)}
+    className={cn('text-sm font-semibold', className)}
     {...props}
   />
 ));
@@ -164,7 +139,7 @@ export const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn('text-sm opacity-90 leading-normal', className)}
+    className={cn('text-sm opacity-90', className)}
     {...props}
   />
 ));
@@ -181,16 +156,23 @@ export const ToastAction = React.forwardRef<
       'text-sm font-medium transition-colors',
       'hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring',
       'disabled:pointer-events-none disabled:opacity-50',
-      'group-[.destructive]:border-red-100 group-[.destructive]:hover:border-red-200',
-      'group-[.success]:border-green-100 group-[.success]:hover:border-green-200',
-      'group-[.warning]:border-yellow-100 group-[.warning]:hover:border-yellow-200',
-      'group-[.info]:border-blue-100 group-[.info]:hover:border-blue-200',
       className,
     )}
     {...props}
   />
 ));
 ToastAction.displayName = ToastPrimitives.Action.displayName;
+
+export const ToastViewport = ToastPrimitives.Viewport;
+
+export function ToastWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <ToastProvider>
+      {children}
+      <ToastViewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />
+    </ToastProvider>
+  );
+}
 
 export type { Toast as ToastType };
 export type { ToastProps } from '@radix-ui/react-toast';
