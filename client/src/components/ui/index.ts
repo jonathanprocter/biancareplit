@@ -1,8 +1,25 @@
 // Re-export individual UI components
-export { Button, buttonVariants } from './button';
-export { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
-export { Progress } from './progress';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
+import { Progress } from './progress';
+import {
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from './toast';
+import { Toaster } from './toaster';
+import { useToast } from './use-toast';
+
 export {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Progress,
   Toast,
   ToastAction,
   ToastClose,
@@ -12,7 +29,9 @@ export {
   ToastViewport,
   Toaster,
   useToast,
-} from './toast';
+};
+
+export { Button, buttonVariants } from './button';
 
 export { cn } from '../../lib/utils';
 
