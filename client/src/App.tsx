@@ -24,19 +24,17 @@ function ErrorFallback({ error }: { error: Error }) {
 
 function App() {
   return (
-    <>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <div className="min-h-screen w-full flex flex-col bg-background">
-          <main className="flex-1 flex items-center justify-center p-4">
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route component={NotFound} />
-            </Switch>
-          </main>
-        </div>
-      </ErrorBoundary>
-      <Toaster />
-    </>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <div className="min-h-screen w-full flex flex-col bg-background">
+        <main className="flex-1 flex items-center justify-center p-4">
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+        <Toaster />
+      </div>
+    </ErrorBoundary>
   );
 }
 
