@@ -1,2 +1,2 @@
-// This file is deprecated. Import from @/components/ui/toast instead.
+// Re-export the Toaster component from the toast implementation
 export { Toaster } from './toast';

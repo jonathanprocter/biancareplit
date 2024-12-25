@@ -2,7 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { calculateProgress, cn, formatTimeSpent } from '../lib/utils';
+import { cn } from '@/lib/utils';
+
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
 import { useToast } from './ui/toast';
@@ -38,14 +39,18 @@ const ContentFlashcardIntegration = () => {
 
   const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
     try {
-      const progressValue = calculateProgress(completedCards, 20, accuracy);
-      setProgress(progressValue);
+      const validCompletedCards = Math.max(0, Number(completedCards) || 0);
+      const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
+      const progressValue = Math.min(
+        100,
+        ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
+      );
+      setProgress(Math.round(progressValue));
     } catch (error) {
-      if (error instanceof Error) {
-        console.error(`Error updating progress: ${error.message}`);
-      } else {
-        console.error('An unknown error occurred:', error);
-      }
+      console.error(
+        'Error updating progress:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       setProgress(0);
     }
   }, []);
@@ -154,32 +159,32 @@ const ContentFlashcardIntegration = () => {
 
         <div className="space-y-4">
           <h4 className="font-semibold text-sm text-gray-500">Study Sessions</h4>
-          {studySlots.map((slot) => (
-            <div
-              key={slot.id}
-              className={cn(
-                'flex justify-between items-center p-4 rounded-lg border',
-                slot.id === studySlots[studySlots.length - 1]?.id
-                  ? 'bg-blue-50 border-blue-200'
-                  : 'bg-gray-50 border-gray-200',
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    'w-3 h-3 rounded-full',
-                    slot.id === studySlots[studySlots.length - 1]?.id
-                      ? 'bg-blue-500 animate-pulse'
-                      : 'bg-gray-400',
-                  )}
-                />
-                <span className="font-medium">Study Session</span>
+          {studySlots.map((slot) => {
+            const isActive = slot.id === studySlots[studySlots.length - 1]?.id;
+            return (
+              <div
+                key={slot.id}
+                className={cn(
+                  'flex justify-between items-center p-4 rounded-lg border',
+                  isActive ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200',
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'w-3 h-3 rounded-full',
+                      isActive ? 'bg-blue-500 animate-pulse' : 'bg-gray-400',
+                    )}
+                  />
+                  <span className="font-medium">Study Session</span>
+                </div>
+                <span className="text-sm text-gray-500">
+                  {Math.floor(((slot.endTime || Date.now()) - slot.startTime) / 60000)}m{' '}
+                  {Math.floor((((slot.endTime || Date.now()) - slot.startTime) % 60000) / 1000)}s
+                </span>
               </div>
-              <span className="text-sm text-gray-500">
-                {formatTimeSpent(slot.startTime, slot.endTime)}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

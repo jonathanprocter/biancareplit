@@ -32,7 +32,6 @@ function App() {
             <Route component={NotFound} />
           </Switch>
         </main>
-        <Toaster />
       </div>
     </ErrorBoundary>
   );

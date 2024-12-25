@@ -1,2 +1,2 @@
-// This file is deprecated. Import types from @/components/ui/toast instead.
-export { type Toast } from '@/components/ui/toast';
+// Re-export types from the ui/toast component
+export type { ToastProps } from '@/components/ui/toast';
