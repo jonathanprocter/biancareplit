@@ -2,10 +2,9 @@ import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
-import { Card, CardContent } from './components/ui/card';
-import { Toaster } from './components/ui/toaster';
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
-import { ToastProvider } from './contexts/toast-context';
+import { Card, CardContent } from './components/ui/card';
+import { ToastProvider } from './components/ui/toaster';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -25,8 +24,8 @@ function ErrorFallback({ error }: { error: Error }) {
 
 function App() {
   return (
-    <ToastProvider>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ToastProvider>
         <div className="min-h-screen w-full flex flex-col bg-background">
           <main className="flex-1 flex items-center justify-center p-4">
             <Switch>
@@ -34,10 +33,9 @@ function App() {
               <Route component={NotFound} />
             </Switch>
           </main>
-          <Toaster />
         </div>
-      </ErrorBoundary>
-    </ToastProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
