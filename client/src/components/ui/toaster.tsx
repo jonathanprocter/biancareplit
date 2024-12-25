@@ -1,2 +1,2 @@
-// This file is being removed as part of toast implementation cleanup
-// Import Toaster from '@/components/ui/toast' instead
+// This file is deprecated. Use toast/toaster.tsx instead.
+export * from './toast/toaster';

@@ -1,4 +1,4 @@
-
+import * as ToastPrimitives from '@radix-ui/react-toast';
 import * as React from 'react';
 import type { Toast } from './types';
 
@@ -26,12 +26,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== toastId));
   }, []);
 
-  const value = React.useMemo(
-    () => ({ toasts, addToast, dismissToast }),
+  const contextValue = React.useMemo(
+    () => ({
+      toasts,
+      addToast,
+      dismissToast,
+    }),
     [toasts, addToast, dismissToast],
   );
 
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+  return (
+    <ToastContext.Provider value={contextValue}>
+      <ToastPrimitives.Provider>
+        {children}
+        <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />
+      </ToastPrimitives.Provider>
+    </ToastContext.Provider>
+  );
 }
 
 export function useToast() {
