@@ -1,2 +1,2 @@
-// This file is kept for compatibility but the implementation has moved to contexts/toast-context.tsx
-export { useToast } from '@/contexts/toast-context';
+// This file is deprecated. Import from @/components/ui/toast instead.
+export { useToast } from '@/components/ui/toast';

@@ -16,24 +16,50 @@ const toastVariants = cva(
     defaultVariants: {
       variant: 'default',
     },
-  },
+  }
 );
 
-interface ToastProps extends React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> {
-  id?: string;
+type ToasterToast = {
+  id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactNode;
-  variant?: VariantProps<typeof toastVariants>['variant'];
-}
+  variant?: 'default' | 'destructive';
+};
 
-const ToastContext = React.createContext<{
-  toasts: ToastProps[];
-  toast: (props: Omit<ToastProps, 'id'>) => void;
-}>({
-  toasts: [],
-  toast: () => undefined,
-});
+type ToastContextType = {
+  toasts: ToasterToast[];
+  toast: (props: Omit<ToasterToast, 'id'>) => void;
+  dismiss: (id: string) => void;
+};
+
+const ToastContext = React.createContext<ToastContextType | null>(null);
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = React.useState<ToasterToast[]>([]);
+
+  const toast = React.useCallback((props: Omit<ToasterToast, 'id'>) => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts((prevToasts) => [...prevToasts, { ...props, id }]);
+
+    setTimeout(() => {
+      setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+    }, 5000);
+  }, []);
+
+  const dismiss = React.useCallback((id: string) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+  }, []);
+
+  return (
+    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+      <ToastPrimitives.Provider>
+        {children}
+        <ToastPrimitives.Viewport className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]" />
+      </ToastPrimitives.Provider>
+    </ToastContext.Provider>
+  );
+}
 
 export function useToast() {
   const context = React.useContext(ToastContext);
@@ -43,50 +69,16 @@ export function useToast() {
   return context;
 }
 
-export function ToastProvider({ 
-  children,
-  swipeDirection = 'right',
-  duration = 5000,
-}: { 
-  children: React.ReactNode;
-  swipeDirection?: 'up' | 'right' | 'down' | 'left';
-  duration?: number;
-}) {
-  const [toasts, setToasts] = React.useState<ToastProps[]>([]);
-
-  const toast = React.useCallback((props: Omit<ToastProps, 'id'>) => {
-    const id = Math.random().toString(36).slice(2);
-    setToasts((prev) => [...prev, { ...props, id }]);
-
-    if (duration > 0) {
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, duration);
-    }
-  }, [duration]);
-
-  return (
-    <ToastContext.Provider value={{ toasts, toast }}>
-      <ToastPrimitives.Provider swipeDirection={swipeDirection}>
-        {children}
-        <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />
-      </ToastPrimitives.Provider>
-    </ToastContext.Provider>
-  );
-}
-
 export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
-  ToastProps
->(({ className, variant, ...props }, ref) => {
-  return (
-    <ToastPrimitives.Root
-      ref={ref}
-      className={cn(toastVariants({ variant }), className)}
-      {...props}
-    />
-  );
-});
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
+>(({ className, variant, ...props }, ref) => (
+  <ToastPrimitives.Root
+    ref={ref}
+    className={cn(toastVariants({ variant }), className)}
+    {...props}
+  />
+));
 Toast.displayName = ToastPrimitives.Root.displayName;
 
 export const ToastClose = React.forwardRef<
@@ -97,7 +89,7 @@ export const ToastClose = React.forwardRef<
     ref={ref}
     className={cn(
       'absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100',
-      className,
+      className
     )}
     toast-close=""
     {...props}
@@ -131,4 +123,24 @@ export const ToastDescription = React.forwardRef<
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
-export type { ToastProps };
+export function Toaster() {
+  const { toasts } = useToast();
+
+  return (
+    <ToastProvider>
+      {toasts.map(({ id, title, description, action, variant }) => (
+        <Toast key={id} variant={variant}>
+          <div className="grid gap-1">
+            {title && <ToastTitle>{title}</ToastTitle>}
+            {description && <ToastDescription>{description}</ToastDescription>}
+          </div>
+          {action}
+          <ToastClose />
+        </Toast>
+      ))}
+      <ToastPrimitives.Viewport className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]" />
+    </ToastProvider>
+  );
+}
+
+export type { ToasterToast as Toast };

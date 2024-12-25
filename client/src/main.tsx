@@ -5,8 +5,7 @@ import { StrictMode } from 'react';
 import App from './App';
 import './index.css';
 import { queryClient } from './lib/queryClient';
-import { ToastProvider } from '@/components/ui/toast';
-import { Toaster } from '@/components/ui/toaster';
+import { ToastProvider, Toaster } from '@/components/ui/toast';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -21,5 +20,5 @@ createRoot(rootElement).render(
         <Toaster />
       </ToastProvider>
     </QueryClientProvider>
-  </StrictMode>,
+  </StrictMode>
 );
