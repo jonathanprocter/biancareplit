@@ -1,11 +1,5 @@
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastTitle,
-  ToastViewport,
-} from './toast';
 import { useToast } from '../../contexts/toast-context';
+import { Toast, ToastClose, ToastDescription, ToastTitle, ToastViewport } from './toast';
 
 export function Toaster() {
   const { toasts } = useToast();

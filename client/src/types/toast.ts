@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
 import type { ToastProps } from '@radix-ui/react-toast';
+
+import type { ReactNode } from 'react';
 
 export type ToasterToast = ToastProps & {
   id: string;

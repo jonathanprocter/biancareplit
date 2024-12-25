@@ -1,6 +1,8 @@
-import { type ReactNode, createContext, useCallback, useContext, useState } from 'react';
 import { ToastProvider as ToastPrimitiveProvider } from '@radix-ui/react-toast';
-import type { ToasterToast, ToastContextType } from '../types/toast';
+
+import { type ReactNode, createContext, useCallback, useContext, useState } from 'react';
+
+import type { ToastContextType, ToasterToast } from '../types/toast';
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
@@ -23,9 +25,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   return (
     <ToastPrimitiveProvider>
-      <ToastContext.Provider value={{ toasts, toast, dismiss }}>
-        {children}
-      </ToastContext.Provider>
+      <ToastContext.Provider value={{ toasts, toast, dismiss }}>{children}</ToastContext.Provider>
     </ToastPrimitiveProvider>
   );
 }
