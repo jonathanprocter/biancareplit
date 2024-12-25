@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useState } from 'react';
-import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
+
+import type { ToastActionElement, ToastProps } from '../components/ui/toast';
 
 const TOAST_REMOVE_DELAY = 5000;
 
@@ -37,9 +38,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
-      {children}
-    </ToastContext.Provider>
+    <ToastContext.Provider value={{ toasts, toast, dismiss }}>{children}</ToastContext.Provider>
   );
 }
 

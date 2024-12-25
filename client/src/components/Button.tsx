@@ -1,8 +1,8 @@
 import React from 'react';
 import type { ButtonHTMLAttributes, FC } from 'react';
 
-// Ensure the cn function is correctly imported
-import { cn } from '@/lib/utils';
+// Use relative path for utils import
+import { cn } from '../lib/utils';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary';
@@ -25,3 +25,5 @@ export const Button: FC<ButtonProps> = React.memo(
     );
   },
 );
+
+Button.displayName = 'Button';

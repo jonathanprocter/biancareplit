@@ -2,11 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, Progress } from '@/components/ui';
-
-import { cn } from '@/lib/utils';
-
-import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle, Progress } from '../components/ui';
+import { useToast } from '../hooks/use-toast';
+import { cn } from '../lib/utils';
 
 interface AnalyticsData {
   totalStudyTime: number;

@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 const ToastProvider = ToastPrimitives.Provider;
 
