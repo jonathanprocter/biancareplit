@@ -1,1 +1,3 @@
-export { useToast } from '@/contexts/toast-context';
+import { useToast as useToastInternal } from '../contexts/toast-context';
+
+export const useToast = useToastInternal;

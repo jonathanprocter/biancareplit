@@ -17,9 +17,18 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./client/src/*"]
+      "@/*": ["./client/src/*"],
+      "@/components/*": ["./client/src/components/*"],
+      "@/lib/*": ["./client/src/lib/*"],
+      "@/hooks/*": ["./client/src/hooks/*"],
+      "@/contexts/*": ["./client/src/contexts/*"]
     }
   },
-  "include": ["client/src/**/*"],
+  "include": [
+    "client/src/**/*",
+    "client/src/**/*.tsx",
+    "client/src/**/*.ts",
+    "client/src/**/*.d.ts"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
