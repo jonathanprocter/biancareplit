@@ -8,14 +8,14 @@ export interface Toast {
   variant?: 'default' | 'destructive';
 }
 
+export interface ToastProps extends Toast {
+  className?: string;
+}
+
+export type ToastActionElement = React.ReactElement;
+
 export interface ToastContextValue {
   toasts: Toast[];
   addToast: (toast: Omit<Toast, 'id'>) => void;
   dismissToast: (toastId: string) => void;
 }
-
-export type ToastProps = Toast & {
-  className?: string;
-};
-
-export type ToastActionElement = React.ReactElement;

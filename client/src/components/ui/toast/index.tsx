@@ -4,11 +4,17 @@ export {
   ToastAction,
   ToastClose,
   ToastDescription,
-  ToastProvider,
   ToastTitle,
   ToastViewport,
   type ToastActionElement,
 } from './toast';
 export { Toaster } from './toaster';
-export type { Toast as ToastType, ToastProps, ToastContextValue } from './types';
-export { useToast } from './provider';
+export { ToastProvider, useToast } from './provider';
+export type { Toast as ToastType, ToastProps } from './types';
+
+// Clean up legacy exports
+export const ToastRoot = Toast;
+export const ToastTitlePrimitive = ToastTitle;
+export const ToastDescriptionPrimitive = ToastDescription;
+export const ToastClosePrimitive = ToastClose;
+export const ToastViewportPrimitive = ToastViewport;

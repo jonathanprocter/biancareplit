@@ -4,7 +4,7 @@ import { Route, Switch } from 'wouter';
 
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 import { Card, CardContent } from './components/ui/card';
-import { ToastProvider } from './components/ui/toast';
+import { ToastProvider } from './components/ui/toast/provider';
 import { Toaster } from './components/ui/toast/toaster';
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -58,6 +58,7 @@ function App() {
               <Route component={NotFound} />
             </Switch>
           </main>
+          
         </div>
         <Toaster />
       </ToastProvider>

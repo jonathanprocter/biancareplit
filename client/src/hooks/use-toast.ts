@@ -1,3 +1,2 @@
-// This file is deprecated and will be removed
-// Import from '@/components/ui/toast' instead
+// Re-export from toast components
 export * from '../components/ui/toast';

@@ -1,8 +1,12 @@
 import * as ToastPrimitives from '@radix-ui/react-toast';
-
 import * as React from 'react';
+import type { Toast } from './types';
 
-import type { Toast, ToastContextValue } from './types';
+interface ToastContextValue {
+  toasts: Toast[];
+  addToast: (toast: Omit<Toast, 'id'>) => void;
+  dismissToast: (toastId: string) => void;
+}
 
 const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
 
