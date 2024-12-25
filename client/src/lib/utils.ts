@@ -26,13 +26,3 @@ export function formatDate(input: string | number | Date): string {
 export function calculateConfidence(score: number): number {
   return Math.min(Math.max((score / 100) * 100, 0), 100);
 }
-
-/**
- * Format time spent in a readable format
- */
-export function formatTimeSpent(startTime: number, endTime?: number): string {
-  const duration = (endTime || Date.now()) - startTime;
-  const minutes = Math.floor(duration / 60000);
-  const seconds = Math.floor((duration % 60000) / 1000);
-  return `${minutes}m ${seconds}s`;
-}

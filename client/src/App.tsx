@@ -1,11 +1,10 @@
 import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
-
-import { Card, CardContent } from '@/components/ui/card';
-import { Toaster } from '@/components/ui/toast';
-
-import ContentFlashcardIntegration from '@/components/ContentFlashcardIntegration';
+import { Card, CardContent } from './components/ui/card';
+import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
+import { ToastProvider } from './components/ui/toast';
+import { Toaster } from './components/ui/toaster';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -23,22 +22,6 @@ function ErrorFallback({ error }: { error: Error }) {
   );
 }
 
-function App() {
-  return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="min-h-screen w-full flex flex-col bg-background">
-        <main className="flex-1 flex items-center justify-center p-4">
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route component={NotFound} />
-          </Switch>
-        </main>
-        <Toaster />
-      </div>
-    </ErrorBoundary>
-  );
-}
-
 function Home() {
   return (
     <div className="w-full">
@@ -49,19 +32,37 @@ function Home() {
 
 function NotFound() {
   return (
-    <div className="w-full">
-      <Card className="w-full max-w-md mx-auto">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md mx-4">
         <CardContent className="pt-6">
           <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-destructive" />
-            <h1 className="text-2xl font-bold">404 Page Not Found</h1>
+            <AlertCircle className="h-8 w-8 text-red-500" />
+            <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-gray-600">
             The page you are looking for does not exist.
           </p>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ToastProvider>
+        <div className="min-h-screen w-full flex flex-col bg-background">
+          <main className="flex-1 flex items-center justify-center p-4">
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route component={NotFound} />
+            </Switch>
+          </main>
+          <Toaster />
+        </div>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
