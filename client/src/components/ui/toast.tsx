@@ -1,7 +1,9 @@
-import * as React from 'react';
 import * as ToastPrimitives from '@radix-ui/react-toast';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { type VariantProps, cva } from 'class-variance-authority';
 import { X } from 'lucide-react';
+
+import * as React from 'react';
+
 import { cn } from '@/lib/utils';
 
 const toastVariants = cva(
@@ -16,10 +18,10 @@ const toastVariants = cva(
     defaultVariants: {
       variant: 'default',
     },
-  }
+  },
 );
 
-type ToasterToast = {
+export type Toast = {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -28,31 +30,31 @@ type ToasterToast = {
 };
 
 type ToastContextType = {
-  toasts: ToasterToast[];
-  toast: (props: Omit<ToasterToast, 'id'>) => void;
-  dismiss: (id: string) => void;
+  toasts: Toast[];
+  addToast: (toast: Omit<Toast, 'id'>) => void;
+  removeToast: (id: string) => void;
 };
 
-const ToastContext = React.createContext<ToastContextType | null>(null);
+const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<ToasterToast[]>([]);
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
 
-  const toast = React.useCallback((props: Omit<ToasterToast, 'id'>) => {
+  const addToast = React.useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).slice(2);
-    setToasts((prevToasts) => [...prevToasts, { ...props, id }]);
+    setToasts((prevToasts) => [...prevToasts, { ...toast, id }]);
 
     setTimeout(() => {
-      setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+      setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
     }, 5000);
   }, []);
 
-  const dismiss = React.useCallback((id: string) => {
+  const removeToast = React.useCallback((id: string) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
       <ToastPrimitives.Provider>
         {children}
         <ToastPrimitives.Viewport className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]" />
@@ -66,7 +68,12 @@ export function useToast() {
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
-  return context;
+  const { addToast, removeToast, toasts } = context;
+  return {
+    toast: addToast,
+    dismiss: removeToast,
+    toasts,
+  };
 }
 
 export const Toast = React.forwardRef<
@@ -89,7 +96,7 @@ export const ToastClose = React.forwardRef<
     ref={ref}
     className={cn(
       'absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100',
-      className
+      className,
     )}
     toast-close=""
     {...props}
@@ -103,11 +110,7 @@ export const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title
-    ref={ref}
-    className={cn('text-sm font-semibold', className)}
-    {...props}
-  />
+  <ToastPrimitives.Title ref={ref} className={cn('text-sm font-semibold', className)} {...props} />
 ));
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
 
@@ -127,7 +130,7 @@ export function Toaster() {
   const { toasts } = useToast();
 
   return (
-    <ToastProvider>
+    <>
       {toasts.map(({ id, title, description, action, variant }) => (
         <Toast key={id} variant={variant}>
           <div className="grid gap-1">
@@ -138,9 +141,6 @@ export function Toaster() {
           <ToastClose />
         </Toast>
       ))}
-      <ToastPrimitives.Viewport className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]" />
-    </ToastProvider>
+    </>
   );
 }
-
-export type { ToasterToast as Toast };

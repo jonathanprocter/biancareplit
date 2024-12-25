@@ -2,11 +2,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/components/ui/toast';
-
-import { cn } from '@/lib/utils';
+import { calculateProgress, cn, formatTimeSpent } from '../lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Progress } from './ui/progress';
+import { useToast } from './ui/toast';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -39,18 +38,14 @@ const ContentFlashcardIntegration = () => {
 
   const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
     try {
-      const validCompletedCards = Math.max(0, Number(completedCards) || 0);
-      const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
-      const progressValue = Math.min(
-        100,
-        ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
-      );
-      setProgress(Math.round(progressValue));
+      const progressValue = calculateProgress(completedCards, 20, accuracy);
+      setProgress(progressValue);
     } catch (error) {
-      console.error(
-        'Error updating progress:',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      if (error instanceof Error) {
+        console.error(`Error updating progress: ${error.message}`);
+      } else {
+        console.error('An unknown error occurred:', error);
+      }
       setProgress(0);
     }
   }, []);
@@ -181,8 +176,7 @@ const ContentFlashcardIntegration = () => {
                 <span className="font-medium">Study Session</span>
               </div>
               <span className="text-sm text-gray-500">
-                {Math.floor(((slot.endTime || Date.now()) - slot.startTime) / 60000)}m{' '}
-                {Math.floor((((slot.endTime || Date.now()) - slot.startTime) % 60000) / 1000)}s
+                {formatTimeSpent(slot.startTime, slot.endTime)}
               </span>
             </div>
           ))}
