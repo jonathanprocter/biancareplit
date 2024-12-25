@@ -1,8 +1,9 @@
 import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
-import { Card, CardContent } from './components/ui/card';
+
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
+import { Card, CardContent } from './components/ui/card';
 import { ToastProvider } from './components/ui/toast';
 import { Toaster } from './components/ui/toaster';
 
@@ -39,9 +40,7 @@ function NotFound() {
             <AlertCircle className="h-8 w-8 text-red-500" />
             <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
           </div>
-          <p className="mt-4 text-sm text-gray-600">
-            The page you are looking for does not exist.
-          </p>
+          <p className="mt-4 text-sm text-gray-600">The page you are looking for does not exist.</p>
         </CardContent>
       </Card>
     </div>
@@ -51,8 +50,8 @@ function NotFound() {
 function App() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <ToastProvider>
-        <div className="min-h-screen w-full flex flex-col bg-background">
+      <div className="min-h-screen w-full flex flex-col bg-background">
+        <ToastProvider>
           <main className="flex-1 flex items-center justify-center p-4">
             <Switch>
               <Route path="/" component={Home} />
@@ -60,8 +59,8 @@ function App() {
             </Switch>
           </main>
           <Toaster />
-        </div>
-      </ToastProvider>
+        </ToastProvider>
+      </div>
     </ErrorBoundary>
   );
 }
