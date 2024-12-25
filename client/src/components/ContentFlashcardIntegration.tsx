@@ -2,12 +2,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-
 import { cn } from '@/lib/utils';
 
 import { useToast } from '@/hooks/use-toast';
+
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Progress } from './ui/progress';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -24,7 +24,7 @@ interface StudySlot {
   category?: string;
 }
 
-const ContentFlashcardIntegration = (): JSX.Element => {
+const ContentFlashcardIntegration = () => {
   const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -38,7 +38,7 @@ const ContentFlashcardIntegration = (): JSX.Element => {
     categoryProgress: {},
   });
 
-  const updateProgress = useCallback((completedCards: number, accuracy = 0): void => {
+  const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
     try {
       const validCompletedCards = Math.max(0, Number(completedCards) || 0);
       const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
@@ -49,19 +49,16 @@ const ContentFlashcardIntegration = (): JSX.Element => {
       );
       setProgress(Math.round(progressValue));
     } catch (err) {
-    if (err instanceof Error) {
-      console.error(`Error: ${err.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', err); {
-      const error = err instanceof Error ? err : new Error('Failed to update progress');
-      console.error('Error updating progress:', error);
+      console.error(
+        'Error updating progress:',
+        err instanceof Error ? err.message : 'Unknown error',
+      );
       setProgress(0);
     }
   }, []);
 
   useEffect(() => {
-    const initializeSystem = async (): Promise<void> => {
+    const initializeSystem = async () => {
       try {
         setLoading(true);
         setError(null);
@@ -90,7 +87,7 @@ const ContentFlashcardIntegration = (): JSX.Element => {
           description: 'Flashcard system ready to use',
         });
       } catch (err) {
-        const error = err instanceof Error ? err : new Error('Failed to initialize');
+        const error = err instanceof Error ? err : new Error('Failed to initialize system');
         console.error('Failed to initialize:', error);
         setError(error);
         toast({

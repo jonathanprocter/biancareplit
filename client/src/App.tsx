@@ -2,12 +2,10 @@ import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
-import { Toaster } from '@/components/ui/toaster';
-
-import ContentFlashcardIntegration from '@/components/ContentFlashcardIntegration';
-import { Card, CardContent } from '@/components/ui';
-
-import { ToastProvider } from '@/contexts/toast-context';
+import { Card, CardContent } from './components/ui/card';
+import { Toaster } from './components/ui/toaster';
+import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
+import { ToastProvider } from './contexts/toast-context';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
