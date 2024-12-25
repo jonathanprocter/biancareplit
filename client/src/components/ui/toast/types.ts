@@ -17,3 +17,5 @@ export interface ToastContextValue {
 export type ToastProps = Toast & {
   className?: string;
 };
+
+export type ToastActionElement = React.ReactElement<any>;

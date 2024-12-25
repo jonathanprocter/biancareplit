@@ -11,7 +11,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const addToast = React.useCallback((toast: Omit<Toast, 'id'>) => {
     setToasts((prevToasts) => {
-      const id = Math.random().toString(36).substring(2);
+      const id = Math.random().toString(36).slice(2);
       const newToast = { ...toast, id };
 
       setTimeout(() => {
@@ -37,7 +37,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ToastContext.Provider value={value}>
-      <ToastPrimitives.Provider>
+      <ToastPrimitives.Provider swipeDirection="right">
         {children}
         <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />
       </ToastPrimitives.Provider>
@@ -51,8 +51,8 @@ export function useToast() {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return {
+    toasts: context.toasts,
     toast: context.addToast,
     dismiss: context.dismissToast,
-    toasts: context.toasts,
   };
 }
