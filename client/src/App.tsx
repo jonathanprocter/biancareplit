@@ -4,7 +4,8 @@ import { Route, Switch } from 'wouter';
 
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 import { Card, CardContent } from './components/ui/card';
-import { ToastProvider } from './components/ui/toaster';
+import { Toaster } from './components/ui/toaster';
+import { ToastProvider } from './contexts/toast-context';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -24,8 +25,8 @@ function ErrorFallback({ error }: { error: Error }) {
 
 function App() {
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <ToastProvider>
+    <ToastProvider>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
         <div className="min-h-screen w-full flex flex-col bg-background">
           <main className="flex-1 flex items-center justify-center p-4">
             <Switch>
@@ -33,9 +34,10 @@ function App() {
               <Route component={NotFound} />
             </Switch>
           </main>
+          <Toaster />
         </div>
-      </ToastProvider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </ToastProvider>
   );
 }
 
