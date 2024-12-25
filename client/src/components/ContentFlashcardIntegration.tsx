@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/toast';
 
 import { cn } from '@/lib/utils';
 
@@ -23,7 +23,7 @@ interface StudySlot {
   category?: string;
 }
 
-export default function ContentFlashcardIntegration() {
+const ContentFlashcardIntegration = () => {
   const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -159,34 +159,37 @@ export default function ContentFlashcardIntegration() {
 
         <div className="space-y-4">
           <h4 className="font-semibold text-sm text-gray-500">Study Sessions</h4>
-          {studySlots.map((slot) => {
-            const isActive = slot.id === studySlots[studySlots.length - 1]?.id;
-            return (
-              <div
-                key={slot.id}
-                className={cn(
-                  'flex justify-between items-center p-4 rounded-lg border',
-                  isActive ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200',
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      'w-3 h-3 rounded-full',
-                      isActive ? 'bg-blue-500 animate-pulse' : 'bg-gray-400',
-                    )}
-                  />
-                  <span className="font-medium">Study Session</span>
-                </div>
-                <span className="text-sm text-gray-500">
-                  {Math.floor(((slot.endTime || Date.now()) - slot.startTime) / 60000)}m{' '}
-                  {Math.floor((((slot.endTime || Date.now()) - slot.startTime) % 60000) / 1000)}s
-                </span>
+          {studySlots.map((slot) => (
+            <div
+              key={slot.id}
+              className={cn(
+                'flex justify-between items-center p-4 rounded-lg border',
+                slot.id === studySlots[studySlots.length - 1]?.id
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-gray-50 border-gray-200',
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    'w-3 h-3 rounded-full',
+                    slot.id === studySlots[studySlots.length - 1]?.id
+                      ? 'bg-blue-500 animate-pulse'
+                      : 'bg-gray-400',
+                  )}
+                />
+                <span className="font-medium">Study Session</span>
               </div>
-            );
-          })}
+              <span className="text-sm text-gray-500">
+                {Math.floor(((slot.endTime || Date.now()) - slot.startTime) / 60000)}m{' '}
+                {Math.floor((((slot.endTime || Date.now()) - slot.startTime) % 60000) / 1000)}s
+              </span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default ContentFlashcardIntegration;

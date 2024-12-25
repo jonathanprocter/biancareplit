@@ -1,3 +1,13 @@
-// Re-export everything from toast component
-export { useToast, type Toast } from './toast';
-export { Toaster } from './toast';
+export {
+  ToastProvider,
+  ToastViewport,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
+  Toaster,
+  useToast,
+  type ToastProps,
+  type ToastActionElement,
+} from './toast';
