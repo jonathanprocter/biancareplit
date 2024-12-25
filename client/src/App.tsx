@@ -3,7 +3,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
-import { Card, CardContent, Toaster } from './components/ui';
+import { Card, CardContent } from './components/ui/card';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -55,7 +55,6 @@ function App() {
             <Route component={NotFound} />
           </Switch>
         </main>
-        <Toaster />
       </div>
     </ErrorBoundary>
   );

@@ -1,4 +1,2 @@
-// Re-export the useToast hook from the toast component
-import { useToast } from '../components/ui/toast';
-
-export { useToast };
+// Re-export everything from the toast component
+export { useToast } from '../components/ui/toast';
