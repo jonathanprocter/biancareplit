@@ -3,9 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { StrictMode } from 'react';
 
 import App from './App';
-import { ToastProvider } from './contexts/toast-context';
-import { queryClient } from './lib/queryClient';
 import './index.css';
+import { queryClient } from './lib/queryClient';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -14,10 +13,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <ToastProvider>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ToastProvider>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
   </StrictMode>,
 );

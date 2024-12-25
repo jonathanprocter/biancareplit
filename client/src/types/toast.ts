@@ -3,11 +3,12 @@ import type { ReactNode } from 'react';
 
 export type ToastActionElement = React.ReactElement<unknown, string>;
 
-export type ToasterToast = ToastProps & {
+export type ToasterToast = Pick<ToastProps, 'altText' | 'duration'> & {
   id: string;
   title?: ReactNode;
   description?: ReactNode;
   action?: ToastActionElement;
+  variant?: 'default' | 'destructive';
 };
 
 export interface ToastContextType {

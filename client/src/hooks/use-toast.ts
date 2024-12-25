@@ -1,10 +1,2 @@
-import { useContext } from 'react';
-import { ToastContext } from '../contexts/toast-context';
-
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-}
+// This file is deprecated. Import useToast from '../contexts/toast-context' instead
+export { useToast } from '../contexts/toast-context';
