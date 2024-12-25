@@ -46,16 +46,8 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-      if (error instanceof Error) {
-        console.error(`Error: ${error.message}`);
-        // Add proper error handling here
-      } else {
-        console.error('An unknown error occurred:', error);
-      }
-      console.error(
-        'Error updating progress:',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error updating progress:', errorMessage);
       setProgress(0);
     }
   }, []);
@@ -134,6 +126,8 @@ const ContentFlashcardIntegration = () => {
     );
   }
 
+  const isActiveSession = (slot: StudySlot) => slot.id === studySlots[studySlots.length - 1]?.id;
+
   return (
     <Card className="max-w-4xl mx-auto p-4">
       <CardHeader>
@@ -164,32 +158,29 @@ const ContentFlashcardIntegration = () => {
 
         <div className="space-y-4">
           <h4 className="font-semibold text-sm text-gray-500">Study Sessions</h4>
-          {studySlots.map((slot) => {
-            const isActive = slot.id === studySlots[studySlots.length - 1]?.id;
-            return (
-              <div
-                key={slot.id}
-                className={cn(
-                  'flex justify-between items-center p-4 rounded-lg border',
-                  isActive ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200',
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      'w-3 h-3 rounded-full',
-                      isActive ? 'bg-blue-500 animate-pulse' : 'bg-gray-400',
-                    )}
-                  />
-                  <span className="font-medium">Study Session</span>
-                </div>
-                <span className="text-sm text-gray-500">
-                  {Math.floor(((slot.endTime || Date.now()) - slot.startTime) / 60000)}m{' '}
-                  {Math.floor((((slot.endTime || Date.now()) - slot.startTime) % 60000) / 1000)}s
-                </span>
+          {studySlots.map((slot) => (
+            <div
+              key={slot.id}
+              className={cn(
+                'flex justify-between items-center p-4 rounded-lg border',
+                isActiveSession(slot) ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200',
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    'w-3 h-3 rounded-full',
+                    isActiveSession(slot) ? 'bg-blue-500 animate-pulse' : 'bg-gray-400',
+                  )}
+                />
+                <span className="font-medium">Study Session</span>
               </div>
-            );
-          })}
+              <span className="text-sm text-gray-500">
+                {Math.floor(((slot.endTime || Date.now()) - slot.startTime) / 60000)}m{' '}
+                {Math.floor((((slot.endTime || Date.now()) - slot.startTime) % 60000) / 1000)}s
+              </span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

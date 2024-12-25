@@ -9,6 +9,13 @@ interface TestItem {
   name: string;
 }
 
+interface TestPrettierProps {
+  items: TestItem[];
+  onSelect?: (item: TestItem) => void;
+  isLoading?: boolean;
+  error?: string;
+}
+
 // Mock the toast hook
 jest.mock('@/hooks/use-toast', () => ({
   useToast: jest.fn(() => ({

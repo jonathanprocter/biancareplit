@@ -18,8 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./client/src/*"],
-      "@db/*": ["./db/*"],
-      "@db": ["./db/index.ts"]
+      "@db": ["./db/index.ts"],
+      "@db/*": ["./db/*"]
     }
   },
   "include": [
