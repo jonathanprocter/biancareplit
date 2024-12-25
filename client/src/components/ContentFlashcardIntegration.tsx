@@ -23,7 +23,7 @@ interface StudySlot {
 }
 
 const ContentFlashcardIntegration = () => {
-  const { toast } = useToast();
+  const { addToast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -46,11 +46,6 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       console.error(
         'Error updating progress:',
         error instanceof Error ? error.message : 'Unknown error',
@@ -85,7 +80,7 @@ const ContentFlashcardIntegration = () => {
         setStudySlots([newStudySlot]);
         setInitialized(true);
 
-        toast({
+        addToast({
           title: 'System Initialized',
           description: 'Flashcard system ready to use',
           variant: 'success',
@@ -95,10 +90,10 @@ const ContentFlashcardIntegration = () => {
         console.error('Failed to initialize:', errorMessage);
         setError(error instanceof Error ? error : new Error(errorMessage));
 
-        toast({
-          variant: 'destructive',
+        addToast({
           title: 'Initialization Failed',
           description: errorMessage,
+          variant: 'destructive',
         });
       } finally {
         setLoading(false);
@@ -106,7 +101,7 @@ const ContentFlashcardIntegration = () => {
     };
 
     void initializeSystem();
-  }, [toast, updateProgress]);
+  }, [addToast, updateProgress]);
 
   if (loading) {
     return (

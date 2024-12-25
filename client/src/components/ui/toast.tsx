@@ -1,8 +1,10 @@
 import * as ToastPrimitives from '@radix-ui/react-toast';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { X } from 'lucide-react';
+
 import * as React from 'react';
-import { cn } from '@/lib/utils';
+
+import { cn } from '../../lib/utils';
 
 const toastVariants = cva(
   'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
@@ -33,9 +35,8 @@ interface Toast {
 
 interface ToastContextValue {
   toasts: Toast[];
-  addToast: (props: Omit<Toast, 'id'>) => string;
+  addToast: (props: Omit<Toast, 'id'>) => void;
   dismiss: (toastId: string) => void;
-  update: (toastId: string, props: Partial<Omit<Toast, 'id'>>) => void;
 }
 
 const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
@@ -61,8 +62,6 @@ export function ToastProvider({
           setToasts((prev) => prev.filter((t) => t.id !== id));
         }, duration);
       }
-
-      return id;
     },
     [defaultDuration],
   );
@@ -71,13 +70,21 @@ export function ToastProvider({
     setToasts((prev) => prev.filter((t) => t.id !== toastId));
   }, []);
 
-  const update = React.useCallback((toastId: string, props: Partial<Omit<Toast, 'id'>>) => {
-    setToasts((prev) => prev.map((t) => (t.id === toastId ? { ...t, ...props } : t)));
-  }, []);
+  const value = React.useMemo(
+    () => ({
+      toasts,
+      addToast,
+      dismiss,
+    }),
+    [toasts, addToast, dismiss],
+  );
 
   return (
-    <ToastContext.Provider value={{ toasts, addToast, dismiss, update }}>
-      {children}
+    <ToastContext.Provider value={value}>
+      <ToastPrimitives.Provider>
+        {children}
+        <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />
+      </ToastPrimitives.Provider>
     </ToastContext.Provider>
   );
 }
@@ -92,8 +99,7 @@ export function useToast() {
 
 export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants>
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => (
   <ToastPrimitives.Root
     ref={ref}
@@ -145,6 +151,25 @@ export const ToastDescription = React.forwardRef<
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
+export function Toaster() {
+  const { toasts, dismiss } = useToast();
+
+  return (
+    <>
+      {toasts.map(({ id, title, description, action, variant, ...props }) => (
+        <Toast key={id} variant={variant} {...props}>
+          <div className="grid gap-1">
+            {title && <ToastTitle>{title}</ToastTitle>}
+            {description && <ToastDescription>{description}</ToastDescription>}
+          </div>
+          {action}
+          <ToastClose onClick={() => dismiss(id)} />
+        </Toast>
+      ))}
+    </>
+  );
+}
+
 export const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
@@ -164,15 +189,6 @@ export const ToastAction = React.forwardRef<
 ToastAction.displayName = ToastPrimitives.Action.displayName;
 
 export const ToastViewport = ToastPrimitives.Viewport;
-
-export function ToastWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <ToastProvider>
-      {children}
-      <ToastViewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />
-    </ToastProvider>
-  );
-}
 
 export type { Toast as ToastType };
 export type { ToastProps } from '@radix-ui/react-toast';
