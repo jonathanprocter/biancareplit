@@ -3,48 +3,23 @@ import * as ToastPrimitives from '@radix-ui/react-toast';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface ToastProps {
+export interface ToastProps {
+  id?: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactNode;
+  variant?: 'default' | 'destructive';
 }
 
-const ToastContext = React.createContext<{
+interface ToastContextValue {
   toasts: ToastProps[];
-  addToast: (toast: ToastProps) => void;
-  removeToast: (index: number) => void;
-}>({
-  toasts: [],
-  addToast: () => {},
-  removeToast: () => {},
-});
-
-export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<ToastProps[]>([]);
-
-  const addToast = React.useCallback((toast: ToastProps) => {
-    setToasts((prev) => [...prev, toast]);
-    // Auto remove toast after 5 seconds
-    setTimeout(() => {
-      setToasts((prev) => prev.slice(1));
-    }, 5000);
-  }, []);
-
-  const removeToast = React.useCallback((index: number) => {
-    setToasts((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
-      <ToastPrimitives.Provider>
-        {children}
-        <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-50 flex flex-col p-4 gap-2 w-full sm:max-w-[420px]" />
-      </ToastPrimitives.Provider>
-    </ToastContext.Provider>
-  );
+  toast: (props: ToastProps) => void;
+  dismiss: (id: string) => void;
 }
 
-export function useToast() {
+const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
+
+function useToastContext() {
   const context = React.useContext(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
@@ -52,7 +27,38 @@ export function useToast() {
   return context;
 }
 
-export const Toast = React.forwardRef<
+function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = React.useState<ToastProps[]>([]);
+
+  const toast = React.useCallback((props: ToastProps) => {
+    const id = String(Date.now());
+    setToasts((prev) => [...prev, { ...props, id }]);
+
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  }, []);
+
+  const dismiss = React.useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const contextValue = React.useMemo(
+    () => ({ toasts, toast, dismiss }),
+    [toasts, toast, dismiss]
+  );
+
+  return (
+    <ToastContext.Provider value={contextValue}>
+      <ToastPrimitives.Provider>
+        {children}
+        <Toaster />
+      </ToastPrimitives.Provider>
+    </ToastContext.Provider>
+  );
+}
+
+const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root>
 >(({ className, children, ...props }, ref) => (
@@ -65,14 +71,26 @@ export const Toast = React.forwardRef<
     {...props}
   >
     {children}
-    <ToastPrimitives.Close className="absolute right-2 top-2 opacity-0 group-hover:opacity-100">
-      <X className="h-4 w-4" />
-    </ToastPrimitives.Close>
   </ToastPrimitives.Root>
 ));
-Toast.displayName = 'Toast';
+Toast.displayName = ToastPrimitives.Root.displayName;
 
-export const ToastTitle = React.forwardRef<
+const ToastClose = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Close>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Close
+    ref={ref}
+    className={cn('absolute right-2 top-2 opacity-0 group-hover:opacity-100', className)}
+    toast-close=""
+    {...props}
+  >
+    <X className="h-4 w-4" />
+  </ToastPrimitives.Close>
+));
+ToastClose.displayName = ToastPrimitives.Close.displayName;
+
+const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
 >(({ className, ...props }, ref) => (
@@ -82,9 +100,9 @@ export const ToastTitle = React.forwardRef<
     {...props}
   />
 ));
-ToastTitle.displayName = 'ToastTitle';
+ToastTitle.displayName = ToastPrimitives.Title.displayName;
 
-export const ToastDescription = React.forwardRef<
+const ToastDescription = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Description>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
 >(({ className, ...props }, ref) => (
@@ -94,15 +112,30 @@ export const ToastDescription = React.forwardRef<
     {...props}
   />
 ));
-ToastDescription.displayName = 'ToastDescription';
+ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
-export function Toaster() {
-  const { toasts, removeToast } = useToast();
+const ToastViewport = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Viewport>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Viewport
+    ref={ref}
+    className={cn(
+      'fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]',
+      className
+    )}
+    {...props}
+  />
+));
+ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
+
+function Toaster() {
+  const { toasts, dismiss } = useToastContext();
 
   return (
     <>
-      {toasts.map((toast, index) => (
-        <Toast key={index}>
+      {toasts.map((toast) => (
+        <Toast key={toast.id}>
           <div className="grid gap-1">
             {toast.title && <ToastTitle>{toast.title}</ToastTitle>}
             {toast.description && (
@@ -110,8 +143,22 @@ export function Toaster() {
             )}
           </div>
           {toast.action}
+          <ToastClose onClick={() => toast.id && dismiss(toast.id)} />
         </Toast>
       ))}
+      <ToastViewport />
     </>
   );
 }
+
+export {
+  type ToastProps as ToastType,
+  ToastProvider,
+  ToastViewport,
+  ToastClose,
+  ToastTitle,
+  ToastDescription,
+  Toast,
+  Toaster,
+  useToastContext as useToast,
+};

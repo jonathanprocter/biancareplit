@@ -32,7 +32,7 @@ function App() {
             <Route component={NotFound} />
           </Switch>
         </main>
-        <Toaster /> {/*Moved Toaster here to match original placement*/}
+        <Toaster />
       </div>
     </ErrorBoundary>
   );
