@@ -1,9 +1,7 @@
+import * as React from 'react';
 import * as ToastPrimitives from '@radix-ui/react-toast';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { X } from 'lucide-react';
-
-import * as React from 'react';
-
 import { cn } from '../../lib/utils';
 
 const toastVariants = cva(
@@ -22,8 +20,7 @@ const toastVariants = cva(
   },
 );
 
-// Types
-export interface ToasterToast extends React.ComponentPropsWithoutRef<typeof Toast> {
+export interface ToasterToast {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -38,15 +35,13 @@ export interface ToastContextType {
   dismiss: (toastId: string) => void;
 }
 
-// Context
 const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
 
-// Provider Component
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = React.useState<ToasterToast[]>([]);
 
   const toast = React.useCallback((props: Omit<ToasterToast, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
+    const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, ...props }]);
 
     if (props.duration !== Infinity) {
@@ -60,42 +55,35 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     setToasts((prev) => prev.filter((t) => t.id !== toastId));
   }, []);
 
-  const value = React.useMemo(
-    () => ({
-      toasts,
-      toast,
-      dismiss,
-    }),
-    [toasts, toast, dismiss],
+  return (
+    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+      {children}
+      <ToastPrimitives.Provider>
+        {toasts.map(({ id, title, description, action, ...props }) => (
+          <Toast key={id} {...props}>
+            <div className="grid gap-1">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && <ToastDescription>{description}</ToastDescription>}
+            </div>
+            {action}
+            <ToastClose />
+          </Toast>
+        ))}
+        <ToastPrimitives.Viewport 
+          className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]" 
+        />
+      </ToastPrimitives.Provider>
+    </ToastContext.Provider>
   );
-
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
 };
 
-// Hook
-export const useToast = (): ToastContextType => {
+export const useToast = () => {
   const context = React.useContext(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
 };
-
-// Components
-export const ToastViewport = React.forwardRef<
-  React.ElementRef<typeof ToastPrimitives.Viewport>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
->(({ className, ...props }, ref) => (
-  <ToastPrimitives.Viewport
-    ref={ref}
-    className={cn(
-      'fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]',
-      className,
-    )}
-    {...props}
-  />
-));
-ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
@@ -108,6 +96,21 @@ export const Toast = React.forwardRef<
   />
 ));
 Toast.displayName = ToastPrimitives.Root.displayName;
+
+export const ToastAction = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Action>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Action
+    ref={ref}
+    className={cn(
+      'inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-destructive/30 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive',
+      className,
+    )}
+    {...props}
+  />
+));
+ToastAction.displayName = ToastPrimitives.Action.displayName;
 
 export const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
@@ -147,5 +150,4 @@ export const ToastDescription = React.forwardRef<
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
-export { toastVariants };
 export type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;

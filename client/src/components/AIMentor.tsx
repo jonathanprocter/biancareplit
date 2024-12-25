@@ -2,14 +2,12 @@ import { BookOpen, Bot, Loader2, Send, Target } from 'lucide-react';
 
 import { useEffect, useRef, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
-import { getMentorResponse } from '@/lib/openai-service';
-
-import { useToast } from '@/hooks/use-toast';
+import { getMentorResponse } from '../lib/openai-service';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Input } from './ui/input';
+import { ScrollArea } from './ui/scroll-area';
+import { useToast } from './ui/toast';
 
 interface Message {
   role: 'user' | 'assistant';
