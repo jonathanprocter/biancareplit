@@ -3,8 +3,9 @@ import { createRoot } from 'react-dom/client';
 
 import { StrictMode } from 'react';
 
+import { ToastProvider } from '@/components/ui/toast';
+
 import App from './App';
-import { ToastProvider } from './components/ui/toast';
 import './index.css';
 import { queryClient } from './lib/queryClient';
 

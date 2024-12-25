@@ -2,10 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { cn } from '../lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Progress } from './ui/progress';
-import { useToast } from './ui/toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/components/ui/toast';
+
+import { cn } from '@/lib/utils';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -23,7 +24,7 @@ interface StudySlot {
 }
 
 const ContentFlashcardIntegration = () => {
-  const { addToast } = useToast();
+  const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -46,6 +47,11 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
       console.error(
         'Error updating progress:',
         error instanceof Error ? error.message : 'Unknown error',
@@ -80,17 +86,17 @@ const ContentFlashcardIntegration = () => {
         setStudySlots([newStudySlot]);
         setInitialized(true);
 
-        addToast({
+        toast({
           title: 'System Initialized',
           description: 'Flashcard system ready to use',
-          variant: 'default',
+          variant: 'success',
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to initialize system';
         console.error('Failed to initialize:', errorMessage);
         setError(error instanceof Error ? error : new Error(errorMessage));
 
-        addToast({
+        toast({
           title: 'Initialization Failed',
           description: errorMessage,
           variant: 'destructive',
@@ -101,7 +107,7 @@ const ContentFlashcardIntegration = () => {
     };
 
     void initializeSystem();
-  }, [addToast, updateProgress]);
+  }, [toast, updateProgress]);
 
   if (loading) {
     return (
