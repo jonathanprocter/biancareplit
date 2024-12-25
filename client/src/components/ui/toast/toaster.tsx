@@ -4,8 +4,9 @@ import {
   ToastClose,
   ToastDescription,
   ToastTitle,
-  useToast
+  ToastViewport,
 } from './toast';
+import { useToast } from './provider';
 
 export function Toaster() {
   const { toasts } = useToast();
@@ -22,6 +23,7 @@ export function Toaster() {
           <ToastClose />
         </Toast>
       ))}
+      <ToastViewport />
     </>
   );
 }

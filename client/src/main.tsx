@@ -3,9 +3,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { ToastProvider } from './components/ui/toast';
-import { Toaster } from './components/ui/toast/toaster';
-import { queryClient } from './lib/queryClient';
+import { Toaster } from './components/ui/toast';
 import './index.css';
+import { queryClient } from './lib/queryClient';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

@@ -4,14 +4,14 @@ import { Progress } from './progress';
 import {
   Toast,
   ToastAction,
+  type ToastActionElement,
   ToastClose,
   ToastDescription,
+  type ToastProps,
   ToastProvider,
   ToastTitle,
-  ToastViewport,
-} from './toast';
-import { Toaster } from './toaster';
-import { useToast } from './use-toast';
+  useToast,
+} from './toast/toast';
 
 export {
   Card,
@@ -26,18 +26,14 @@ export {
   ToastDescription,
   ToastProvider,
   ToastTitle,
-  ToastViewport,
-  Toaster,
   useToast,
 };
 
+export type { ToastProps, ToastActionElement };
+
 export { Button, buttonVariants } from './button';
-
 export { cn } from '../../lib/utils';
-
-// Export component types
 export type { SelectProps } from './select';
-
 export { Input, type InputProps } from './input';
 export { Badge, badgeVariants } from './badge';
 export { Separator } from './separator';

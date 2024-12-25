@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
-import { useToast } from '../components/ui/use-toast';
+import { useToast } from '../components/ui/toast';
 import { cn } from '../lib/utils';
 
 interface AnalyticsData {
@@ -46,11 +46,6 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
       console.error(
         'Error updating progress:',
         error instanceof Error ? error.message : 'Unknown error',
