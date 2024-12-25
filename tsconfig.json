@@ -21,7 +21,8 @@
       "@/components/*": ["./client/src/components/*"],
       "@/lib/*": ["./client/src/lib/*"],
       "@/hooks/*": ["./client/src/hooks/*"],
-      "@/contexts/*": ["./client/src/contexts/*"]
+      "@/contexts/*": ["./client/src/contexts/*"],
+      "@/ui/*": ["./client/src/components/ui/*"]
     }
   },
   "include": [
