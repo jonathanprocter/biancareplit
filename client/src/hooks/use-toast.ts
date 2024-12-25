@@ -1,2 +1,3 @@
-// This file is deprecated. Import useToast from '../contexts/toast-context' instead
-export { useToast } from '../contexts/toast-context';
+// This file is kept for compatibility
+// Import from @/components/ui/toast instead
+export { useToast } from '@/components/ui/toast';

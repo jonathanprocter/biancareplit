@@ -1,19 +1,10 @@
-import * as React from 'react';
-import { useToast } from '../../contexts/toast-context';
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from './toast';
+import { Toast, ToastClose, ToastDescription, ToastTitle, ToastViewport, useToast } from './toast';
 
 export function Toaster() {
   const { toasts } = useToast();
 
   return (
-    <ToastProvider>
+    <>
       {toasts.map(({ id, title, description, action, ...props }) => (
         <Toast key={id} {...props}>
           <div className="grid gap-1">
@@ -25,8 +16,6 @@ export function Toaster() {
         </Toast>
       ))}
       <ToastViewport />
-    </ToastProvider>
+    </>
   );
 }
-
-export { Toast, ToastTitle, ToastDescription, ToastClose };

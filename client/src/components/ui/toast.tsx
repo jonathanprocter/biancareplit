@@ -1,7 +1,9 @@
-import * as React from 'react';
 import * as ToastPrimitives from '@radix-ui/react-toast';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { type VariantProps, cva } from 'class-variance-authority';
 import { X } from 'lucide-react';
+
+import * as React from 'react';
+
 import { cn } from '../../lib/utils';
 
 const toastVariants = cva(
@@ -20,9 +22,67 @@ const toastVariants = cva(
   },
 );
 
-const ToastProvider = ToastPrimitives.Provider;
+// Types
+export interface ToasterToast extends React.ComponentPropsWithoutRef<typeof Toast> {
+  id: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: React.ReactElement;
+  variant?: 'default' | 'destructive';
+  duration?: number;
+}
 
-const ToastViewport = React.forwardRef<
+export interface ToastContextType {
+  toasts: ToasterToast[];
+  toast: (props: Omit<ToasterToast, 'id'>) => void;
+  dismiss: (toastId: string) => void;
+}
+
+// Context
+const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
+
+// Provider Component
+export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
+  const [toasts, setToasts] = React.useState<ToasterToast[]>([]);
+
+  const toast = React.useCallback((props: Omit<ToasterToast, 'id'>) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, ...props }]);
+
+    if (props.duration !== Infinity) {
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, props.duration || 5000);
+    }
+  }, []);
+
+  const dismiss = React.useCallback((toastId: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== toastId));
+  }, []);
+
+  const value = React.useMemo(
+    () => ({
+      toasts,
+      toast,
+      dismiss,
+    }),
+    [toasts, toast, dismiss],
+  );
+
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+};
+
+// Hook
+export const useToast = (): ToastContextType => {
+  const context = React.useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return context;
+};
+
+// Components
+export const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
 >(({ className, ...props }, ref) => (
@@ -37,7 +97,7 @@ const ToastViewport = React.forwardRef<
 ));
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
-const Toast = React.forwardRef<
+export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => (
@@ -49,7 +109,7 @@ const Toast = React.forwardRef<
 ));
 Toast.displayName = ToastPrimitives.Root.displayName;
 
-const ToastClose = React.forwardRef<
+export const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
 >(({ className, ...props }, ref) => (
@@ -67,7 +127,7 @@ const ToastClose = React.forwardRef<
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
 
-const ToastTitle = React.forwardRef<
+export const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
 >(({ className, ...props }, ref) => (
@@ -75,7 +135,7 @@ const ToastTitle = React.forwardRef<
 ));
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
 
-const ToastDescription = React.forwardRef<
+export const ToastDescription = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Description>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
 >(({ className, ...props }, ref) => (
@@ -87,14 +147,5 @@ const ToastDescription = React.forwardRef<
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
-export {
-  ToastProvider,
-  ToastViewport,
-  Toast,
-  ToastTitle,
-  ToastDescription,
-  ToastClose,
-  toastVariants,
-};
-
+export { toastVariants };
 export type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;
