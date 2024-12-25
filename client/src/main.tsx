@@ -4,7 +4,8 @@ import { createRoot } from 'react-dom/client';
 import { StrictMode } from 'react';
 
 import App from './App';
-import { ToastProvider } from './components/ui/toast';
+import { ToastContextProvider } from './components/ui/toast-context';
+import { Toaster } from './components/ui/toaster';
 import './index.css';
 import { queryClient } from './lib/queryClient';
 
@@ -16,9 +17,10 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>
+      <ToastContextProvider>
         <App />
-      </ToastProvider>
+        <Toaster />
+      </ToastContextProvider>
     </QueryClientProvider>
   </StrictMode>,
 );
