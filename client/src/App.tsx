@@ -1,7 +1,6 @@
 import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
-
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 import { Card, CardContent } from './components/ui/card';
 
