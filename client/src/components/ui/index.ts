@@ -1,7 +1,7 @@
 // Re-export individual UI components
 export { Button, buttonVariants, type ButtonProps } from './button';
 export { Input, type InputProps } from './input';
-export { Progress, type ProgressProps } from './progress';
+export { Progress } from './progress';
 export {
   Card,
   CardHeader,
@@ -26,7 +26,7 @@ export {
 } from './toast';
 
 // Export utility functions
-export { cn } from '@/lib/utils';
+export { cn } from '../../lib/utils';
 
 // Export component types
 export type { SelectProps } from './select';

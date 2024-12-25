@@ -1,2 +1,2 @@
-// Re-export everything from the ui/toast component
-export * from '@/components/ui/toast';
+// Re-export everything from the toast component
+export { ToastProvider, useToast, type Toast } from '../components/ui/toast';

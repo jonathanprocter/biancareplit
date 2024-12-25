@@ -147,7 +147,7 @@ export function AIMentor() {
 
         <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
           <div className="space-y-4">
-            {messages.map((message, index) => (
+            {messages.map((message) => (
               <div
                 key={`${message.role}-${message.timestamp.getTime()}`}
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
