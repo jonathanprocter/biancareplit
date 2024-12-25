@@ -2,8 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle, Progress } from '@/components/ui';
 
 import { cn } from '@/lib/utils';
 
@@ -72,15 +71,15 @@ const ContentFlashcardIntegration = (): JSX.Element => {
         setAnalytics(initialAnalytics);
         updateProgress(initialAnalytics.completedCards, initialAnalytics.accuracy);
 
-        setStudySlots([
-          {
-            id: uuidv4(),
-            startTime: Date.now(),
-            category: 'content',
-          },
-        ]);
+        const newStudySlot: StudySlot = {
+          id: uuidv4(),
+          startTime: Date.now(),
+          category: 'content',
+        };
 
+        setStudySlots([newStudySlot]);
         setInitialized(true);
+
         toast({
           title: 'System Initialized',
           description: 'Flashcard system ready to use',
@@ -99,10 +98,8 @@ const ContentFlashcardIntegration = (): JSX.Element => {
       }
     };
 
-    if (!initialized) {
-      void initializeSystem();
-    }
-  }, [initialized, toast, updateProgress]);
+    void initializeSystem();
+  }, [toast, updateProgress]);
 
   if (loading) {
     return (

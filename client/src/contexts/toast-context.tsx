@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useState } from 'react';
-
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
 const TOAST_REMOVE_DELAY = 5000;
@@ -14,33 +13,33 @@ type ToasterToast = ToastProps & {
 type ToastContextType = {
   toasts: ToasterToast[];
   toast: (props: Omit<ToasterToast, 'id'>) => void;
-  removeToast: (id: string) => void;
+  dismiss: (toastId: string) => void;
 };
 
-const ToastContext = createContext<ToastContextType>({
-  toasts: [],
-  toast: () => null,
-  removeToast: () => null,
-});
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToasterToast[]>([]);
 
   const toast = useCallback((props: Omit<ToasterToast, 'id'>) => {
     const id = Math.random().toString(36).slice(2, 9);
-    setToasts((prev) => [...prev, { id, ...props }]);
+    const newToast = { id, ...props };
+
+    setToasts((prevToasts) => [...prevToasts, newToast]);
 
     setTimeout(() => {
-      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+      setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
     }, TOAST_REMOVE_DELAY);
   }, []);
 
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  const dismiss = useCallback((toastId: string) => {
+    setToasts((prevToasts) => prevToasts.filter((t) => t.id !== toastId));
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toasts, toast, removeToast }}>{children}</ToastContext.Provider>
+    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+      {children}
+    </ToastContext.Provider>
   );
 }
 

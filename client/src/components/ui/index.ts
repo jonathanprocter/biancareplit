@@ -1,18 +1,18 @@
-// Base components
-export * from './card';
-export * from './progress';
-export * from './toast';
-export * from './toaster';
+// Re-export all UI components
+export { Button, buttonVariants } from './button';
 
-// Export individual components with explicit paths
-export { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
-export { Progress } from './progress';
-export { Toast, ToastAction } from './toast';
-export { Toaster } from './toaster';
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './card';
 
-// Additional UI components as needed
-export { Button } from './button';
 export { Input } from './input';
-export { Badge } from './badge';
+
+export { Progress } from './progress';
+
+export { Badge, badgeVariants } from './badge';
+
 export { Separator } from './separator';
+
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+
+export { Toast, ToastAction } from './toast';
+
+export { Toaster } from './toaster';

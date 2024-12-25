@@ -17,15 +17,11 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./client/src/*"],
-      "@/components/*": ["./client/src/components/*"],
-      "@/lib/*": ["./client/src/lib/*"],
-      "@/hooks/*": ["./client/src/hooks/*"],
-      "@/contexts/*": ["./client/src/contexts/*"],
-      "@/ui/*": ["./client/src/components/ui/*"]
+      "@/*": ["./src/*", "./client/src/*"]
     }
   },
   "include": [
+    "src/**/*",
     "client/src/**/*",
     "client/src/**/*.tsx",
     "client/src/**/*.ts",
