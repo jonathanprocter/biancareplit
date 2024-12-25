@@ -27,3 +27,4 @@ export type { CardProps } from './card';
 export type { InputProps } from './input';
 export type { ProgressProps } from './progress';
 export type { SelectProps } from './select';
+export type { ToastProps, ToastType } from './toast';

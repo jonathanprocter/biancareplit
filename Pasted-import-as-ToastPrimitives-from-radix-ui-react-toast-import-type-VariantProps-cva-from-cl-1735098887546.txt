@@ -2,8 +2,9 @@ import * as ToastPrimitives from '@radix-ui/react-toast';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import * as React from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
+// Enhanced variants with more toast types and better styling
 const toastVariants = cva(
   'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
   {
@@ -31,9 +32,10 @@ const toastVariants = cva(
       swipe: 'default',
       state: 'open',
     },
-  },
+  }
 );
 
+// Improved toast interface
 interface Toast {
   id: string;
   title?: React.ReactNode;
@@ -52,10 +54,10 @@ interface ToastContextValue {
 
 const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
 
-export function ToastProvider({
+export function ToastProvider({ 
   children,
   defaultDuration = 5000,
-}: {
+}: { 
   children: React.ReactNode;
   defaultDuration?: number;
 }) {
@@ -76,7 +78,7 @@ export function ToastProvider({
 
       return id;
     },
-    [defaultDuration],
+    [defaultDuration]
   );
 
   const dismiss = React.useCallback((toastId: string) => {
@@ -84,7 +86,9 @@ export function ToastProvider({
   }, []);
 
   const update = React.useCallback((toastId: string, props: Partial<Omit<Toast, 'id'>>) => {
-    setToasts((prev) => prev.map((t) => (t.id === toastId ? { ...t, ...props } : t)));
+    setToasts((prev) =>
+      prev.map((t) => (t.id === toastId ? { ...t, ...props } : t))
+    );
   }, []);
 
   return (
@@ -107,10 +111,10 @@ export function useToast() {
 
 export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants> & {
-      onSwipeEnd?: () => void;
-    }
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & 
+  VariantProps<typeof toastVariants> & {
+    onSwipeEnd?: () => void;
+  }
 >(({ className, variant, onSwipeEnd, ...props }, ref) => (
   <ToastPrimitives.Root
     ref={ref}
@@ -136,7 +140,7 @@ export const ToastClose = React.forwardRef<
       'group-[.success]:text-green-300 group-[.success]:hover:text-green-50',
       'group-[.warning]:text-yellow-300 group-[.warning]:hover:text-yellow-50',
       'group-[.info]:text-blue-300 group-[.info]:hover:text-blue-50',
-      className,
+      className
     )}
     toast-close=""
     {...props}
@@ -150,10 +154,10 @@ export const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title
-    ref={ref}
-    className={cn('text-sm font-semibold leading-none tracking-tight', className)}
-    {...props}
+  <ToastPrimitives.Title 
+    ref={ref} 
+    className={cn('text-sm font-semibold leading-none tracking-tight', className)} 
+    {...props} 
   />
 ));
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
@@ -185,7 +189,7 @@ export const ToastAction = React.forwardRef<
       'group-[.success]:border-green-100 group-[.success]:hover:border-green-200',
       'group-[.warning]:border-yellow-100 group-[.warning]:hover:border-yellow-200',
       'group-[.info]:border-blue-100 group-[.info]:hover:border-blue-200',
-      className,
+      className
     )}
     {...props}
   />
