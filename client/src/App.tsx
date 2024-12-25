@@ -4,8 +4,7 @@ import { Route, Switch } from 'wouter';
 
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 import { Card, CardContent } from './components/ui/card';
-import { ToastProvider } from './components/ui/toast';
-import { Toaster } from './components/ui/toast';
+import { ToastProvider, Toaster } from './components/ui/toast';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (

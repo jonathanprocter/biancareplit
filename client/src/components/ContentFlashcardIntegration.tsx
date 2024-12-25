@@ -83,7 +83,7 @@ const ContentFlashcardIntegration = () => {
         addToast({
           title: 'System Initialized',
           description: 'Flashcard system ready to use',
-          variant: 'success',
+          variant: 'default',
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to initialize system';
