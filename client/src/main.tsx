@@ -4,8 +4,8 @@ import { StrictMode } from 'react';
 
 import App from './App';
 import { ToastProvider } from './contexts/toast-context';
-import './index.css';
 import { queryClient } from './lib/queryClient';
+import './index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
