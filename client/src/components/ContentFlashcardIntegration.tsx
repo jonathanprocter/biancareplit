@@ -46,8 +46,10 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error updating progress:', errorMessage);
+      console.error(
+        'Error updating progress:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       setProgress(0);
     }
   }, []);

@@ -1,4 +1,5 @@
-import { createContext, type ReactNode, useCallback, useState } from 'react';
+import { type ReactNode, createContext, useCallback, useState } from 'react';
+
 import type { ToastProps } from '../components/ui/toast';
 
 export type ToasterToast = ToastProps & {
@@ -23,22 +24,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== toastId));
   }, []);
 
-  const toast = useCallback((props: Omit<ToasterToast, 'id'>) => {
-    const id = Math.random().toString(36).slice(2, 9);
-    const newToast = { id, ...props };
-    setToasts((prev) => [...prev, newToast]);
-    setTimeout(() => dismiss(id), 5000);
-  }, [dismiss]);
+  const toast = useCallback(
+    (props: Omit<ToasterToast, 'id'>) => {
+      const id = Math.random().toString(36).slice(2, 9);
+      const newToast = { id, ...props };
+      setToasts((prev) => [...prev, newToast]);
+      setTimeout(() => dismiss(id), 5000);
+    },
+    [dismiss],
+  );
 
   const value = {
     toasts,
     toast,
-    dismiss
+    dismiss,
   };
 
-  return (
-    <ToastContext.Provider value={value}>
-      {children}
-    </ToastContext.Provider>
-  );
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
 }
