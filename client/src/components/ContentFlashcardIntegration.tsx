@@ -2,9 +2,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, Progress } from '../components/ui';
-import { useToast } from '../hooks/use-toast';
-import { cn } from '../lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+
+import { cn } from '@/lib/utils';
+
+import { useToast } from '@/hooks/use-toast';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -77,7 +80,6 @@ const ContentFlashcardIntegration = (): JSX.Element => {
 
         setStudySlots([newStudySlot]);
         setInitialized(true);
-
         toast({
           title: 'System Initialized',
           description: 'Flashcard system ready to use',
