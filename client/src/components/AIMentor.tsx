@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { useToast } from './ui/use-toast';
+import { useToast } from './ui/toast';
 
 interface Message {
   role: 'user' | 'assistant';

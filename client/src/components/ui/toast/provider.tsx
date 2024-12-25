@@ -1,5 +1,7 @@
-import * as React from 'react';
 import * as ToastPrimitives from '@radix-ui/react-toast';
+
+import * as React from 'react';
+
 import type { Toast, ToastContextValue } from './types';
 
 const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
@@ -16,7 +18,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         setToasts((currentToasts) => currentToasts.filter((t) => t.id !== id));
       }, 5000);
 
-      return [newToast, ...prevToasts];
+      return [...prevToasts, newToast];
     });
   }, []);
 
@@ -24,17 +26,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== toastId));
   }, []);
 
-  const contextValue = React.useMemo(
+  const value = React.useMemo(
     () => ({
       toasts,
       addToast,
       dismissToast,
     }),
-    [toasts, addToast, dismissToast]
+    [toasts, addToast, dismissToast],
   );
 
   return (
-    <ToastContext.Provider value={contextValue}>
+    <ToastContext.Provider value={value}>
       <ToastPrimitives.Provider>
         {children}
         <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toast';
 
 interface TestItem {
   id: number;
@@ -17,7 +17,7 @@ interface TestPrettierProps {
 }
 
 // Mock the toast hook
-jest.mock('@/hooks/use-toast', () => ({
+jest.mock('@/components/ui/toast', () => ({
   useToast: jest.fn(() => ({
     toast: jest.fn(),
   })),
