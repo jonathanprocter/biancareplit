@@ -7,7 +7,7 @@ import { db } from './config';
 const app = express();
 const server = createServer(app);
 
-const PORT = parseInt(process.env.PORT || '3000');
+const PORT = parseInt(process.env.PORT || '3001');
 
 const wss = new WebSocketServer({ 
   server,
