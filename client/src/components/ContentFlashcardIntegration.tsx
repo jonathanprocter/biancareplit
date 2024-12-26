@@ -1,11 +1,9 @@
+
 import { v4 as uuidv4 } from 'uuid';
-
 import { useCallback, useEffect, useState } from 'react';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/components/ui/toast';
-
+import { useToast } from '@/components/ui/toast/use-toast';
 import { cn } from '@/lib/utils';
 
 interface AnalyticsData {
@@ -29,7 +27,7 @@ interface APIError extends Error {
 }
 
 const ContentFlashcardIntegration = () => {
-  const { toast: showToast } = useToast();
+  const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
@@ -58,7 +56,7 @@ const ContentFlashcardIntegration = () => {
         setProgress(Math.round(progressValue));
       } catch (error) {
         console.error('Error updating progress:', error);
-        showToast({
+        toast({
           variant: 'destructive',
           title: 'Error',
           description: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -66,7 +64,7 @@ const ContentFlashcardIntegration = () => {
         setProgress(0);
       }
     },
-    [showToast],
+    [toast],
   );
 
   const initializeSystem = useCallback(async (): Promise<void> => {
@@ -94,19 +92,17 @@ const ContentFlashcardIntegration = () => {
       setStudySlots([newStudySlot]);
       setInitialized(true);
 
-      showToast({
+      toast({
         title: 'Success',
         description: 'Flashcard system ready to use',
         variant: 'default',
       });
     } catch (error) {
-      const apiError: APIError =
-        error instanceof Error ? error : new Error('Failed to initialize system');
+      const apiError: APIError = error instanceof Error ? error : new Error('Failed to initialize system');
       apiError.code = 'INITIALIZATION_ERROR';
-      console.error('Failed to initialize:', apiError.message);
       setError(apiError);
-
-      showToast({
+      
+      toast({
         variant: 'destructive',
         title: 'Initialization Failed',
         description: apiError.message,
@@ -114,37 +110,32 @@ const ContentFlashcardIntegration = () => {
     } finally {
       setLoading(false);
     }
-  }, [showToast, updateProgress]);
+  }, [toast, updateProgress]);
 
   useEffect(() => {
     let mounted = true;
 
     const initialize = async () => {
-      try {
-        if (mounted) {
-          await initializeSystem();
-        }
-      } catch (error) {
-        console.error(
-          'Initialization failed:',
-          error instanceof Error ? error.message : 'Unknown error',
-        );
-        showToast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to initialize system',
-        });
+      if (mounted) {
+        await initializeSystem();
       }
     };
 
-    initialize().catch((error) => {
+    initialize().catch(error => {
       console.error('Unhandled initialization error:', error);
+      if (mounted) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to initialize system'
+        });
+      }
     });
 
     return () => {
       mounted = false;
     };
-  }, [initializeSystem, showToast]);
+  }, [initializeSystem, toast]);
 
   if (error) {
     return (

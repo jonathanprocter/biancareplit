@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 
 export interface ToastProps {
@@ -11,7 +12,7 @@ export function useToast() {
     if (variant === 'destructive') {
       toast.error(title, { description });
     } else {
-      toast.success(title, { description });
+      toast(title, { description });
     }
   };
 
