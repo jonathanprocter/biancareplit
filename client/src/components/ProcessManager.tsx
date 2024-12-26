@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/components/ui/toast/use-toast';
 
 import { CodeReviewStatus } from './CodeReviewStatus';
 import { IntegrationMonitor } from './IntegrationMonitor';
@@ -32,7 +33,13 @@ export const ProcessManager: React.FC<Props> = ({ onComplete }) => {
           break;
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      setError(errorMessage);
+      toast({
+        variant: 'destructive',
+        title: 'Process Error',
+        description: errorMessage,
+      });
     }
   };
 

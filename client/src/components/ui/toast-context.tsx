@@ -1,3 +1,3 @@
-// This file is deprecated and will be removed.
-// Import toast functionality from '@/components/ui/toast/index' instead.
+// This file has been deprecated and all functionality moved to @/components/ui/toast/index
+// This file will be removed in a future update
 export {};
