@@ -15,7 +15,7 @@ const wss = new WebSocketServer({
 });
 
 wss.on('connection', (ws) => {
-  console.log('WebSocket client connected');
+  console.log('Client connected');
   
   ws.on('message', async (message) => {
     try {
@@ -24,10 +24,6 @@ wss.on('connection', (ws) => {
       console.error('WebSocket error:', error);
       ws.send(JSON.stringify({ error: 'Internal server error' }));
     }
-  });
-
-  ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
   });
 
   ws.on('close', () => {
