@@ -1,17 +1,3 @@
-// Single source of truth for toast functionality
-import {
-  Toast,
-  ToastAction,
-  ToastClose,
-  ToastDescription,
-  ToastTitle,
-  ToastViewport,
-  type ToastActionElement,
-} from './toast';
-import { Toaster } from './toaster';
-import { ToastProvider, useToast } from './provider';
-import type { Toast as ToastType, ToastProps } from './types';
-
 export {
   Toast,
   ToastAction,
@@ -19,9 +5,12 @@ export {
   ToastDescription,
   ToastTitle,
   ToastViewport,
-  Toaster,
-  ToastProvider,
-  useToast,
-};
+  type ToastActionElement,
+  type ToastProps,
+} from './toast';
 
-export type { ToastActionElement, ToastType, ToastProps };
+export { ToastProvider, useToast } from './provider';
+export { Toaster } from './toaster';
+
+// Re-export primitive components for direct use if needed
+export { Provider, Root, Title, Description, Action, Close, Viewport } from '@radix-ui/react-toast';

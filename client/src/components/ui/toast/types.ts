@@ -1,12 +1,2 @@
-import type { ReactNode } from 'react';
-
-export interface Toast {
-  id: string;
-  title?: ReactNode;
-  description?: ReactNode;
-  variant?: 'default' | 'destructive';
-}
-
-export interface ToastProps extends Toast {
-  onDismiss?: () => void;
-}
+// This file has been deprecated and consolidated into toast.tsx
+// Import types from '@/components/ui/toast' instead

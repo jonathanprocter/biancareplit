@@ -2,20 +2,20 @@ import * as ToastPrimitives from '@radix-ui/react-toast';
 
 import * as React from 'react';
 
-import type { Toast } from './types';
+import type { ToastProps } from './toast';
 
 interface ToastContextValue {
-  toasts: Toast[];
-  addToast: (toast: Omit<Toast, 'id'>) => void;
+  toasts: ToastProps[];
+  addToast: (toast: Omit<ToastProps, 'id'>) => void;
   dismissToast: (toastId: string) => void;
 }
 
 const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<Toast[]>([]);
+  const [toasts, setToasts] = React.useState<ToastProps[]>([]);
 
-  const addToast = React.useCallback((toast: Omit<Toast, 'id'>) => {
+  const addToast = React.useCallback((toast: Omit<ToastProps, 'id'>) => {
     const id = Math.random().toString(36).substring(2);
     setToasts((prev) => [...prev, { ...toast, id }]);
 

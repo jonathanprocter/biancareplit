@@ -2,7 +2,6 @@ import * as ToastPrimitives from '@radix-ui/react-toast';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import * as React from 'react';
-
 import { cn } from '../../../lib/utils';
 
 const toastVariants = cva(
@@ -19,6 +18,15 @@ const toastVariants = cva(
     },
   },
 );
+
+export type ToastProps = {
+  id: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+  variant?: 'default' | 'destructive';
+  onDismiss?: () => void;
+};
 
 export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
