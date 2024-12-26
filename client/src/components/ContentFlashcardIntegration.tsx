@@ -1,9 +1,11 @@
-
 import { v4 as uuidv4 } from 'uuid';
+
 import { useCallback, useEffect, useState } from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/toast/use-toast';
+
 import { cn } from '@/lib/utils';
 
 interface AnalyticsData {
@@ -98,10 +100,11 @@ const ContentFlashcardIntegration = () => {
         variant: 'default',
       });
     } catch (error) {
-      const apiError: APIError = error instanceof Error ? error : new Error('Failed to initialize system');
+      const apiError: APIError =
+        error instanceof Error ? error : new Error('Failed to initialize system');
       apiError.code = 'INITIALIZATION_ERROR';
       setError(apiError);
-      
+
       toast({
         variant: 'destructive',
         title: 'Initialization Failed',
@@ -121,13 +124,13 @@ const ContentFlashcardIntegration = () => {
       }
     };
 
-    initialize().catch(error => {
+    initialize().catch((error) => {
       console.error('Unhandled initialization error:', error);
       if (mounted) {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to initialize system'
+          description: 'Failed to initialize system',
         });
       }
     });
