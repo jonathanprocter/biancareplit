@@ -1,13 +1,13 @@
-// Export all toast components from a single source of truth
+export { useToast, toast } from "./use-toast";
 export {
-  Toast,
-  ToastAction,
-  ToastClose,
-  ToastDescription,
-  ToastTitle,
+  ToastProvider,
   ToastViewport,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
   type ToastProps,
   type ToastActionElement,
-} from './toast';
-export { ToastProvider, useToast } from './provider';
-export { Toaster } from './toaster';
+} from "./toast";
+export { Toaster } from "./toaster";
