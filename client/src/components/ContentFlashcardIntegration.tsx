@@ -129,15 +129,22 @@ const ContentFlashcardIntegration = () => {
           'Initialization failed:',
           error instanceof Error ? error.message : 'Unknown error',
         );
+        showToast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to initialize system'
+        });
       }
     };
 
-    void initialize();
+    initialize().catch(error => {
+      console.error('Unhandled initialization error:', error);
+    });
 
     return () => {
       mounted = false;
     };
-  }, [initializeSystem]);
+  }, [initializeSystem, showToast]);
 
   if (error) {
     return (
