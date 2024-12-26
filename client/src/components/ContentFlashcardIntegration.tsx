@@ -29,6 +29,7 @@ interface APIError extends Error {
 }
 
 const ContentFlashcardIntegration = () => {
+  const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
@@ -90,7 +91,6 @@ const ContentFlashcardIntegration = () => {
       setStudySlots([newStudySlot]);
       setInitialized(true);
 
-      const { toast } = useToast();
       toast({
         title: 'System Initialized',
         description: 'Flashcard system ready to use',
@@ -102,7 +102,6 @@ const ContentFlashcardIntegration = () => {
       console.error('Failed to initialize:', apiError.message);
       setError(apiError);
 
-      const { toast } = useToast();
       toast({
         variant: 'destructive',
         title: 'Initialization Failed',
