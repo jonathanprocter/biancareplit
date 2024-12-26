@@ -1,12 +1,17 @@
 
 import { toast } from 'sonner';
 
-export const useToast = () => {
-  return {
-    toast: {
-      error: (message: string) => toast.error(message),
-      success: (message: string) => toast.success(message),
-      info: (message: string) => toast.info(message)
+export const useToast = () => ({
+  toast: (options: { title: string; description: string; variant?: 'error' | 'success' | 'info' }) => {
+    const { title, description, variant = 'default' } = options;
+    if (variant === 'error') {
+      toast.error(title, { description });
+    } else if (variant === 'success') {
+      toast.success(title, { description });
+    } else if (variant === 'info') {
+      toast.info(title, { description });
+    } else {
+      toast(title, { description });
     }
-  };
-};
+  }
+});
