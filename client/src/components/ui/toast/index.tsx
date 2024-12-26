@@ -1,16 +1,16 @@
 import {
   Toast,
   ToastAction,
+  type ToastActionElement,
   ToastClose,
   ToastDescription,
+  type ToastProps,
   ToastProvider,
   ToastTitle,
   ToastViewport,
-  type ToastActionElement,
-  type ToastProps,
 } from './toast';
 import { Toaster } from './toaster';
-import { useToast, toast } from './use-toast';
+import { toast, useToast } from './use-toast';
 
 export {
   Toast,

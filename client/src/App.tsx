@@ -7,6 +7,7 @@ import { DeploymentVerification } from './components/DeploymentVerification';
 import { IntegrationMonitor } from './components/IntegrationMonitor';
 import { ProcessManager } from './components/ProcessManager';
 import { Card, CardContent } from './components/ui/card';
+import { Toaster } from './components/ui/toast/index';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -41,6 +42,7 @@ function App() {
             <Route component={NotFound} />
           </Switch>
         </main>
+        <Toaster />
       </div>
     </ErrorBoundary>
   );

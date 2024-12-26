@@ -1,0 +1,244 @@
+// lib/types.ts
+export interface AIResponse {
+  content: string;
+  metadata?: {
+    confidence: number;
+    source?: string;
+  };
+  error?: string;
+}
+
+export interface ProcessedData {
+  id: string;
+  timestamp: number;
+  input: string;
+  output: AIResponse;
+  status: 'success' | 'error' | 'pending';
+}
+
+// lib/ai-service.ts
+import { v4 as uuidv4 } from 'uuid';
+import { AIResponse, ProcessedData } from './types';
+
+export class AIService {
+  private static instance: AIService;
+  private processingQueue: Map<string, ProcessedData>;
+
+  private constructor() {
+    this.processingQueue = new Map();
+  }
+
+  static getInstance(): AIService {
+    if (!AIService.instance) {
+      AIService.instance = new AIService();
+    }
+    return AIService.instance;
+  }
+
+  async processInput(input: string): Promise<string> {
+    const requestId = uuidv4();
+    
+    try {
+      // Create initial processing record
+      const processData: ProcessedData = {
+        id: requestId,
+        timestamp: Date.now(),
+        input,
+        output: { content: '' },
+        status: 'pending'
+      };
+      
+      this.processingQueue.set(requestId, processData);
+
+      // Make the AI request
+      const response = await this.makeAIRequest(input);
+      
+      // Update processing record with result
+      processData.output = response;
+      processData.status = 'success';
+      this.processingQueue.set(requestId, processData);
+
+      return requestId;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Update processing record with error
+      const errorData: ProcessedData = {
+        id: requestId,
+        timestamp: Date.now(),
+        input,
+        output: { content: '', error: errorMessage },
+        status: 'error'
+      };
+      
+      this.processingQueue.set(requestId, errorData);
+      throw new Error(`AI Processing failed: ${errorMessage}`);
+    }
+  }
+
+  private async makeAIRequest(input: string): Promise<AIResponse> {
+    try {
+      const response = await fetch('/api/ai/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ input }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        content: data.content,
+        metadata: {
+          confidence: data.confidence || 1.0,
+          source: data.source
+        }
+      };
+    } catch (error) {
+      throw new Error(`AI request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  getProcessingStatus(requestId: string): ProcessedData | undefined {
+    return this.processingQueue.get(requestId);
+  }
+
+  clearProcessingHistory(requestId: string): void {
+    this.processingQueue.delete(requestId);
+  }
+}
+
+// components/AIProcessor.tsx
+import React, { useState, useCallback } from 'react';
+import { AIService } from '@/lib/ai-service';
+import { ProcessedData } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+
+export const AIProcessor: React.FC = () => {
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<ProcessedData | null>(null);
+  const { toast } = useToast();
+  const aiService = AIService.getInstance();
+
+  const handleProcess = useCallback(async () => {
+    if (!input.trim()) {
+      toast({
+        title: 'Input Required',
+        description: 'Please enter some text to process.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const requestId = await aiService.processInput(input);
+      const processedData = aiService.getProcessingStatus(requestId);
+      
+      if (processedData) {
+        setResult(processedData);
+        if (processedData.status === 'success') {
+          toast({
+            title: 'Processing Complete',
+            description: 'AI has successfully processed your input.',
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Processing Failed',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
+      });
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [input, toast]);
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>AI Processor</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Textarea
+          placeholder="Enter text to process..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="min-h-[100px]"
+          disabled={loading}
+        />
+        
+        <Button
+          onClick={handleProcess}
+          disabled={loading || !input.trim()}
+          className="w-full"
+        >
+          {loading ? 'Processing...' : 'Process Input'}
+        </Button>
+
+        {result && (
+          <div className="mt-4 p-4 border rounded-md">
+            <h3 className="font-semibold mb-2">Result:</h3>
+            <p className="whitespace-pre-wrap">
+              {result.output.content}
+            </p>
+            {result.output.metadata && (
+              <div className="mt-2 text-sm text-gray-500">
+                <p>Confidence: {result.output.metadata.confidence}</p>
+                {result.output.metadata.source && (
+                  <p>Source: {result.output.metadata.source}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// api/ai/process.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { input } = req.body;
+
+    if (!input || typeof input !== 'string') {
+      return res.status(400).json({ error: 'Invalid input' });
+    }
+
+    // Here you would integrate with your specific AI service
+    // This is a placeholder response
+    const response = {
+      content: `Processed: ${input}`,
+      confidence: 0.95,
+      source: 'AI Model v1.0'
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('AI processing error:', error);
+    res.status(500).json({ 
+      error: 'AI processing failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}

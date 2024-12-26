@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 
-import { CodeReviewHelper } from '@/utils/codeReview';
+import { CodeReview } from '@/utils/codeReview';
 
 interface Props {
   onComplete?: () => void;
@@ -23,7 +23,6 @@ export const CodeReviewStatus: React.FC<Props> = ({ onComplete }) => {
       filesChecked: number;
       errorCount: number;
       warningCount: number;
-      fixableCount: number;
     };
   } | null>(null);
   const [reviewing, setReviewing] = useState(false);
@@ -32,21 +31,24 @@ export const CodeReviewStatus: React.FC<Props> = ({ onComplete }) => {
   useEffect(() => {
     const runCodeReview = async () => {
       setReviewing(true);
-      const reviewer = new CodeReviewHelper();
+      const reviewer = new CodeReview();
 
       try {
-        const result = await reviewer.reviewDirectory('.');
+        const result = await reviewer.getReviewStatus();
         setReviewStatus(result);
 
         if (result.issues.length > 0) {
-          await reviewer.fixIssues(result.issues);
+          await reviewer.clearReview();
         }
 
         if (onComplete) {
           onComplete();
         }
       } catch (error) {
-        console.error('Code review failed:', error);
+        console.error(
+          'Code review failed:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
       } finally {
         setReviewing(false);
       }
@@ -77,7 +79,6 @@ export const CodeReviewStatus: React.FC<Props> = ({ onComplete }) => {
             <li>Files checked: {reviewStatus.stats.filesChecked}</li>
             <li>Errors found: {reviewStatus.stats.errorCount}</li>
             <li>Warnings found: {reviewStatus.stats.warningCount}</li>
-            <li>Fixable issues: {reviewStatus.stats.fixableCount}</li>
           </ul>
         </AlertDescription>
       </Alert>

@@ -1,10 +1,10 @@
+// lib/codeReview.ts
 interface CodeIssue {
   file: string;
   line: number;
   column: number;
   message: string;
   severity: 'error' | 'warning';
-  rule?: string;
 }
 
 interface ReviewResult {
@@ -22,8 +22,8 @@ export class CodeReview {
     stats: {
       filesChecked: 0,
       errorCount: 0,
-      warningCount: 0,
-    },
+      warningCount: 0
+    }
   };
 
   async reviewFile(filePath: string): Promise<CodeIssue[]> {
@@ -34,7 +34,6 @@ export class CodeReview {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ path: filePath }),
-        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -43,17 +42,12 @@ export class CodeReview {
 
       const issues: CodeIssue[] = await response.json();
       this.currentResult.stats.filesChecked++;
-      this.currentResult.stats.errorCount += issues.filter((i) => i.severity === 'error').length;
-      this.currentResult.stats.warningCount += issues.filter(
-        (i) => i.severity === 'warning',
-      ).length;
-
+      this.currentResult.stats.errorCount += issues.filter(i => i.severity === 'error').length;
+      this.currentResult.stats.warningCount += issues.filter(i => i.severity === 'warning').length;
+      
       return issues;
     } catch (error) {
-      console.error(
-        `Error reviewing file ${filePath}:`,
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      console.error(`Error reviewing file ${filePath}:`, error);
       throw error;
     }
   }
@@ -68,8 +62,38 @@ export class CodeReview {
       stats: {
         filesChecked: 0,
         errorCount: 0,
-        warningCount: 0,
-      },
+        warningCount: 0
+      }
     };
+  }
+}
+
+// pages/api/review-file.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { path } = req.body;
+
+    if (!path) {
+      return res.status(400).json({ error: 'File path is required' });
+    }
+
+    // Implement your file review logic here
+    // For now, return an empty array of issues
+    res.status(200).json([]);
+  } catch (error) {
+    console.error('File review error:', error);
+    res.status(500).json({ 
+      error: 'File review failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
