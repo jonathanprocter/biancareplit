@@ -11,30 +11,6 @@ export class DeploymentChecker {
   }
 
   private initializeChecks() {
-    // Environment Variables Check
-    this.checks.push({
-      name: 'Environment Variables',
-      check: async () => {
-        // Check for Vite-specific environment variables
-        const requiredVars = ['DATABASE_URL'];
-        return requiredVars.every(
-          (varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined',
-        );
-      },
-    });
-
-    // Component Dependencies Check
-    this.checks.push({
-      name: 'Component Dependencies',
-      check: async () => {
-        try {
-          return import('@/components/ui/toast').then(() => true);
-        } catch {
-          return false;
-        }
-      },
-    });
-
     // API Health Check
     this.checks.push({
       name: 'API Health',
@@ -43,6 +19,39 @@ export class DeploymentChecker {
           const response = await fetch('/api/health');
           return response.status === 200;
         } catch {
+          return false;
+        }
+      },
+    });
+
+    // Database Connection Check
+    this.checks.push({
+      name: 'Database Connection',
+      check: async () => {
+        try {
+          const response = await fetch('/api/health/db');
+          return response.status === 200;
+        } catch {
+          return false;
+        }
+      },
+    });
+
+    // Component Dependencies Check
+    this.checks.push({
+      name: 'Component Dependencies',
+      check: async () => {
+        try {
+          // Verify essential UI components are loaded
+          const components = [
+            import('@/components/ui/alert'),
+            import('@/components/ui/button'),
+            import('@/components/ui/card'),
+          ];
+          await Promise.all(components);
+          return true;
+        } catch (error) {
+          console.error('Component dependency check failed:', error);
           return false;
         }
       },

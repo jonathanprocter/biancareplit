@@ -55,7 +55,9 @@ export interface UserProgress {
 }
 
 // Auth hooks
-export const useLogin = (): ReturnType<typeof useMutation<User, Error, { username: string; password: string }>> => {
+export const useLogin = (): ReturnType<
+  typeof useMutation<User, Error, { username: string; password: string }>
+> => {
   return useMutation<User, Error, { username: string; password: string }>({
     mutationFn: async (credentials) => {
       const res = await fetch('/api/login', {
@@ -86,7 +88,9 @@ export const useLogin = (): ReturnType<typeof useMutation<User, Error, { usernam
   });
 };
 
-export const useRegister = (): ReturnType<typeof useMutation<User, Error, { username: string; password: string; email: string }>> => {
+export const useRegister = (): ReturnType<
+  typeof useMutation<User, Error, { username: string; password: string; email: string }>
+> => {
   return useMutation<User, Error, { username: string; password: string; email: string }>({
     mutationFn: async (userData) => {
       const res = await fetch('/api/register', {
@@ -152,8 +156,18 @@ export const useUserProgress = (userId: number): ReturnType<typeof useQuery<User
   });
 };
 
-export const useUpdateProgress = (): ReturnType<typeof useMutation<UserProgress, Error, { userId: number; enrollmentId: number; correct: boolean }>> => {
-  return useMutation<UserProgress, Error, { userId: number; enrollmentId: number; correct: boolean }>({
+export const useUpdateProgress = (): ReturnType<
+  typeof useMutation<
+    UserProgress,
+    Error,
+    { userId: number; enrollmentId: number; correct: boolean }
+  >
+> => {
+  return useMutation<
+    UserProgress,
+    Error,
+    { userId: number; enrollmentId: number; correct: boolean }
+  >({
     mutationFn: async ({ userId, enrollmentId, correct }) => {
       const res = await fetch(`/api/users/${userId}/progress`, {
         method: 'POST',
@@ -201,7 +215,9 @@ export interface UserPreferences {
   preferredTopics: string[];
 }
 
-export const useGenerateLearningPath = (): ReturnType<typeof useMutation<LearningPath, Error, number>> => {
+export const useGenerateLearningPath = (): ReturnType<
+  typeof useMutation<LearningPath, Error, number>
+> => {
   return useMutation<LearningPath, Error, number>({
     mutationFn: async (userId) => {
       const res = await fetch(`/api/users/${userId}/learning-paths`, {
@@ -226,7 +242,9 @@ export const useLearningPaths = (userId: number): ReturnType<typeof useQuery<Lea
   });
 };
 
-export const useUpdatePreferences = (): ReturnType<typeof useMutation<UserPreferences, Error, { userId: number; preferences: UserPreferences }>> => {
+export const useUpdatePreferences = (): ReturnType<
+  typeof useMutation<UserPreferences, Error, { userId: number; preferences: UserPreferences }>
+> => {
   return useMutation<UserPreferences, Error, { userId: number; preferences: UserPreferences }>({
     mutationFn: async ({ userId, preferences }) => {
       const res = await fetch(`/api/users/${userId}/preferences`, {

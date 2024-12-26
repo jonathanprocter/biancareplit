@@ -1,5 +1,4 @@
 import { VariantProps, cva } from 'class-variance-authority';
-import DOMPurify from 'dompurify';
 
 import React, { HTMLAttributes, forwardRef } from 'react';
 
@@ -21,17 +20,12 @@ const alertVariants = cva(
   },
 );
 
-const sanitizeClassName = (className: string): string => {
-  return DOMPurify.sanitize(className);
-};
-
 const Alert = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => {
-  const combinedClassName = cn(alertVariants({ variant }), sanitizeClassName(className || ''));
-  return <div ref={ref} role="alert" className={combinedClassName} {...props} />;
-});
+>(({ className, variant, ...props }, ref) => (
+  <div ref={ref} role="alert" className={cn(alertVariants({ variant }), className)} {...props} />
+));
 Alert.displayName = 'Alert';
 
 const AlertTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(

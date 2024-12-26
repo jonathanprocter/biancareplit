@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 import { DeploymentChecker } from '@/utils/deploymentChecker';
 
@@ -9,7 +11,7 @@ interface DeploymentStatus {
   issues: string[];
 }
 
-export const DeploymentVerification = () => {
+export function DeploymentVerification() {
   const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,10 +40,20 @@ export const DeploymentVerification = () => {
   }, []);
 
   if (loading) {
-    return <div>Verifying deployment status...</div>;
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="py-6">
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Verifying Deployment...</h2>
+            <Progress value={33} />
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
+
   if (!deploymentStatus) {
-    return <div>Verifying deployment status...</div>;
+    return null;
   }
 
   return (
@@ -50,9 +62,11 @@ export const DeploymentVerification = () => {
         <Alert variant="destructive">
           <AlertTitle>Deployment Issues Detected</AlertTitle>
           <AlertDescription>
-            <ul className="list-disc pl-4">
+            <ul className="list-disc pl-4 mt-2">
               {deploymentStatus.issues.map((issue, index) => (
-                <li key={index}>{issue}</li>
+                <li key={index} className="text-sm">
+                  {issue}
+                </li>
               ))}
             </ul>
           </AlertDescription>
@@ -65,6 +79,6 @@ export const DeploymentVerification = () => {
       )}
     </div>
   );
-};
+}
 
 export default DeploymentVerification;
