@@ -14,11 +14,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src')
     }
   },
-  css: {
-    postcss: './postcss.config.cjs'
-  },
   build: {
-    outDir: 'dist',
+    outDir: path.resolve(__dirname, '../dist/public'),
     emptyOutDir: true
   }
 });
