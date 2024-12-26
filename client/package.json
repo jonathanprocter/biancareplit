@@ -1,10 +1,10 @@
-
 {
   "name": "ai-bot-template-client",
   "private": true,
   "version": "0.0.1",
+  "type": "module",
   "scripts": {
-    "dev": "vite --port 3002 --host 0.0.0.0",
+    "dev": "vite --port 4000",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -18,7 +18,8 @@
     "react-dom": "18.2.0",
     "sonner": "1.2.4",
     "tailwind-merge": "2.1.0",
-    "uuid": "9.0.1"
+    "uuid": "9.0.1",
+    "wouter": "^2.12.1"
   },
   "devDependencies": {
     "@types/react": "18.2.42",
@@ -27,5 +28,8 @@
     "@vitejs/plugin-react": "4.2.1",
     "typescript": "5.3.3",
     "vite": "5.0.7"
+  },
+  "overrides": {
+    "rollup": ">=4.0.0"
   }
 }

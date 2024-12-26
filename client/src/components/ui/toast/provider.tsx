@@ -1,2 +1,3 @@
-// This file is deprecated and should be removed
-// Import toast functionality from '@/hooks/use-toast' instead
+// This file is deprecated and its functionality has been moved to index.tsx
+// Please import from '@/components/ui/toast' instead
+export {};

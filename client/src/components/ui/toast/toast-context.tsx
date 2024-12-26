@@ -1,19 +1,3 @@
-import React, { createContext, useCallback, useState } from 'react';
-
-import { ToastProps } from './types';
-
-interface ToastContextType {
-  toast: (props: ToastProps) => void;
-}
-
-export const ToastContext = createContext<ToastContextType | undefined>(undefined);
-
-export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
-  const [toasts, setToasts] = useState<ToastProps[]>([]);
-
-  const toast = useCallback((props: ToastProps) => {
-    setToasts((prevToasts) => [...prevToasts, props]);
-  }, []);
-
-  return <ToastContext.Provider value={{ toast }}>{children}</ToastContext.Provider>;
-};
+// This file is deprecated and its functionality has been moved to index.tsx
+// Please import from '@/components/ui/toast' instead
+export {};

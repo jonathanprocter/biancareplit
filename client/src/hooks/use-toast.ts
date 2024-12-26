@@ -7,26 +7,29 @@ export interface ToastProps {
 }
 
 export function useToast() {
-  const toast = (props: ToastProps) => {
-    const message = props.description || props.title;
+  function toast(props: ToastProps) {
+    const { title = '', description = '', variant = 'default' } = props;
 
-    switch (props.variant) {
+    const options = {
+      description,
+      className: 'group toast',
+    };
+
+    switch (variant) {
       case 'success':
-        sonnerToast.success(message);
-        break;
+        return sonnerToast.success(title, options);
       case 'error':
       case 'destructive':
-        sonnerToast.error(message);
-        break;
+        return sonnerToast.error(title, options);
       case 'info':
-        sonnerToast.info(message);
-        break;
+        return sonnerToast.info(title, options);
       default:
-        sonnerToast(message);
+        return sonnerToast(title, options);
     }
-  };
+  }
 
   return { toast };
 }
 
-export { sonnerToast as toast };
+// Export a singleton instance for direct usage
+export const { toast } = useToast();

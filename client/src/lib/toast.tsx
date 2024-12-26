@@ -1,3 +1,3 @@
 // This file is deprecated.
-// Import toast functionality from '@/components/ui/toast' instead
-export { useToast, ToastProvider } from '@/components/ui/toast';
+// Import toast functionality directly from '@/hooks/use-toast'
+export { useToast } from '@/hooks/use-toast';
