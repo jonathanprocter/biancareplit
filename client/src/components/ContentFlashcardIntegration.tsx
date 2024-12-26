@@ -34,11 +34,9 @@ const ContentFlashcardIntegration = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
 
-  const showToast = (props: any) => {
-    if (toast) {
-      toast(props);
-    }
-  };
+  const showToast = useCallback((props: { title: string; description: string; variant?: 'default' | 'destructive' }) => {
+    toast(props);
+  }, [toast]);
   const [progress, setProgress] = useState<number>(0);
   const [studySlots, setStudySlots] = useState<StudySlot[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
@@ -131,6 +129,11 @@ const ContentFlashcardIntegration = () => {
         }
       } catch (err) {
         console.error('Initialization error:', err);
+        showToast({
+          title: 'Error',
+          description: 'Failed to initialize system',
+          variant: 'destructive'
+        });
       }
     };
 
