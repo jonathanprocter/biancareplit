@@ -4,21 +4,17 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  build: {
-    target: 'esnext',
-    outDir: 'dist',
-    emptyOutDir: true
+  server: {
+    port: 5000,
+    host: '0.0.0.0'
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src')
     }
   },
-  server: {
-    port: 5000,
-    host: '0.0.0.0'
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'sonner', '@tanstack/react-query']
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true
   }
 });
