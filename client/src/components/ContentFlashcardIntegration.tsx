@@ -129,10 +129,12 @@ const ContentFlashcardIntegration = () => {
         console.error('Initialization error:', error);
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: error instanceof Error ? error.message : 'Failed to initialize flashcard system'
+          title: 'Initialization Failed',
+          description: error instanceof Error ? error.message : 'Failed to initialize flashcard system. Please try again.'
         });
       }
+      setError(error instanceof Error ? error : new Error('Initialization failed'));
+      setLoading(false);
     });
 
     return () => {

@@ -10,10 +10,11 @@ export interface ToastProps {
 export function useToast() {
   return {
     toast: (props: ToastProps) => {
-      if (props.variant === 'destructive') {
-        toast.error(props.title, { description: props.description });
+      const { title, description, variant } = props;
+      if (variant === 'destructive') {
+        toast.error(title, { description });
       } else {
-        toast.success(props.title, { description: props.description });
+        toast.message(title, { description });
       }
     }
   };
