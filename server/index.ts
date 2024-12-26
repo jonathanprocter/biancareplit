@@ -99,7 +99,7 @@ app.use((req, res, next) => {
     }
 
     // Always serve on port 5000
-    const PORT = process.env.PORT || 5000;
+    const PORT = process.env.PORT || 3001;
     server.listen(PORT, '0.0.0.0', () => {
       log(`Server running on port ${PORT}`);
       log(`API available at http://0.0.0.0:${PORT}/api`);
