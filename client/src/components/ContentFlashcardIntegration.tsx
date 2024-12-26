@@ -97,6 +97,7 @@ const ContentFlashcardIntegration = () => {
       showToast({
         title: 'Success',
         description: 'Flashcard system ready to use',
+        variant: 'default'
       });
     } catch (error) {
       const apiError: APIError =
