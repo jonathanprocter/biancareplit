@@ -1,2 +1,2 @@
-// This file is deprecated.
-// Import { ToastProvider, useToast } from '@/components/ui/toast' instead
+// This file is deprecated and will be removed.
+// Import toast functionality from '@/components/ui/toast' instead

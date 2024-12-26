@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/toast';
 
 import { cn } from '@/lib/utils';
 
@@ -23,12 +23,12 @@ interface StudySlot {
   category?: string;
 }
 
-const ContentFlashcardIntegration = () => {
+const ContentFlashcardIntegration: React.FC = () => {
   const { toast } = useToast();
-  const [initialized, setInitialized] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<number>(0);
   const [studySlots, setStudySlots] = useState<StudySlot[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalStudyTime: 0,
@@ -38,13 +38,21 @@ const ContentFlashcardIntegration = () => {
   });
 
   const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
-    const validCompletedCards = Math.max(0, Number(completedCards) || 0);
-    const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
-    const progressValue = Math.min(
-      100,
-      ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
-    );
-    setProgress(Math.round(progressValue));
+    try {
+      const validCompletedCards = Math.max(0, Number(completedCards) || 0);
+      const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
+      const progressValue = Math.min(
+        100,
+        ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
+      );
+      setProgress(Math.round(progressValue));
+    } catch (error) {
+      console.error(
+        'Error updating progress:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      setProgress(0);
+    }
   }, []);
 
   useEffect(() => {

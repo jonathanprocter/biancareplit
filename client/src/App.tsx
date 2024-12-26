@@ -4,6 +4,7 @@ import { Route, Switch } from 'wouter';
 
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 import { Card, CardContent } from './components/ui/card';
+import { Toaster } from './components/ui/toast';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -47,22 +48,17 @@ function NotFound() {
 
 function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <div className="min-h-screen w-full flex flex-col bg-background">
-              <main className="flex-1 flex items-center justify-center p-4">
-                <Switch>
-                  <Route path="/" component={Home} />
-                  <Route component={NotFound} />
-                </Switch>
-              </main>
-            </div>
-          </ErrorBoundary>
-        </ToastProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <div className="min-h-screen w-full flex flex-col bg-background">
+        <main className="flex-1 flex items-center justify-center p-4">
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+      </div>
+      <Toaster />
+    </ErrorBoundary>
   );
 }
 
