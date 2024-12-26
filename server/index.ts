@@ -2,12 +2,24 @@ import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { registerRoutes } from './routes';
-import { setupVite, serveStatic } from './vite';
-import { log } from './vite';
+import { setupVite, serveStatic, log } from './vite';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  const path = req.path;
+
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
+  });
+
+  next();
+});
 
 (async () => {
   const server = registerRoutes(app);
@@ -25,6 +37,6 @@ app.use(express.urlencoded({ extended: false }));
   // this serves both the API and the client
   const PORT = 5000;
   server.listen(PORT, '0.0.0.0', () => {
-    log(`serving on port ${PORT}`);
+    log(`Server running at http://0.0.0.0:${PORT}`);
   });
 })();

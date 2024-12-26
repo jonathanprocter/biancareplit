@@ -1,5 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 import App from './App';
 import './index.css';
 
@@ -8,8 +10,11 @@ if (!container) {
   throw new Error('Root element not found');
 }
 
-createRoot(container).render(
+const root = createRoot(container);
+root.render(
   <StrictMode>
-    <App />
-  </StrictMode>,
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </StrictMode>
 );
