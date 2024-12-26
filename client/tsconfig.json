@@ -14,23 +14,8 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./client/src/*"],
-      "@db/*": ["./db/*"],
-      "@db": ["./db/index.ts"]
-    }
+    "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "client/src/**/*",
-    "client/src/**/*.tsx",
-    "client/src/**/*.ts",
-    "client/src/**/*.d.ts",
-    "db/**/*",
-    "server/**/*",
-    "src/**/*",
-    "test/**/*"
-  ],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
