@@ -24,7 +24,9 @@ function ErrorFallback({ error }: { error: Error }) {
 function Home() {
   return (
     <div className="w-full">
-      <ContentFlashcardIntegration />
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ContentFlashcardIntegration />
+      </ErrorBoundary>
     </div>
   );
 }

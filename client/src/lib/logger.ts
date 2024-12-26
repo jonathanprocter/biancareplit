@@ -27,14 +27,12 @@ export function logInfo(message: string, data?: unknown): void {
 
 export function logWarn(message: string, data?: unknown): void {
   if (process.env.NODE_ENV === 'development') {
-     
     console.warn(formatLog(message, data, { level: 'warn' }));
   }
 }
 
 export function logError(message: string, error?: unknown): void {
   if (process.env.NODE_ENV === 'development') {
-     
     console.error(formatLog(message, error, { level: 'error' }));
   }
 }

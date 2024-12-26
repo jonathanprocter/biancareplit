@@ -56,8 +56,8 @@ export interface UserProgress {
 
 // Auth hooks
 export const useLogin = () => {
-  return useMutation({
-    mutationFn: async (credentials: { username: string; password: string }) => {
+  return useMutation<User, Error, { username: string; password: string }>({
+    mutationFn: async (credentials) => {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -87,8 +87,8 @@ export const useLogin = () => {
 };
 
 export const useRegister = () => {
-  return useMutation({
-    mutationFn: async (userData: { username: string; password: string; email: string }) => {
+  return useMutation<User, Error, { username: string; password: string; email: string }>({
+    mutationFn: async (userData) => {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,8 +121,8 @@ export const useCourse = (id: number) => {
 };
 
 export const useEnroll = () => {
-  return useMutation({
-    mutationFn: async (courseId: number) => {
+  return useMutation<Enrollment, Error, number>({
+    mutationFn: async (courseId) => {
       const res = await fetch('/api/enrollments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -139,7 +139,7 @@ export const useEnroll = () => {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
+      void queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
     },
   });
 };
@@ -153,16 +153,8 @@ export const useUserProgress = (userId: number) => {
 };
 
 export const useUpdateProgress = () => {
-  return useMutation({
-    mutationFn: async ({
-      userId,
-      enrollmentId,
-      correct,
-    }: {
-      userId: number;
-      enrollmentId: number;
-      correct: boolean;
-    }) => {
+  return useMutation<UserProgress, Error, { userId: number; enrollmentId: number; correct: boolean }>({
+    mutationFn: async ({ userId, enrollmentId, correct }) => {
       const res = await fetch(`/api/users/${userId}/progress`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -179,14 +171,14 @@ export const useUpdateProgress = () => {
       return res.json();
     },
     onSuccess: (_, { userId }) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [`/api/users/${userId}/progress`],
       });
     },
   });
 };
 
-// Learning path types
+// Learning path types and hooks
 export interface LearningPath {
   id: number;
   userId: number;
@@ -209,10 +201,9 @@ export interface UserPreferences {
   preferredTopics: string[];
 }
 
-// Learning path hooks
 export const useGenerateLearningPath = () => {
-  return useMutation({
-    mutationFn: async (userId: number) => {
+  return useMutation<LearningPath, Error, number>({
+    mutationFn: async (userId) => {
       const res = await fetch(`/api/users/${userId}/learning-paths`, {
         method: 'POST',
         credentials: 'include',
@@ -236,14 +227,8 @@ export const useLearningPaths = (userId: number) => {
 };
 
 export const useUpdatePreferences = () => {
-  return useMutation({
-    mutationFn: async ({
-      userId,
-      preferences,
-    }: {
-      userId: number;
-      preferences: UserPreferences;
-    }) => {
+  return useMutation<UserPreferences, Error, { userId: number; preferences: UserPreferences }>({
+    mutationFn: async ({ userId, preferences }) => {
       const res = await fetch(`/api/users/${userId}/preferences`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

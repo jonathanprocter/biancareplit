@@ -16,9 +16,9 @@ export interface AnalyticsData {
 interface FlashcardSystemEvents {
   initialized: { timestamp: number; analyticsReady: boolean };
   sessionStarted: { timestamp: number };
-  sessionEnded: { timestamp: number; stats: any };
+  sessionEnded: { timestamp: number; stats: AnalyticsData };
   cleanup: { timestamp: number };
-  resultSaved: { success: boolean; data: any };
+  resultSaved: { success: boolean; data: AnalyticsData };
   error: { message: string; timestamp: number };
 }
 
@@ -74,17 +74,16 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
     return { ...this.analytics };
   }
 
-  async saveResult(data: any): Promise<AnalyticsData | null> {
+  async saveResult(data: Partial<AnalyticsData>): Promise<AnalyticsData | null> {
     try {
-      // Update analytics with new data
       this.analytics = {
         ...this.analytics,
-        totalStudyTime: (this.analytics.totalStudyTime || 0) + (data.duration || 0),
+        totalStudyTime: (this.analytics.totalStudyTime || 0) + (data.totalStudyTime || 0),
         completedCards: (this.analytics.completedCards || 0) + 1,
-        accuracy: data.accuracy || this.analytics.accuracy,
+        accuracy: data.accuracy ?? this.analytics.accuracy,
         categoryProgress: {
           ...this.analytics.categoryProgress,
-          [data.category]: (this.analytics.categoryProgress[data.category] || 0) + 1,
+          [data.category || 'default']: (this.analytics.categoryProgress[data.category || 'default'] || 0) + 1,
         },
       };
       return this.analytics;
