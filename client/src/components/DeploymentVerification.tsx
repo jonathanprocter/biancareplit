@@ -23,6 +23,11 @@ export function DeploymentVerification() {
         const status = await checker.verifyDeployment();
         setDeploymentStatus(status);
       } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+      // Add proper error handling here
+    } else {
+      console.error('An unknown error occurred:', error); {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error('Deployment verification failed:', errorMessage);
         setDeploymentStatus({
