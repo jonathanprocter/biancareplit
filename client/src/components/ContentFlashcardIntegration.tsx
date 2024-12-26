@@ -1,10 +1,9 @@
+
 import { v4 as uuidv4 } from 'uuid';
-
 import { useCallback, useEffect, useState } from 'react';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/components/ui/toast/use-toast';
+import { toast } from '@/components/ui/toast/use-toast';
 
 import { cn } from '@/lib/utils';
 
@@ -29,7 +28,6 @@ interface APIError extends Error {
 }
 
 const ContentFlashcardIntegration = () => {
-  const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
@@ -42,32 +40,29 @@ const ContentFlashcardIntegration = () => {
     categoryProgress: {},
   });
 
-  const updateProgress = useCallback(
-    (completedCards: number, accuracy = 0): void => {
-      try {
-        if (typeof completedCards !== 'number' || typeof accuracy !== 'number') {
-          throw new Error('Invalid progress update parameters');
-        }
-
-        const validCompletedCards = Math.max(0, completedCards);
-        const validAccuracy = Math.min(1, Math.max(0, accuracy));
-        const progressValue = Math.min(
-          100,
-          ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
-        );
-        setProgress(Math.round(progressValue));
-      } catch (error) {
-        console.error('Error updating progress:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Progress Update Failed',
-          description: error instanceof Error ? error.message : 'Unknown error occurred',
-        });
-        setProgress(0);
+  const updateProgress = useCallback((completedCards: number, accuracy = 0): void => {
+    try {
+      if (typeof completedCards !== 'number' || typeof accuracy !== 'number') {
+        throw new Error('Invalid progress update parameters');
       }
-    },
-    [toast],
-  );
+
+      const validCompletedCards = Math.max(0, completedCards);
+      const validAccuracy = Math.min(1, Math.max(0, accuracy));
+      const progressValue = Math.min(
+        100,
+        ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
+      );
+      setProgress(Math.round(progressValue));
+    } catch (error) {
+      console.error('Error updating progress:', error);
+      toast({
+        variant: "destructive",
+        title: "Progress Update Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred"
+      });
+      setProgress(0);
+    }
+  }, []);
 
   const initializeSystem = useCallback(async (): Promise<void> => {
     try {
@@ -97,25 +92,24 @@ const ContentFlashcardIntegration = () => {
       setInitialized(true);
 
       toast({
-        title: 'System Initialized',
-        description: 'Flashcard system ready to use',
+        title: "System Initialized",
+        description: "Flashcard system ready to use"
       });
     } catch (error) {
-      const apiError: APIError =
-        error instanceof Error ? error : new Error('Failed to initialize system');
+      const apiError: APIError = error instanceof Error ? error : new Error('Failed to initialize system');
       apiError.code = 'INITIALIZATION_ERROR';
       console.error('Failed to initialize:', apiError.message);
       setError(apiError);
 
       toast({
-        variant: 'destructive',
-        title: 'Initialization Failed',
-        description: apiError.message,
+        variant: "destructive",
+        title: "Initialization Failed",
+        description: apiError.message
       });
     } finally {
       setLoading(false);
     }
-  }, [toast, updateProgress]);
+  }, [updateProgress]);
 
   useEffect(() => {
     let mounted = true;
@@ -126,10 +120,7 @@ const ContentFlashcardIntegration = () => {
           await initializeSystem();
         }
       } catch (error) {
-        console.error(
-          'Initialization failed:',
-          error instanceof Error ? error.message : 'Unknown error',
-        );
+        console.error('Initialization failed:', error instanceof Error ? error.message : 'Unknown error');
       }
     };
 
