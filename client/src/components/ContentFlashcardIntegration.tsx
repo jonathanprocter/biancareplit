@@ -29,7 +29,7 @@ interface APIError extends Error {
 }
 
 const ContentFlashcardIntegration = () => {
-  const toast = useToast();
+  const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);

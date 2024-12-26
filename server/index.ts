@@ -7,11 +7,18 @@ import { db } from './config';
 const app = express();
 const server = createServer(app);
 
-const PORT = parseInt(process.env.PORT || '3001');
+const PORT = parseInt(process.env.PORT || '3003');
 
 const wss = new WebSocketServer({ 
-  server,
-  path: '/ws'
+  noServer: true
+});
+
+server.on('upgrade', (request, socket, head) => {
+  if (request.url === '/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  }
 });
 
 wss.on('connection', (ws) => {
