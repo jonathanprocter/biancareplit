@@ -1,6 +1,24 @@
 import { logError, logInfo } from '@/lib/logger';
 
-import type { AIResponse, Flashcard, Question } from '@/types/api';
+export interface AIResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export interface Question {
+  id: string;
+  text: string;
+  options?: string[];
+  answer?: string;
+}
+
+export interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  topic?: string;
+}
 
 class AIServiceError extends Error {
   constructor(message: string) {

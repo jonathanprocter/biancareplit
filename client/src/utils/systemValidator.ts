@@ -1,4 +1,4 @@
-import type { ValidationResult, SystemCheck } from '@/types/api';
+import type { SystemCheck, ValidationResult } from '@/types/api';
 
 export class SystemValidator {
   private static instance: SystemValidator;

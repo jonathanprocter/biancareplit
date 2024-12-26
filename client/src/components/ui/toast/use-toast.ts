@@ -182,4 +182,4 @@ function useToast() {
 }
 
 export { toast, useToast };
-export type { Toast, ToasterToast };
+export type { Toast, ToasterToast, State as ToastState };

@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 
-import { useToast } from '@/hooks/use-toast';
+import type { AIResponse } from '@/lib/ai-service';
 
-import type { AIResponse } from '@/types/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProcessingResult {
   content: string;
@@ -49,7 +49,7 @@ export const AIProcessor: React.FC = () => {
 
       const data: AIResponse<ProcessingResult> = await response.json();
 
-      if (!data.success) {
+      if (!data.success || !data.data) {
         throw new Error(data.error || 'Processing failed');
       }
 

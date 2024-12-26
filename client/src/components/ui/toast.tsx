@@ -1,5 +1,20 @@
 'use client';
 
+import {
+  Toast,
+  ToastAction,
+  type ToastActionElement,
+  ToastClose,
+  ToastDescription,
+  type ToastProps,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from './toast/toast';
+import { Toaster } from './toast/toaster';
+import { type Toast as ToastType, type ToasterToast } from '@/hooks/use-toast';
+import { toast, useToast } from '@/hooks/use-toast';
+
 export {
   Toast,
   ToastAction,
@@ -11,6 +26,6 @@ export {
   Toaster,
   useToast,
   toast,
-} from './toast/index';
+};
 
-export type { ToastActionElement, ToastProps, ToastType, ToasterToast } from './toast/index';
+export type { ToastActionElement, ToastProps, ToastType, ToasterToast };

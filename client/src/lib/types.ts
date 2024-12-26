@@ -1,4 +1,4 @@
-export interface AIResponse<T> {
+export interface AIResponse {
   content: string;
   metadata?: {
     confidence: number;
