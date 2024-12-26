@@ -1,2 +1,2 @@
-// This file will be removed. Use Toaster from sonner directly
+// Deprecated - Use Toaster from sonner directly
 export {};

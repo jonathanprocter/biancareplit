@@ -1,25 +1,31 @@
+import { toast as sonnerToast } from 'sonner';
 
-import { create } from 'zustand';
-
-interface ToastState {
-  message: string | null;
-  variant?: 'default' | 'destructive';
+export interface ToastProps {
   title?: string;
   description?: string;
+  variant?: 'default' | 'destructive' | 'success' | 'error' | 'info';
 }
 
-interface ToastStore extends ToastState {
-  showToast: (toast: ToastState) => void;
-  hideToast: () => void;
-}
+export const toast = (props: ToastProps) => {
+  const message = props.description || props.title;
+  if (!message) return;
 
-export const useToastStore = create<ToastStore>((set) => ({
-  message: null,
-  showToast: (toast) => {
-    set(toast);
-    setTimeout(() => {
-      set({ message: null });
-    }, 3000);
-  },
-  hideToast: () => set({ message: null }),
-}));
+  switch (props.variant) {
+    case 'success':
+      sonnerToast.success(message);
+      break;
+    case 'error':
+    case 'destructive':
+      sonnerToast.error(message);
+      break;
+    case 'info':
+      sonnerToast.info(message);
+      break;
+    default:
+      sonnerToast(message);
+  }
+};
+
+export const useToast = () => {
+  return { toast };
+};
