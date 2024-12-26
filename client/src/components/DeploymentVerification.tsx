@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -24,7 +23,10 @@ export function DeploymentVerification() {
         const status = await checker.verifyDeployment();
         setDeploymentStatus(status);
       } catch (error) {
-        console.error('Deployment verification failed:', error instanceof Error ? error.message : 'Unknown error');
+        console.error(
+          'Deployment verification failed:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
         setDeploymentStatus({
           ready: false,
           issues: ['Failed to complete deployment verification'],
