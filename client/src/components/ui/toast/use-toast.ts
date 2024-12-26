@@ -13,12 +13,12 @@ export function useToast() {
       try {
         const { title, description, variant } = props;
         if (variant === 'destructive') {
-          toast.error(title, { description });
+          toast.error(title || '', { description });
         } else {
-          toast(title, { description });
+          toast(title || '', { description });
         }
-      } catch (err) {
-        console.error('Toast error:', err);
+      } catch (error) {
+        console.error('Toast error:', error);
       }
     }
   };

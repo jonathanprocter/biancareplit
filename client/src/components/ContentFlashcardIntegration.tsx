@@ -124,20 +124,23 @@ const ContentFlashcardIntegration = () => {
       }
     };
 
-    try {
-      await initialize();
-    } catch (error) {
-      if (mounted) {
-        console.error('Initialization error:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Initialization Failed',
-          description: error instanceof Error ? error.message : 'Failed to initialize flashcard system'
-        });
-        setError(error instanceof Error ? error : new Error('Initialization failed'));
-        setLoading(false);
-      }
-    }
+    initialize()
+      .catch((error) => {
+        if (mounted) {
+          console.error('Initialization error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error instanceof Error ? error.message : 'Failed to initialize system'
+          });
+          setError(error instanceof Error ? error : new Error('Initialization failed'));
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
 
     return () => {
       mounted = false;
