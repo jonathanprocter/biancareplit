@@ -66,7 +66,7 @@ const ContentFlashcardIntegration = () => {
         setProgress(0);
       }
     },
-    [toast],
+    [showToast],
   );
 
   const initializeSystem = useCallback(async (): Promise<void> => {

@@ -1,22 +1,23 @@
 
-import * as React from "react"
-import { toast as sonnerToast } from "sonner"
+import { toast } from 'sonner';
 
-export function useToast() {
-  const toast = React.useCallback(
-    ({ title, description, ...props }: { title?: string; description?: string; [key: string]: any }) => {
-      return sonnerToast(description || title, {
-        ...props,
-        description: description ? title : undefined,
-      })
-    },
-    []
-  )
-
-  return {
-    toast,
-    dismiss: sonnerToast.dismiss,
-  }
+interface ToastProps {
+  title?: string;
+  description?: string;
+  variant?: 'default' | 'destructive';
+  duration?: number;
 }
 
-export { sonnerToast as toast }
+export function useToast() {
+  const showToast = ({ title, description, variant, duration }: ToastProps) => {
+    const toastFn = variant === 'destructive' ? toast.error : toast;
+    toastFn(description || title, {
+      description: description ? title : undefined,
+      duration: duration || 3000,
+    });
+  };
+
+  return { toast: showToast };
+}
+
+export { toast };
