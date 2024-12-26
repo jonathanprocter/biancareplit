@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast';
+import { toast } from '@/components/ui/toast';
 
 interface SystemCheck {
   name: string;
@@ -33,7 +33,7 @@ export class SystemValidator {
       name: 'Toast Component',
       check: async () => {
         try {
-          return typeof useToast === 'function';
+          return typeof toast === 'function';
         } catch {
           return false;
         }
@@ -66,18 +66,6 @@ export class SystemValidator {
         } catch {
           return false;
         }
-      },
-      critical: true,
-    });
-
-    // Environment Variable Check
-    this.registerCheck({
-      name: 'Environment Variables',
-      check: async () => {
-        const requiredVars = ['DATABASE_URL'];
-        return requiredVars.every(
-          (varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined'
-        );
       },
       critical: true,
     });

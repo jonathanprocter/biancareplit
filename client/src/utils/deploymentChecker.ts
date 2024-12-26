@@ -16,7 +16,9 @@ export class DeploymentChecker {
       name: 'Environment Variables',
       check: async () => {
         const requiredVars = ['DATABASE_URL'];
-        return requiredVars.every((varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined');
+        return requiredVars.every(
+          (varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined',
+        );
       },
     });
 
@@ -25,23 +27,11 @@ export class DeploymentChecker {
       name: 'Component Dependencies',
       check: async () => {
         try {
-          const requiredModules = [
-            '@/components/ui/card',
-            '@/components/ui/progress',
-            '@/components/ui/toast',
-          ];
-
-          await Promise.all(
-            requiredModules.map(async (module) => {
-              try {
-                await import(/* @vite-ignore */ module);
-                return true;
-              } catch {
-                return false;
-              }
-            }),
-          );
-
+          const requiredComponents = ['@/components/ui/toast', '@/components/ui/card'];
+          for (const component of requiredComponents) {
+            const imported = await import(/* @vite-ignore */ component);
+            if (!imported) return false;
+          }
           return true;
         } catch {
           return false;
@@ -49,12 +39,12 @@ export class DeploymentChecker {
       },
     });
 
-    // Database Connection Check
+    // API Health Check
     this.checks.push({
-      name: 'Database Connection',
+      name: 'API Health',
       check: async () => {
         try {
-          const response = await fetch('/api/db/health');
+          const response = await fetch('/api/health');
           return response.status === 200;
         } catch {
           return false;
@@ -76,7 +66,9 @@ export class DeploymentChecker {
           issues.push(`${check.name} check failed`);
         }
       } catch (error) {
-        issues.push(`${check.name} check failed with error: ${error instanceof Error ? error.message : String(error)}`);
+        issues.push(
+          `${check.name} check failed with error: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
 

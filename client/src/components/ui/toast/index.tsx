@@ -7,7 +7,6 @@ import {
   ToastTitle,
   ToastViewport,
 } from './toast';
-import type { ToastActionElement, ToastProps } from './toast';
 import { Toaster } from './toaster';
 import { toast, useToast } from './use-toast';
 
@@ -24,4 +23,4 @@ export {
   toast,
 };
 
-export type { ToastActionElement, ToastProps };
+export type { ToastActionElement, ToastProps } from './toast';

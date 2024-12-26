@@ -4,10 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { toast, useToast } from '@/components/ui/toast';
 
 import { cn } from '@/lib/utils';
-
-import { useToast } from '@/hooks/use-toast';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -57,10 +56,9 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-      console.error(
-        'Error updating progress:',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error updating progress';
+      console.error('Error updating progress:', errorMessage);
       setProgress(0);
       throw error;
     }
@@ -101,7 +99,7 @@ const ContentFlashcardIntegration = () => {
       const apiError: APIError =
         error instanceof Error ? error : new Error('Failed to initialize system');
       apiError.code = 'INITIALIZATION_ERROR';
-      console.error('Failed to initialize:', apiError);
+      console.error('Failed to initialize:', apiError.message);
       setError(apiError);
 
       toast({
