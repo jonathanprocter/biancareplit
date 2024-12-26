@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/components/ui/toast/use-toast';
+import { useToast } from '@/components/ui/toast';
 
 import { CodeReviewStatus } from './CodeReviewStatus';
 import { IntegrationMonitor } from './IntegrationMonitor';
@@ -16,6 +16,7 @@ interface Props {
 export const ProcessManager: React.FC<Props> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState<ProcessStep>('review');
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleStepComplete = (step: ProcessStep) => {
     try {

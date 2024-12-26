@@ -1,2 +1,4 @@
-// This file is deprecated. Import from '@/components/ui/toast/use-toast' instead
-export { toast, useToast } from '@/components/ui/toast/use-toast';
+import { toast } from '@/components/ui/toast';
+
+export { toast, useToast } from '@/components/ui/toast';
+export type { Toast, ToasterToast } from '@/components/ui/toast';

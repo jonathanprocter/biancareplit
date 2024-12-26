@@ -3,28 +3,34 @@
 import {
   Toast,
   ToastAction,
-  type ToastActionElement,
   ToastClose,
   ToastDescription,
-  type ToastProps,
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  type ToastActionElement,
+  type ToastProps,
 } from './toast';
 import { Toaster } from './toaster';
-import { toast, useToast } from './use-toast';
+import { useToast, toast, type Toast as ToastType, type ToasterToast } from './use-toast';
 
+// Re-export everything from a single source of truth
 export {
-  Toast,
+  Toaster,
   ToastAction,
   ToastClose,
   ToastDescription,
+  Toast,
   ToastProvider,
   ToastTitle,
   ToastViewport,
-  Toaster,
   useToast,
   toast,
 };
 
-export type { ToastActionElement, ToastProps };
+export type {
+  ToastProps,
+  ToastActionElement,
+  ToastType,
+  ToasterToast,
+};

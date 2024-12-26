@@ -1,3 +1,21 @@
-// This file is deprecated and will be removed.
-// Import toast functionality from '@/components/ui/toast/index' instead.
-export {};
+'use client';
+
+export {
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+  Toaster,
+  useToast,
+  toast,
+} from './toast/index';
+
+export type {
+  ToastActionElement,
+  ToastProps,
+  ToastType,
+  ToasterToast,
+} from './toast/index';
