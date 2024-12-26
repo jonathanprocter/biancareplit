@@ -162,25 +162,27 @@ function toast({ ...props }: Toast) {
   };
 }
 
-function useToast() {
-  const [state, setState] = React.useState<State>(memoryState);
+//Added context for useToast
+const ToastContext = React.createContext(null);
 
-  React.useEffect(() => {
-    listeners.push(setState);
-    return () => {
-      const index = listeners.indexOf(setState);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
-    };
-  }, []);
+export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
+  const [state, dispatch] = React.useReducer(reducer, { toasts: [] });
 
-  return {
-    ...state,
-    toast,
-    dismiss: (toastId?: string) => dispatch({ type: 'DISMISS_TOAST', toastId }),
-  };
+  const value = { ...state, toast, dispatch };
+
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+};
+
+
+export function useToast() {
+  const context = React.useContext(ToastContext);
+
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider");
+  }
+
+  return context;
 }
 
-export { toast, useToast };
+export { toast, useToast, ToastProvider };
 export type { State as ToastState, Toast, ToasterToast };
