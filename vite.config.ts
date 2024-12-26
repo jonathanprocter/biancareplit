@@ -9,7 +9,8 @@ export default defineConfig({
     port: 3000,
     strictPort: false,
     hmr: {
-      port: 24678 // Changed WebSocket port
+      clientPort: 443,
+      port: 24678
     }
   }
 });
