@@ -1,4 +1,3 @@
-import { toast, useToast as useToastBase } from '@/components/ui/toast/index';
+import { toast, useToast } from '@/components/ui/toast/index';
 
-export const useToast = useToastBase;
-export { toast };
+export { useToast, toast };

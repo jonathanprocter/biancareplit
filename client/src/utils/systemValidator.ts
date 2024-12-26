@@ -1,4 +1,4 @@
-import { toast } from '@/components/ui/toast';
+import { toast } from '@/components/ui/toast/index';
 
 interface SystemCheck {
   name: string;

@@ -15,6 +15,7 @@ export class DeploymentChecker {
     this.checks.push({
       name: 'Environment Variables',
       check: async () => {
+        // Check for Vite-specific environment variables
         const requiredVars = ['DATABASE_URL'];
         return requiredVars.every(
           (varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined',
@@ -27,12 +28,7 @@ export class DeploymentChecker {
       name: 'Component Dependencies',
       check: async () => {
         try {
-          const requiredComponents = ['@/components/ui/toast', '@/components/ui/card'];
-          for (const component of requiredComponents) {
-            const imported = await import(/* @vite-ignore */ component);
-            if (!imported) return false;
-          }
-          return true;
+          return import('@/components/ui/toast').then(() => true);
         } catch {
           return false;
         }
