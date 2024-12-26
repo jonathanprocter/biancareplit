@@ -16,9 +16,7 @@ export class DeploymentChecker {
       name: 'Environment Variables',
       check: async () => {
         const requiredVars = ['DATABASE_URL'];
-        return requiredVars.every(
-          (varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined',
-        );
+        return requiredVars.every((varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined');
       },
     });
 
@@ -27,7 +25,6 @@ export class DeploymentChecker {
       name: 'Component Dependencies',
       check: async () => {
         try {
-          // Check if required components are available
           const requiredModules = [
             '@/components/ui/card',
             '@/components/ui/progress',
@@ -37,10 +34,7 @@ export class DeploymentChecker {
           await Promise.all(
             requiredModules.map(async (module) => {
               try {
-                // Add Vite ignore comment to suppress dynamic import warning
-                // @ts-ignore
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const mod = await import(/* @vite-ignore */ module);
+                await import(/* @vite-ignore */ module);
                 return true;
               } catch {
                 return false;
@@ -82,7 +76,7 @@ export class DeploymentChecker {
           issues.push(`${check.name} check failed`);
         }
       } catch (error) {
-        issues.push(`${check.name} check failed with error: ${error}`);
+        issues.push(`${check.name} check failed with error: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 

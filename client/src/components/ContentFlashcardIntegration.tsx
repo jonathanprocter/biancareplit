@@ -135,7 +135,7 @@ const ContentFlashcardIntegration = () => {
     return (
       <Card className="max-w-4xl mx-auto p-4">
         <CardContent className="p-6">
-          <div className="text-red-500">
+          <div className="text-destructive">
             <h3 className="text-xl font-semibold mb-2">Error Occurred</h3>
             <p>{error.message}</p>
             {error.code && <p className="text-sm mt-1">Error Code: {error.code}</p>}
@@ -168,34 +168,34 @@ const ContentFlashcardIntegration = () => {
 
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="p-4 bg-gray-100 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-500">Study Time</h4>
+          <div className="p-4 bg-muted rounded-lg">
+            <h4 className="font-semibold text-sm text-muted-foreground">Study Time</h4>
             <p className="text-2xl font-bold">{Math.floor(analytics.totalStudyTime / 60)}m</p>
           </div>
-          <div className="p-4 bg-gray-100 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-500">Cards Completed</h4>
+          <div className="p-4 bg-muted rounded-lg">
+            <h4 className="font-semibold text-sm text-muted-foreground">Cards Completed</h4>
             <p className="text-2xl font-bold">{analytics.completedCards}</p>
           </div>
-          <div className="p-4 bg-gray-100 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-500">Accuracy</h4>
+          <div className="p-4 bg-muted rounded-lg">
+            <h4 className="font-semibold text-sm text-muted-foreground">Accuracy</h4>
             <p className="text-2xl font-bold">{Math.round(analytics.accuracy * 100)}%</p>
           </div>
-          <div className="p-4 bg-gray-100 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-500">Categories</h4>
+          <div className="p-4 bg-muted rounded-lg">
+            <h4 className="font-semibold text-sm text-muted-foreground">Categories</h4>
             <p className="text-2xl font-bold">{Object.keys(analytics.categoryProgress).length}</p>
           </div>
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-semibold text-sm text-gray-500">Study Sessions</h4>
+          <h4 className="font-semibold text-sm text-muted-foreground">Study Sessions</h4>
           {studySlots.map((slot) => (
             <div
               key={slot.id}
               className={cn(
                 'flex justify-between items-center p-4 rounded-lg border',
                 slot.id === studySlots[studySlots.length - 1]?.id
-                  ? 'bg-blue-50 border-blue-200'
-                  : 'bg-gray-50 border-gray-200',
+                  ? 'bg-primary/10 border-primary/20'
+                  : 'bg-muted border-border',
               )}
             >
               <div className="flex items-center gap-3">
@@ -203,13 +203,13 @@ const ContentFlashcardIntegration = () => {
                   className={cn(
                     'w-3 h-3 rounded-full',
                     slot.id === studySlots[studySlots.length - 1]?.id
-                      ? 'bg-blue-500 animate-pulse'
-                      : 'bg-gray-400',
+                      ? 'bg-primary animate-pulse'
+                      : 'bg-muted-foreground',
                   )}
                 />
                 <span className="font-medium">Study Session</span>
               </div>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 {Math.floor(((slot.endTime || Date.now()) - slot.startTime) / 60000)}m{' '}
                 {Math.floor((((slot.endTime || Date.now()) - slot.startTime) % 60000) / 1000)}s
               </span>

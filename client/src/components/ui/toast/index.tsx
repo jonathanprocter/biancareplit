@@ -1,20 +1,17 @@
 import {
   Toast,
   ToastAction,
-  type ToastActionElement,
   ToastClose,
   ToastDescription,
-  type ToastProps,
   ToastProvider,
   ToastTitle,
   ToastViewport,
 } from './toast';
+import type { ToastActionElement, ToastProps } from './toast';
 import { Toaster } from './toaster';
-import { useToast } from './use-toast';
+import { toast, useToast } from './use-toast';
 
 export {
-  type ToastProps,
-  type ToastActionElement,
   Toast,
   ToastAction,
   ToastClose,
@@ -24,4 +21,7 @@ export {
   ToastViewport,
   Toaster,
   useToast,
+  toast,
 };
+
+export type { ToastActionElement, ToastProps };

@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { CodeReviewStatus } from '@/components/CodeReviewStatus';
-import { IntegrationMonitor } from '@/components/IntegrationMonitor';
+import { CodeReviewStatus } from './CodeReviewStatus';
+import { IntegrationMonitor } from './IntegrationMonitor';
 
 type ProcessStep = 'review' | 'integration' | 'complete';
 
@@ -44,9 +44,9 @@ export const ProcessManager: React.FC<Props> = ({ onComplete }) => {
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-4">
       {error && (
-        <Card className="bg-red-50">
+        <Card className="bg-destructive/10">
           <CardContent className="p-4">
-            <p className="text-red-600">{error}</p>
+            <p className="text-destructive">{error}</p>
             <Button onClick={handleRollback} className="mt-2" variant="destructive">
               Rollback to Code Review
             </Button>

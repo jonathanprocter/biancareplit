@@ -47,7 +47,10 @@ export class CodeReviewHelper {
         })),
       );
     } catch (error) {
-      console.error(`Error reviewing file ${filePath}:`, error);
+      console.error(
+        `Error reviewing file ${filePath}:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       return [];
     }
   }
@@ -109,16 +112,6 @@ export class CodeReviewHelper {
           const results = await eslintFix.lintFiles([issue.file]);
           await ESLint.outputFixes(results);
         } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-      // Add proper error handling here
-    } else {
-      console.error('An unknown error occurred:', error); {
           console.error(
             'Error fixing issue:',
             error instanceof Error ? error.message : 'Unknown error',

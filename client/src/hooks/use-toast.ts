@@ -1,2 +1,4 @@
-// This file re-exports the toast hook from the UI component
-export { useToast } from '@/components/ui/toast';
+import { toast, useToast as useToastBase } from '@/components/ui/toast';
+
+export const useToast = useToastBase;
+export { toast };
