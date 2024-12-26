@@ -1,11 +1,9 @@
+
 import { v4 as uuidv4 } from 'uuid';
-
 import React, { useCallback, useEffect, useState } from 'react';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/components/ui/toast';
-
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
 interface AnalyticsData {
@@ -25,10 +23,10 @@ interface StudySlot {
 
 const ContentFlashcardIntegration: React.FC = () => {
   const { toast } = useToast();
-  const [initialized, setInitialized] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [initialized, setInitialized] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [progress, setProgress] = useState<number>(0);
+  const [progress, setProgress] = useState(0);
   const [studySlots, setStudySlots] = useState<StudySlot[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalStudyTime: 0,
@@ -38,18 +36,13 @@ const ContentFlashcardIntegration: React.FC = () => {
   });
 
   const updateProgress = useCallback((completedCards: number, accuracy = 0) => {
-    try {
-      const validCompletedCards = Math.max(0, Number(completedCards) || 0);
-      const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
-      const progressValue = Math.min(
-        100,
-        ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
-      );
-      setProgress(Math.round(progressValue));
-    } catch (error) {
-      console.error('Error updating progress:', error instanceof Error ? error.message : error);
-      setProgress(0);
-    }
+    const validCompletedCards = Math.max(0, Number(completedCards) || 0);
+    const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
+    const progressValue = Math.min(
+      100,
+      ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100
+    );
+    setProgress(Math.round(progressValue));
   }, []);
 
   useEffect(() => {
@@ -77,16 +70,15 @@ const ContentFlashcardIntegration: React.FC = () => {
 
         setStudySlots([newStudySlot]);
         setInitialized(true);
-
+        
         toast({
           title: 'System Initialized',
           description: 'Flashcard system ready to use',
         });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize system';
-        console.error('Failed to initialize:', errorMessage);
-        setError(error instanceof Error ? error : new Error(errorMessage));
-
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to initialize system';
+        setError(err instanceof Error ? err : new Error(errorMessage));
+        
         toast({
           variant: 'destructive',
           title: 'Initialization Failed',
@@ -163,7 +155,7 @@ const ContentFlashcardIntegration: React.FC = () => {
                 'flex justify-between items-center p-4 rounded-lg border',
                 slot.id === studySlots[studySlots.length - 1]?.id
                   ? 'bg-blue-50 border-blue-200'
-                  : 'bg-gray-50 border-gray-200',
+                  : 'bg-gray-50 border-gray-200'
               )}
             >
               <div className="flex items-center gap-3">
@@ -172,7 +164,7 @@ const ContentFlashcardIntegration: React.FC = () => {
                     'w-3 h-3 rounded-full',
                     slot.id === studySlots[studySlots.length - 1]?.id
                       ? 'bg-blue-500 animate-pulse'
-                      : 'bg-gray-400',
+                      : 'bg-gray-400'
                   )}
                 />
                 <span className="font-medium">Study Session</span>
