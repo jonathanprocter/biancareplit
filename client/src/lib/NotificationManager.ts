@@ -1,4 +1,5 @@
 import { toast } from '@/hooks/use-toast';
+import type { ToastProps } from '@/hooks/use-toast';
 
 type NotificationType = 'success' | 'error' | 'info';
 
@@ -14,12 +15,16 @@ class NotificationManager {
     return NotificationManager.instance;
   }
 
-  addNotification(message: string, type: NotificationType = 'info') {
+  addNotification(message: string, type: NotificationType = 'info'): void {
+    if (!message) return;
+
+    const toastProps: ToastProps = {
+      title: message,
+      variant: type
+    };
+
     try {
-      toast({
-        title: message,
-        variant: type
-      });
+      toast(toastProps);
     } catch (error) {
       console.error('Failed to show notification:', error);
     }

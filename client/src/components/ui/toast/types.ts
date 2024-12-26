@@ -1,3 +1,3 @@
-// This file is deprecated and its functionality has been moved to @/hooks/use-toast
+// This file is now deprecated
 // Please import types from '@/hooks/use-toast' instead
 export {};

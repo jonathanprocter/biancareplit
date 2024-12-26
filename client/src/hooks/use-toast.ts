@@ -6,27 +6,24 @@ export interface ToastProps {
   variant?: 'default' | 'destructive' | 'success' | 'error' | 'info';
 }
 
-// Single source of truth for toast functionality
-export const toast = (props: ToastProps) => {
-  const title = props.title || '';
-  const description = props.description;
+export const toast = ({ title, description, variant = 'default' }: ToastProps) => {
+  const message = title || description;
+  if (!message) return;
 
-  const options = {
-    description: description,
-  };
-
-  switch (props.variant) {
+  switch (variant) {
     case 'success':
-      return sonnerToast.success(title, options);
+      sonnerToast.success(message);
+      break;
     case 'error':
     case 'destructive':
-      return sonnerToast.error(title, options);
+      sonnerToast.error(message);
+      break;
     case 'info':
-      return sonnerToast.info(title, options);
+      sonnerToast.info(message);
+      break;
     default:
-      return sonnerToast(title, options);
+      sonnerToast(message);
   }
 };
 
-// React hook for components
 export const useToast = () => ({ toast });

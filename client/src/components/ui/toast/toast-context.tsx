@@ -1,3 +1,3 @@
-// This file is deprecated and its functionality has been moved to index.tsx
-// Please import from '@/components/ui/toast' instead
+// This file is now deprecated as we are using sonner directly
+// Please import Toaster from 'sonner' instead
 export {};

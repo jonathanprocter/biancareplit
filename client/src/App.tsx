@@ -18,7 +18,6 @@ function App() {
           theme="light"
           richColors
           closeButton
-          className="toaster-container"
         />
       </div>
     </ErrorBoundary>
