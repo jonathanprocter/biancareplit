@@ -1,23 +1,21 @@
-import { toast } from 'sonner';
 
-export interface ToastProps {
+import { create } from "zustand";
+
+type ToastState = {
+  open: boolean;
   title?: string;
   description?: string;
-  variant?: 'default' | 'destructive';
-}
+  type?: "default" | "success" | "error";
+  show: (params: { title?: string; description?: string; type?: "default" | "success" | "error" }) => void;
+  hide: () => void;
+};
 
-export function useToast() {
-  return {
-    toast: ({ title, description, variant }: ToastProps) => {
-      if (variant === 'destructive') {
-        toast.error(title || '', {
-          description: description || ''
-        });
-      } else {
-        toast.success(title || '', {
-          description: description || ''
-        });
-      }
-    }
-  };
-}
+export const useToast = create<ToastState>((set) => ({
+  open: false,
+  title: undefined,
+  description: undefined,
+  type: "default",
+  show: ({ title, description, type = "default" }) =>
+    set({ open: true, title, description, type }),
+  hide: () => set({ open: false }),
+}));
