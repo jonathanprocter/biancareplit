@@ -45,8 +45,24 @@ export function processItems(
   items: FormattedItem[],
   config: Partial<NestedConfig>,
 ): FormattedItem[] {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('Processing items with config:', config);
-  }
+  // Use structured logging instead of console.log
+  const logger = {
+    debug: (message: string, data?: unknown) => {
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        // Using a structured format for better tracing
+        const logData = {
+          timestamp: new Date().toISOString(),
+          level: 'debug',
+          message,
+          data,
+        };
+        // eslint-disable-next-line no-console
+        console.debug(JSON.stringify(logData));
+      }
+    },
+  };
+
+  logger.debug('Processing items with config', { itemCount: items.length, config });
   return items.filter((item) => item.status === 'active');
 }

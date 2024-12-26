@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { SystemValidator } from '@/utils/systemValidator';
 import { useToast } from '@/components/ui/toast';
+
+import { SystemValidator } from '@/utils/systemValidator';
 
 interface Props {
   onComplete?: () => void;

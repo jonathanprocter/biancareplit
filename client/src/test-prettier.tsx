@@ -1,4 +1,5 @@
 import { type FC, useEffect, useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface TestProps {
   title: string;
@@ -9,30 +10,32 @@ interface TestProps {
   }>;
 }
 
-// React component formatting test with more complex JSX
 export const TestComponent: FC<TestProps> = ({ title, items }) => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (selectedId !== null) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('Selected item:', selectedId);
-        console.log('Interaction time:', new Date().toISOString());
-      }
+      toast({
+        title: 'Item Selected',
+        description: `Selected item ID: ${selectedId}`,
+      });
     }
-  }, [selectedId]);
+  }, [selectedId, toast]);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Component mounted with title:', title);
-    }
-    // Return cleanup function
+    toast({
+      title: 'Component Mounted',
+      description: `Mounted with title: ${title}`,
+    });
+
     return () => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Component unmounted');
-      }
+      toast({
+        title: 'Component Unmounted',
+        description: 'Cleanup complete',
+      });
     };
-  }, [title]);
+  }, [title, toast]);
 
   return (
     <div className="container mx-auto p-4">
@@ -54,3 +57,5 @@ export const TestComponent: FC<TestProps> = ({ title, items }) => {
     </div>
   );
 };
+
+export default TestComponent;

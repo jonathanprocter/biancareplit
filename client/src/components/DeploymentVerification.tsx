@@ -11,6 +11,7 @@ interface DeploymentStatus {
 
 export const DeploymentVerification = () => {
   const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStatus | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checker = new DeploymentChecker();
@@ -28,12 +29,17 @@ export const DeploymentVerification = () => {
           ready: false,
           issues: ['Failed to complete deployment verification'],
         });
+      } finally {
+        setLoading(false);
       }
     };
 
     void verifyDeployment();
   }, []);
 
+  if (loading) {
+    return <div>Verifying deployment status...</div>;
+  }
   if (!deploymentStatus) {
     return <div>Verifying deployment status...</div>;
   }
