@@ -14,6 +14,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src')
     }
   },
+  css: {
+    postcss: true 
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true
