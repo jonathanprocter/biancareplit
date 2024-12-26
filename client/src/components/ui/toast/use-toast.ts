@@ -1,5 +1,5 @@
 
-import { toast } from 'sonner';
+import { Toaster as Sonner, toast } from 'sonner';
 
 interface ToastProps {
   title?: string;
@@ -9,15 +9,17 @@ interface ToastProps {
 }
 
 export function useToast() {
-  const showToast = ({ title, description, variant, duration }: ToastProps) => {
-    const toastFn = variant === 'destructive' ? toast.error : toast;
-    toastFn(description || title, {
-      description: description ? title : undefined,
-      duration: duration || 3000,
-    });
+  const showToast = ({ title, description, variant = 'default', duration = 3000 }: ToastProps) => {
+    if (variant === 'destructive') {
+      toast.error(title, { description });
+    } else {
+      toast(title, { description });
+    }
   };
 
-  return { toast: showToast };
+  return {
+    toast: showToast,
+  };
 }
 
-export { toast };
+export { Sonner as Toaster };
