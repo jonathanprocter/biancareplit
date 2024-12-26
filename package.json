@@ -4,7 +4,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently -k -p \"[{name}]\" -n \"VITE,SERVER\" -c \"green,blue\" \"vite --host 0.0.0.0\" \"tsx watch server/index.ts\"",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"VITE,SERVER\" -c \"green,blue\" \"vite\" \"tsx watch server/index.ts\"",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
