@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface SystemCheck {
   name: string;
@@ -33,6 +33,7 @@ export class SystemValidator {
       name: 'Toast Component',
       check: async () => {
         try {
+          // Check if the toast hook exists
           return typeof useToast === 'function';
         } catch {
           return false;

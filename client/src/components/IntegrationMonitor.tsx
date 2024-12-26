@@ -4,7 +4,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import { SystemValidator } from '@/utils/systemValidator';
 
-export const IntegrationMonitor = () => {
+interface Props {
+  onComplete?: () => void;
+}
+
+export const IntegrationMonitor: React.FC<Props> = ({ onComplete }) => {
   const [status, setStatus] = useState<{
     success: boolean;
     failedChecks: string[];
@@ -19,6 +23,9 @@ export const IntegrationMonitor = () => {
       try {
         const result = await validator.validateSystem();
         setStatus(result);
+        if (result.success && onComplete) {
+          onComplete();
+        }
       } catch (error) {
         console.error(
           'Validation failed:',
@@ -35,7 +42,7 @@ export const IntegrationMonitor = () => {
     const interval = setInterval(checkSystem, 5 * 60 * 1000); // Every 5 minutes
 
     return () => clearInterval(interval);
-  }, []);
+  }, [onComplete]);
 
   if (loading) {
     return <div>Checking system status...</div>;

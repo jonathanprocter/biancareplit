@@ -1,2 +1,3 @@
 // This file is deprecated and will be removed.
-// Import toast functionality from '@/components/ui/toast' instead
+// Import toast functionality from '@/hooks/use-toast' instead
+export {};

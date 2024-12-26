@@ -16,7 +16,9 @@ export class DeploymentChecker {
       name: 'Environment Variables',
       check: async () => {
         const requiredVars = ['DATABASE_URL'];
-        return requiredVars.every((varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined');
+        return requiredVars.every(
+          (varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined',
+        );
       },
     });
 

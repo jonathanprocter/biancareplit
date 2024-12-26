@@ -84,3 +84,5 @@ export const ProcessManager: React.FC<Props> = ({ onComplete }) => {
     </div>
   );
 };
+
+export default ProcessManager;
