@@ -32,6 +32,7 @@ const ContentFlashcardIntegration = () => {
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
+  const { showNotification, toast, showToast } = useToast();
 
   const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     showNotification({ message, type });
@@ -61,15 +62,11 @@ const ContentFlashcardIntegration = () => {
         setProgress(Math.round(progressValue));
       } catch (error) {
         console.error('Error updating progress:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: error instanceof Error ? error.message : 'Unknown error occurred',
-        });
+        notify(error instanceof Error ? error.message : 'Unknown error occurred', 'error');
         setProgress(0);
       }
     },
-    [toast],
+    [notify],
   );
 
   const initializeSystem = useCallback(async (): Promise<void> => {
