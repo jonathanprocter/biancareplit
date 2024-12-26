@@ -4,21 +4,24 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  root: path.resolve(__dirname, '.'),
+  publicDir: 'public',
   server: {
     port: 5000,
-    host: '0.0.0.0',
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost'
-    }
+    host: '0.0.0.0'
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src')
+      '@': path.resolve(__dirname, './src')
     }
   },
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      }
+    }
   }
 });

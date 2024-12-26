@@ -3,6 +3,8 @@ import { nclexQuestions, users } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import type { Express, Request, Response, NextFunction } from 'express';
 import { type Server, createServer } from 'http';
+import path from 'path';
+import express from 'express';
 
 // Error handler middleware
 const errorHandler = (err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -18,6 +20,9 @@ const errorHandler = (err: any, _req: Request, res: Response, _next: NextFunctio
 };
 
 export function registerRoutes(app: Express): Server {
+  // Serve static files from the public directory
+  app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
+
   // Health check endpoint
   app.get('/api/health', (_req, res) => {
     res.json({
@@ -45,6 +50,11 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       next(error);
     }
+  });
+
+  // Serve index.html for all other routes to support client-side routing
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
   });
 
   // API route handler for 404s
