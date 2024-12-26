@@ -1,13 +1,13 @@
-import { Switch, Route } from 'wouter';
+import { StrictMode } from 'react';
 
 function Home() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md mx-4 p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+    <div className="container">
+      <div className="card">
+        <h1 className="title">
           Medical Education Platform
         </h1>
-        <p className="text-gray-600">
+        <p className="text">
           Welcome to your personalized learning experience
         </p>
       </div>
@@ -17,9 +17,9 @@ function Home() {
 
 function App() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-    </Switch>
+    <StrictMode>
+      <Home />
+    </StrictMode>
   );
 }
 
