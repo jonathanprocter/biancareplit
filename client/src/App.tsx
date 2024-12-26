@@ -2,8 +2,7 @@ import { Switch, Route } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ContentFlashcardIntegration } from './components/ContentFlashcardIntegration';
-import { Toaster } from '@/components/ui/toast';
+import { Toaster } from 'sonner';
 
 function App() {
   return (
@@ -18,6 +17,8 @@ function App() {
           theme="light"
           richColors
           closeButton
+          visibleToasts={6}
+          duration={4000}
         />
       </div>
     </ErrorBoundary>
@@ -27,7 +28,7 @@ function App() {
 function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <ContentFlashcardIntegration />
+      <h1 className="text-2xl font-bold text-center mb-8">Medical Education Platform</h1>
     </div>
   );
 }

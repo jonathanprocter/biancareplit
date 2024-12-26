@@ -1,5 +1,5 @@
 import { Toaster } from 'sonner';
-import type { ToastProps } from '@/hooks/use-toast';
-
 export { Toaster };
-export type { ToastProps };
+
+// Re-export our toast hook for convenience
+export { toast, useToast, type ToastProps } from '@/hooks/use-toast';

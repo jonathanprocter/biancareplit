@@ -23,11 +23,7 @@ class NotificationManager {
       variant: type
     };
 
-    try {
-      toast(toastProps);
-    } catch (error) {
-      console.error('Failed to show notification:', error);
-    }
+    toast(toastProps);
   }
 }
 

@@ -1,3 +1,1 @@
-// This file is deprecated and should be removed
-// Use @/components/ui/toast instead
-export {};
+// This file can be safely deleted as we're using Sonner for toast notifications
