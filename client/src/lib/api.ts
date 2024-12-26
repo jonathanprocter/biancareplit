@@ -153,7 +153,11 @@ export const useUserProgress = (userId: number) => {
 };
 
 export const useUpdateProgress = () => {
-  return useMutation<UserProgress, Error, { userId: number; enrollmentId: number; correct: boolean }>({
+  return useMutation<
+    UserProgress,
+    Error,
+    { userId: number; enrollmentId: number; correct: boolean }
+  >({
     mutationFn: async ({ userId, enrollmentId, correct }) => {
       const res = await fetch(`/api/users/${userId}/progress`, {
         method: 'POST',

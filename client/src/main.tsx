@@ -1,9 +1,9 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
 import { StrictMode } from 'react';
-
 import App from './App';
-import { Toaster } from './components/ui/toast';
+import { ToastProvider } from './components/ui/toast/provider';
+import { Toaster } from './components/ui/toast/toaster';
 import './index.css';
 import { queryClient } from './lib/queryClient';
 
@@ -14,9 +14,11 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-      <Toaster />
-    </QueryClientProvider>
+    <ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <App />
+        <Toaster />
+      </QueryClientProvider>
+    </ToastProvider>
   </StrictMode>,
 );

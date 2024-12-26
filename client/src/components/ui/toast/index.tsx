@@ -1,4 +1,18 @@
-// Central export file for toast functionality
+// Central export point for all toast functionality
+import {
+  Toast,
+  ToastAction,
+  type ToastActionElement,
+  ToastClose,
+  ToastDescription,
+  type ToastProps,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from './toast';
+import { Toaster } from './toaster';
+import { useToast } from './use-toast';
+
 export {
   Toast,
   ToastAction,
@@ -7,8 +21,8 @@ export {
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  Toaster,
+  useToast,
   type ToastActionElement,
   type ToastProps,
-} from './toast';
-export { Toaster } from './toaster';
-export { useToast } from './use-toast';
+};

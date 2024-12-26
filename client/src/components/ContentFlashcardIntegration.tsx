@@ -118,14 +118,19 @@ const ContentFlashcardIntegration = () => {
   }, [toast, updateProgress]);
 
   useEffect(() => {
-    // Using async IIFE for proper error handling
-    (async () => {
+    const initialize = async () => {
       try {
         await initializeSystem();
       } catch (error) {
-        console.error('Initialization failed:', error);
+        if (error instanceof Error) {
+          console.error(`Error: ${error.message}`);
+        } else {
+          console.error('An unknown error occurred:', error);
+        }
       }
-    })();
+    };
+
+    void initialize();
   }, [initializeSystem]);
 
   if (error) {

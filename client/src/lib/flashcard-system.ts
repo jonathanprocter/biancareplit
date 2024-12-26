@@ -83,7 +83,8 @@ export class FlashcardSystem extends EventEmitter<FlashcardSystemEvents> {
         accuracy: data.accuracy ?? this.analytics.accuracy,
         categoryProgress: {
           ...this.analytics.categoryProgress,
-          [data.category || 'default']: (this.analytics.categoryProgress[data.category || 'default'] || 0) + 1,
+          [data.category || 'default']:
+            (this.analytics.categoryProgress[data.category || 'default'] || 0) + 1,
         },
       };
       return this.analytics;

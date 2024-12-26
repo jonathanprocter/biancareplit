@@ -68,7 +68,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout);
 };
 
-export const reducer = (state: State, action: Action): State => {
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case 'ADD_TOAST':
       return {
@@ -161,7 +161,7 @@ function toast({ ...props }: Toast) {
   };
 }
 
-function useToast() {
+export function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 
   React.useEffect(() => {
@@ -180,5 +180,3 @@ function useToast() {
     dismiss: (toastId?: string) => dispatch({ type: 'DISMISS_TOAST', toastId }),
   };
 }
-
-export { useToast, toast };
