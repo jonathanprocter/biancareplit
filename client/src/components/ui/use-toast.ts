@@ -1,3 +1,4 @@
 // This file is deprecated and will be removed.
-// Import toast functionality from '@/components/ui/toast/index' instead.
-export { toast, useToast } from './toast/index';
+// Import toast functionality from '@/hooks/use-toast' instead.
+export { toast, useToast } from './toast/use-toast';
+export type { Toast, ToasterToast } from './toast/use-toast';

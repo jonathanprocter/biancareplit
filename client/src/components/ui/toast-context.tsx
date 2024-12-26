@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+
 import type { Toast, ToasterToast } from '@/components/ui/toast';
 
 type ToastContextType = {

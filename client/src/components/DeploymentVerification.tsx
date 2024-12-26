@@ -4,11 +4,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import { DeploymentChecker } from '@/utils/deploymentChecker';
 
+interface DeploymentStatus {
+  ready: boolean;
+  issues: string[];
+}
+
 export const DeploymentVerification = () => {
-  const [deploymentStatus, setDeploymentStatus] = useState<{
-    ready: boolean;
-    issues: string[];
-  } | null>(null);
+  const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStatus | null>(null);
 
   useEffect(() => {
     const checker = new DeploymentChecker();
@@ -58,3 +60,5 @@ export const DeploymentVerification = () => {
     </div>
   );
 };
+
+export default DeploymentVerification;

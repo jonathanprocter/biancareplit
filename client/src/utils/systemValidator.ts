@@ -1,16 +1,4 @@
-import { useToast } from '@/components/ui/toast';
-
-interface SystemCheck {
-  name: string;
-  check: () => Promise<boolean>;
-  critical: boolean;
-}
-
-interface ValidationResult {
-  success: boolean;
-  failedChecks: string[];
-  warnings: string[];
-}
+import type { ValidationResult, SystemCheck } from '@/types/api';
 
 export class SystemValidator {
   private static instance: SystemValidator;
@@ -28,12 +16,14 @@ export class SystemValidator {
   }
 
   private initializeChecks() {
-    // Component Availability Checks
+    // Component Dependencies Check
     this.registerCheck({
-      name: 'Toast Component',
+      name: 'Component Dependencies',
       check: async () => {
         try {
-          return typeof useToast === 'function';
+          // Import toast dynamically to check availability
+          await import('@/components/ui/toast');
+          return true;
         } catch {
           return false;
         }

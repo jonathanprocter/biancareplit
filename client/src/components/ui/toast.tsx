@@ -13,9 +13,4 @@ export {
   toast,
 } from './toast/index';
 
-export type {
-  ToastActionElement,
-  ToastProps,
-  ToastType,
-  ToasterToast,
-} from './toast/index';
+export type { ToastActionElement, ToastProps, ToastType, ToasterToast } from './toast/index';

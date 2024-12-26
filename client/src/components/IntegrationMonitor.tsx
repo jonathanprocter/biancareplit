@@ -8,12 +8,14 @@ interface Props {
   onComplete?: () => void;
 }
 
+interface SystemStatus {
+  success: boolean;
+  failedChecks: string[];
+  warnings: string[];
+}
+
 export const IntegrationMonitor: React.FC<Props> = ({ onComplete }) => {
-  const [status, setStatus] = useState<{
-    success: boolean;
-    failedChecks: string[];
-    warnings: string[];
-  } | null>(null);
+  const [status, setStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,3 +91,5 @@ export const IntegrationMonitor: React.FC<Props> = ({ onComplete }) => {
     </div>
   );
 };
+
+export default IntegrationMonitor;
