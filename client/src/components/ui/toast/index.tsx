@@ -1,3 +1,4 @@
+// Export all toast components from a single source of truth
 export {
   Toast,
   ToastAction,

@@ -28,7 +28,9 @@
     "client/src/**/*.ts",
     "client/src/**/*.d.ts",
     "db/**/*",
-    "server/**/*"
+    "server/**/*",
+    "src/**/*",
+    "test/**/*"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
