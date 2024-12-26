@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { toast } from '@/components/ui/toast/use-toast';
+import { useToast } from '@/components/ui/toast/use-toast';
 
 import { cn } from '@/lib/utils';
 
@@ -90,7 +90,8 @@ const ContentFlashcardIntegration = () => {
       setStudySlots([newStudySlot]);
       setInitialized(true);
 
-      toast({
+      const { toast } = useToast();
+  toast({
         title: 'System Initialized',
         description: 'Flashcard system ready to use',
       });
@@ -101,7 +102,8 @@ const ContentFlashcardIntegration = () => {
       console.error('Failed to initialize:', apiError.message);
       setError(apiError);
 
-      toast({
+      const { toast } = useToast();
+  toast({
         variant: 'destructive',
         title: 'Initialization Failed',
         description: apiError.message,
