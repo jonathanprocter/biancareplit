@@ -1,5 +1,5 @@
-
 import React, { createContext, useCallback, useState } from 'react';
+
 import { ToastProps } from './types';
 
 interface ToastContextType {
@@ -15,9 +15,5 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     setToasts((prevToasts) => [...prevToasts, props]);
   }, []);
 
-  return (
-    <ToastContext.Provider value={{ toast }}>
-      {children}
-    </ToastContext.Provider>
-  );
+  return <ToastContext.Provider value={{ toast }}>{children}</ToastContext.Provider>;
 };
