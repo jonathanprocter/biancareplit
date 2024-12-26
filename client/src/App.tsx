@@ -1,10 +1,20 @@
-import { StrictMode } from 'react';
 import { Switch, Route } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
-import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/components/ui/toast";
+import { useEffect } from "react";
 
 function Home() {
+  const { add } = useToast();
+
+  useEffect(() => {
+    add({
+      title: "Welcome",
+      description: "Welcome to your personalized learning experience",
+      duration: 3000,
+    });
+  }, [add]);
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
@@ -42,13 +52,10 @@ function NotFound() {
 
 function App() {
   return (
-    <>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route component={NotFound} />
-      </Switch>
-      <Toaster />
-    </>
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
