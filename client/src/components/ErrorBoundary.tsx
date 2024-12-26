@@ -1,5 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import NotificationManager from '../lib/NotificationManager';
+import { toast } from 'sonner';
 
 interface Props {
   children: ReactNode;
@@ -21,10 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
-    NotificationManager.getInstance().addNotification(
-      `Application Error: ${error.message}`,
-      'error'
-    );
+    toast.error(`Application Error: ${error.message}`);
   }
 
   render() {

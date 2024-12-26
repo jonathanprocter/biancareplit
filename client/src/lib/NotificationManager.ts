@@ -1,5 +1,4 @@
-import { toast } from '@/hooks/use-toast';
-import type { ToastProps } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 type NotificationType = 'success' | 'error' | 'info';
 
@@ -18,12 +17,17 @@ class NotificationManager {
   addNotification(message: string, type: NotificationType = 'info'): void {
     if (!message) return;
 
-    const toastProps: ToastProps = {
-      description: message,
-      variant: type
-    };
-
-    toast(toastProps);
+    switch (type) {
+      case 'success':
+        toast.success(message);
+        break;
+      case 'error':
+        toast.error(message);
+        break;
+      case 'info':
+        toast.info(message);
+        break;
+    }
   }
 }
 

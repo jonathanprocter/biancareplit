@@ -1,5 +1,5 @@
 import { Toaster } from 'sonner';
-export { Toaster };
 
-// Re-export our toast hook for convenience
-export { toast, useToast, type ToastProps } from '@/hooks/use-toast';
+// Re-export the Toaster component and our toast utilities
+export { Toaster };
+export { toast, useToast, type ToastProps } from '@/lib/toast';

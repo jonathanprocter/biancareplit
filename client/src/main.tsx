@@ -23,7 +23,7 @@ createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
-      <Toaster />
+      <Toaster position="bottom-right" richColors />
     </QueryClientProvider>
   </StrictMode>,
 );
