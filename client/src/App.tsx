@@ -1,5 +1,5 @@
-
 import { Toaster } from 'sonner';
+
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 
 function App() {

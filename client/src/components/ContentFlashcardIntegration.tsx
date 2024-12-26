@@ -132,12 +132,12 @@ const ContentFlashcardIntegration = () => {
         showToast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to initialize system'
+          description: 'Failed to initialize system',
         });
       }
     };
 
-    initialize().catch(error => {
+    initialize().catch((error) => {
       console.error('Unhandled initialization error:', error);
     });
 
