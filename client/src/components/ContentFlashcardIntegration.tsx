@@ -35,7 +35,11 @@ const ContentFlashcardIntegration = () => {
   const { toast } = useToast();
 
   const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    showNotification({ message, type });
+    toast({
+      title: type.charAt(0).toUpperCase() + type.slice(1),
+      description: message,
+      variant: type === 'error' ? 'destructive' : 'default'
+    });
   }, []);
   const [progress, setProgress] = useState<number>(0);
   const [studySlots, setStudySlots] = useState<StudySlot[]>([]);
