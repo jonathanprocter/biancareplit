@@ -1,23 +1,16 @@
+
 import * as React from 'react';
-
-import { toast as showToast } from '@/components/ui/toast';
-
-export interface Toast {
-  id: string;
-  title?: string;
-  description?: string;
-  action?: React.ReactNode;
-  variant?: 'default' | 'destructive';
-}
-
-export type ToasterToast = Required<Pick<Toast, 'id'>> & Toast;
-
-interface State {
-  toasts: ToasterToast[];
-}
+import type { ToastActionElement, ToastProps } from '@radix-ui/react-toast';
 
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000;
+
+export type ToasterToast = ToastProps & {
+  id: string;
+  title?: string;
+  description?: string;
+  action?: ToastActionElement;
+};
 
 const actionTypes = {
   ADD_TOAST: 'ADD_TOAST',
@@ -46,19 +39,15 @@ type Action =
     }
   | {
       type: ActionType['DISMISS_TOAST'];
-      toastId?: ToasterToast['id'];
+      toastId?: string;
     }
   | {
       type: ActionType['REMOVE_TOAST'];
-      toastId?: ToasterToast['id'];
+      toastId?: string;
     };
 
-interface Toast {
-  id: string;
-  title?: string;
-  description?: string;
-  action?: React.ReactNode;
-  variant?: 'default' | 'destructive';
+interface State {
+  toasts: ToasterToast[];
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
@@ -90,7 +79,9 @@ export const reducer = (state: State, action: Action): State => {
     case 'UPDATE_TOAST':
       return {
         ...state,
-        toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),
+        toasts: state.toasts.map((t) =>
+          t.id === action.toast.id ? { ...t, ...action.toast } : t,
+        ),
       };
 
     case 'DISMISS_TOAST': {
@@ -116,7 +107,6 @@ export const reducer = (state: State, action: Action): State => {
         ),
       };
     }
-
     case 'REMOVE_TOAST':
       if (action.toastId === undefined) {
         return {
@@ -142,10 +132,12 @@ function dispatch(action: Action) {
   });
 }
 
-export function toast({ ...props }: Toast) {
+export function toast({
+  ...props
+}: Omit<ToasterToast, 'id'>) {
   const id = genId();
 
-  const update = (props: Toast) =>
+  const update = (props: ToasterToast) =>
     dispatch({
       type: 'UPDATE_TOAST',
       toast: { ...props, id },
