@@ -32,7 +32,7 @@ const ContentFlashcardIntegration = () => {
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
-  const { showNotification, toast, showToast } = useToast();
+  const { toast } = useToast();
 
   const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     showNotification({ message, type });
