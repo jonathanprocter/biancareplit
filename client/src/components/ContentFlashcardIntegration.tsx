@@ -91,7 +91,7 @@ const ContentFlashcardIntegration = () => {
       setInitialized(true);
 
       const { toast } = useToast();
-  toast({
+      toast({
         title: 'System Initialized',
         description: 'Flashcard system ready to use',
       });
@@ -103,7 +103,7 @@ const ContentFlashcardIntegration = () => {
       setError(apiError);
 
       const { toast } = useToast();
-  toast({
+      toast({
         variant: 'destructive',
         title: 'Initialization Failed',
         description: apiError.message,
