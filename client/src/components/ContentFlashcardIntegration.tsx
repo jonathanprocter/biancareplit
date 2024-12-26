@@ -49,8 +49,8 @@ const ContentFlashcardIntegration = () => {
         throw new Error('Invalid progress update parameters');
       }
 
-      const validCompletedCards = Math.max(0, Number(completedCards) || 0);
-      const validAccuracy = Math.min(1, Math.max(0, Number(accuracy) || 0));
+      const validCompletedCards = Math.max(0, completedCards);
+      const validAccuracy = Math.min(1, Math.max(0, accuracy));
       const progressValue = Math.min(
         100,
         ((validCompletedCards / 20) * 0.7 + validAccuracy * 0.3) * 100,
@@ -116,9 +116,13 @@ const ContentFlashcardIntegration = () => {
   }, [toast, updateProgress]);
 
   useEffect(() => {
+    let mounted = true;
+
     const initialize = async () => {
       try {
-        await initializeSystem();
+        if (mounted) {
+          await initializeSystem();
+        }
       } catch (error) {
         console.error(
           'Initialization failed:',
@@ -128,6 +132,10 @@ const ContentFlashcardIntegration = () => {
     };
 
     void initialize();
+
+    return () => {
+      mounted = false;
+    };
   }, [initializeSystem]);
 
   if (error) {

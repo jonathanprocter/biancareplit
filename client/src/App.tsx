@@ -2,12 +2,13 @@ import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
+import { AIProcessor } from './components/AIProcessor';
+import { CodeReviewStatus } from './components/CodeReviewStatus';
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 import { DeploymentVerification } from './components/DeploymentVerification';
 import { IntegrationMonitor } from './components/IntegrationMonitor';
 import { ProcessManager } from './components/ProcessManager';
 import { Card, CardContent } from './components/ui/card';
-import { Toaster } from './components/ui/toast/index';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -37,12 +38,13 @@ function App() {
                 <IntegrationMonitor />
                 <DeploymentVerification />
                 <ContentFlashcardIntegration />
+                <AIProcessor />
+                <CodeReviewStatus />
               </div>
             </Route>
             <Route component={NotFound} />
           </Switch>
         </main>
-        <Toaster />
       </div>
     </ErrorBoundary>
   );
