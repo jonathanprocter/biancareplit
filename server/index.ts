@@ -39,39 +39,54 @@ app.use((req, res, next) => {
   try {
     const server = createServer(app);
 
-    // Create WebSocket server
+    // Create WebSocket server with proper error handling
     const wss = new WebSocketServer({
       noServer: true,
-      perMessageDeflate: false, // Disable per-message deflate to avoid upgrade issues
+      perMessageDeflate: false,
     });
 
-    // Handle WebSocket connections
+    // Handle WebSocket connections with improved error handling
     wss.on('connection', (ws: WebSocket) => {
-      ws.on('message', (message: string) => {
-        console.log('received: %s', message);
+      ws.on('error', (error: Error) => {
+        log(`WebSocket error: ${error.message}`);
+      });
+
+      ws.on('message', (message: Buffer) => {
+        try {
+          const data = message.toString();
+          log(`Received WebSocket message: ${data}`);
+        } catch (error) {
+          log(
+            `Error processing WebSocket message: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
       });
     });
 
-    // Handle upgrades
+    // Handle upgrades with proper error handling
     server.on('upgrade', (request, socket, head) => {
-      // Accept all upgrade requests - this fixes the "upgrade required" issue
+      // Ignore Vite HMR upgrade requests
+      if (request.headers['sec-websocket-protocol']?.includes('vite-hmr')) {
+        return;
+      }
+
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
       });
     });
 
-    // Register routes
+    // Register routes before setting up Vite middleware
     registerRoutes(app);
 
     // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || 'Internal Server Error';
+      log(`Error: ${status} - ${message}`);
       res.status(status).json({ message });
-      throw err;
     });
 
-    // Setup vite in development mode or serve static files in production
+    // Setup Vite in development or serve static files in production
     if (app.get('env') === 'development') {
       await setupVite(app, server);
     } else {
@@ -81,10 +96,10 @@ app.use((req, res, next) => {
     // Always serve on port 5000
     const PORT = 5000;
     server.listen(PORT, '0.0.0.0', () => {
-      log(`serving on port ${PORT}`);
+      log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    log('[Server] Fatal error:', error);
+    log(`Fatal server error: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 })();

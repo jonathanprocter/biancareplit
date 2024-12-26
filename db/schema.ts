@@ -179,9 +179,9 @@ export const nclexQuestions = pgTable('nclex_questions', {
   subcategory: text('subcategory').notNull(),
   difficulty: text('difficulty').notNull(),
   topic: text('topic').notNull(),
-  rationale: text('rationale').notNull(), // Detailed explanation
-  commonMistakes: text('common_mistakes').default('[]'), // JSON array
-  relatedConcepts: text('related_concepts').default('[]'), // JSON array
+  rationale: text('rationale').notNull(),
+  commonMistakes: text('common_mistakes').default('[]'),
+  relatedConcepts: text('related_concepts').default('[]'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   isAIGenerated: boolean('is_ai_generated').default(false),
 });
@@ -299,6 +299,8 @@ export const userRelations = relations(users, ({ many }) => ({
   enrollments: many(enrollments),
   teachingCourses: many(courses),
   userBadges: many(userBadges),
+  quizAttempts: many(quizAttempts),
+  dailyProgress: many(dailyProgress),
 }));
 
 export const moduleRelations = relations(modules, ({ one }) => ({
@@ -334,30 +336,6 @@ export const userBadgeRelations = relations(userBadges, ({ one }) => ({
   }),
 }));
 
-// Schemas
-export const insertUserSchema = createInsertSchema(users);
-export const extendedInsertUserSchema = insertUserSchema.extend({
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  email: z.string().email('Invalid email format'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
-});
-export const selectUserSchema = createSelectSchema(users);
-
-export const insertCourseSchema = createInsertSchema(courses);
-export const selectCourseSchema = createSelectSchema(courses);
-
-export const insertBadgeSchema = createInsertSchema(badges);
-export const selectBadgeSchema = createSelectSchema(badges);
-
-// Types
-export type InsertUser = typeof users.$inferInsert;
-export type SelectUser = typeof users.$inferSelect;
-export type InsertCourse = typeof courses.$inferInsert;
-export type SelectCourse = typeof courses.$inferSelect;
-export type InsertBadge = typeof badges.$inferInsert;
-export type SelectBadge = typeof badges.$inferSelect;
-
-// Add relations for new tables
 export const nclexQuestionRelations = relations(nclexQuestions, ({ many }) => ({
   attempts: many(quizAttempts),
   flashcards: many(flashcards),
@@ -399,7 +377,21 @@ export const instructorPreferenceRelations = relations(instructorPreferences, ({
   }),
 }));
 
-// Add schemas for new tables
+// Schemas
+export const insertUserSchema = createInsertSchema(users);
+export const extendedInsertUserSchema = insertUserSchema.extend({
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email('Invalid email format'),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+});
+export const selectUserSchema = createSelectSchema(users);
+
+export const insertCourseSchema = createInsertSchema(courses);
+export const selectCourseSchema = createSelectSchema(courses);
+
+export const insertBadgeSchema = createInsertSchema(badges);
+export const selectBadgeSchema = createSelectSchema(badges);
+
 export const insertNclexQuestionSchema = createInsertSchema(nclexQuestions);
 export const selectNclexQuestionSchema = createSelectSchema(nclexQuestions);
 
@@ -415,7 +407,13 @@ export const selectDailyProgressSchema = createSelectSchema(dailyProgress);
 export const insertInstructorPreferenceSchema = createInsertSchema(instructorPreferences);
 export const selectInstructorPreferenceSchema = createSelectSchema(instructorPreferences);
 
-// Types for new tables
+// Types
+export type InsertUser = typeof users.$inferInsert;
+export type SelectUser = typeof users.$inferSelect;
+export type InsertCourse = typeof courses.$inferInsert;
+export type SelectCourse = typeof courses.$inferSelect;
+export type InsertBadge = typeof badges.$inferInsert;
+export type SelectBadge = typeof badges.$inferSelect;
 export type InsertNclexQuestion = typeof nclexQuestions.$inferInsert;
 export type SelectNclexQuestion = typeof nclexQuestions.$inferSelect;
 export type InsertFlashcard = typeof flashcards.$inferInsert;
