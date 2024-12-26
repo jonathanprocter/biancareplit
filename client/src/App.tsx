@@ -1,16 +1,13 @@
-import { Toaster } from 'sonner';
 
-import { Toaster } from '@/components/ui/toast/toaster';
+import { Toaster } from 'sonner';
+import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 
 function App() {
   return (
-    <>
     <div className="w-full">
       <ContentFlashcardIntegration />
       <Toaster />
     </div>
-  <Toaster />
-    </>
   );
 }
 
