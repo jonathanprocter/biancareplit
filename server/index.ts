@@ -1,3 +1,4 @@
+import { initializeDatabase } from '@db';
 import express, { NextFunction, type Request, Response } from 'express';
 import { createServer } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
@@ -37,6 +38,10 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Initialize database first
+    await initializeDatabase();
+    log('Database initialized successfully');
+
     const server = createServer(app);
 
     // Create WebSocket server with proper error handling

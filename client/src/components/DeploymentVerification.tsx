@@ -29,11 +29,12 @@ export function DeploymentVerification() {
           ready: false,
           issues: ['Failed to complete deployment verification'],
         });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    void verifyDeployment();
+    verifyDeployment();
   }, []);
 
   if (loading) {
