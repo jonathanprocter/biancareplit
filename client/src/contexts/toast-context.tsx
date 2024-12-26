@@ -1,2 +1,2 @@
-// Re-export everything from the toast component
-export { ToastProvider, useToast, type Toast } from '../components/ui/toast';
+// This file is deprecated
+// Import { ToastProvider, useToast } from '@/components/ui/toast' instead

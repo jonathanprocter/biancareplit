@@ -1,5 +1,5 @@
 // Single source of truth for toast functionality
-export {
+import {
   Toast,
   ToastAction,
   ToastClose,
@@ -8,6 +8,20 @@ export {
   ToastViewport,
   type ToastActionElement,
 } from './toast';
-export { Toaster } from './toaster';
-export { ToastProvider, useToast } from './provider';
-export type { Toast as ToastType, ToastProps } from './types';
+import { Toaster } from './toaster';
+import { ToastProvider, useToast } from './provider';
+import type { Toast as ToastType, ToastProps } from './types';
+
+export {
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastDescription,
+  ToastTitle,
+  ToastViewport,
+  Toaster,
+  ToastProvider,
+  useToast,
+};
+
+export type { ToastActionElement, ToastType, ToastProps };

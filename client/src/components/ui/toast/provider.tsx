@@ -1,5 +1,7 @@
 import * as ToastPrimitives from '@radix-ui/react-toast';
+
 import * as React from 'react';
+
 import type { Toast } from './types';
 
 interface ToastContextValue {

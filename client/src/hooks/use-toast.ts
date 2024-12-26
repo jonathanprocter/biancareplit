@@ -1,2 +1,2 @@
 // Re-export from toast components
-export * from '../components/ui/toast';
+export { useToast } from '@/components/ui/toast';
