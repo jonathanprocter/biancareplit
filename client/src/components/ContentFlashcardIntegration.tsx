@@ -29,21 +29,13 @@ interface APIError extends Error {
 }
 
 const ContentFlashcardIntegration = () => {
-  const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
 
-  const showToast = useCallback((props: { title: string; description: string; variant?: 'default' | 'destructive' }) => {
-    if (toast) {
-      toast({
-        title: props.title,
-        description: props.description,
-        variant: props.variant || 'default',
-        duration: 3000
-      });
-    }
-  }, [toast]);
+  const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    showNotification({ message, type });
+  }, []);
   const [progress, setProgress] = useState<number>(0);
   const [studySlots, setStudySlots] = useState<StudySlot[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
@@ -105,11 +97,7 @@ const ContentFlashcardIntegration = () => {
       setStudySlots([newStudySlot]);
       setInitialized(true);
 
-      showToast({
-        title: 'Success',
-        description: 'Flashcard system ready to use',
-        variant: 'default',
-      });
+      notify('Flashcard system ready to use', 'success');
     } catch (error) {
       const apiError: APIError =
         error instanceof Error ? error : new Error('Failed to initialize system');
