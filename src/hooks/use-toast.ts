@@ -1,17 +1,16 @@
 
-import { toast } from 'sonner';
+import { create } from 'zustand';
 
-export const useToast = () => ({
-  toast: (options: { title: string; description: string; variant?: 'error' | 'success' | 'info' }) => {
-    const { title, description, variant = 'default' } = options;
-    if (variant === 'error') {
-      toast.error(title, { description });
-    } else if (variant === 'success') {
-      toast.success(title, { description });
-    } else if (variant === 'info') {
-      toast.info(title, { description });
-    } else {
-      toast(title, { description });
-    }
-  }
-});
+interface ToastState {
+  message: string | null;
+  type: 'success' | 'error' | 'info';
+  show: (message: string, type?: 'success' | 'error' | 'info') => void;
+  hide: () => void;
+}
+
+export const useToast = create<ToastState>((set) => ({
+  message: null,
+  type: 'info',
+  show: (message, type = 'info') => set({ message, type }),
+  hide: () => set({ message: null, type: 'info' }),
+}));

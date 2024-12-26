@@ -1,14 +1,13 @@
 
-import { Providers } from './providers/providers';
+import React from 'react';
 import { ContentFlashcardIntegration } from './components/ContentFlashcardIntegration';
-import { ToastProvider } from './components/ui/toast/provider';
+import { Toast } from './components/ui/toast/Toast';
 
 export default function App() {
   return (
-    <Providers>
-      <div className="min-h-screen bg-gray-50 p-4">
-        <ContentFlashcardIntegration />
-      </div>
-    </Providers>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <ContentFlashcardIntegration />
+      <Toast />
+    </div>
   );
 }
