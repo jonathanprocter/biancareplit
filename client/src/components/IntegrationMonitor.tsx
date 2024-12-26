@@ -18,7 +18,7 @@ interface SystemStatus {
 export const IntegrationMonitor: React.FC<Props> = ({ onComplete }) => {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const toast = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     const validator = SystemValidator.getInstance();
