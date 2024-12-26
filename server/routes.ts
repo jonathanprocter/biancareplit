@@ -1,8 +1,21 @@
 import { db } from '@db';
 import { nclexQuestions, users } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import type { Express, Request, Response } from 'express';
+import type { Express, Request, Response, NextFunction } from 'express';
 import { type Server, createServer } from 'http';
+
+// Error handler middleware
+const errorHandler = (err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('Error:', err);
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+
+  res.status(status).json({
+    status: 'error',
+    message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+};
 
 export function registerRoutes(app: Express): Server {
   // Health check endpoint
@@ -15,39 +28,36 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Database health check
-  app.get('/api/health/db', async (_req, res) => {
+  app.get('/api/health/db', async (_req, res, next) => {
     try {
-      // Simple query to verify database connection
       await db.select().from(users).limit(1);
       res.json({ status: 'connected' });
     } catch (error) {
-      res.status(500).json({
-        status: 'error',
-        message: 'Database connection failed',
-      });
+      next(error);
     }
   });
 
-  // Get available questions
-  app.get('/api/questions', async (_req, res) => {
+  // Get available questions with error handling
+  app.get('/api/questions', async (_req, res, next) => {
     try {
       const allQuestions = await db.select().from(nclexQuestions);
       res.json(allQuestions);
     } catch (error) {
-      res.status(500).json({
-        message: 'Failed to fetch questions',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      next(error);
     }
   });
 
   // API route handler for 404s
-  app.use('/api/*', (req, res) => {
+  app.use('/api/*', (_req, res) => {
     res.status(404).json({
-      message: `API endpoint not found: ${req.path}`,
+      status: 'error',
+      message: `API endpoint not found: ${_req.path}`,
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Global error handler
+  app.use(errorHandler);
 
   const server = createServer(app);
   return server;
