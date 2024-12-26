@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 export interface ToastProps {
@@ -9,12 +8,11 @@ export interface ToastProps {
 
 export function useToast() {
   return {
-    toast: (props: ToastProps) => {
-      const { title, description, variant } = props;
+    toast: ({ title, description, variant }: ToastProps) => {
       if (variant === 'destructive') {
-        toast.error(title || '', { description });
+        toast.error(title, { description });
       } else {
-        toast.success(title || '', { description });
+        toast(title, { description });
       }
     }
   };
