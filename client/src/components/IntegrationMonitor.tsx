@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
 import { SystemValidator } from '@/utils/systemValidator';
+import { useToast } from '@/components/ui/toast';
 
 interface Props {
   onComplete?: () => void;
@@ -17,6 +16,7 @@ interface SystemStatus {
 export const IntegrationMonitor: React.FC<Props> = ({ onComplete }) => {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     const validator = SystemValidator.getInstance();
@@ -27,12 +27,28 @@ export const IntegrationMonitor: React.FC<Props> = ({ onComplete }) => {
         setStatus(result);
         if (result.success && onComplete) {
           onComplete();
+          toast({
+            title: 'System Check Complete',
+            description: 'All systems operational.',
+            variant: 'success',
+          });
+        } else if (!result.success) {
+          toast({
+            title: 'System Issues Detected',
+            description: 'Please check the details.',
+            variant: 'error',
+          });
         }
       } catch (error) {
         console.error(
           'Validation failed:',
           error instanceof Error ? error.message : 'Unknown error',
         );
+        toast({
+          title: 'System Check Failed',
+          description: 'An unexpected error occurred.',
+          variant: 'error',
+        });
       } finally {
         setLoading(false);
       }
@@ -44,7 +60,7 @@ export const IntegrationMonitor: React.FC<Props> = ({ onComplete }) => {
     const interval = setInterval(checkSystem, 5 * 60 * 1000); // Every 5 minutes
 
     return () => clearInterval(interval);
-  }, [onComplete]);
+  }, [onComplete, toast]);
 
   if (loading) {
     return <div>Checking system status...</div>;

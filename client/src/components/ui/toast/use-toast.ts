@@ -1,3 +1,4 @@
+// This is the core toast implementation
 import * as React from 'react';
 
 import type { ToastActionElement, ToastProps } from './toast';
@@ -79,7 +80,9 @@ const reducer = (state: State, action: Action): State => {
     case 'UPDATE_TOAST':
       return {
         ...state,
-        toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),
+        toasts: state.toasts.map((t) =>
+          t.id === action.toast.id ? { ...t, ...action.toast } : t,
+        ),
       };
 
     case 'DISMISS_TOAST': {
@@ -182,4 +185,4 @@ function useToast() {
 }
 
 export { toast, useToast };
-export type { Toast, ToasterToast, State as ToastState };
+export type { State as ToastState, Toast, ToasterToast };

@@ -12,8 +12,7 @@ import {
   ToastViewport,
 } from './toast/toast';
 import { Toaster } from './toast/toaster';
-import { type Toast as ToastType, type ToasterToast } from '@/hooks/use-toast';
-import { toast, useToast } from '@/hooks/use-toast';
+import { type Toast as ToastType, type ToasterToast, toast, useToast } from './toast/use-toast';
 
 export {
   Toast,
