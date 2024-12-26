@@ -10,11 +10,13 @@ export function useToast() {
   return {
     toast: ({ title, description, variant }: ToastProps) => {
       if (variant === 'destructive') {
-        toast.error(title, {
-          description: description,
+        toast.error(title || '', {
+          description: description || ''
         });
       } else {
-        toast.success(title || '', { description }); //Corrected to use toast.success for non-destructive variants
+        toast.success(title || '', {
+          description: description || ''
+        });
       }
     }
   };
