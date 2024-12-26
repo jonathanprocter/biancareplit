@@ -3,6 +3,9 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Switch } from 'wouter';
 
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
+import { DeploymentVerification } from './components/DeploymentVerification';
+import { IntegrationMonitor } from './components/IntegrationMonitor';
+import { ProcessManager } from './components/ProcessManager';
 import { Card, CardContent } from './components/ui/card';
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -21,13 +24,25 @@ function ErrorFallback({ error }: { error: Error }) {
   );
 }
 
-function Home() {
+function App() {
   return (
-    <div className="w-full">
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <ContentFlashcardIntegration />
-      </ErrorBoundary>
-    </div>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <div className="min-h-screen w-full flex flex-col bg-background">
+        <main className="flex-1 flex items-center justify-center p-4">
+          <Switch>
+            <Route path="/">
+              <div className="max-w-7xl mx-auto p-4 space-y-6">
+                <ProcessManager />
+                <IntegrationMonitor />
+                <DeploymentVerification />
+                <ContentFlashcardIntegration />
+              </div>
+            </Route>
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+      </div>
+    </ErrorBoundary>
   );
 }
 
@@ -44,21 +59,6 @@ function NotFound() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function App() {
-  return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="min-h-screen w-full flex flex-col bg-background">
-        <main className="flex-1 flex items-center justify-center p-4">
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route component={NotFound} />
-          </Switch>
-        </main>
-      </div>
-    </ErrorBoundary>
   );
 }
 

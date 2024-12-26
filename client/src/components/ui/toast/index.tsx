@@ -1,4 +1,3 @@
-// Central export point for all toast functionality
 import {
   Toast,
   ToastAction,

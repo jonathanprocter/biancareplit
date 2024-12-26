@@ -1,0 +1,200 @@
+// utils/codeReview.ts
+import { ESLint } from 'eslint';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+interface CodeIssue {
+  file: string;
+  line: number;
+  column: number;
+  message: string;
+  severity: 'error' | 'warning';
+  rule?: string;
+}
+
+interface ReviewResult {
+  issues: CodeIssue[];
+  stats: {
+    filesChecked: number;
+    errorCount: number;
+    warningCount: number;
+    fixableCount: number;
+  };
+}
+
+export class CodeReviewHelper {
+  private eslint: ESLint;
+  
+  constructor() {
+    this.eslint = new ESLint({
+      fix: true,
+      extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      useEslintrc: true
+    });
+  }
+
+  async reviewFile(filePath: string): Promise<CodeIssue[]> {
+    try {
+      const results = await this.eslint.lintFiles([filePath]);
+      
+      return results.flatMap(result => 
+        result.messages.map(msg => ({
+          file: path.relative(process.cwd(), result.filePath),
+          line: msg.line,
+          column: msg.column,
+          message: msg.message,
+          severity: msg.severity === 2 ? 'error' : 'warning',
+          rule: msg.ruleId || undefined
+        }))
+      );
+    } catch (error) {
+      console.error(`Error reviewing file ${filePath}:`, error);
+      return [];
+    }
+  }
+
+  async reviewDirectory(dirPath: string): Promise<ReviewResult> {
+    const issues: CodeIssue[] = [];
+    let filesChecked = 0;
+    let errorCount = 0;
+    let warningCount = 0;
+    let fixableCount = 0;
+
+    async function* getFiles(dir: string): AsyncGenerator<string> {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        
+        if (entry.isDirectory()) {
+          if (!entry.name.startsWith('.') && entry.name !== 'node_modules') {
+            yield* getFiles(fullPath);
+          }
+        } else if (
+          entry.isFile() && 
+          /\.(js|jsx|ts|tsx)$/.test(entry.name) &&
+          !entry.name.endsWith('.d.ts')
+        ) {
+          yield fullPath;
+        }
+      }
+    }
+
+    for await (const file of getFiles(dirPath)) {
+      const fileIssues = await this.reviewFile(file);
+      issues.push(...fileIssues);
+      
+      filesChecked++;
+      errorCount += fileIssues.filter(i => i.severity === 'error').length;
+      warningCount += fileIssues.filter(i => i.severity === 'warning').length;
+      fixableCount += fileIssues.length;
+    }
+
+    return {
+      issues,
+      stats: {
+        filesChecked,
+        errorCount,
+        warningCount,
+        fixableCount
+      }
+    };
+  }
+
+  async fixIssues(issues: CodeIssue[]): Promise<void> {
+    const eslintFix = new ESLint({ fix: true });
+    
+    for (const issue of issues) {
+      if (issue.rule) {
+        try {
+          const results = await eslintFix.lintFiles([issue.file]);
+          await ESLint.outputFixes(results);
+        } catch (error) {
+          console.error(`Error fixing issue in ${issue.file}:`, error);
+        }
+      }
+    }
+  }
+}
+
+// components/CodeReviewStatus.tsx
+import React, { useEffect, useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { CodeReviewHelper } from '@/utils/codeReview';
+
+export const CodeReviewStatus: React.FC = () => {
+  const [reviewStatus, setReviewStatus] = useState<ReviewResult | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const runCodeReview = async () => {
+      setReviewing(true);
+      const reviewer = new CodeReviewHelper();
+      
+      try {
+        const result = await reviewer.reviewDirectory('.');
+        setReviewStatus(result);
+        
+        if (result.issues.length > 0) {
+          await reviewer.fixIssues(result.issues);
+        }
+      } catch (error) {
+        console.error('Code review failed:', error);
+      } finally {
+        setReviewing(false);
+      }
+    };
+
+    void runCodeReview();
+  }, []);
+
+  if (reviewing) {
+    return (
+      <div className="space-y-4">
+        <Progress value={progress} />
+        <p>Reviewing code...</p>
+      </div>
+    );
+  }
+
+  if (!reviewStatus) {
+    return <div>Preparing code review...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <Alert variant={reviewStatus.stats.errorCount > 0 ? 'destructive' : 'success'}>
+        <AlertTitle>Code Review Results</AlertTitle>
+        <AlertDescription>
+          <ul className="list-disc pl-4">
+            <li>Files checked: {reviewStatus.stats.filesChecked}</li>
+            <li>Errors found: {reviewStatus.stats.errorCount}</li>
+            <li>Warnings found: {reviewStatus.stats.warningCount}</li>
+            <li>Fixable issues: {reviewStatus.stats.fixableCount}</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
+
+      {reviewStatus.issues.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold">Issues Found:</h3>
+          <div className="mt-2 space-y-2">
+            {reviewStatus.issues.map((issue, index) => (
+              <div key={index} className="p-2 border rounded">
+                <p className="font-medium">
+                  {issue.file}:{issue.line}:{issue.column}
+                </p>
+                <p className="text-sm text-gray-600">{issue.message}</p>
+                {issue.rule && (
+                  <p className="text-xs text-gray-500">Rule: {issue.rule}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

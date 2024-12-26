@@ -1,0 +1,154 @@
+// utils/deploymentChecker.ts
+interface DeploymentCheck {
+  name: string;
+  check: () => Promise<boolean>;
+}
+
+export class DeploymentChecker {
+  private checks: DeploymentCheck[] = [];
+
+  constructor() {
+    this.initializeChecks();
+  }
+
+  private initializeChecks() {
+    // Environment Variables Check
+    this.checks.push({
+      name: 'Environment Variables',
+      check: async () => {
+        const requiredVars = [
+          'NEXT_PUBLIC_API_URL',
+          'NEXT_PUBLIC_APP_ENV'
+        ];
+        return requiredVars.every(varName => 
+          typeof process.env[varName] !== 'undefined'
+        );
+      }
+    });
+
+    // Component Dependencies Check
+    this.checks.push({
+      name: 'Component Dependencies',
+      check: async () => {
+        try {
+          // Check if required components are available
+          const requiredModules = [
+            '@/components/ui/card',
+            '@/components/ui/progress',
+            '@/components/ui/use-toast'
+          ];
+          
+          await Promise.all(
+            requiredModules.map(async (module) => {
+              try {
+                await import(module);
+                return true;
+              } catch {
+                return false;
+              }
+            })
+          );
+          
+          return true;
+        } catch {
+          return false;
+        }
+      }
+    });
+
+    // Database Connection Check
+    this.checks.push({
+      name: 'Database Connection',
+      check: async () => {
+        try {
+          const response = await fetch('/api/db/health');
+          return response.status === 200;
+        } catch {
+          return false;
+        }
+      }
+    });
+  }
+
+  async verifyDeployment(): Promise<{
+    ready: boolean;
+    issues: string[];
+  }> {
+    const issues: string[] = [];
+
+    for (const check of this.checks) {
+      try {
+        const passed = await check.check();
+        if (!passed) {
+          issues.push(`${check.name} check failed`);
+        }
+      } catch (error) {
+        issues.push(`${check.name} check failed with error: ${error}`);
+      }
+    }
+
+    return {
+      ready: issues.length === 0,
+      issues
+    };
+  }
+}
+
+// components/DeploymentVerification.tsx
+import React, { useEffect, useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { DeploymentChecker } from '@/utils/deploymentChecker';
+
+export const DeploymentVerification: React.FC = () => {
+  const [deploymentStatus, setDeploymentStatus] = useState<{
+    ready: boolean;
+    issues: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    const checker = new DeploymentChecker();
+    
+    const verifyDeployment = async () => {
+      try {
+        const status = await checker.verifyDeployment();
+        setDeploymentStatus(status);
+      } catch (error) {
+        console.error('Deployment verification failed:', error);
+        setDeploymentStatus({
+          ready: false,
+          issues: ['Failed to complete deployment verification']
+        });
+      }
+    };
+
+    void verifyDeployment();
+  }, []);
+
+  if (!deploymentStatus) {
+    return <div>Verifying deployment status...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {!deploymentStatus.ready ? (
+        <Alert variant="destructive">
+          <AlertTitle>Deployment Issues Detected</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc pl-4">
+              {deploymentStatus.issues.map((issue, index) => (
+                <li key={index}>{issue}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert variant="success">
+          <AlertTitle>Deployment Ready</AlertTitle>
+          <AlertDescription>
+            All deployment checks passed successfully.
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+};

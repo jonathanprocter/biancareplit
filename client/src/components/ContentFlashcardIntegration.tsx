@@ -42,7 +42,6 @@ const ContentFlashcardIntegration = () => {
     categoryProgress: {},
   });
 
-  // Improved error handling for progress updates
   const updateProgress = useCallback((completedCards: number, accuracy = 0): void => {
     try {
       if (typeof completedCards !== 'number' || typeof accuracy !== 'number') {
@@ -62,11 +61,10 @@ const ContentFlashcardIntegration = () => {
         error instanceof Error ? error.message : 'Unknown error',
       );
       setProgress(0);
-      throw error; // Re-throw for error boundary handling
+      throw error;
     }
   }, []);
 
-  // Improved initialization with proper error handling
   const initializeSystem = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
@@ -122,11 +120,10 @@ const ContentFlashcardIntegration = () => {
       try {
         await initializeSystem();
       } catch (error) {
-        if (error instanceof Error) {
-          console.error(`Error: ${error.message}`);
-        } else {
-          console.error('An unknown error occurred:', error);
-        }
+        console.error(
+          'Initialization failed:',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
       }
     };
 
