@@ -1,11 +1,9 @@
+
 import { v4 as uuidv4 } from 'uuid';
-
 import { useCallback, useEffect, useState } from 'react';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/toast/use-toast';
-
 import { cn } from '@/lib/utils';
 
 interface AnalyticsData {
@@ -56,13 +54,15 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error updating progress';
-      console.error('Error updating progress:', errorMessage);
+      console.error('Error updating progress:', error);
+      toast({
+        variant: "destructive",
+        title: "Progress Update Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred"
+      });
       setProgress(0);
-      throw error;
     }
-  }, []);
+  }, [toast]);
 
   const initializeSystem = useCallback(async (): Promise<void> => {
     try {
@@ -92,27 +92,24 @@ const ContentFlashcardIntegration = () => {
       setInitialized(true);
 
       toast({
-        title: 'System Initialized',
-        description: 'Flashcard system ready to use',
+        title: "System Initialized",
+        description: "Flashcard system ready to use"
       });
     } catch (error) {
-      const apiError: APIError =
-        error instanceof Error ? error : new Error('Failed to initialize system');
+      const apiError: APIError = error instanceof Error ? error : new Error('Failed to initialize system');
       apiError.code = 'INITIALIZATION_ERROR';
       console.error('Failed to initialize:', apiError.message);
       setError(apiError);
 
       toast({
-        variant: 'destructive',
-        title: 'Initialization Failed',
-        description: apiError.message,
+        variant: "destructive",
+        title: "Initialization Failed",
+        description: apiError.message
       });
-
-      throw apiError;
     } finally {
       setLoading(false);
     }
-  }, [updateProgress]);
+  }, [toast, updateProgress]);
 
   useEffect(() => {
     let mounted = true;
@@ -123,10 +120,7 @@ const ContentFlashcardIntegration = () => {
           await initializeSystem();
         }
       } catch (error) {
-        console.error(
-          'Initialization failed:',
-          error instanceof Error ? error.message : 'Unknown error',
-        );
+        console.error('Initialization failed:', error instanceof Error ? error.message : 'Unknown error');
       }
     };
 
@@ -171,7 +165,6 @@ const ContentFlashcardIntegration = () => {
         <Progress value={progress} className="mt-4" />
         <p className="text-sm text-gray-500 mt-2">{progress}% Complete</p>
       </CardHeader>
-
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="p-4 bg-muted rounded-lg">
@@ -191,7 +184,6 @@ const ContentFlashcardIntegration = () => {
             <p className="text-2xl font-bold">{Object.keys(analytics.categoryProgress).length}</p>
           </div>
         </div>
-
         <div className="space-y-4">
           <h4 className="font-semibold text-sm text-muted-foreground">Study Sessions</h4>
           {studySlots.map((slot) => (
