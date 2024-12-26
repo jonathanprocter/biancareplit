@@ -3,9 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCallback, useEffect, useState } from 'react';
 
 import { cn } from '../lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Progress } from './ui/progress';
-import { useToast } from './ui/toast';
+import { Card, CardContent, CardHeader, CardTitle, Progress, useToast } from './ui';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -46,11 +44,7 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-      if (error instanceof Error) {
-        console.error(`Error updating progress: ${error.message}`);
-      } else {
-        console.error('An unknown error occurred:', error);
-      }
+      console.error('Error updating progress:', error instanceof Error ? error.message : error);
       setProgress(0);
     }
   }, []);

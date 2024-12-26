@@ -10,8 +10,9 @@ import {
   type ToastProps,
   ToastProvider,
   ToastTitle,
+  Toaster,
   useToast,
-} from './toast/toast';
+} from './toast';
 
 export {
   Card,
@@ -26,6 +27,7 @@ export {
   ToastDescription,
   ToastProvider,
   ToastTitle,
+  Toaster,
   useToast,
 };
 
