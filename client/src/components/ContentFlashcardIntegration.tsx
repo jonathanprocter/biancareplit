@@ -3,8 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { toast } from '@/components/ui/toast/use-toast';
-
+import { useToast } from '@/components/ui/toast/use-toast';
 import { cn } from '@/lib/utils';
 
 interface AnalyticsData {
@@ -28,6 +27,7 @@ interface APIError extends Error {
 }
 
 const ContentFlashcardIntegration = () => {
+  const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
@@ -62,7 +62,7 @@ const ContentFlashcardIntegration = () => {
       });
       setProgress(0);
     }
-  }, []);
+  }, [toast]);
 
   const initializeSystem = useCallback(async (): Promise<void> => {
     try {
@@ -109,7 +109,7 @@ const ContentFlashcardIntegration = () => {
     } finally {
       setLoading(false);
     }
-  }, [updateProgress]);
+  }, [toast, updateProgress]);
 
   useEffect(() => {
     let mounted = true;
