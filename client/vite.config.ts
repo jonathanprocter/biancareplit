@@ -4,11 +4,10 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  root: path.resolve(__dirname, '.'),
-  publicDir: 'public',
   server: {
+    host: '0.0.0.0',
     port: 5000,
-    host: '0.0.0.0'
+    strictPort: true
   },
   resolve: {
     alias: {
@@ -17,11 +16,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html')
-      }
-    }
+    emptyOutDir: true
   }
 });

@@ -5,6 +5,11 @@ import type { Express, Request, Response, NextFunction } from 'express';
 import { type Server, createServer } from 'http';
 import path from 'path';
 import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Error handler middleware
 const errorHandler = (err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -20,16 +25,9 @@ const errorHandler = (err: any, _req: Request, res: Response, _next: NextFunctio
 };
 
 export function registerRoutes(app: Express): Server {
-  // Serve static files from the public directory
-  app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
-
-  // Health check endpoint
+  // API routes
   app.get('/api/health', (_req, res) => {
-    res.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-    });
+    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
   });
 
   // Database health check
@@ -52,18 +50,29 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Serve index.html for all other routes to support client-side routing
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
-  });
+  // Serve static files from the client/dist directory in production
+  if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
+  }
 
-  // API route handler for 404s
+  // API catch-all for 404s
   app.use('/api/*', (_req, res) => {
     res.status(404).json({
       status: 'error',
-      message: `API endpoint not found: ${_req.path}`,
-      timestamp: new Date().toISOString(),
+      message: 'API endpoint not found',
     });
+  });
+
+  // For any other route, let the React app handle routing
+  app.get('*', (_req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
+    } else {
+      res.status(404).json({
+        status: 'error',
+        message: 'Not found'
+      });
+    }
   });
 
   // Global error handler

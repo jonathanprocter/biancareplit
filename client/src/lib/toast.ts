@@ -7,7 +7,7 @@ export interface ToastProps {
 }
 
 export const toast = (props: ToastProps) => {
-  const message = props.title || props.description;
+  const message = props.description || props.title;
   if (!message) return;
 
   switch (props.variant) {
