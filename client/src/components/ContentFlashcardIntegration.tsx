@@ -29,7 +29,7 @@ interface APIError extends Error {
 }
 
 const ContentFlashcardIntegration = () => {
-  const { toast: showToast } = useToast();
+  const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
@@ -58,11 +58,7 @@ const ContentFlashcardIntegration = () => {
         setProgress(Math.round(progressValue));
       } catch (error) {
         console.error('Error updating progress:', error);
-        showToast({
-          variant: 'destructive',
-          title: 'Progress Update Failed',
-          description: error instanceof Error ? error.message : 'Unknown error occurred',
-        });
+        toast(error instanceof Error ? error.message : 'Unknown error occurred');
         setProgress(0);
       }
     },
@@ -94,10 +90,7 @@ const ContentFlashcardIntegration = () => {
       setStudySlots([newStudySlot]);
       setInitialized(true);
 
-      showToast({
-        title: 'System Initialized',
-        description: 'Flashcard system ready to use',
-      });
+      toast('Flashcard system ready to use');
     } catch (error) {
       const apiError: APIError =
         error instanceof Error ? error : new Error('Failed to initialize system');
