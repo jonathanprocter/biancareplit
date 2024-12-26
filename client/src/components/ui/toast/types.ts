@@ -1,2 +1,2 @@
-// This file has been deprecated and consolidated into toast.tsx
-// Import types from '@/components/ui/toast' instead
+// This file is deprecated and should be removed
+// Import types from '@/hooks/use-toast' instead

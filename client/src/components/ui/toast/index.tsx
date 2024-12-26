@@ -1,9 +1,9 @@
 'use client';
 
 import { Toaster as SonnerToaster } from 'sonner';
-import { toast } from 'sonner';
-import type { ToastProps } from '@/hooks/use-toast';
+
 export { useToast } from '@/hooks/use-toast';
+export type { ToastProps } from '@/hooks/use-toast';
 
 export function Toaster() {
   return (
@@ -19,6 +19,3 @@ export function Toaster() {
     />
   );
 }
-
-export { toast };
-export type { ToastProps };
