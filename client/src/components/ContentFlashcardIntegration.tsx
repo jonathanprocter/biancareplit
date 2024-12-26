@@ -35,7 +35,14 @@ const ContentFlashcardIntegration = () => {
   const [error, setError] = useState<APIError | null>(null);
 
   const showToast = useCallback((props: { title: string; description: string; variant?: 'default' | 'destructive' }) => {
-    toast(props);
+    if (toast) {
+      toast({
+        title: props.title,
+        description: props.description,
+        variant: props.variant || 'default',
+        duration: 3000
+      });
+    }
   }, [toast]);
   const [progress, setProgress] = useState<number>(0);
   const [studySlots, setStudySlots] = useState<StudySlot[]>([]);
