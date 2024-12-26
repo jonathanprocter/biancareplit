@@ -1,3 +1,4 @@
+
 import { Toaster as SonnerToaster } from 'sonner';
 
 export function Toaster() {
@@ -6,11 +7,7 @@ export function Toaster() {
       position="bottom-right"
       toastOptions={{
         duration: 3000,
-        style: {
-          background: 'hsl(var(--background))',
-          color: 'hsl(var(--foreground))',
-          border: '1px solid hsl(var(--border))',
-        },
+        className: 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100',
       }}
     />
   );
