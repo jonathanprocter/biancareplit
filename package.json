@@ -105,6 +105,7 @@
     "input-otp": "^1.2.4",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "jotai": "^2.11.0",
     "lint-staged": "^15.2.11",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",
