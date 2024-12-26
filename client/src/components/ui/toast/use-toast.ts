@@ -1,5 +1,8 @@
-
 import { toast } from 'sonner';
+import { useContext } from 'react';
+// Assuming ToastContext is defined elsewhere
+import { ToastContext } from './ToastContext'; // Or wherever your context is defined
+
 
 export interface ToastProps {
   title?: string;
@@ -8,18 +11,6 @@ export interface ToastProps {
 }
 
 export function useToast() {
-  return {
-    toast: (props: ToastProps) => {
-      try {
-        const { title, description, variant } = props;
-        if (variant === 'destructive') {
-          toast.error(title || '', { description });
-        } else {
-          toast(title || '', { description });
-        }
-      } catch (error) {
-        console.error('Toast error:', error);
-      }
-    }
-  };
+  const { toast } = useContext(ToastContext);
+  return { toast };
 }
