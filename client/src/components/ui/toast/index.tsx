@@ -1,30 +1,24 @@
 'use client';
 
-import {
-  Toast,
-  ToastAction,
-  type ToastActionElement,
-  ToastClose,
-  ToastDescription,
-  type ToastProps,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from './toast';
-import { Toaster } from './toaster';
-import { type Toast as ToastType, type ToasterToast, toast, useToast } from './use-toast';
+import { Toaster as SonnerToaster } from 'sonner';
+import { toast } from 'sonner';
+import type { ToastProps } from '@/hooks/use-toast';
+export { useToast } from '@/hooks/use-toast';
 
-export {
-  Toast,
-  ToastAction,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-  Toaster,
-  useToast,
-  toast,
-};
+export function Toaster() {
+  return (
+    <SonnerToaster
+      position="bottom-right"
+      toastOptions={{
+        style: {
+          background: 'hsl(var(--background))',
+          color: 'hsl(var(--foreground))',
+          border: '1px solid hsl(var(--border))',
+        },
+      }}
+    />
+  );
+}
 
-export type { ToastProps, ToastActionElement, ToastType, ToasterToast };
+export { toast };
+export type { ToastProps };

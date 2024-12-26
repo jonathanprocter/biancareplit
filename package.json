@@ -17,14 +17,18 @@
     "@typescript-eslint/parser": "^8.18.2",
     "@vitejs/plugin-react": "^4.3.4",
     "ai-bot-template": "file:",
+    "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.30.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.37.3",
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.14.0",
+    "postcss": "^8.4.49",
+    "sonner": "^1.7.1",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "terser-webpack-plugin": "^5.3.11",
-    "vite": "^6.0.6"
+    "vite": "^6.0.6",
+    "zustand": "^5.0.2"
   }
 }

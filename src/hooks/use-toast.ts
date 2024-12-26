@@ -1,18 +1,26 @@
+import { toast as sonnerToast } from 'sonner';
 
-import { toast } from 'sonner';
+export interface ToastProps {
+  title?: string;
+  description?: string;
+  variant?: 'default' | 'destructive' | 'success' | 'error' | 'info';
+}
 
-export const useToast = () => ({
-  toast: (options: { title?: string; description?: string; type?: 'success' | 'error' | 'info' }) => {
-    const message = options.description || options.title;
-    switch (options.type) {
+export const useToast = () => {
+  const toast = (props: ToastProps) => {
+    const message = props.description || props.title;
+    switch (props.variant) {
       case 'success':
-        toast.success(message);
+        sonnerToast.success(message);
         break;
       case 'error':
-        toast.error(message);
+      case 'destructive':
+        sonnerToast.error(message);
         break;
       default:
-        toast(message);
+        sonnerToast(message);
     }
-  }
-});
+  };
+
+  return { toast };
+};

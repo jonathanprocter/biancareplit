@@ -1,6 +1,5 @@
 import { type FC, useEffect, useState } from 'react';
-
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface TestProps {
   title: string;
@@ -20,6 +19,7 @@ export const TestComponent: FC<TestProps> = ({ title, items }) => {
       toast({
         title: 'Item Selected',
         description: `Selected item ID: ${selectedId}`,
+        variant: 'info'
       });
     }
   }, [selectedId, toast]);
@@ -28,12 +28,14 @@ export const TestComponent: FC<TestProps> = ({ title, items }) => {
     toast({
       title: 'Component Mounted',
       description: `Mounted with title: ${title}`,
+      variant: 'success'
     });
 
     return () => {
       toast({
         title: 'Component Unmounted',
         description: 'Cleanup complete',
+        variant: 'info'
       });
     };
   }, [title, toast]);
