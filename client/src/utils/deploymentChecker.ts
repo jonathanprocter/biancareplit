@@ -16,7 +16,7 @@ export class DeploymentChecker {
       name: 'Environment Variables',
       check: async () => {
         const requiredVars = ['DATABASE_URL'];
-        return requiredVars.every((varName) => typeof process.env[varName] !== 'undefined');
+        return requiredVars.every((varName) => typeof import.meta.env[`VITE_${varName}`] !== 'undefined');
       },
     });
 
@@ -35,7 +35,10 @@ export class DeploymentChecker {
           await Promise.all(
             requiredModules.map(async (module) => {
               try {
-                await import(module);
+                // Add Vite ignore comment to suppress dynamic import warning
+                // @ts-ignore
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const mod = await import(/* @vite-ignore */ module);
                 return true;
               } catch {
                 return false;

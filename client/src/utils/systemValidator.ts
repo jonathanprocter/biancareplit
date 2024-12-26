@@ -1,4 +1,4 @@
-import { toast } from '@/components/ui/toast';
+import { useToast } from '@/components/ui/toast';
 
 interface SystemCheck {
   name: string;
@@ -33,7 +33,7 @@ export class SystemValidator {
       name: 'Toast Component',
       check: async () => {
         try {
-          return typeof toast === 'function';
+          return typeof useToast === 'function';
         } catch {
           return false;
         }

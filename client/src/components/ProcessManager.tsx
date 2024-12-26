@@ -8,7 +8,11 @@ import { IntegrationMonitor } from '@/components/IntegrationMonitor';
 
 type ProcessStep = 'review' | 'integration' | 'complete';
 
-export const ProcessManager: React.FC = () => {
+interface Props {
+  onComplete?: () => void;
+}
+
+export const ProcessManager: React.FC<Props> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState<ProcessStep>('review');
   const [error, setError] = useState<string | null>(null);
 
@@ -20,6 +24,9 @@ export const ProcessManager: React.FC = () => {
           break;
         case 'integration':
           setCurrentStep('complete');
+          if (onComplete) {
+            onComplete();
+          }
           break;
         default:
           break;
