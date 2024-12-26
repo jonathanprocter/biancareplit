@@ -15,7 +15,7 @@ export default defineConfig({
     }
   },
   css: {
-    postcss: true 
+    postcss: true
   },
   build: {
     outDir: 'dist',
