@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 interface ToastProps {
@@ -16,6 +15,6 @@ export function useToast() {
       } else {
         toast(title, { description });
       }
-    }
+    },
   };
 }

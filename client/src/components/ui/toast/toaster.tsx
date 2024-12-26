@@ -1,9 +1,8 @@
-
 import { Toaster as SonnerToaster } from 'sonner';
 
 export function Toaster() {
   return (
-    <SonnerToaster 
+    <SonnerToaster
       position="bottom-right"
       toastOptions={{
         duration: 3000,
