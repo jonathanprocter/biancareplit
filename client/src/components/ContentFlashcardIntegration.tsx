@@ -61,7 +61,7 @@ const ContentFlashcardIntegration = () => {
         showToast({
           variant: 'destructive',
           title: 'Error',
-          description: error instanceof Error ? error.message : 'Unknown error occurred'
+          description: error instanceof Error ? error.message : 'Unknown error occurred',
         });
         setProgress(0);
       }
@@ -96,7 +96,7 @@ const ContentFlashcardIntegration = () => {
 
       showToast({
         title: 'Success',
-        description: 'Flashcard system ready to use'
+        description: 'Flashcard system ready to use',
       });
     } catch (error) {
       const apiError: APIError =
