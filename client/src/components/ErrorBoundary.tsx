@@ -1,5 +1,4 @@
-
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import NotificationManager from '../lib/NotificationManager';
 
 interface Props {
@@ -33,7 +32,9 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
           <h2 className="text-red-800 font-bold">Something went wrong</h2>
-          <p className="text-red-600">The application encountered an error</p>
+          <p className="text-red-600 mt-2">
+            The application encountered an error. Please try refreshing the page.
+          </p>
         </div>
       );
     }

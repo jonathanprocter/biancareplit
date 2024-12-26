@@ -22,6 +22,6 @@ export default defineConfig({
     host: '0.0.0.0'
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'sonner']
+    include: ['react', 'react-dom', 'sonner', '@radix-ui/react-toast', 'tailwind-merge', 'clsx']
   }
 });

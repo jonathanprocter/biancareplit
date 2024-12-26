@@ -6,30 +6,27 @@ export interface ToastProps {
   variant?: 'default' | 'destructive' | 'success' | 'error' | 'info';
 }
 
-export function useToast() {
-  function toast(props: ToastProps) {
-    const { title = '', description = '', variant = 'default' } = props;
+// Single source of truth for toast functionality
+export const toast = (props: ToastProps) => {
+  const title = props.title || '';
+  const description = props.description;
 
-    const options = {
-      description,
-      className: 'group toast',
-    };
+  const options = {
+    description: description,
+  };
 
-    switch (variant) {
-      case 'success':
-        return sonnerToast.success(title, options);
-      case 'error':
-      case 'destructive':
-        return sonnerToast.error(title, options);
-      case 'info':
-        return sonnerToast.info(title, options);
-      default:
-        return sonnerToast(title, options);
-    }
+  switch (props.variant) {
+    case 'success':
+      return sonnerToast.success(title, options);
+    case 'error':
+    case 'destructive':
+      return sonnerToast.error(title, options);
+    case 'info':
+      return sonnerToast.info(title, options);
+    default:
+      return sonnerToast(title, options);
   }
+};
 
-  return { toast };
-}
-
-// Export a singleton instance for direct usage
-export const { toast } = useToast();
+// React hook for components
+export const useToast = () => ({ toast });

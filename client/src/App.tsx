@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ContentFlashcardIntegration } from './components/ContentFlashcardIntegration';
-import { Toaster } from '@/components/ui/toast';
+import { Toaster } from 'sonner';
 
 function App() {
   return (
@@ -13,7 +13,13 @@ function App() {
           <Route path="/" component={HomePage} />
           <Route component={NotFound} />
         </Switch>
-        <Toaster />
+        <Toaster 
+          position="bottom-right"
+          theme="light"
+          richColors
+          closeButton
+          className="toaster-container"
+        />
       </div>
     </ErrorBoundary>
   );
