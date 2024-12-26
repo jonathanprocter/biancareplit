@@ -6,8 +6,8 @@ export interface ToastProps {
   variant?: 'default' | 'destructive' | 'success' | 'error' | 'info';
 }
 
-export const toast = ({ title, description, variant = 'default' }: ToastProps) => {
-  const message = title || description;
+export function toast({ title, description, variant = 'default' }: ToastProps) {
+  const message = description || title;
   if (!message) return;
 
   switch (variant) {
@@ -24,6 +24,8 @@ export const toast = ({ title, description, variant = 'default' }: ToastProps) =
     default:
       sonnerToast(message);
   }
-};
+}
 
-export const useToast = () => ({ toast });
+export const useToast = () => {
+  return { toast };
+};

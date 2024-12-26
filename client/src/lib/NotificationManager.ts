@@ -19,7 +19,7 @@ class NotificationManager {
     if (!message) return;
 
     const toastProps: ToastProps = {
-      title: message,
+      description: message,
       variant: type
     };
 

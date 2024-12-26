@@ -6,11 +6,8 @@ export default defineConfig({
   plugins: [react()],
   build: {
     target: 'esnext',
-    rollupOptions: {
-      output: {
-        format: 'esm'
-      }
-    }
+    outDir: 'dist',
+    emptyOutDir: true
   },
   resolve: {
     alias: {
@@ -18,10 +15,10 @@ export default defineConfig({
     }
   },
   server: {
-    port: 4000,
+    port: 5000,
     host: '0.0.0.0'
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'sonner', '@radix-ui/react-toast', 'tailwind-merge', 'clsx']
+    include: ['react', 'react-dom', 'sonner', '@tanstack/react-query']
   }
 });

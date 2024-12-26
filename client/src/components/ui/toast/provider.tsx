@@ -1,3 +1,2 @@
-// This file is now deprecated as we are using sonner directly
-// Please import Toaster from 'sonner' instead
+// This file will be removed. Use Toaster from sonner directly
 export {};

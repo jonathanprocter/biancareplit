@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ContentFlashcardIntegration } from './components/ContentFlashcardIntegration';
-import { Toaster } from 'sonner';
+import { Toaster } from '@/components/ui/toast';
 
 function App() {
   return (
