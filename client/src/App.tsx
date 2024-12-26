@@ -1,15 +1,12 @@
-import { ToastProvider } from '@/components/ui/toast/toast-context';
-import { Toaster } from '@/components/ui/toast'; // Assuming this import is needed
+import { Toaster } from 'sonner';
 
 
 function App() {
   return (
-    <ToastProvider>
-      <div className="w-full">
+    <div className="w-full">
         <ContentFlashcardIntegration />
+        <Toaster />
       </div>
-    <Toaster />
-    </ToastProvider>
   );
 }
 
