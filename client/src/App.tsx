@@ -4,7 +4,6 @@ import { Route, Switch } from 'wouter';
 
 import ContentFlashcardIntegration from './components/ContentFlashcardIntegration';
 import { Card, CardContent } from './components/ui/card';
-import { Toaster } from './components/ui/toast';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -57,7 +56,6 @@ function App() {
           </Switch>
         </main>
       </div>
-      <Toaster />
     </ErrorBoundary>
   );
 }

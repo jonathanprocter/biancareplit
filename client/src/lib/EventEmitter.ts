@@ -1,6 +1,11 @@
 type EventCallback<T> = (data: T) => void;
 
-export class EventEmitter<Events extends Record<string, any>> {
+// Generic event map interface to constrain the Events type
+interface EventMap {
+  [K: string]: unknown;
+}
+
+export class EventEmitter<Events extends EventMap> {
   private events: Map<keyof Events, Set<EventCallback<Events[keyof Events]>>> = new Map();
 
   protected emit<K extends keyof Events>(event: K, data: Events[K]): void {
