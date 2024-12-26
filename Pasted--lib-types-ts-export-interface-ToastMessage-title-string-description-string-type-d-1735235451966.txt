@@ -1,0 +1,175 @@
+// lib/types.ts
+export interface ToastMessage {
+  title: string;
+  description?: string;
+  type?: 'default' | 'success' | 'error';
+  duration?: number;
+}
+
+// lib/store.ts
+import { create } from 'zustand';
+import { ToastMessage } from './types';
+
+interface AppState {
+  toast: ToastMessage | null;
+  showToast: (message: ToastMessage) => void;
+  hideToast: () => void;
+}
+
+export const useStore = create<AppState>((set) => ({
+  toast: null,
+  showToast: (message) => {
+    set({ toast: message });
+    setTimeout(() => set({ toast: null }), message.duration || 3000);
+  },
+  hideToast: () => set({ toast: null }),
+}));
+
+// components/ErrorBoundary.tsx
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+    error: null
+  };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <h2 className="text-red-800 font-bold">Something went wrong</h2>
+          <p className="text-red-600">{this.state.error?.message}</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// components/Toast.tsx
+import { useStore } from '@/lib/store';
+import { useEffect } from 'react';
+
+export function Toast() {
+  const { toast, hideToast } = useStore();
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(hideToast, toast.duration || 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast, hideToast]);
+
+  if (!toast) return null;
+
+  const bgColor = toast.type === 'success' ? 'bg-green-500' : 
+                 toast.type === 'error' ? 'bg-red-500' : 
+                 'bg-gray-800';
+
+  return (
+    <div className={`fixed bottom-4 right-4 z-50 p-4 rounded-lg text-white ${bgColor}`}>
+      <div className="font-semibold">{toast.title}</div>
+      {toast.description && <div className="text-sm mt-1">{toast.description}</div>}
+    </div>
+  );
+}
+
+// components/ContentFlashcardIntegration.tsx
+import { useState, useEffect } from 'react';
+import { useStore } from '@/lib/store';
+import { Card, CardContent } from '@/components/ui/card';
+
+export function ContentFlashcardIntegration() {
+  const [isConnected, setIsConnected] = useState(false);
+  const showToast = useStore(state => state.showToast);
+
+  useEffect(() => {
+    let ws: WebSocket;
+
+    const connectWebSocket = async () => {
+      try {
+        ws = new WebSocket('ws://localhost:3002');
+        
+        ws.onopen = () => {
+          setIsConnected(true);
+          showToast({
+            title: 'Connected',
+            description: 'WebSocket connection established',
+            type: 'success'
+          });
+        };
+
+        ws.onerror = (error) => {
+          throw new Error('WebSocket connection failed');
+        };
+
+        ws.onclose = () => {
+          setIsConnected(false);
+          showToast({
+            title: 'Disconnected',
+            description: 'WebSocket connection lost',
+            type: 'error'
+          });
+        };
+      } catch (error) {
+        showToast({
+          title: 'Connection Error',
+          description: error instanceof Error ? error.message : 'Failed to connect',
+          type: 'error'
+        });
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [showToast]);
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className={`rounded-full h-3 w-3 ${isConnected ? 'bg-green-500' : 'bg-red-500'} inline-block mr-2`} />
+        <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
+      </CardContent>
+    </Card>
+  );
+}
+
+// App.tsx
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { ContentFlashcardIntegration } from './components/ContentFlashcardIntegration';
+import { Toast } from './components/Toast';
+
+export function App() {
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50 p-4">
+        <ContentFlashcardIntegration />
+        <Toast />
+      </div>
+    </ErrorBoundary>
+  );
+}

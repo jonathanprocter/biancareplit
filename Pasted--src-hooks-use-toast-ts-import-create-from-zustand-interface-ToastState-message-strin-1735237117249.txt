@@ -1,0 +1,103 @@
+// src/hooks/use-toast.ts
+import { create } from 'zustand';
+
+interface ToastState {
+  message: string | null;
+  type: 'success' | 'error' | 'info';
+  show: (message: string, type?: 'success' | 'error' | 'info') => void;
+  hide: () => void;
+}
+
+export const useToast = create<ToastState>((set) => ({
+  message: null,
+  type: 'info',
+  show: (message, type = 'info') => set({ message, type }),
+  hide: () => set({ message: null, type: 'info' }),
+}));
+
+// src/components/ui/toast/Toast.tsx
+import React, { useEffect } from 'react';
+import { useToast } from '../../../hooks/use-toast';
+
+export function Toast() {
+  const { message, type, hide } = useToast();
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(hide, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message, hide]);
+
+  if (!message) return null;
+
+  const bgColor = type === 'success' ? 'bg-green-500' :
+                 type === 'error' ? 'bg-red-500' :
+                 'bg-blue-500';
+
+  return (
+    <div className={`fixed bottom-4 right-4 p-4 rounded-lg text-white ${bgColor} z-50`}>
+      {message}
+    </div>
+  );
+}
+
+// src/components/ContentFlashcardIntegration.tsx
+import React, { useEffect, useState } from 'react';
+import { useToast } from '../hooks/use-toast';
+
+interface Flashcard {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export function ContentFlashcardIntegration() {
+  const [cards, setCards] = useState<Flashcard[]>([]);
+  const { show } = useToast();
+
+  useEffect(() => {
+    const loadCards = async () => {
+      try {
+        const response = await fetch('/api/flashcards');
+        if (!response.ok) throw new Error('Failed to load flashcards');
+        
+        const data = await response.json();
+        setCards(data);
+        show('Flashcards loaded successfully', 'success');
+      } catch (error) {
+        show(error instanceof Error ? error.message : 'Error loading flashcards', 'error');
+      }
+    };
+
+    loadCards().catch(error => {
+      console.error('Unhandled promise rejection:', error);
+      show('Failed to initialize flashcards', 'error');
+    });
+  }, [show]);
+
+  return (
+    <div className="space-y-4">
+      {cards.map(card => (
+        <div key={card.id} className="p-4 border rounded-lg">
+          <h3 className="font-bold">{card.question}</h3>
+          <p className="mt-2">{card.answer}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// src/App.tsx
+import React from 'react';
+import { ContentFlashcardIntegration } from './components/ContentFlashcardIntegration';
+import { Toast } from './components/ui/toast/Toast';
+
+export default function App() {
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <ContentFlashcardIntegration />
+      <Toast />
+    </div>
+  );
+}

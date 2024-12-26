@@ -1,26 +1,36 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "jsx": "react-jsx",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
-    },
-    "types": ["node", "vite/client"],
-    "esModuleInterop": true
+      "@/*": ["./client/src/*"],
+      "@db/*": ["./db/*"],
+      "@db": ["./db/index.ts"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "build", "dist"]
+  "include": [
+    "client/src/**/*",
+    "client/src/**/*.tsx",
+    "client/src/**/*.ts",
+    "client/src/**/*.d.ts",
+    "db/**/*",
+    "server/**/*",
+    "src/**/*",
+    "test/**/*"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -1,0 +1,155 @@
+// lib/NotificationManager.ts
+type NotificationType = 'success' | 'error' | 'info';
+
+interface Notification {
+  id: string;
+  message: string;
+  type: NotificationType;
+}
+
+class NotificationManager {
+  private static instance: NotificationManager;
+  private notifications: Notification[] = [];
+  private listeners: Set<(notifications: Notification[]) => void> = new Set();
+
+  private constructor() {}
+
+  static getInstance(): NotificationManager {
+    if (!NotificationManager.instance) {
+      NotificationManager.instance = new NotificationManager();
+    }
+    return NotificationManager.instance;
+  }
+
+  addNotification(message: string, type: NotificationType = 'info') {
+    const notification = {
+      id: Math.random().toString(36).substring(2),
+      message,
+      type
+    };
+    this.notifications.push(notification);
+    this.notifyListeners();
+    
+    setTimeout(() => {
+      this.removeNotification(notification.id);
+    }, 3000);
+  }
+
+  removeNotification(id: string) {
+    this.notifications = this.notifications.filter(n => n.id !== id);
+    this.notifyListeners();
+  }
+
+  subscribe(listener: (notifications: Notification[]) => void) {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notifyListeners() {
+    this.listeners.forEach(listener => listener([...this.notifications]));
+  }
+}
+
+export default NotificationManager;
+
+// components/Notifications.tsx
+import React, { useEffect, useState } from 'react';
+import NotificationManager from '../lib/NotificationManager';
+
+export function Notifications() {
+  const [notifications, setNotifications] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const unsubscribe = NotificationManager.getInstance().subscribe(setNotifications);
+    return unsubscribe;
+  }, []);
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 space-y-2">
+      {notifications.map(notification => (
+        <div
+          key={notification.id}
+          className={`p-4 rounded-lg shadow-lg text-white ${
+            notification.type === 'success' ? 'bg-green-500' :
+            notification.type === 'error' ? 'bg-red-500' :
+            'bg-blue-500'
+          }`}
+        >
+          {notification.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// components/ContentFlashcardIntegration.tsx
+import React, { useEffect, useState } from 'react';
+import NotificationManager from '../lib/NotificationManager';
+
+interface ContentFlashcard {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export function ContentFlashcardIntegration() {
+  const [flashcards, setFlashcards] = useState<ContentFlashcard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const notificationManager = NotificationManager.getInstance();
+
+  useEffect(() => {
+    const loadFlashcards = async () => {
+      try {
+        const response = await fetch('/api/flashcards');
+        if (!response.ok) throw new Error('Failed to load flashcards');
+        
+        const data = await response.json();
+        setFlashcards(data);
+        notificationManager.addNotification('Flashcards loaded successfully', 'success');
+      } catch (error) {
+        notificationManager.addNotification(
+          error instanceof Error ? error.message : 'Error loading flashcards',
+          'error'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFlashcards().catch(error => {
+      console.error('Unhandled promise rejection:', error);
+      notificationManager.addNotification('Failed to initialize flashcards', 'error');
+    });
+  }, []);
+
+  if (loading) {
+    return <div>Loading flashcards...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {flashcards.map(card => (
+        <div key={card.id} className="p-4 border rounded-lg">
+          <h3 className="font-bold">{card.question}</h3>
+          <p className="mt-2">{card.answer}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// App.tsx
+import React from 'react';
+import { ContentFlashcardIntegration } from './components/ContentFlashcardIntegration';
+import { Notifications } from './components/Notifications';
+
+export function App() {
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <ContentFlashcardIntegration />
+      <Notifications />
+    </div>
+  );
+}
