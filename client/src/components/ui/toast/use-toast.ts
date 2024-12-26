@@ -8,13 +8,13 @@ export interface ToastProps {
 }
 
 export function useToast() {
-  return {
-    toast: ({ title, description, variant = 'default' }: ToastProps) => {
-      if (variant === 'destructive') {
-        toast.error(title, { description });
-      } else {
-        toast(title, { description });
-      }
-    },
+  const showToast = (props: ToastProps) => {
+    if (props.variant === 'destructive') {
+      toast.error(props.title, { description: props.description });
+    } else {
+      toast(props.title, { description: props.description });
+    }
   };
+
+  return { toast: showToast };
 }

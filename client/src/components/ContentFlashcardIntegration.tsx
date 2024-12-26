@@ -129,8 +129,8 @@ const ContentFlashcardIntegration = () => {
       if (mounted) {
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to initialize system',
+          title: 'Initialization Error',
+          description: error instanceof Error ? error.message : 'Failed to initialize system',
         });
       }
     });
