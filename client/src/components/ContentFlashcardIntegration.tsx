@@ -29,10 +29,16 @@ interface APIError extends Error {
 }
 
 const ContentFlashcardIntegration = () => {
-  const { toast } = useToast();
+  const toast = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<APIError | null>(null);
+
+  const showToast = (props: any) => {
+    if (toast && typeof toast === 'function') {
+      toast(props);
+    }
+  };
   const [progress, setProgress] = useState<number>(0);
   const [studySlots, setStudySlots] = useState<StudySlot[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
@@ -94,7 +100,7 @@ const ContentFlashcardIntegration = () => {
       setStudySlots([newStudySlot]);
       setInitialized(true);
 
-      toast({
+      showToast({
         title: 'Success',
         description: 'Flashcard system ready to use',
         variant: 'default',

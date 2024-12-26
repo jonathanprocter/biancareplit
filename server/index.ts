@@ -29,8 +29,14 @@ wss.on('connection', (ws) => {
       ws.send(JSON.stringify({ status: 'received' }));
     } catch (error) {
       console.error('WebSocket error:', error);
-      ws.send(JSON.stringify({ error: 'Internal server error' }));
+      if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify({ error: 'Internal server error' }));
+      }
     }
+  });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
   });
 
   ws.on('close', () => {
