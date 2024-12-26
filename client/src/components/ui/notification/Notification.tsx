@@ -1,12 +1,43 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import NotificationManager from '../../../lib/NotificationManager';
 
 interface NotificationProps {
   message: string;
   type?: 'success' | 'error' | 'info';
   duration?: number;
 }
+
+export const Notifications: React.FC = () => {
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    const unsubscribe = NotificationManager.getInstance().subscribe(
+      (updatedNotifications) => {
+        setNotifications(updatedNotifications);
+      }
+    );
+    return unsubscribe;
+  }, []);
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+      {notifications.map((notification) => (
+        <div
+          key={notification.id}
+          className={`rounded-lg p-4 shadow-lg ${
+            notification.type === 'error' ? 'bg-red-500' :
+            notification.type === 'success' ? 'bg-green-500' :
+            'bg-blue-500'
+          } text-white`}
+        >
+          {notification.message}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const Notification: React.FC<NotificationProps> = ({ message, type = 'info', duration = 3000 }) => {
   const backgroundColor = type === 'success' ? 'bg-green-500' : 

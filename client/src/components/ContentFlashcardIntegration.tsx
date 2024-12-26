@@ -240,4 +240,4 @@ const ContentFlashcardIntegration = () => {
   );
 };
 
-export default ContentFlashcardIntegration;
+export { ContentFlashcardIntegration };
