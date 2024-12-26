@@ -1,22 +1,20 @@
-import * as ToastPrimitives from '@radix-ui/react-toast';
-
 import * as React from 'react';
 
-import type { ToastProps } from './toast';
+import type { Toast } from './toast';
 
 interface ToastContextValue {
-  toasts: ToastProps[];
-  addToast: (toast: Omit<ToastProps, 'id'>) => void;
-  dismissToast: (toastId: string) => void;
+  toasts: Toast[];
+  addToast: (toast: Omit<Toast, 'id'>) => void;
+  removeToast: (id: string) => void;
 }
 
-const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
+export const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<ToastProps[]>([]);
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
 
-  const addToast = React.useCallback((toast: Omit<ToastProps, 'id'>) => {
-    const id = Math.random().toString(36).substring(2);
+  const addToast = React.useCallback((toast: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { ...toast, id }]);
 
     setTimeout(() => {
@@ -24,27 +22,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }, 5000);
   }, []);
 
-  const dismissToast = React.useCallback((toastId: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== toastId));
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const contextValue = React.useMemo(
+  const value = React.useMemo(
     () => ({
       toasts,
       addToast,
-      dismissToast,
+      removeToast,
     }),
-    [toasts, addToast, dismissToast],
+    [toasts, addToast, removeToast],
   );
 
-  return (
-    <ToastContext.Provider value={contextValue}>
-      <ToastPrimitives.Provider>
-        {children}
-        <ToastPrimitives.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]" />
-      </ToastPrimitives.Provider>
-    </ToastContext.Provider>
-  );
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
 }
 
 export function useToast() {
@@ -53,8 +44,8 @@ export function useToast() {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return {
-    toast: context.addToast,
-    dismiss: context.dismissToast,
     toasts: context.toasts,
+    toast: context.addToast,
+    dismiss: context.removeToast,
   };
 }
