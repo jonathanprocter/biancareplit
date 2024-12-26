@@ -113,7 +113,7 @@ const ContentFlashcardIntegration = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast, updateProgress]);
+  }, [showToast, updateProgress]);
 
   useEffect(() => {
     let mounted = true;

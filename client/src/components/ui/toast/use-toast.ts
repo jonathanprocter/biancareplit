@@ -1,15 +1,22 @@
 
-import { useContext } from 'react';
-import { ToastActionElement, ToastProps } from './types';
-import { ToastContext } from './toast-context';
+import * as React from "react"
+import { toast as sonnerToast } from "sonner"
 
-const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
+export function useToast() {
+  const toast = React.useCallback(
+    ({ title, description, ...props }: { title?: string; description?: string; [key: string]: any }) => {
+      return sonnerToast(description || title, {
+        ...props,
+        description: description ? title : undefined,
+      })
+    },
+    []
+  )
+
+  return {
+    toast,
+    dismiss: sonnerToast.dismiss,
   }
-  return context;
-};
+}
 
-export { useToast };
-export type { ToastProps, ToastActionElement };
+export { sonnerToast as toast }

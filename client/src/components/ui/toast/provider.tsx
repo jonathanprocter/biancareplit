@@ -1,15 +1,3 @@
-import * as React from 'react';
-
-import type { Toast } from './toast';
-
-interface ToastContextValue {
-  toasts: Toast[];
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
-}
-
-export const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
-
 //This function is now redundant and can be removed since we are using @radix-ui/react-toast
 // export function ToastProvider({ children }: { children: React.ReactNode }) {
 //   const [toasts, setToasts] = React.useState<Toast[]>([]);
@@ -40,6 +28,18 @@ export const ToastContext = React.createContext<ToastContextValue | undefined>(u
 // }
 
 import { ToastProvider as BaseToastProvider } from '@radix-ui/react-toast';
+
+import * as React from 'react';
+
+import type { Toast } from './toast';
+
+interface ToastContextValue {
+  toasts: Toast[];
+  addToast: (toast: Omit<Toast, 'id'>) => void;
+  removeToast: (id: string) => void;
+}
+
+export const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   return <BaseToastProvider>{children}</BaseToastProvider>;
