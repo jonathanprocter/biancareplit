@@ -52,7 +52,7 @@ const ContentFlashcardIntegration = () => {
       console.error('Error updating progress:', error instanceof Error ? error.message : error);
       setProgress(0);
     }
-  }, []);
+  }, [updateProgress]);
 
   useEffect(() => {
     const initializeSystem = async () => {
