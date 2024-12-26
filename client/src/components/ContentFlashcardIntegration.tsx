@@ -1,9 +1,10 @@
+
 import { v4 as uuidv4 } from 'uuid';
-
-import { useCallback, useEffect, useState } from 'react';
-
+import React, { useCallback, useEffect, useState } from 'react';
 import { cn } from '../lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, Progress, useToast } from './ui';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Progress } from './ui/progress';
+import { useToast } from '../hooks/use-toast';
 
 interface AnalyticsData {
   totalStudyTime: number;
@@ -20,7 +21,7 @@ interface StudySlot {
   category?: string;
 }
 
-const ContentFlashcardIntegration = () => {
+const ContentFlashcardIntegration: React.FC = () => {
   const { toast } = useToast();
   const [initialized, setInitialized] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -44,12 +45,9 @@ const ContentFlashcardIntegration = () => {
       );
       setProgress(Math.round(progressValue));
     } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-    } else {
-      console.error('An unknown error occurred:', error);
+      console.error('Error updating progress:', error instanceof Error ? error.message : error);
+      setProgress(0);
     }
-    setProgress(0);
   }, []);
 
   useEffect(() => {
