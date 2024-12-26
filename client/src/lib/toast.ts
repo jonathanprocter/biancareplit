@@ -3,14 +3,20 @@ import { create } from 'zustand';
 
 interface ToastState {
   message: string | null;
-  showToast: (message: string) => void;
+  variant?: 'default' | 'destructive';
+  title?: string;
+  description?: string;
+}
+
+interface ToastStore extends ToastState {
+  showToast: (toast: ToastState) => void;
   hideToast: () => void;
 }
 
-export const useToastStore = create<ToastState>((set) => ({
+export const useToastStore = create<ToastStore>((set) => ({
   message: null,
-  showToast: (message) => {
-    set({ message });
+  showToast: (toast) => {
+    set(toast);
     setTimeout(() => {
       set({ message: null });
     }, 3000);
