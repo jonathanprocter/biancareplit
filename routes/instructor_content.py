@@ -1,11 +1,13 @@
-from flask import Blueprint, request, jsonify
-from werkzeug.utils import secure_filename
-import os
 import mimetypes
-import fitz  # PyMuPDF for PDF handling
-import docx  # python-docx for DOCX handling
-from services.ai_service import AIService
+import os
 from typing import Optional
+
+import docx  # python-docx for DOCX handling
+import fitz  # PyMuPDF for PDF handling
+from flask import Blueprint, jsonify, request
+from werkzeug.utils import secure_filename
+
+from services.ai_service import AIService
 
 instructor_bp = Blueprint("instructor", __name__)
 ai_service = AIService()
@@ -17,8 +19,10 @@ MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB
 # Ensure upload directory exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def validate_mime_type(file) -> Optional[str]:
     mime_type = mimetypes.guess_type(file.filename)[0]
@@ -26,16 +30,17 @@ def validate_mime_type(file) -> Optional[str]:
         return "Unknown file type"
 
     allowed_mimes = {
-        'application/pdf': 'pdf',
-        'application/msword': 'doc',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-        'text/plain': 'txt'
+        "application/pdf": "pdf",
+        "application/msword": "doc",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+        "text/plain": "txt",
     }
 
     if mime_type not in allowed_mimes:
         return f"Invalid file type: {mime_type}"
 
     return None
+
 
 def extract_text(filepath: str) -> Optional[str]:
     try:
@@ -60,6 +65,7 @@ def extract_text(filepath: str) -> Optional[str]:
 
     except Exception as e:
         return None
+
 
 @instructor_bp.route("/api/instructor/upload", methods=["POST"])
 def upload_content():
@@ -101,26 +107,32 @@ def upload_content():
         # Process with AI based on content type
         try:
             if content_type == "quiz":
-                questions = ai_service.generate_questions(text_content, topic or "general")
-                return jsonify({
-                    "success": True,
-                    "message": "Questions generated",
-                    "questions": questions
-                })
+                questions = ai_service.generate_questions(
+                    text_content, topic or "general"
+                )
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": "Questions generated",
+                        "questions": questions,
+                    }
+                )
 
             if content_type == "flashcard":
-                flashcards = ai_service.generate_flashcards(text_content, topic or "general")
-                return jsonify({
-                    "success": True,
-                    "message": "Flashcards generated",
-                    "flashcards": flashcards
-                })
+                flashcards = ai_service.generate_flashcards(
+                    text_content, topic or "general"
+                )
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": "Flashcards generated",
+                        "flashcards": flashcards,
+                    }
+                )
             analysis = ai_service.analyze_content(text_content, topic or "general")
-            return jsonify({
-                "success": True,
-                "message": "Content processed",
-                "analysis": analysis
-            })
+            return jsonify(
+                {"success": True, "message": "Content processed", "analysis": analysis}
+            )
 
         finally:
             # Clean up the uploaded file after processing
@@ -128,12 +140,10 @@ def upload_content():
 
     except Exception as e:
         # Clean up file if it exists
-        if 'filepath' in locals() and os.path.exists(filepath):
+        if "filepath" in locals() and os.path.exists(filepath):
             os.remove(filepath)
-        return jsonify({
-            "error": str(e),
-            "message": "Failed to process file"
-        }), 500
+        return jsonify({"error": str(e), "message": "Failed to process file"}), 500
+
 
 @instructor_bp.route("/api/instructor/course-overview", methods=["POST"])
 def set_course_overview():
@@ -154,13 +164,15 @@ def set_course_overview():
         # Update AI context with new course overview
         ai_service.update_course_context(overview, timeframe)
 
-        return jsonify({
-            "success": True,
-            "message": f"{timeframe.capitalize()} overview updated successfully"
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"{timeframe.capitalize()} overview updated successfully",
+            }
+        )
 
     except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "message": "Failed to update course overview"
-        }), 500
+        return (
+            jsonify({"error": str(e), "message": "Failed to update course overview"}),
+            500,
+        )

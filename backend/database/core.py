@@ -2,13 +2,14 @@
 
 import logging
 import os
-from typing import Optional, Dict, Any
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.exc import SQLAlchemyError
+from typing import Any, Dict, Optional
+
 from flask import Flask, current_app
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 logger = logging.getLogger(__name__)
 
@@ -16,13 +17,14 @@ logger = logging.getLogger(__name__)
 db = SQLAlchemy()
 migrate = Migrate()
 
+
 class DatabaseManager:
     """Database manager with robust error handling and connection management."""
 
     _instance = None
     _initialized = False
 
-    def __new__(cls) -> 'DatabaseManager':
+    def __new__(cls) -> "DatabaseManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -51,7 +53,7 @@ class DatabaseManager:
                     logger.info("Database connection verified successfully")
 
                     # Create all tables in development mode
-                    if app.config.get('ENV') == 'development':
+                    if app.config.get("ENV") == "development":
                         db.create_all()
                         logger.info("Database tables created successfully")
 
@@ -110,12 +112,13 @@ class DatabaseManager:
     def cleanup(self) -> None:
         """Cleanup database resources."""
         try:
-            if hasattr(self, 'session'):
+            if hasattr(self, "session"):
                 self.session.remove()
             self._initialized = False
             logger.info("Database cleanup completed")
         except Exception as e:
             logger.error(f"Database cleanup failed: {str(e)}")
+
 
 # Create singleton instance
 db_manager = DatabaseManager()

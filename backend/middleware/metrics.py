@@ -1,16 +1,19 @@
 """Prometheus metrics middleware for Flask application."""
 
-import time
 import logging
-from typing import Optional, Dict, Any
-from flask import Flask, request, g
-from prometheus_client import Counter, Histogram, CollectorRegistry, generate_latest
-from .base import BaseMiddleware
+import time
+from typing import Any, Dict, Optional
+
+from flask import Flask, g, request
+from prometheus_client import CollectorRegistry, Counter, Histogram, generate_latest
+
 from ..config.unified_config import config_manager
+from .base import BaseMiddleware
 
 logger = logging.getLogger(__name__)
 
 CONTENT_TYPE_LATEST = "text/plain; version=0.0.4; charset=utf-8"
+
 
 class MetricsMiddleware(BaseMiddleware):
     """Collects and exposes Prometheus metrics."""
@@ -44,27 +47,27 @@ class MetricsMiddleware(BaseMiddleware):
                 f"{namespace}_http_requests_total",
                 "Total number of HTTP requests",
                 ["method", "endpoint", "status"],
-                registry=self._registry
+                registry=self._registry,
             ),
             "latency": Histogram(
                 f"{namespace}_request_duration_seconds",
                 "HTTP request latency in seconds",
                 ["method", "endpoint"],
                 buckets=buckets,
-                registry=self._registry
+                registry=self._registry,
             ),
             "errors": Counter(
                 f"{namespace}_http_errors_total",
                 "Total number of HTTP errors",
                 ["method", "endpoint", "error_type"],
-                registry=self._registry
+                registry=self._registry,
             ),
             "active_requests": Counter(
                 f"{namespace}_active_requests",
                 "Currently active HTTP requests",
                 ["method"],
-                registry=self._registry
-            )
+                registry=self._registry,
+            ),
         }
 
     def init_app(self, app: Flask) -> None:
@@ -77,13 +80,19 @@ class MetricsMiddleware(BaseMiddleware):
                 logger.info("Metrics collection is disabled")
                 return
 
-            self.exclude_paths = set(config.get("exclude_paths", ["/metrics", "/health", "/static"]))
+            self.exclude_paths = set(
+                config.get("exclude_paths", ["/metrics", "/health", "/static"])
+            )
 
             # Register metrics endpoint
             @app.route("/metrics")
             def metrics():
                 try:
-                    return generate_latest(self._registry), 200, {"Content-Type": CONTENT_TYPE_LATEST}
+                    return (
+                        generate_latest(self._registry),
+                        200,
+                        {"Content-Type": CONTENT_TYPE_LATEST},
+                    )
                 except Exception as e:
                     logger.error(f"Error generating metrics: {str(e)}")
                     return {"error": str(e)}, 500
@@ -100,9 +109,7 @@ class MetricsMiddleware(BaseMiddleware):
         """Record request start time and increment active requests."""
         if request.path not in self.exclude_paths:
             g.start_time = time.time()
-            self._metrics["active_requests"].labels(
-                method=request.method
-            ).inc()
+            self._metrics["active_requests"].labels(method=request.method).inc()
 
     def after_request(self, response):
         """Record request metrics."""
@@ -124,9 +131,7 @@ class MetricsMiddleware(BaseMiddleware):
                 ).inc()
 
                 # Decrement active requests
-                self._metrics["active_requests"].labels(
-                    method=request.method
-                ).dec()
+                self._metrics["active_requests"].labels(method=request.method).dec()
 
                 # Record errors if any
                 if response.status_code >= 400:
