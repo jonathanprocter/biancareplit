@@ -153,7 +153,7 @@ async function applyAutoFixes(files: string[]): Promise<void> {
       const hookMatches = content.matchAll(/useEffect\(\(\)\s*=>\s*{[\s\S]*?},\s*\[(.*?)\]\s*\)/g);
       for (const match of Array.from(hookMatches)) {
         const currentDeps = match[1].split(',').map(d => d.trim()).filter(Boolean);
-        const missingDeps = content.match(new RegExp(`warning.*?'(.*?)'.*?react-hooks\/exhaustive-deps`));
+        const missingDeps = content.match(new RegExp("warning.*?'(.*?)'.*?react-hooks\/exhaustive-deps"));
 
         if (missingDeps) {
           const newDeps = [...new Set([...currentDeps, missingDeps[1]])].join(', ');

@@ -269,7 +269,7 @@ class StudyCoachInterface {
     if (result.success) {
       this.addMessageToChat(
         'assistant',
-        `Flashcard saved successfully!\n` +
+        "Flashcard saved successfully!\n" +
           `Location: ${result.collection}\n` +
           `Difficulty: ${difficulty}\n` +
           `Topics: ${tags.join(', ')}`,

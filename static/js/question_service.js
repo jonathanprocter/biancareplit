@@ -75,7 +75,7 @@ class QuestionService {
     console.log(`Filling buffer for ${category}, need ${needed} questions`);
 
     try {
-      const response = await fetch(`/api/nursing/questions/generate`, {
+      const response = await fetch("/api/nursing/questions/generate", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

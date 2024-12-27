@@ -68,7 +68,7 @@ class QuestionLoader {
 
       return data;
     } catch (error) {
-      console.error(`Failed to load questions:`, error);
+      console.error("Failed to load questions:", error);
 
       if (retryCount < this.maxRetries) {
         console.log(`Retrying... (${retryCount + 1}/${this.maxRetries})`);

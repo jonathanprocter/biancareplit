@@ -196,7 +196,7 @@ class StudyCoachInterface {
 
       if (result.success) {
         const successMessage =
-          `Flashcard saved successfully!\n` +
+          "Flashcard saved successfully!\n" +
           `Location: ${result.collection}\n` +
           `Difficulty: ${result.difficulty}\n` +
           `Topics: ${result.tags.join(', ')}`;
