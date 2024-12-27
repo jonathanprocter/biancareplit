@@ -1,8 +1,11 @@
 """Cleanup tool for Prometheus metrics to prevent duplicates."""
 
 import logging
+import time
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, Set
+
 from prometheus_client import REGISTRY, CollectorRegistry
-from typing import Set, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +52,7 @@ def cleanup_metrics(registry: Optional[CollectorRegistry] = None) -> Set[str]:
     except Exception as e:
         logger.error(f"Error during metrics cleanup: {str(e)}")
         raise
-import time
-from datetime import datetime, timedelta
-from typing import Dict, Any
+
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,9 @@
-import psutil
 import logging
+import time
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +31,6 @@ class PerformanceMonitor:
 
 
 performance_monitor = PerformanceMonitor()
-import time
 
 logger = logging.getLogger(__name__)
 

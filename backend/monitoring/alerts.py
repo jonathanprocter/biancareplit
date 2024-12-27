@@ -1,6 +1,9 @@
 import logging
-from typing import Dict, Any
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from prometheus_client import Counter, Gauge
 
 logger = logging.getLogger(__name__)
@@ -26,9 +29,7 @@ class AlertManager:
             else:
                 ALERT_STATUS.labels(type=metric).set(0)
         return alerts
-from typing import List, Optional
-from dataclasses import dataclass
-from enum import Enum
+
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,7 @@ class AlertManager:
             self.alerts[index].resolved = True
             return True
         return False
+
 
 logger = logging.getLogger(__name__)
 
