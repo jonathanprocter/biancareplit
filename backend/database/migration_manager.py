@@ -1,6 +1,9 @@
 """Database migration manager."""
+
 import logging
+
 from flask_migrate import Migrate
+
 from backend.database.db_config import db
 
 logger = logging.getLogger(__name__)

@@ -1,9 +1,9 @@
 """Database migrations management."""
 
+import logging
 import subprocess
 from pathlib import Path
-from typing import Optional, List, Tuple
-import logging
+from typing import List, Optional, Tuple
 
 
 class MigrationManager:

@@ -1,8 +1,10 @@
 """Core middleware integration service."""
 
-from typing import Optional, List, Dict
 import logging
+from typing import Dict, List, Optional
+
 from flask import Flask, Response
+
 from .base import BaseMiddleware
 from .middleware_config import middleware_registry
 
@@ -31,10 +33,10 @@ class MiddlewareIntegration:
     def _register_core_middleware(self) -> None:
         """Register and initialize core middleware components."""
         try:
-            from .logging import LoggingMiddleware
-            from .security import SecurityMiddleware
             from .error_handler import ErrorHandlerMiddleware
+            from .logging import LoggingMiddleware
             from .request_tracking import RequestTrackingMiddleware
+            from .security import SecurityMiddleware
 
             # Register core middleware with settings from config
             core_middleware = {

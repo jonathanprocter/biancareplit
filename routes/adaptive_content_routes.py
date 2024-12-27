@@ -1,9 +1,11 @@
-from flask import Blueprint, jsonify, request
-from models import db, Review, Content, AdaptivePattern
-from datetime import datetime, timedelta
-from sqlalchemy import func
 import logging
-from typing import Dict, List, Optional, Union, Any
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
+
+from flask import Blueprint, jsonify, request
+from sqlalchemy import func
+
+from models import AdaptivePattern, Content, Review, db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,12 +22,17 @@ def get_learning_patterns() -> tuple[dict, int]:
         reviews = Review.query.order_by(Review.created_at.desc()).limit(100).all()
 
         if not reviews:
-            return jsonify({
-                "currentLevel": "Beginner",
-                "preferredStyle": "Visual",
-                "weakAreas": [],
-                "insights": []
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "currentLevel": "Beginner",
+                        "preferredStyle": "Visual",
+                        "weakAreas": [],
+                        "insights": [],
+                    }
+                ),
+                200,
+            )
 
         # Calculate patterns with proper error handling
         patterns = {
@@ -48,12 +55,17 @@ def get_performance_data() -> tuple[dict, int]:
         reviews = Review.query.order_by(Review.created_at.desc()).limit(100).all()
 
         if not reviews:
-            return jsonify({
-                "overallProgress": 0,
-                "masteredTopics": 0,
-                "studyStreak": 0,
-                "recentPerformance": []
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "overallProgress": 0,
+                        "masteredTopics": 0,
+                        "studyStreak": 0,
+                        "recentPerformance": [],
+                    }
+                ),
+                200,
+            )
 
         performance_data = {
             "overallProgress": calculate_overall_progress(reviews),
@@ -225,10 +237,12 @@ def generate_learning_insights(reviews: List[Review]) -> List[Dict[str, str]]:
         # Time-based performance analysis
         time_performance = analyze_time_performance(reviews)
         if time_performance:
-            insights.append({
-                "title": "Optimal Study Time",
-                "description": f"You perform best during {time_performance} hours"
-            })
+            insights.append(
+                {
+                    "title": "Optimal Study Time",
+                    "description": f"You perform best during {time_performance} hours",
+                }
+            )
 
         # Topic mastery progress
         mastery_insight = analyze_topic_mastery(reviews)
@@ -251,7 +265,7 @@ def analyze_time_performance(reviews: List[Review]) -> Optional[str]:
                 time_scores[hour] = []
             time_scores[hour].append(review.score)
 
-        best_hour = max(time_scores.items(), key=lambda x: sum(x[1])/len(x[1]))[0]
+        best_hour = max(time_scores.items(), key=lambda x: sum(x[1]) / len(x[1]))[0]
         if 5 <= best_hour < 12:
             return "morning"
         if 12 <= best_hour < 17:
@@ -266,21 +280,23 @@ def analyze_topic_mastery(reviews: List[Review]) -> Optional[Dict[str, str]]:
     """Analyze topic mastery progress"""
     try:
         recent_reviews = sorted(reviews, key=lambda x: x.created_at, reverse=True)[:20]
-        improvement_rate = sum(1 for r in recent_reviews if r.score > 0.8) / len(recent_reviews)
+        improvement_rate = sum(1 for r in recent_reviews if r.score > 0.8) / len(
+            recent_reviews
+        )
 
         if improvement_rate >= 0.8:
             return {
                 "title": "Mastery Progress",
-                "description": "You're showing excellent mastery of recent topics!"
+                "description": "You're showing excellent mastery of recent topics!",
             }
         if improvement_rate >= 0.6:
             return {
                 "title": "Steady Progress",
-                "description": "You're making steady progress in your learning journey."
+                "description": "You're making steady progress in your learning journey.",
             }
         return {
             "title": "Learning Opportunity",
-            "description": "Focus on reviewing challenging topics to improve mastery."
+            "description": "Focus on reviewing challenging topics to improve mastery.",
         }
     except Exception as e:
         logger.error(f"Error analyzing topic mastery: {str(e)}")
@@ -301,7 +317,9 @@ def count_mastered_topics(reviews: List[Review]) -> int:
     return 3
 
 
-def get_recent_performance(reviews: List[Review]) -> List[Dict[str, Union[datetime, float]]]:
+def get_recent_performance(
+    reviews: List[Review],
+) -> List[Dict[str, Union[datetime, float]]]:
     if not reviews:
         return []
     # Get recent performance data
@@ -312,7 +330,9 @@ def generate_content_id() -> float:
     return datetime.utcnow().timestamp()
 
 
-def generate_adaptive_question(patterns: Dict[str, Any], performance: Dict[str, Any]) -> str:
+def generate_adaptive_question(
+    patterns: Dict[str, Any], performance: Dict[str, Any]
+) -> str:
     # Generate question based on patterns
     return "What is the primary function of the adaptive learning system?"
 
@@ -406,7 +426,9 @@ def generate_feedback(content_id: Any, answer: Any) -> Dict[str, Any]:
         }
 
 
-def update_learning_patterns(content_id: Any, answer: Any, time_spent: Any) -> Dict[str, Any]:
+def update_learning_patterns(
+    content_id: Any, answer: Any, time_spent: Any
+) -> Dict[str, Any]:
     """Update learning patterns based on user interaction"""
     try:
         content = Content.query.get(content_id)

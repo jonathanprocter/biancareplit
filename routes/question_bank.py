@@ -1,11 +1,10 @@
-from flask import Blueprint, jsonify, request
-from models import (
-    Content,
-    Flashcard,
-    )
-from extensions import db
-from ai_coach_service import AICoachService
 import logging
+
+from flask import Blueprint, jsonify, request
+
+from ai_coach_service import AICoachService
+from extensions import db
+from models import Content, Flashcard
 
 # Configure logging
 logger = logging.getLogger(__name__)

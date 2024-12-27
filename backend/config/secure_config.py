@@ -1,7 +1,8 @@
-import os
-from typing import Dict, Any, Optional, List, Union
-from dotenv import load_dotenv
 import logging
+import os
+from typing import Any, Dict, List, Optional, Union
+
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

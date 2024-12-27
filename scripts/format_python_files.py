@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
+import logging
 import os
 import subprocess
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

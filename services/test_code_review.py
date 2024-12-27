@@ -1,5 +1,6 @@
-from code_review_service import CodeReviewService
 import json
+
+from code_review_service import CodeReviewService
 
 
 def test_code_review():

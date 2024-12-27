@@ -1,10 +1,12 @@
-from flask import Blueprint, jsonify, request
-from models import Review, Flashcard, AdaptivePattern, Content
-from extensions import db
-from datetime import datetime, timedelta
-from sqlalchemy import func, case
 import logging
+from datetime import datetime, timedelta
+
+from flask import Blueprint, jsonify, request
+from sqlalchemy import case, func
+
 from adaptive_learning import AdaptiveLearningSystem, LearningIntegrationService
+from extensions import db
+from models import AdaptivePattern, Content, Flashcard, Review
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

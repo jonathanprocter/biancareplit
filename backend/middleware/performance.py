@@ -1,10 +1,11 @@
 """Performance monitoring middleware."""
 
-import time
 import logging
+import time
 from functools import wraps
+
 from flask import Flask, g, request
-from prometheus_client import Counter, Histogram, CollectorRegistry
+from prometheus_client import CollectorRegistry, Counter, Histogram
 
 # Initialize registry
 REGISTRY = CollectorRegistry(auto_describe=True)

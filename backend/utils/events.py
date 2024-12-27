@@ -1,6 +1,6 @@
-from typing import Dict, Any, Callable, List
-import logging
 import asyncio
+import logging
+from typing import Any, Callable, Dict, List
 
 
 class EventEmitter:

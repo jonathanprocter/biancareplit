@@ -1,5 +1,6 @@
-from pathlib import Path
 import logging
+from pathlib import Path
+
 import yaml
 
 logger = logging.getLogger(__name__)

@@ -23,7 +23,9 @@ def setup_logging(app):
 
     # Configure file handler
     file_handler = RotatingFileHandler(
-        logs_dir / "app.log", maxBytes=1024 * 1024, backupCount=10  # 1MB
+        logs_dir / "app.log",
+        maxBytes=1024 * 1024,
+        backupCount=10,  # 1MB
     )
     file_handler.setFormatter(logging.Formatter(log_format))
     file_handler.setLevel(log_level)

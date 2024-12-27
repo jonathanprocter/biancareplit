@@ -1,15 +1,17 @@
 """Unified configuration management for the medical education platform."""
 
-import os
 import logging
-from typing import Dict, Any, Optional
-from flask import Flask
+import os
+from typing import Any, Dict, Optional
+
 from dotenv import load_dotenv
+from flask import Flask
 
 # Load environment variables
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
 
 class ConfigManager:
     """Unified configuration manager with singleton pattern."""
@@ -23,7 +25,7 @@ class ConfigManager:
         return cls._instance
 
     def __init__(self):
-        if hasattr(self, '_initialized') and self._initialized:
+        if hasattr(self, "_initialized") and self._initialized:
             return
 
         self.config = {
@@ -45,7 +47,7 @@ class ConfigManager:
         log_level = getattr(logging, self.config["LOG_LEVEL"])
         logging.basicConfig(
             level=log_level,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
         logger.info(f"Logging configured at {self.config['LOG_LEVEL']} level")
 
@@ -71,10 +73,13 @@ class ConfigManager:
                 app.logger.addHandler(file_handler)
                 app.logger.setLevel(logging.INFO)
 
-            logger.info(f"Initialized application config for environment: {self.config['ENV']}")
+            logger.info(
+                f"Initialized application config for environment: {self.config['ENV']}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize application configuration: {str(e)}")
             raise
+
 
 config_manager = ConfigManager()

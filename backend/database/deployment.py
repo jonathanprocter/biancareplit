@@ -1,6 +1,7 @@
 """Database migration deployment script."""
-import sys
+
 import logging
+import sys
 from pathlib import Path
 
 # Configure logging

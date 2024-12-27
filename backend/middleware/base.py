@@ -1,13 +1,16 @@
 """Base middleware class implementation."""
 
 import logging
-from typing import Optional, Any, Dict, TypeVar, Generic, Callable
+from typing import Any, Callable, Dict, Generic, Optional, TypeVar
+
 from flask import Flask
+
 from ..config.unified_config import config_manager
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class BaseMiddleware(Generic[T]):
     """Base class for all middleware implementations."""
@@ -63,17 +66,17 @@ class BaseMiddleware(Generic[T]):
             raise RuntimeError("Flask application not initialized")
 
         try:
-            if hasattr(self, 'before_request'):
+            if hasattr(self, "before_request"):
                 self.app.before_request_funcs.setdefault(None, []).append(
                     self._wrap_handler(self.before_request)
                 )
 
-            if hasattr(self, 'after_request'):
+            if hasattr(self, "after_request"):
                 self.app.after_request_funcs.setdefault(None, []).append(
                     self._wrap_handler(self.after_request)
                 )
 
-            if hasattr(self, 'teardown_request'):
+            if hasattr(self, "teardown_request"):
                 self.app.teardown_request_funcs.setdefault(None, []).append(
                     self._wrap_handler(self.teardown_request)
                 )
@@ -83,6 +86,7 @@ class BaseMiddleware(Generic[T]):
 
     def _wrap_handler(self, handler: Callable) -> Callable:
         """Wrap request handlers with error handling."""
+
         def wrapped(*args: Any, **kwargs: Any) -> Any:
             try:
                 return handler(*args, **kwargs)
@@ -91,6 +95,7 @@ class BaseMiddleware(Generic[T]):
                 if self.app and self.app.debug:
                     logger.exception(f"Detailed {handler.__name__} error:")
                 raise
+
         return wrapped
 
     def before_request(self) -> Optional[Any]:

@@ -1,8 +1,10 @@
-from functools import wraps
+import logging
 import time
+from functools import wraps
+
 from flask import request
 from prometheus_client import Counter, Histogram
-import logging
+
 from .base_metrics import BaseMetricsRegistry
 
 logger = logging.getLogger(__name__)

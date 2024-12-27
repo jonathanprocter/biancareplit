@@ -3,9 +3,9 @@
 
 def init_routes(app):
     """Initialize and register all route blueprints."""
-    from .question_bank import question_bank
     from .adaptive_content_routes import adaptive_content_bp
     from .adaptive_learning_routes import adaptive_routes
+    from .question_bank import question_bank
 
     # Register blueprints with proper URL prefixes
     app.register_blueprint(question_bank, url_prefix="/api")

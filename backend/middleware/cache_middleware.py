@@ -1,12 +1,14 @@
-from typing import Optional, Dict, Any
-from flask import Request, Response
-import time
 import json
-from .base import BaseMiddleware
-from werkzeug.security import safe_str_cmp
-from werkzeug.wrappers import Response as WerkzeugResponse
+import time
 from collections import OrderedDict
 from threading import Lock
+from typing import Any, Dict, Optional
+
+from flask import Request, Response
+from werkzeug.security import safe_str_cmp
+from werkzeug.wrappers import Response as WerkzeugResponse
+
+from .base import BaseMiddleware
 
 
 class CacheMiddleware(BaseMiddleware):

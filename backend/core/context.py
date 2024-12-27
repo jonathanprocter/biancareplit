@@ -2,10 +2,12 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Generator, Optional, Dict, Any
-from flask import has_app_context
-from backend.database.db_config import DatabaseConfig
 from datetime import datetime
+from typing import Any, Dict, Generator, Optional
+
+from flask import has_app_context
+
+from backend.database.db_config import DatabaseConfig
 
 logger = logging.getLogger(__name__)
 

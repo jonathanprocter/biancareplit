@@ -1,7 +1,7 @@
 import openai
 
-
 from backend.core.memory_manager import process_memory
+
 
 class AICoachService:
     def __init__(self):

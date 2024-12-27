@@ -1,11 +1,13 @@
 """Database configuration and connection management."""
-import os
+
 import logging
-from typing import Dict, Any, Optional
+import os
 from contextlib import contextmanager
+from typing import Any, Dict, Optional
+
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger(__name__)
 

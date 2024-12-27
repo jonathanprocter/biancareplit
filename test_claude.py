@@ -1,5 +1,6 @@
-from services.claude_service import ClaudeService
 import glob
+
+from services.claude_service import ClaudeService
 
 
 def get_all_code_files():

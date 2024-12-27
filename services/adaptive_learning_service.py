@@ -1,6 +1,8 @@
+from typing import Dict, List
+
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from typing import Dict, List
+
 from services.ai_service import AIService
 
 

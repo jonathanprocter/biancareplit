@@ -1,11 +1,13 @@
-from flask import current_app
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime
 import logging
-from models import User, DailyProgress, QuizAttempt
+import smtplib
+from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from flask import current_app
 from sqlalchemy import func
+
+from models import DailyProgress, QuizAttempt, User
 
 logger = logging.getLogger(__name__)
 
@@ -120,9 +122,7 @@ class InstructorReportingService:
         <body>
             <h1>Daily Student Progress Report</h1>
             <p>Here's a summary of your students' progress for {date}</p>
-        """.format(
-            date=datetime.now().strftime("%Y-%m-%d")
-        )
+        """.format(date=datetime.now().strftime("%Y-%m-%d"))
 
         for report in student_reports:
             html += """

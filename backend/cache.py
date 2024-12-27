@@ -1,6 +1,7 @@
-from flask_caching import Cache
-import logging
 import hashlib
+import logging
+
+from flask_caching import Cache
 
 logger = logging.getLogger(__name__)
 

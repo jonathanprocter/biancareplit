@@ -1,11 +1,13 @@
-from flask import Blueprint, request, jsonify
-from datetime import datetime
-from backend.models.analytics import StudySession, QuestionAttempt, UserProgress
-from backend.database.config import db
-import openai
-import os
-from typing import Dict, List, Optional
 import logging
+import os
+from datetime import datetime
+from typing import Dict, List, Optional
+
+import openai
+from flask import Blueprint, jsonify, request
+
+from backend.database.config import db
+from backend.models.analytics import QuestionAttempt, StudySession, UserProgress
 
 logger = logging.getLogger(__name__)
 

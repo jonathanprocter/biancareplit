@@ -1,6 +1,6 @@
-from typing import Dict, Any
 from datetime import datetime
 from threading import Lock
+from typing import Any, Dict
 
 
 class MorningGreetingService:

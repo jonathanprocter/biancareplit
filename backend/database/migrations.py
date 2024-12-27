@@ -1,9 +1,12 @@
 """Database migrations manager."""
+
 import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
+
 from flask import Flask
+
 from .db_config import db
 
 logger = logging.getLogger(__name__)

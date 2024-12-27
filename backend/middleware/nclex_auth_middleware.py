@@ -1,11 +1,13 @@
 """Authentication middleware for NCLEX platform."""
 
-from functools import wraps
-from flask import request, g, jsonify
-import jwt
 import logging
 from datetime import datetime, timedelta
+from functools import wraps
 from typing import Callable, Optional
+
+import jwt
+from flask import g, jsonify, request
+
 from backend.config.secure_config import config_manager
 
 logger = logging.getLogger(__name__)

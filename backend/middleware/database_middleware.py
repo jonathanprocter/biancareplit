@@ -1,13 +1,16 @@
 """Database middleware for handling database operations and migrations."""
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from flask import Flask, g
 from sqlalchemy.exc import SQLAlchemyError
+
+from ..config.unified_config import ConfigurationError, config_manager
 from ..database.core import db_manager
-from ..config.unified_config import config_manager, ConfigurationError
 
 logger = logging.getLogger(__name__)
+
 
 class DatabaseMiddleware:
     """Handles database operations and migrations in middleware layer."""
@@ -71,14 +74,14 @@ class DatabaseMiddleware:
             # Register request handlers
             @app.before_request
             def before_request():
-                if not hasattr(g, 'db_connections'):
+                if not hasattr(g, "db_connections"):
                     g.db_connections = []
                 g.db = db_manager.session
                 g.db_connections.append(g.db)
 
             @app.teardown_request
             def teardown_request(exception=None):
-                if hasattr(g, 'db_connections'):
+                if hasattr(g, "db_connections"):
                     for db_session in g.db_connections:
                         try:
                             if exception:
@@ -100,7 +103,7 @@ class DatabaseMiddleware:
 
         except Exception as e:
             self.logger.error(f"Database middleware initialization failed: {str(e)}")
-            if hasattr(app, 'debug') and app.debug:
+            if hasattr(app, "debug") and app.debug:
                 self.logger.exception("Detailed error trace:")
             raise
 
@@ -137,17 +140,20 @@ class DatabaseMiddleware:
     def cleanup(self) -> None:
         """Cleanup database resources."""
         try:
-            if hasattr(g, 'db_connections'):
+            if hasattr(g, "db_connections"):
                 for db_session in g.db_connections:
                     try:
                         db_session.close()
                     except Exception as e:
-                        self.logger.error(f"Error closing database session during cleanup: {str(e)}")
+                        self.logger.error(
+                            f"Error closing database session during cleanup: {str(e)}"
+                        )
             self._initialized = False
         except Exception as e:
             self.logger.error(f"Database cleanup failed: {str(e)}")
             if self._app and self._app.debug:
                 self.logger.exception("Detailed error trace:")
+
 
 # Create singleton instance
 database_middleware = DatabaseMiddleware()

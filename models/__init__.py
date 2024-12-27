@@ -1,9 +1,16 @@
 from datetime import datetime
 from enum import Enum
+
 from flask_sqlalchemy import SQLAlchemy
+
+from .adaptive_pattern import AdaptivePattern
+from .content import Content
+from .review import Review
+from .study_material import StudyMaterial
 
 # Initialize SQLAlchemy
 db = SQLAlchemy()
+
 
 # Define enums first to avoid circular imports
 class SubjectCategory(str, Enum):
@@ -17,10 +24,12 @@ class SubjectCategory(str, Enum):
     CRITICAL_CARE = "CRITICAL_CARE"
     EMERGENCY = "EMERGENCY"
 
+
 class DifficultyLevel(str, Enum):
     BEGINNER = "BEGINNER"
     INTERMEDIATE = "INTERMEDIATE"
     ADVANCED = "ADVANCED"
+
 
 class ContentType(str, Enum):
     QUIZ = "QUIZ"
@@ -28,6 +37,7 @@ class ContentType(str, Enum):
     CASE_STUDY = "CASE_STUDY"
     PRACTICE_QUESTION = "PRACTICE_QUESTION"
     STUDY_NOTE = "STUDY_NOTE"
+
 
 # Association tables
 study_material_questions = db.Table(
@@ -47,10 +57,7 @@ study_material_questions = db.Table(
 )
 
 # Import models after defining base classes and association tables
-from .content import Content
-from .study_material import StudyMaterial
-from .review import Review
-from .adaptive_pattern import AdaptivePattern
+
 
 def init_models():
     """Initialize model relationships and any required setup"""
@@ -60,10 +67,9 @@ def init_models():
         back_populates="content_items",
     )
     StudyMaterial.content_items = db.relationship(
-        "Content", 
-        secondary=study_material_questions, 
-        back_populates="study_materials"
+        "Content", secondary=study_material_questions, back_populates="study_materials"
     )
+
 
 # Define exports
 __all__ = [
@@ -78,6 +84,7 @@ __all__ = [
     "study_material_questions",
     "init_models",
 ]
+
 
 class Flashcard(db.Model):
     __tablename__ = "flashcard"

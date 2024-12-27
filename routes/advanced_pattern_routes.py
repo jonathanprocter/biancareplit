@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
+
 from models.advanced_pattern_recognition import (
-    AdvancedPatternRecognition,
     AdvancedPatternModel,
+    AdvancedPatternRecognition,
 )
 
 advanced_pattern_routes = Blueprint("advanced_pattern_routes", __name__)

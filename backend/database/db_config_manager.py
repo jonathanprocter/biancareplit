@@ -1,11 +1,12 @@
 """Database configuration manager module."""
 
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 import logging
-from typing import Optional
 import os
+from typing import Optional
+
+from flask import Flask
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 # Initialize SQLAlchemy and Migrate
 db = SQLAlchemy()
 migrate = Migrate()
+
 
 class DatabaseConfigManager:
     """Database configuration manager."""
@@ -86,6 +88,7 @@ class DatabaseConfigManager:
             logger.error("Database not initialized")
             return None
         return db
+
 
 # Create singleton instance
 db_manager = DatabaseConfigManager()

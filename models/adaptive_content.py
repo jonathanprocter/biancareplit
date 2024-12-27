@@ -1,9 +1,11 @@
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from dataclasses import dataclass
-from typing import Dict, List, Optional
-from extensions import db
-from sqlalchemy.dialects.postgresql import JSON
 from datetime import datetime
+from typing import Dict, List, Optional
+
+from sqlalchemy.dialects.postgresql import JSON
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
+from extensions import db
 
 
 @dataclass

@@ -1,8 +1,9 @@
 """Core middleware system for the NCLEX coaching platform."""
-from flask import request, after_this_request
+
 import logging
 import time
-from flask import Flask
+
+from flask import Flask, after_this_request, request
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

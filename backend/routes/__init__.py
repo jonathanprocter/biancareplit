@@ -1,9 +1,11 @@
 from flask import Flask
+
+from backend.monitoring.metrics_router import metrics_bp
+
+from .admin import bp as admin_bp
 from .api import bp as api_bp
 from .auth import bp as auth_bp
-from .admin import bp as admin_bp
 from .monitoring import monitoring_bp
-from backend.monitoring.metrics_router import metrics_bp
 
 
 def register_blueprints(app: Flask):

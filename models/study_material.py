@@ -1,7 +1,10 @@
 from datetime import date
-from extensions import db
-from . import SubjectCategory, DifficultyLevel
+
 from sqlalchemy.dialects.postgresql import JSONB
+
+from extensions import db
+
+from . import DifficultyLevel, SubjectCategory
 
 
 class StudyMaterial(db.Model):
