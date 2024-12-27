@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+import logging
 import os
 import subprocess
-import logging
+import sys
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
@@ -55,4 +56,4 @@ def format_python_files():
 
 if __name__ == "__main__":
     success = format_python_files()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

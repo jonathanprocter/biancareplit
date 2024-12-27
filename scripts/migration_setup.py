@@ -1,12 +1,14 @@
 """Database migration setup script."""
 
+import logging
 import os
 import shutil
+import sys
 from pathlib import Path
-import logging
+
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 # Configure logging
 logging.basicConfig(
@@ -70,4 +72,4 @@ if __name__ == "__main__":
         logger.info("Migration setup completed successfully!")
     else:
         logger.error("Migration setup failed!")
-        exit(1)
+        sys.exit(1)
