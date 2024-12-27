@@ -1,13 +1,16 @@
 """Middleware management system."""
 
 import logging
-from typing import Dict, Type, Optional, List, Any
-from flask import Flask, g, request, current_app
+from typing import Any, Dict, List, Optional, Type
+
+from flask import Flask, current_app, g, request
+
+from ..config.unified_config import ConfigurationError, config_manager
 from .base import BaseMiddleware
 from .middleware_config import middleware_registry
-from ..config.unified_config import config_manager, ConfigurationError
 
 logger = logging.getLogger(__name__)
+
 
 class MiddlewareManager:
     """Manages middleware initialization and execution."""
@@ -27,7 +30,9 @@ class MiddlewareManager:
                 raise TypeError(f"Middleware {name} must inherit from BaseMiddleware")
 
             if name in self._registry:
-                logger.warning(f"Middleware {name} is already registered, will be overwritten")
+                logger.warning(
+                    f"Middleware {name} is already registered, will be overwritten"
+                )
 
             self._registry[name] = middleware_class
             logger.debug(f"Registered middleware: {name}")
@@ -44,15 +49,12 @@ class MiddlewareManager:
 
         try:
             # Validate middleware configuration
-            if not app.config.get('MIDDLEWARE'):
+            if not app.config.get("MIDDLEWARE"):
                 config = config_manager.get("MIDDLEWARE", {})
                 if not config:
                     logger.warning("No middleware configuration found, using defaults")
-                    config = {
-                        "metrics": {"enabled": True},
-                        "health": {"enabled": True}
-                    }
-                app.config['MIDDLEWARE'] = config
+                    config = {"metrics": {"enabled": True}, "health": {"enabled": True}}
+                app.config["MIDDLEWARE"] = config
 
             enabled_middleware = middleware_registry.get_enabled_middleware()
             logger.info(f"Initializing middleware: {enabled_middleware}")
@@ -65,7 +67,7 @@ class MiddlewareManager:
                         continue
 
                     settings = middleware_registry.get_middleware_settings(name)
-                    if not settings.get('enabled', True):
+                    if not settings.get("enabled", True):
                         logger.info(f"Middleware {name} is disabled by configuration")
                         continue
 
@@ -79,7 +81,9 @@ class MiddlewareManager:
                     logger.info(f"Initialized middleware: {name}")
 
                 except Exception as e:
-                    logger.error(f"Failed to initialize middleware {name}: {e}", exc_info=True)
+                    logger.error(
+                        f"Failed to initialize middleware {name}: {e}", exc_info=True
+                    )
                     # Continue with other middleware even if one fails
                     continue
 
@@ -89,7 +93,9 @@ class MiddlewareManager:
             logger.info("Middleware initialization completed successfully")
 
         except Exception as e:
-            logger.error(f"Failed to initialize middleware manager: {str(e)}", exc_info=True)
+            logger.error(
+                f"Failed to initialize middleware manager: {str(e)}", exc_info=True
+            )
             raise
 
     def _register_handlers(self, app: Flask) -> None:
@@ -123,7 +129,9 @@ class MiddlewareManager:
         """Cleanup middleware resources with proper error handling."""
         for name, middleware in list(self._middleware.items()):
             try:
-                if hasattr(middleware, 'cleanup') and callable(getattr(middleware, 'cleanup')):
+                if hasattr(middleware, "cleanup") and callable(
+                    getattr(middleware, "cleanup")
+                ):
                     middleware.cleanup()
                 self._middleware.pop(name, None)
             except Exception as e:
@@ -139,6 +147,7 @@ class MiddlewareManager:
     def is_initialized(self) -> bool:
         """Check if middleware manager is initialized."""
         return self._initialized
+
 
 # Create singleton instance
 middleware_manager = MiddlewareManager()

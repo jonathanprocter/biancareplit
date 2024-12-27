@@ -1,18 +1,21 @@
 """Flask application factory and configuration."""
 
+import logging
+import os
+from datetime import datetime
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import os
-import logging
-from datetime import datetime
+from prometheus_client import CollectorRegistry, make_wsgi_app
+from sqlalchemy import text
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+
+from backend.config.unified_config import config_manager
 from backend.database.core import db, db_manager
 from backend.middleware.initializer import middleware_initializer
-from backend.config.unified_config import config_manager
-from prometheus_client import make_wsgi_app, CollectorRegistry
-from werkzeug.middleware.dispatcher import DispatcherMiddleware
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
+
 
 def create_app():
     """Create and configure the Flask application"""
@@ -40,18 +43,19 @@ def create_app():
         # Configure Prometheus metrics
         prometheus_registry = CollectorRegistry()
         app.wsgi_app = DispatcherMiddleware(
-            app.wsgi_app,
-            {'/metrics': make_wsgi_app(registry=prometheus_registry)}
+            app.wsgi_app, {"/metrics": make_wsgi_app(registry=prometheus_registry)}
         )
         logger.info("Prometheus metrics configured")
 
         @app.route("/")
         def index():
-            return jsonify({
-                "status": "online",
-                "version": "1.0.0",
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            return jsonify(
+                {
+                    "status": "online",
+                    "version": "1.0.0",
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         @app.route("/health")
         def health():
@@ -60,19 +64,29 @@ def create_app():
                 db.session.execute(text("SELECT 1"))
                 db.session.commit()
 
-                return jsonify({
-                    "status": "healthy",
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "version": "1.0.0",
-                    "database": "connected"
-                }), 200
+                return (
+                    jsonify(
+                        {
+                            "status": "healthy",
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "version": "1.0.0",
+                            "database": "connected",
+                        }
+                    ),
+                    200,
+                )
             except Exception as e:
                 logger.error(f"Health check failed: {str(e)}")
-                return jsonify({
-                    "status": "unhealthy",
-                    "error": str(e),
-                    "timestamp": datetime.utcnow().isoformat()
-                }), 503
+                return (
+                    jsonify(
+                        {
+                            "status": "unhealthy",
+                            "error": str(e),
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                    ),
+                    503,
+                )
 
         @app.errorhandler(404)
         def not_found_error(error):
@@ -93,6 +107,7 @@ def create_app():
     except Exception as e:
         logger.error(f"Application initialization failed: {str(e)}")
         raise
+
 
 # Create the application instance
 app = create_app()

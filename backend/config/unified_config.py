@@ -1,27 +1,31 @@
 """Unified configuration management for the medical education platform."""
 
+import logging
 import os
 import sys
-import logging
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Union, TypeVar, Type
-import yaml
 from datetime import timedelta
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+
+import yaml
 
 # Initial basic logging setup
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class ConfigurationError(Exception):
     """Base exception for configuration errors."""
+
     pass
+
 
 class ConfigurationManager:
     """Unified configuration manager with singleton pattern."""
@@ -58,30 +62,34 @@ class ConfigurationManager:
             # Get database URL with proper error handling
             database_url = os.getenv("DATABASE_URL")
             if not database_url:
-                raise ConfigurationError("DATABASE_URL environment variable must be set")
+                raise ConfigurationError(
+                    "DATABASE_URL environment variable must be set"
+                )
 
             # Handle postgres URL format
             if database_url.startswith("postgres://"):
                 database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-            self.config.update({
-                "ENV": self.env,
-                "DEBUG": self.env == "development",
-                "TESTING": self.env == "testing",
-                "SECRET_KEY": os.getenv("SECRET_KEY", "dev"),
-                "SQLALCHEMY_DATABASE_URI": database_url,
-                "SQLALCHEMY_TRACK_MODIFICATIONS": False,
-                "SQLALCHEMY_ENGINE_OPTIONS": {
-                    "pool_pre_ping": True,
-                    "pool_size": int(os.getenv("DB_POOL_SIZE", "5")),
-                    "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
-                    "pool_recycle": 300,
-                },
-                "SESSION_TYPE": "filesystem",
-                "PERMANENT_SESSION_LIFETIME": timedelta(hours=1),
-                "API_TIMEOUT": int(os.getenv("API_TIMEOUT", "30")),
-                "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
-            })
+            self.config.update(
+                {
+                    "ENV": self.env,
+                    "DEBUG": self.env == "development",
+                    "TESTING": self.env == "testing",
+                    "SECRET_KEY": os.getenv("SECRET_KEY", "dev"),
+                    "SQLALCHEMY_DATABASE_URI": database_url,
+                    "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+                    "SQLALCHEMY_ENGINE_OPTIONS": {
+                        "pool_pre_ping": True,
+                        "pool_size": int(os.getenv("DB_POOL_SIZE", "5")),
+                        "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+                        "pool_recycle": 300,
+                    },
+                    "SESSION_TYPE": "filesystem",
+                    "PERMANENT_SESSION_LIFETIME": timedelta(hours=1),
+                    "API_TIMEOUT": int(os.getenv("API_TIMEOUT", "30")),
+                    "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
+                }
+            )
 
             logger.info("Base configuration loaded successfully")
         except ValueError as e:
@@ -136,6 +144,7 @@ class ConfigurationManager:
     def __str__(self) -> str:
         """String representation of configuration."""
         return f"ConfigurationManager(env={self.env}, initialized={self._initialized})"
+
 
 # Create singleton instance
 config_manager = ConfigurationManager()

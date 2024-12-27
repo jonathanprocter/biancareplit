@@ -1,15 +1,18 @@
 """Middleware initialization system."""
 
 import logging
-from typing import Dict, Type, Optional
+from typing import Dict, Optional, Type
+
 from flask import Flask
+
 from .base import BaseMiddleware
-from .middleware_config import middleware_registry
-from .metrics import MetricsMiddleware
-from .health import HealthMiddleware
 from .database_middleware import DatabaseMiddleware
+from .health import HealthMiddleware
+from .metrics import MetricsMiddleware
+from .middleware_config import middleware_registry
 
 logger = logging.getLogger(__name__)
+
 
 class MiddlewareInitializer:
     """Handles middleware initialization and registration."""
@@ -20,7 +23,7 @@ class MiddlewareInitializer:
         self._registry: Dict[str, Type[BaseMiddleware]] = {
             "metrics": MetricsMiddleware,
             "health": HealthMiddleware,
-            "database": DatabaseMiddleware
+            "database": DatabaseMiddleware,
         }
         self._initialized: Dict[str, BaseMiddleware] = {}
         self._setup_logging()
@@ -31,7 +34,9 @@ class MiddlewareInitializer:
     def _setup_logging(self) -> None:
         """Set up logging for middleware initialization."""
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
@@ -42,7 +47,7 @@ class MiddlewareInitializer:
             self.app = app
 
             # Wait for configuration to be ready
-            if not app.config.get('MIDDLEWARE'):
+            if not app.config.get("MIDDLEWARE"):
                 logger.warning("No middleware configuration found, using defaults")
 
             # Initialize middleware components in correct order
@@ -60,7 +65,7 @@ class MiddlewareInitializer:
                         continue
 
                     settings = middleware_registry.get_middleware_settings(name)
-                    if not settings.get('enabled', True):
+                    if not settings.get("enabled", True):
                         logger.info(f"Middleware {name} is disabled by configuration")
                         continue
 
@@ -91,7 +96,9 @@ class MiddlewareInitializer:
         try:
             for name, middleware in list(self._initialized.items()):
                 try:
-                    if hasattr(middleware, 'cleanup') and callable(getattr(middleware, 'cleanup')):
+                    if hasattr(middleware, "cleanup") and callable(
+                        getattr(middleware, "cleanup")
+                    ):
                         middleware.cleanup()
                     self._initialized.pop(name, None)
                 except Exception as e:
@@ -99,6 +106,7 @@ class MiddlewareInitializer:
             self._initialized.clear()
         except Exception as e:
             logger.error(f"Error during middleware cleanup: {e}")
+
 
 # Create singleton instance
 middleware_initializer = MiddlewareInitializer()
