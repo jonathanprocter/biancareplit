@@ -1,12 +1,14 @@
-from flask import current_app
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
 import logging
-from models import User, DailyProgress, QuizAttempt
+import smtplib
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from flask import current_app
 from sqlalchemy import func
+
 from extensions import db
+from models import DailyProgress, QuizAttempt, User
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,8 @@ class InstructorReportingService:
     def init_app(self, app):
         self.app = app
 
-    def generate_student_report(self, student_id, date=None):
+    @staticmethod
+    def generate_student_report(student_id, date=None):
         """Generate a detailed report for a specific student."""
         if date is None:
             date = datetime.utcnow().date()
@@ -105,7 +108,8 @@ class InstructorReportingService:
             logger.error(f"Error sending instructor email: {str(e)}")
             raise
 
-    def _generate_email_html(self, student_reports):
+    @staticmethod
+    def _generate_email_html(student_reports):
         """Generate HTML content for the email."""
         html = """
         <html>
@@ -121,9 +125,7 @@ class InstructorReportingService:
         <body>
             <h1>Daily Student Progress Report</h1>
             <p>Here's a summary of your students' progress for {date}</p>
-        """.format(
-            date=datetime.now().strftime("%Y-%m-%d")
-        )
+        """.format(date=datetime.now().strftime("%Y-%m-%d"))
 
         for report in student_reports:
             html += """

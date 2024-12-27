@@ -1,9 +1,11 @@
 """Security middleware implementation."""
 
-from typing import Optional
-from flask import Flask, Request, Response, abort, g
 import logging
 from functools import wraps
+from typing import Optional
+
+from flask import Flask, Request, Response, abort, g
+
 from .base import BaseMiddleware
 
 logger = logging.getLogger(__name__)
@@ -43,14 +45,16 @@ class SecurityMiddleware(BaseMiddleware):
 
         return None
 
-    def process_response(self, response: Response) -> Response:
+    @staticmethod
+    def process_response(response: Response) -> Response:
         """Add security headers to response."""
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         return response
 
-    def csrf_protect(self):
+    @staticmethod
+    def csrf_protect():
         def decorator(f):
             @wraps(f)
             def decorated_function(*args, **kwargs):

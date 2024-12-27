@@ -1,17 +1,19 @@
+import logging
+import os
+
 from flask import Blueprint, jsonify, request
+
+from ai_coach_service import AICoachService
+from extensions import db
 from models import (
     Content,
-    Flashcard,
-    DifficultyLevel,
-    SubjectCategory,
     ContentType,
+    DifficultyLevel,
+    Flashcard,
     Review,
+    SubjectCategory,
     study_material_questions,
 )
-from extensions import db
-from ai_coach_service import AICoachService
-import os
-import logging
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -25,7 +27,8 @@ class LearningIntegrationService:
     def __init__(self, db_session):
         self.db = db_session
 
-    def convert_missed_question(self, missed_question):
+    @staticmethod
+    def convert_missed_question(missed_question):
         flashcard = Flashcard(
             front=missed_question["question"],
             back=f"Correct Answer: {missed_question['correct_answer']}\nExplanation: {missed_question.get('explanation', '')}",

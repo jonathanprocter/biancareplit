@@ -1,14 +1,15 @@
-
-import os
-import logging
-import json
-import time
 import asyncio
+import json
+import logging
+import os
+import time
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
 from openai import OpenAI, OpenAIError
 
 logger = logging.getLogger(__name__)
+
 
 class CodeReviewService:
     def __init__(self):
@@ -22,20 +23,16 @@ class CodeReviewService:
         self.fix_patterns = {
             "unused_imports": (
                 r"^import\s+([^\s]+)(?:\s+as\s+[^\s]+)?\s*$",
-                lambda m, content: "" if self._is_unused(m.group(1), content) else m.group(0)
+                lambda m, content: (
+                    "" if self._is_unused(m.group(1), content) else m.group(0)
+                ),
             ),
-            "trailing_whitespace": (
-                r"[ \t]+$",
-                ""
-            ),
-            "multiple_blank_lines": (
-                r"\n{3,}",
-                "\n\n"
-            ),
+            "trailing_whitespace": (r"[ \t]+$", ""),
+            "multiple_blank_lines": (r"\n{3,}", "\n\n"),
             "missing_type_hints": (
                 r"def\s+([^\(]+)\(([^\)]*)\)(?!\s*->)",
-                lambda m: f"def {m.group(1)}({m.group(2)}) -> Any"
-            )
+                lambda m: f"def {m.group(1)}({m.group(2)}) -> Any",
+            ),
         }
 
     async def apply_automated_fixes(self, file_path: str, content: str) -> str:
@@ -44,21 +41,29 @@ class CodeReviewService:
             fixed_content = content
             for fix_name, (pattern, replacement) in self.fix_patterns.items():
                 if callable(replacement):
-                    fixed_content = self._apply_callable_fix(fixed_content, pattern, replacement)
+                    fixed_content = self._apply_callable_fix(
+                        fixed_content, pattern, replacement
+                    )
                 else:
-                    fixed_content = self._apply_simple_fix(fixed_content, pattern, replacement)
+                    fixed_content = self._apply_simple_fix(
+                        fixed_content, pattern, replacement
+                    )
 
             return fixed_content
         except Exception as e:
             logger.error(f"Error applying fixes to {file_path}: {str(e)}")
             return content
 
-    def _apply_simple_fix(self, content: str, pattern: str, replacement: str) -> str:
+    @staticmethod
+    def _apply_simple_fix(content: str, pattern: str, replacement: str) -> str:
         import re
+
         return re.sub(pattern, replacement, content, flags=re.MULTILINE)
 
-    def _apply_callable_fix(self, content: str, pattern: str, replacement_func) -> str:
+    @staticmethod
+    def _apply_callable_fix(content: str, pattern: str, replacement_func) -> str:
         import re
+
         lines = content.splitlines()
         fixed_lines = []
         for line in lines:
@@ -78,27 +83,25 @@ class CodeReviewService:
             "fixed": [],
             "failed": [],
             "skipped": [],
-            "stats": {
-                "processed": 0,
-                "fixes_applied": 0,
-                "errors": 0
-            }
+            "stats": {"processed": 0, "fixes_applied": 0, "errors": 0},
         }
 
         try:
             for root, _, files in os.walk(directory):
                 for file in files:
-                    if file.endswith(('.py', '.ts', '.tsx', '.js', '.jsx')):
+                    if file.endswith((".py", ".ts", ".tsx", ".js", ".jsx")):
                         file_path = os.path.join(root, file)
                         try:
-                            with open(file_path, 'r') as f:
+                            with open(file_path, "r") as f:
                                 content = f.read()
 
                             # Apply automated fixes
-                            fixed_content = await self.apply_automated_fixes(file_path, content)
+                            fixed_content = await self.apply_automated_fixes(
+                                file_path, content
+                            )
 
                             if fixed_content != content:
-                                with open(file_path, 'w') as f:
+                                with open(file_path, "w") as f:
                                     f.write(fixed_content)
                                 results["fixed"].append(file_path)
                                 results["stats"]["fixes_applied"] += 1

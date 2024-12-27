@@ -1,8 +1,10 @@
+import logging
 from datetime import datetime
+
+from sqlalchemy import func
+
 from models.adaptive_learning import AdaptivePattern
 from models.content import Content, Review
-from sqlalchemy import func
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,7 +49,8 @@ class AdaptiveLearningSystem:
             logger.error(f"Error generating adaptive content: {str(e)}")
             raise
 
-    def track_response_patterns(self, user_id, response_data):
+    @staticmethod
+    def track_response_patterns(user_id, response_data):
         try:
             pattern_data = {
                 "response_time": response_data.get("time_taken"),
@@ -62,7 +65,8 @@ class AdaptiveLearningSystem:
             logger.error(f"Error tracking response patterns: {str(e)}")
             raise
 
-    def _calculate_accuracy(self, reviews):
+    @staticmethod
+    def _calculate_accuracy(reviews):
         if not reviews:
             return {"overall": 0.0, "by_category": {}, "trend": []}
 
@@ -92,7 +96,8 @@ class AdaptiveLearningSystem:
 
         return {"overall": overall, "by_category": by_category, "trend": trend}
 
-    def _analyze_study_times(self, reviews):
+    @staticmethod
+    def _analyze_study_times(reviews):
         if not reviews:
             return {
                 "average_time": 0,
@@ -161,7 +166,8 @@ class AdaptiveLearningSystem:
             "session_lengths": session_lengths,
         }
 
-    def _evaluate_topic_mastery(self, reviews):
+    @staticmethod
+    def _evaluate_topic_mastery(reviews):
         if not reviews:
             return {
                 "mastery_levels": {},
@@ -369,7 +375,8 @@ class AdaptiveLearningSystem:
             "recommendations": recommendations,
         }
 
-    def _select_content(self, patterns, topic=None):
+    @staticmethod
+    def _select_content(patterns, topic=None):
         try:
             query = Content.query
 
@@ -414,7 +421,8 @@ class AdaptiveLearningSystem:
             logger.error(f"Error selecting content: {str(e)}")
             raise
 
-    def _categorize_content_type(self, content):
+    @staticmethod
+    def _categorize_content_type(content):
         if not content:
             return "verbal"
 

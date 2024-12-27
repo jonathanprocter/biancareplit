@@ -1,7 +1,8 @@
-import psutil
-import time
-from typing import Dict, Any
 import logging
+import time
+from typing import Any, Dict
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,8 @@ class SystemMetricsCollector:
         self.collection_interval = collection_interval
         self.last_collection = 0
 
-    def collect_metrics(self) -> Dict[str, Any]:
+    @staticmethod
+    def collect_metrics() -> Dict[str, Any]:
         try:
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()

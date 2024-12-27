@@ -1,8 +1,9 @@
-import psutil
 import json
 import logging
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
+import psutil
 from flask import current_app
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,8 @@ class HealthCheck:
             logger.error(f"Health check failed: {str(e)}")
             return {"status": "error", "message": str(e)}
 
-    def check_middleware(self) -> Dict[str, Any]:
+    @staticmethod
+    def check_middleware() -> Dict[str, Any]:
         try:
             middleware_status = {}
             if hasattr(current_app, "middleware_manager"):

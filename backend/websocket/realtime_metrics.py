@@ -1,8 +1,8 @@
 import asyncio
 import json
 import logging
-from typing import Set, Dict
 from datetime import datetime
+from typing import Dict, Set
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,8 @@ class RealtimeMetricsHandler:
                 logger.error(f"Error broadcasting metrics: {e}")
             await asyncio.sleep(2)  # Update every 2 seconds
 
-    def collect_metrics(self) -> Dict:
+    @staticmethod
+    def collect_metrics() -> Dict:
         from ..monitoring.metrics_collector import metrics_collector
 
         return {

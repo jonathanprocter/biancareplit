@@ -1,9 +1,10 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
 import os
-from models import StudySession, QuestionAttempt
+import smtplib
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from models import QuestionAttempt, StudySession
 
 
 class SummaryService:
@@ -13,7 +14,8 @@ class SummaryService:
         self.smtp_username = os.getenv("SMTP_USERNAME")
         self.smtp_password = os.getenv("SMTP_PASSWORD")
 
-    async def generate_daily_summary(self, user_id: str):
+    @staticmethod
+    async def generate_daily_summary(user_id: str):
         yesterday = datetime.now() - timedelta(days=1)
 
         # Get study sessions

@@ -1,7 +1,8 @@
 import time
-from typing import Dict, Any
-import psutil
 from datetime import datetime
+from typing import Any, Dict
+
+import psutil
 
 
 class MetricsAggregator:
@@ -9,7 +10,8 @@ class MetricsAggregator:
         self._metrics_buffer = []
         self._buffer_size = 100
 
-    def collect_system_metrics(self) -> Dict[str, Any]:
+    @staticmethod
+    def collect_system_metrics() -> Dict[str, Any]:
         """Collect current system metrics"""
         return {
             "timestamp": datetime.utcnow().isoformat(),

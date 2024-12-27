@@ -31,7 +31,8 @@ class MiddlewareInitializer:
         if app:
             self.init_app(app)
 
-    def _setup_logging(self) -> None:
+    @staticmethod
+    def _setup_logging() -> None:
         """Set up logging for middleware initialization."""
         handler = logging.StreamHandler()
         formatter = logging.Formatter(

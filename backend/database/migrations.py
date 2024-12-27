@@ -1,11 +1,13 @@
 """Database migrations manager."""
 
-import os
 import logging
-from pathlib import Path
+import os
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
+
 from flask import Flask
+
 from .db_config import db, migrate
 
 logger = logging.getLogger(__name__)
@@ -24,7 +26,8 @@ class MigrationManager:
         self.app = app
         self._ensure_migrations_dir()
 
-    def _ensure_migrations_dir(self) -> None:
+    @staticmethod
+    def _ensure_migrations_dir() -> None:
         """Ensure migrations directory exists."""
         migrations_dir = Path("migrations")
         if not migrations_dir.exists():
@@ -33,7 +36,8 @@ class MigrationManager:
             versions_dir.mkdir()
             logger.info("Created migrations directory structure")
 
-    def create_backup(self) -> Optional[Path]:
+    @staticmethod
+    def create_backup() -> Optional[Path]:
         """Create backup of current migrations."""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

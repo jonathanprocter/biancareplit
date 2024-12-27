@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify
-import psutil
 import logging
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List
+
+import psutil
+from flask import Blueprint, jsonify
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +111,8 @@ class SystemHealthMonitor:
                 name="Disk Usage", status="fail", message="Failed to check disk usage"
             )
 
-    def check_network(self) -> HealthCheck:
+    @staticmethod
+    def check_network() -> HealthCheck:
         """Check network connectivity"""
         try:
             net_io = psutil.net_io_counters()

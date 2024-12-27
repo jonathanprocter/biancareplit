@@ -1,9 +1,11 @@
-import os
-import yaml
 import json
 import logging
+import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+import yaml
+
 from .validators import ConfigValidator
 
 logger = logging.getLogger(__name__)
@@ -17,7 +19,8 @@ class ConfigLoader:
         self.env = os.getenv("FLASK_ENV", "development")
         self.validator = ConfigValidator()
 
-    def load_yaml(self, file_path: Path) -> Optional[Dict[str, Any]]:
+    @staticmethod
+    def load_yaml(file_path: Path) -> Optional[Dict[str, Any]]:
         """Load YAML configuration file"""
         try:
             if file_path.is_file():
@@ -33,7 +36,8 @@ class ConfigLoader:
             logger.error(f"Failed to load YAML config {file_path}: {str(e)}")
             return None
 
-    def load_json(self, file_path: Path) -> Optional[Dict[str, Any]]:
+    @staticmethod
+    def load_json(file_path: Path) -> Optional[Dict[str, Any]]:
         """Load JSON configuration file"""
         try:
             if file_path.is_file():
@@ -68,7 +72,8 @@ class ConfigLoader:
 
         return self._process_config(config)
 
-    def _process_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    @staticmethod
+    def _process_config(config: Dict[str, Any]) -> Dict[str, Any]:
         """Process configuration by substituting environment variables"""
         processed = {}
 

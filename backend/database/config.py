@@ -1,13 +1,14 @@
 """Database configuration and connection management."""
 
-from pathlib import Path
-import os
 import logging
-from typing import Dict, Any, Optional
+import os
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,8 @@ class DatabaseManager:
             logger.error(f"Failed to initialize database: {str(e)}")
             raise
 
-    def check_connection(self) -> bool:
+    @staticmethod
+    def check_connection() -> bool:
         """Check database connection health."""
         try:
             db.session.execute("SELECT 1")

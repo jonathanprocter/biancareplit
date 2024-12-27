@@ -1,12 +1,14 @@
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
+from datetime import datetime
+
 import numpy as np
 import tensorflow as tf
-from datetime import datetime
-from extensions import db
+from sklearn.decomposition import PCA
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
 from sqlalchemy.dialects.postgresql import JSON
+
+from extensions import db
 
 
 class AdvancedPatternModel(db.Model):
@@ -54,7 +56,8 @@ class AdvancedPatternRecognition:
         self.scaler = StandardScaler()
         self.pca = PCA(n_components=0.95)  # Preserve 95% of variance
 
-    def _build_deep_pattern_model(self):
+    @staticmethod
+    def _build_deep_pattern_model():
         model = tf.keras.Sequential(
             [
                 tf.keras.layers.Dense(128, activation="relu", input_shape=(50,)),
@@ -99,7 +102,8 @@ class AdvancedPatternRecognition:
 
         return pattern_analysis
 
-    def _extract_temporal_features(self, user_data):
+    @staticmethod
+    def _extract_temporal_features(user_data):
         """Extract time-based learning patterns"""
         features = []
         for session in user_data.get("sessions", []):
@@ -112,7 +116,8 @@ class AdvancedPatternRecognition:
             features.append(time_features)
         return np.array(features)
 
-    def _extract_behavioral_features(self, user_data):
+    @staticmethod
+    def _extract_behavioral_features(user_data):
         """Extract behavioral patterns from user interactions"""
         features = []
         for session in user_data.get("sessions", []):
@@ -125,7 +130,8 @@ class AdvancedPatternRecognition:
             features.append(behavioral_features)
         return np.array(features)
 
-    def _extract_cognitive_features(self, user_data):
+    @staticmethod
+    def _extract_cognitive_features(user_data):
         """Extract cognitive learning patterns"""
         features = []
         for session in user_data.get("sessions", []):
@@ -175,13 +181,15 @@ class AdvancedPatternRecognition:
             "recommended_adjustments": self._generate_recommendations(predictions),
         }
 
-    def _calculate_trend(self, data):
+    @staticmethod
+    def _calculate_trend(data):
         """Calculate learning trend from time series data"""
         x = np.arange(len(data))
         z = np.polyfit(x, data, 1)
         return float(z[0])
 
-    def _identify_learning_style(self, predictions):
+    @staticmethod
+    def _identify_learning_style(predictions):
         """Identify dominant learning style from behavioral patterns"""
         styles = ["visual", "auditory", "kinesthetic", "reading/writing"]
         return styles[np.argmax(np.mean(predictions, axis=0))]
@@ -192,7 +200,8 @@ class AdvancedPatternRecognition:
         trend = self._calculate_trend(features[:, -1])
         return patterns[int(np.clip(trend * 2 + 1, 0, 3))]
 
-    def _analyze_retention(self, scores):
+    @staticmethod
+    def _analyze_retention(scores):
         """Analyze knowledge retention patterns"""
         retention_rate = np.mean(scores)
         decay_rate = -np.log(retention_rate) if retention_rate > 0 else 0
@@ -210,7 +219,8 @@ class AdvancedPatternRecognition:
             "mastery_stability": float(1 - np.std(scores)),
         }
 
-    def _interpret_deep_patterns(self, predictions):
+    @staticmethod
+    def _interpret_deep_patterns(predictions):
         """Interpret complex patterns from deep learning model"""
         return {
             "pattern_strength": float(np.max(predictions)),
@@ -235,13 +245,15 @@ class AdvancedPatternRecognition:
             "learning_pace": self._recommend_pace(trajectory),
         }
 
-    def _identify_focus_areas(self, predictions):
+    @staticmethod
+    def _identify_focus_areas(predictions):
         """Identify areas needing focus based on pattern analysis"""
         areas = ["comprehension", "retention", "application", "analysis"]
         scores = predictions.mean(axis=0)
         return [area for area, score in zip(areas, scores) if score < 0.7]
 
-    def _recommend_pace(self, trajectory):
+    @staticmethod
+    def _recommend_pace(trajectory):
         """Recommend learning pace based on trajectory analysis"""
         if trajectory["direction"] > 0.5:
             return "accelerate"

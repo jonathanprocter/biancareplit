@@ -1,8 +1,9 @@
-import psutil
 import logging
 from datetime import datetime
-from typing import Dict, Any
-from prometheus_client import Gauge, Counter
+from typing import Any, Dict
+
+import psutil
+from prometheus_client import Counter, Gauge
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,8 @@ class DeploymentMonitor:
     def __init__(self):
         self.last_check = datetime.now()
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    @staticmethod
+    def get_system_metrics() -> Dict[str, Any]:
         """Collect system metrics"""
         try:
             metrics = {
@@ -88,14 +90,14 @@ class DeploymentMonitor:
             "timestamp": datetime.now().isoformat(),
             "metrics": metrics,
             "aggregates": {
-                name: self.metric_aggregator.get_aggregate(name)
-                for name in metrics
+                name: self.metric_aggregator.get_aggregate(name) for name in metrics
             },
             "uptime": self.get_uptime(),
             "alerts": self.notification_handler.notification_queue[-5:],
         }
 
-    def get_uptime(self) -> float:
+    @staticmethod
+    def get_uptime() -> float:
         """Get system uptime in seconds"""
         return psutil.boot_time()
 
@@ -128,17 +130,20 @@ class MetricsCleanupService:
 
 
 class LoggingManager:
-    def log_alert(self, alert):
+    @staticmethod
+    def log_alert(alert):
         print(f"Alert: {alert}")
 
 
 class MetricsManager:
-    def collect_and_store_metrics(self):
+    @staticmethod
+    def collect_and_store_metrics():
         return {"cpu": 50, "memory": 60, "disk": 70}
 
 
 class AlertManager:
-    def check_metrics(self, metrics):
+    @staticmethod
+    def check_metrics(metrics):
         alerts = []
         if metrics["cpu"] > 80:
             alerts.append(Alert("High CPU usage", Severity.CRITICAL))

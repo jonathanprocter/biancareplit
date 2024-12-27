@@ -1,5 +1,6 @@
 import os
 import re
+
 import requests
 
 BOLD_ASTERISKS_RE = re.compile(r"\*\*(.*?)\*\*")
@@ -18,17 +19,20 @@ class AICoach:
             raise ValueError("OpenAI API key not provided")
         self.api_key = api_key
 
-    def format_inline_markup(self, text):
+    @staticmethod
+    def format_inline_markup(text):
         text = BOLD_ASTERISKS_RE.sub(r"<strong>\1</strong>", text)
         text = ITALICS_SINGLE_ASTERISKS_RE.sub(r"<em>\1</em>", text)
         text = BOLD_UNDERSCORES_RE.sub(r"<strong>\1</strong>", text)
         text = ITALICS_SINGLE_UNDERSCORES_RE.sub(r"<em>\1</em>", text)
         return text
 
-    def is_ordered_list_item(self, line):
+    @staticmethod
+    def is_ordered_list_item(line):
         return bool(ORDERED_LIST_RE.match(line.strip()))
 
-    def is_unordered_list_item(self, line):
+    @staticmethod
+    def is_unordered_list_item(line):
         return bool(UNORDERED_LIST_RE.match(line.strip()))
 
     # Continue with other methods...

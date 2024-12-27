@@ -1,7 +1,8 @@
 """CLI interface for database migration management."""
 
 import sys
-from typing import Dict, Any
+from typing import Any, Dict
+
 from backend.database.migration_manager import MigrationManager
 
 
@@ -9,7 +10,8 @@ class MigrationCLI:
     def __init__(self):
         self.manager = MigrationManager()
 
-    def display_health_status(self, status: Dict[str, Any]) -> None:
+    @staticmethod
+    def display_health_status(status: Dict[str, Any]) -> None:
         """Display migration system health status."""
         print("\nMigration System Health Status:")
         print("-" * 40)

@@ -27,7 +27,8 @@ class BaseMiddleware(Generic[T]):
         if app is not None:
             self.init_app(app)
 
-    def _setup_logging(self) -> None:
+    @staticmethod
+    def _setup_logging() -> None:
         """Setup logging for the middleware."""
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
@@ -102,7 +103,8 @@ class BaseMiddleware(Generic[T]):
         """Handle operations before each request."""
         pass
 
-    def after_request(self, response: Any) -> Any:
+    @staticmethod
+    def after_request(response: Any) -> Any:
         """Handle operations after each request."""
         return response
 

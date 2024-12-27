@@ -1,6 +1,7 @@
-from flask import Flask, jsonify
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
+from flask import Flask, jsonify
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -17,7 +18,8 @@ class ErrorMiddleware:
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app: Flask) -> None:
+    @staticmethod
+    def init_app(app: Flask) -> None:
         @app.errorhandler(Exception)
         def handle_error(error: Exception) -> Dict[str, Any]:
             logger.error(f"Unhandled error: {str(error)}")

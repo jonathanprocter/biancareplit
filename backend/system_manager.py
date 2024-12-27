@@ -1,15 +1,16 @@
 # system_manager.py
-import os
-import sys
-import shutil
-import logging
-from pathlib import Path
-from typing import Optional, Dict, Any, List
-import yaml
 import json
-from datetime import datetime
-from contextlib import contextmanager
+import logging
+import os
+import shutil
 import subprocess
+import sys
+from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 class SystemManager:
@@ -21,7 +22,8 @@ class SystemManager:
         self.backup_dir = self.base_path / "backups"
         self.env = os.getenv("APP_ENV", "development")
 
-    def _setup_logger(self) -> logging.Logger:
+    @staticmethod
+    def _setup_logger() -> logging.Logger:
         """Initialize logging configuration"""
         logger = logging.getLogger("SystemManager")
         logger.setLevel(logging.INFO)

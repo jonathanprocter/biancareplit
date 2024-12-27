@@ -1,10 +1,11 @@
 import logging
-from functools import wraps
-from typing import Any, Callable
-from flask import request, Response
 from datetime import datetime, timedelta
-from werkzeug.security import safe_str_cmp
+from functools import wraps
 from hashlib import sha256
+from typing import Any, Callable
+
+from flask import Response, request
+from werkzeug.security import safe_str_cmp
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,8 @@ class CacheMiddleware:
         self.cache = {}
         self._setup_middleware()
 
-    def _setup_middleware(self) -> None:
+    @staticmethod
+    def _setup_middleware() -> None:
         """Setup cache handlers."""
         logger.info("Cache middleware initialized")
 

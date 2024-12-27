@@ -1,7 +1,8 @@
 import logging
 import traceback
 from typing import Any, Dict, Optional
-from flask import jsonify, request, current_app
+
+from flask import current_app, jsonify, request
 from werkzeug.exceptions import HTTPException
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,8 @@ class ErrorHandlerMiddleware:
                 405,
             )
 
-    def _log_error(self, error: Exception) -> str:
+    @staticmethod
+    def _log_error(error: Exception) -> str:
         """Log error details and return error ID."""
         error_id = hex(hash(str(error) + str(traceback.format_exc())))[-8:]
         logger.error(f"Error ID {error_id}: {str(error)}\n{traceback.format_exc()}")

@@ -1,13 +1,15 @@
 from datetime import datetime, timedelta
-from models import Flashcard, AdaptivePattern
-from typing import Dict, Any
+from typing import Any, Dict
+
+from models import AdaptivePattern, Flashcard
 
 
 class LearningIntegrationService:
     def __init__(self, db):
         self.db = db
 
-    def convert_missed_question(self, question_data: Dict[str, Any]) -> Flashcard:
+    @staticmethod
+    def convert_missed_question(question_data: Dict[str, Any]) -> Flashcard:
         """Convert missed quiz question to flashcard with detailed tagging"""
         flashcard = Flashcard(
             front=question_data["question"],
@@ -34,7 +36,8 @@ class LearningIntegrationService:
         )
         return flashcard
 
-    def calculate_next_review(self, card: Flashcard, quality: int) -> datetime:
+    @staticmethod
+    def calculate_next_review(card: Flashcard, quality: int) -> datetime:
         """Calculate next review time using SuperMemo SM-2 algorithm"""
         if quality >= 3:  # Correct response
             if card.consecutive_correct == 0:

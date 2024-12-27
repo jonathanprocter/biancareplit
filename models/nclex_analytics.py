@@ -1,7 +1,9 @@
-from datetime import datetime
-from typing import Dict, Any, List
 import logging
+from datetime import datetime
+from typing import Any, Dict, List
+
 from extensions import db
+
 
 class NCLEXAnalytics(db.Model):
     __tablename__ = "nclex_analytics"
@@ -46,7 +48,8 @@ class NCLEXAnalytics(db.Model):
             logging.error(f"Error in prediction calculation: {str(e)}")
             return {"error": "Failed to calculate prediction"}
 
-    def calculate_mastery_level(self, score: float) -> str:
+    @staticmethod
+    def calculate_mastery_level(score: float) -> str:
         """Calculate mastery level based on score"""
         if score >= 0.85:
             return "Advanced"
@@ -56,7 +59,8 @@ class NCLEXAnalytics(db.Model):
             return "Developing"
         return "Needs Improvement"
 
-    def get_focus_areas(self, topic_data: Dict[str, Any]) -> List[str]:
+    @staticmethod
+    def get_focus_areas(topic_data: Dict[str, Any]) -> List[str]:
         """Get areas that need focus based on performance"""
         weak_areas = []
         for subtopic, stats in topic_data.get("subtopic_stats", {}).items():

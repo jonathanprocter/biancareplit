@@ -1,9 +1,11 @@
-import os
-import logging
-import openai
-from models import Content, SubjectCategory, DifficultyLevel, ContentType
-from typing import List, Dict, Any, Optional
 import json
+import logging
+import os
+from typing import Any, Dict, List, Optional
+
+import openai
+
+from models import Content, ContentType, DifficultyLevel, SubjectCategory
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,7 +18,8 @@ class QuestionGenerator:
             raise ValueError("OpenAI API key not found in environment variables")
         openai.api_key = self.api_key
 
-    def _validate_question(self, question: Dict[str, Any]) -> bool:
+    @staticmethod
+    def _validate_question(question: Dict[str, Any]) -> bool:
         try:
             if (
                 not question.get("question")
@@ -56,7 +59,8 @@ class QuestionGenerator:
             logger.error(f"Error validating question: {str(e)}")
             return False
 
-    def generate_prompt(self, category: str, difficulty: str, count: int = 5) -> str:
+    @staticmethod
+    def generate_prompt(category: str, difficulty: str, count: int = 5) -> str:
         return f"""Create {count} high-cognitive level NCLEX-style questions focusing on analysis, synthesis, or evaluation with the following criteria:
     Difficulty: {difficulty}
     Topic: {category}
@@ -182,7 +186,8 @@ class QuestionGenerator:
             logger.error(f"Error in generate_questions: {str(e)}")
             return []
 
-    def create_content_objects(self, questions, category, difficulty):
+    @staticmethod
+    def create_content_objects(questions, category, difficulty):
         content_objects = []
 
         try:
