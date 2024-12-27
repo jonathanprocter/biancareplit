@@ -97,8 +97,8 @@ async function makeRequest<T>(endpoint: string, data: Record<string, unknown>): 
 export const aiService = {
   async generateQuestions(
     topic: string,
-    difficulty: string = 'intermediate',
-    count: number = 5,
+    difficulty = 'intermediate',
+    count = 5,
   ): Promise<AIResponse<Question[]>> {
     try {
       const data = await makeRequest<{ questions: Question[] }>('questions/generate', {
@@ -120,7 +120,7 @@ export const aiService = {
     }
   },
 
-  async generateFlashcards(topic: string, count: number = 5): Promise<AIResponse<Flashcard[]>> {
+  async generateFlashcards(topic: string, count = 5): Promise<AIResponse<Flashcard[]>> {
     try {
       const data = await makeRequest<{ flashcards: Flashcard[] }>('flashcards/generate', {
         topic,

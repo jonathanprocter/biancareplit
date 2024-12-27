@@ -8,7 +8,7 @@ import {
 export class MiddlewareManager {
   private static instance: MiddlewareManager;
   private middlewares: BaseMiddleware[] = [];
-  private initialized: boolean = false;
+  private initialized = false;
 
   private constructor() {}
 

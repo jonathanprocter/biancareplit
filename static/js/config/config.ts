@@ -149,7 +149,7 @@ const defaultConfig: Config = {
 class ConfigManager {
   private static instance: ConfigManager;
   private config: Config;
-  private initialized: boolean = false;
+  private initialized = false;
 
   private constructor() {
     // Default configuration with initialized flag

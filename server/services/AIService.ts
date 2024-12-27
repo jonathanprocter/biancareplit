@@ -75,7 +75,7 @@ interface StudyProgress {
 export class AIService {
   private openai: OpenAI | null = null;
   private static instance: AIService | null = null;
-  private connectionValidated: boolean = false;
+  private connectionValidated = false;
   private initializationError: Error | null = null;
 
   private constructor() {
@@ -172,8 +172,8 @@ export class AIService {
 
   async generate_questions(
     topic: string,
-    difficulty: string = 'intermediate',
-    count: number = 5,
+    difficulty = 'intermediate',
+    count = 5,
   ): Promise<Question[]> {
     try {
       await this.ensureConnection();
@@ -207,7 +207,7 @@ export class AIService {
     }
   }
 
-  async generate_flashcards(topic: string, count: number = 5): Promise<Flashcard[]> {
+  async generate_flashcards(topic: string, count = 5): Promise<Flashcard[]> {
     try {
       await this.ensureConnection();
       console.info(`AIService: Generating ${count} flashcards about "${topic}"`);

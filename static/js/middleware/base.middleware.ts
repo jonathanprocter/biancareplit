@@ -28,7 +28,7 @@ export abstract class BaseMiddleware {
   protected name: string;
   protected enabled: boolean;
   protected priority: number;
-  private initialized: boolean = false;
+  private initialized = false;
 
   constructor(options: MiddlewareOptions = {}) {
     const validatedOptions = MiddlewareOptionsSchema.parse(options);
