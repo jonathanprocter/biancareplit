@@ -18,7 +18,7 @@ class CodeReviewService:
         self.batch_size = 5
         self.max_file_size = 100 * 1024
         self.api_timeout = 60.0
-        
+
         self.fix_patterns = {
             "unused_imports": (
                 r"^import\s+([^\s]+)(?:\s+as\s+[^\s]+)?\s*$",
@@ -47,7 +47,7 @@ class CodeReviewService:
                     fixed_content = self._apply_callable_fix(fixed_content, pattern, replacement)
                 else:
                     fixed_content = self._apply_simple_fix(fixed_content, pattern, replacement)
-            
+
             return fixed_content
         except Exception as e:
             logger.error(f"Error applying fixes to {file_path}: {str(e)}")
@@ -93,18 +93,18 @@ class CodeReviewService:
                         try:
                             with open(file_path, 'r') as f:
                                 content = f.read()
-                            
+
                             # Apply automated fixes
                             fixed_content = await self.apply_automated_fixes(file_path, content)
-                            
+
                             if fixed_content != content:
                                 with open(file_path, 'w') as f:
                                     f.write(fixed_content)
                                 results["fixed"].append(file_path)
                                 results["stats"]["fixes_applied"] += 1
-                            
+
                             results["stats"]["processed"] += 1
-                            
+
                         except Exception as e:
                             logger.error(f"Error processing {file_path}: {str(e)}")
                             results["failed"].append(file_path)

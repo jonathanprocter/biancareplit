@@ -32,7 +32,7 @@ class DeploymentVerifier:
 
     def verify_deployment(self) -> bool:
         logger.info("Starting deployment verification...")
-        
+
         for attempt in range(self.max_retries):
             if attempt > 0:
                 wait_time = min(5 * attempt, 30)

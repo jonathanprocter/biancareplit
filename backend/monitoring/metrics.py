@@ -35,13 +35,13 @@ class MetricsCollector:
                     'network': psutil.net_io_counters()._asdict()
                 }
             }
-            
+
             # Add status indicators
             metrics['status'] = self._calculate_status(metrics)
-            
+
             # Store in history
             self.metrics_history.append(metrics)
-            
+
             return metrics
         except Exception as e:
             logger.error(f"Failed to collect metrics: {str(e)}")
