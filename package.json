@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "ai-bot-template",
   "private": true,
   "version": "0.0.1",
@@ -59,5 +60,9 @@
     "wouter": "^3.3.5",
     "zod": "^3.24.1",
     "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.0",
+    "prettier-plugin-tailwindcss": "^0.6.9"
   }
 }

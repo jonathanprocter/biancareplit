@@ -3,22 +3,23 @@ version = 1
 [[analyzers]]
 name = "python"
 
-  [analyzers.meta]
-  runtime_version = "3.x.x"
+[analyzers.meta]
+runtime_version = "3.x.x"
 
 [[analyzers]]
 name = "javascript"
+enabled = true
 
-  [analyzers.meta]
-  plugins = [
+[analyzers.meta]
+plugins = [
     "react",
     "vue",
     "ember",
     "angularjs",
     "meteor",
     "angular"
-  ]
-  environment = [
+]
+environment = [
     "nodejs",
     "jquery",
     "mongo",
@@ -28,7 +29,7 @@ name = "javascript"
     "vitest",
     "mocha",
     "jasmine"
-  ]
+]
 
 [[analyzers]]
 name = "shell"
