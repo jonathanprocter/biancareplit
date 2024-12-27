@@ -75,7 +75,7 @@ class QuestionService {
     console.log(`Filling buffer for ${category}, need ${needed} questions`);
 
     try {
-      const response = await fetch("/api/nursing/questions/generate", {
+      const response = await fetch('/api/nursing/questions/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ class QuestionService {
 
   async getQuestions(category, count = 1) {
     try {
-      let buffer = this.questionBuffer.get(category) || [];
+      const buffer = this.questionBuffer.get(category) || [];
 
       // If buffer is getting low, trigger a fill
       if (buffer.length < this.MIN_BUFFER_SIZE) {
@@ -165,9 +165,7 @@ const questionService = new QuestionService();
 document.addEventListener('DOMContentLoaded', () => {
   questionService.initialize().catch((error) => {
     console.error('Failed to initialize QuestionService:', error);
-    showErrorNotification(
-      'Question service initialization failed. Please refresh the page.',
-    );
+    showErrorNotification('Question service initialization failed. Please refresh the page.');
   });
 });
 
