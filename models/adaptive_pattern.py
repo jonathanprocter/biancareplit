@@ -1,13 +1,16 @@
 from datetime import datetime
-from app import db
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from sqlalchemy.dialects.postgresql import JSONB
+
+from app import db
+
 
 class AdaptivePattern(db.Model):
     __tablename__ = "adaptive_patterns"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     total_questions = db.Column(db.Integer, default=0)
     correct_answers = db.Column(db.Integer, default=0)
@@ -44,16 +47,22 @@ class AdaptivePattern(db.Model):
     def to_dict(self) -> Dict[str, Any]:
         """Convert model to dictionary"""
         return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'category': self.category,
-            'accuracy_rate': round(self.accuracy_rate, 2) if self.accuracy_rate else 0,
-            'avg_time_per_question': round(self.avg_time_per_question, 2) if self.avg_time_per_question else 0,
-            'total_questions': self.total_questions,
-            'learning_style_weights': self.learning_style_weights,
-            'difficulty_preference': self.difficulty_preference,
-            'last_activity': self.last_activity.isoformat() if self.last_activity else None
+            "id": self.id,
+            "user_id": self.user_id,
+            "category": self.category,
+            "accuracy_rate": round(self.accuracy_rate, 2) if self.accuracy_rate else 0,
+            "avg_time_per_question": (
+                round(self.avg_time_per_question, 2)
+                if self.avg_time_per_question
+                else 0
+            ),
+            "total_questions": self.total_questions,
+            "learning_style_weights": self.learning_style_weights,
+            "difficulty_preference": self.difficulty_preference,
+            "last_activity": (
+                self.last_activity.isoformat() if self.last_activity else None
+            ),
         }
 
     def __repr__(self) -> str:
-        return f'<AdaptivePattern {self.id}: {self.category} - {self.accuracy_rate:.1f}% accuracy>'
+        return f"<AdaptivePattern {self.id}: {self.category} - {self.accuracy_rate:.1f}% accuracy>"

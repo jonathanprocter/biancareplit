@@ -1,14 +1,15 @@
-
 #!/usr/bin/env python3
-import requests
-import sys
 import logging
+import sys
 import time
+
+import requests
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class DeploymentVerifier:
     def __init__(self, base_url: str = "http://0.0.0.0:3001", max_retries: int = 5):
@@ -24,7 +25,9 @@ class DeploymentVerifier:
             if response.status_code == 200:
                 logger.info(f"✅ Endpoint {endpoint} is healthy")
                 return True
-            logger.error(f"❌ Endpoint {endpoint} returned status {response.status_code}")
+            logger.error(
+                f"❌ Endpoint {endpoint} returned status {response.status_code}"
+            )
             return False
         except requests.RequestException as e:
             logger.error(f"❌ Failed to connect to {endpoint}: {str(e)}")
@@ -47,8 +50,11 @@ class DeploymentVerifier:
                 logger.info("✅ Deployment verification successful!")
                 return True
 
-        logger.error(f"❌ Deployment verification failed after {self.max_retries} attempts")
+        logger.error(
+            f"❌ Deployment verification failed after {self.max_retries} attempts"
+        )
         return False
+
 
 if __name__ == "__main__":
     verifier = DeploymentVerifier()
