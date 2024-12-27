@@ -77,9 +77,7 @@ function displayCurrentQuestion() {
                   state.currentQuestionIndex === 0 ? 'disabled' : ''
                 }>← Previous</button>
                 <button type="button" class="action-btn next" onclick="nextQuestion()" ${
-                  state.currentQuestionIndex >= state.questions.length - 1
-                    ? 'disabled'
-                    : ''
+                  state.currentQuestionIndex >= state.questions.length - 1 ? 'disabled' : ''
                 }>Next →</button>
             </div>
         </div>
