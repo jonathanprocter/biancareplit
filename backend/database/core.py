@@ -76,7 +76,8 @@ class DatabaseManager:
             raise RuntimeError("Database manager not initialized")
         return db.session
 
-    def verify_connection(self, app: Flask) -> bool:
+    @staticmethod
+    def verify_connection(app: Flask) -> bool:
         """Verify database connection."""
         try:
             with app.app_context():
@@ -89,7 +90,8 @@ class DatabaseManager:
                 logger.exception("Detailed error trace:")
             return False
 
-    def get_connection_info(self, app: Flask) -> Dict[str, Any]:
+    @staticmethod
+    def get_connection_info(app: Flask) -> Dict[str, Any]:
         """Get database connection information."""
         try:
             with app.app_context():

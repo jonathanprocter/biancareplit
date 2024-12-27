@@ -20,7 +20,8 @@ class InstructorReportingService:
     def init_app(self, app):
         self.app = app
 
-    def generate_student_report(self, student_id, date=None):
+    @staticmethod
+    def generate_student_report(student_id, date=None):
         """Generate a detailed report for a specific student."""
         if date is None:
             date = datetime.utcnow().date()
@@ -105,7 +106,8 @@ class InstructorReportingService:
             logger.error(f"Error sending instructor email: {str(e)}")
             raise
 
-    def _generate_email_html(self, student_reports):
+    @staticmethod
+    def _generate_email_html(student_reports):
         """Generate HTML content for the email."""
         html = """
         <html>

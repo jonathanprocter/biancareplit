@@ -17,7 +17,8 @@ class CacheMiddleware:
         self.cache = {}
         self._setup_middleware()
 
-    def _setup_middleware(self) -> None:
+    @staticmethod
+    def _setup_middleware() -> None:
         """Setup cache handlers."""
         logger.info("Cache middleware initialized")
 

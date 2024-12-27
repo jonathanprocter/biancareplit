@@ -14,7 +14,8 @@ class MigrationVerifier:
         self.migrations_dir = migrations_dir or Path("migrations")
         self.logger = self._setup_logger()
 
-    def _setup_logger(self) -> logging.Logger:
+    @staticmethod
+    def _setup_logger() -> logging.Logger:
         """Initialize logger for migration verification."""
         logger = logging.getLogger("MigrationVerifier")
         logger.setLevel(logging.INFO)

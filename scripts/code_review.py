@@ -53,7 +53,8 @@ class CodeReviewSystem:
         if self.session:
             await self.session.close()
 
-    def detect_language(self, file_path: str) -> Optional[str]:
+    @staticmethod
+    def detect_language(file_path: str) -> Optional[str]:
         """Detect the programming language based on file extension."""
         _, ext = os.path.splitext(file_path)
         return SUPPORTED_LANGUAGES.get(ext)
@@ -123,7 +124,8 @@ class CodeReviewSystem:
             logger.error(f"Error fixing {file_path}: {str(e)}")
             return None
 
-    def apply_linters(self, file_path: str, language: str) -> bool:
+    @staticmethod
+    def apply_linters(file_path: str, language: str) -> bool:
         """Apply language-specific linters and formatters."""
         try:
             if language == "Python":
@@ -140,7 +142,8 @@ class CodeReviewSystem:
             logger.error(f"Unexpected error during linting {file_path}: {str(e)}")
             return False
 
-    def save_fixed_code(self, file_path: str, fixed_code: str) -> bool:
+    @staticmethod
+    def save_fixed_code(file_path: str, fixed_code: str) -> bool:
         """Save the fixed code back to the file."""
         try:
             with open(file_path, "w", encoding="utf-8") as file:

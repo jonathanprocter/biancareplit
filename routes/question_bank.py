@@ -25,7 +25,8 @@ class LearningIntegrationService:
     def __init__(self, db_session):
         self.db = db_session
 
-    def convert_missed_question(self, missed_question):
+    @staticmethod
+    def convert_missed_question(missed_question):
         flashcard = Flashcard(
             front=missed_question["question"],
             back=f"Correct Answer: {missed_question['correct_answer']}\nExplanation: {missed_question.get('explanation', '')}",

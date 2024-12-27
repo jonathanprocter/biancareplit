@@ -37,7 +37,8 @@ class ApplicationContextManager:
         self.db_session = None
         self._initialized = True
 
-    def _setup_logger(self) -> logging.Logger:
+    @staticmethod
+    def _setup_logger() -> logging.Logger:
         """Setup logging configuration."""
         logger = logging.getLogger("AppContextManager")
         logger.setLevel(logging.INFO)

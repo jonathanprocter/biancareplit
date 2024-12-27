@@ -26,7 +26,8 @@ class MigrationManager:
             self.logger.addHandler(handler)
             self.logger.info("Migration manager logging initialized")
 
-    def _run_command(self, command: List[str]) -> Tuple[bool, str]:
+    @staticmethod
+    def _run_command(command: List[str]) -> Tuple[bool, str]:
         """Run a shell command and return result"""
         try:
             result = subprocess.run(command, capture_output=True, text=True, check=True)

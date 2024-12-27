@@ -65,7 +65,8 @@ class DatabaseManager:
             logger.error(f"Failed to initialize database: {str(e)}")
             raise
 
-    def check_connection(self) -> bool:
+    @staticmethod
+    def check_connection() -> bool:
         """Check database connection health."""
         try:
             db.session.execute("SELECT 1")

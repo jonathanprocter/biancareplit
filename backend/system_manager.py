@@ -21,7 +21,8 @@ class SystemManager:
         self.backup_dir = self.base_path / "backups"
         self.env = os.getenv("APP_ENV", "development")
 
-    def _setup_logger(self) -> logging.Logger:
+    @staticmethod
+    def _setup_logger() -> logging.Logger:
         """Initialize logging configuration"""
         logger = logging.getLogger("SystemManager")
         logger.setLevel(logging.INFO)

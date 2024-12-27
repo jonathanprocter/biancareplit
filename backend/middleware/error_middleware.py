@@ -17,7 +17,8 @@ class ErrorMiddleware:
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app: Flask) -> None:
+    @staticmethod
+    def init_app(app: Flask) -> None:
         @app.errorhandler(Exception)
         def handle_error(error: Exception) -> Dict[str, Any]:
             logger.error(f"Unhandled error: {str(error)}")

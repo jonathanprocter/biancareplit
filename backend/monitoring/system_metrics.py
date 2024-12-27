@@ -11,7 +11,8 @@ class SystemMetricsCollector:
         self.collection_interval = collection_interval
         self.last_collection = 0
 
-    def collect_metrics(self) -> Dict[str, Any]:
+    @staticmethod
+    def collect_metrics() -> Dict[str, Any]:
         try:
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()

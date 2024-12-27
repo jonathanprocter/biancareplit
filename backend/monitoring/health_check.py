@@ -30,7 +30,8 @@ class HealthCheck:
             logger.error(f"Health check failed: {str(e)}")
             return {"status": "error", "message": str(e)}
 
-    def check_middleware(self) -> Dict[str, Any]:
+    @staticmethod
+    def check_middleware() -> Dict[str, Any]:
         try:
             middleware_status = {}
             if hasattr(current_app, "middleware_manager"):

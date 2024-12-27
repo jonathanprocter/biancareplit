@@ -106,7 +106,8 @@ class ContentParsingService:
             logger.error(f"Error parsing file {file_path}: {str(e)}")
             raise
 
-    async def _parse_pdf(self, file_path: Path) -> str:
+    @staticmethod
+    async def _parse_pdf(file_path: Path) -> str:
         """Parse PDF content using PyMuPDF with enhanced error handling"""
         doc = None
         try:
@@ -128,7 +129,8 @@ class ContentParsingService:
             if doc:
                 doc.close()
 
-    async def _parse_docx(self, file_path: Path) -> str:
+    @staticmethod
+    async def _parse_docx(file_path: Path) -> str:
         """Parse DOCX content using python-docx"""
         try:
             doc = docx.Document(str(file_path))
@@ -137,7 +139,8 @@ class ContentParsingService:
             logger.error(f"Error parsing DOCX: {str(e)}")
             raise
 
-    async def _parse_text(self, file_path: Path) -> str:
+    @staticmethod
+    async def _parse_text(file_path: Path) -> str:
         """Parse plain text file with encoding handling"""
         try:
             with open(file_path, "r", encoding="utf-8") as f:

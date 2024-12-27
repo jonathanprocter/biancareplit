@@ -16,7 +16,8 @@ class DeploymentMonitor:
     def __init__(self):
         self.last_check = datetime.now()
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    @staticmethod
+    def get_system_metrics() -> Dict[str, Any]:
         """Collect system metrics"""
         try:
             metrics = {
@@ -95,7 +96,8 @@ class DeploymentMonitor:
             "alerts": self.notification_handler.notification_queue[-5:],
         }
 
-    def get_uptime(self) -> float:
+    @staticmethod
+    def get_uptime() -> float:
         """Get system uptime in seconds"""
         return psutil.boot_time()
 
@@ -128,17 +130,20 @@ class MetricsCleanupService:
 
 
 class LoggingManager:
-    def log_alert(self, alert):
+    @staticmethod
+    def log_alert(alert):
         print(f"Alert: {alert}")
 
 
 class MetricsManager:
-    def collect_and_store_metrics(self):
+    @staticmethod
+    def collect_and_store_metrics():
         return {"cpu": 50, "memory": 60, "disk": 70}
 
 
 class AlertManager:
-    def check_metrics(self, metrics):
+    @staticmethod
+    def check_metrics(metrics):
         alerts = []
         if metrics["cpu"] > 80:
             alerts.append(Alert("High CPU usage", Severity.CRITICAL))

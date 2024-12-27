@@ -71,7 +71,8 @@ class DatabaseConfigManager:
             logger.error(f"Failed to initialize database: {str(e)}")
             raise
 
-    def verify_connection(self, app: Flask) -> bool:
+    @staticmethod
+    def verify_connection(app: Flask) -> bool:
         """Verify database connection."""
         try:
             with app.app_context():

@@ -19,7 +19,8 @@ class MetricsCollector:
     def __init__(self):
         self.start_time = datetime.utcnow()
 
-    def collect_system_metrics(self) -> Dict[str, Any]:
+    @staticmethod
+    def collect_system_metrics() -> Dict[str, Any]:
         try:
             cpu = psutil.cpu_percent()
             memory = psutil.virtual_memory()

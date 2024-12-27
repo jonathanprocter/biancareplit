@@ -13,7 +13,8 @@ class SummaryService:
         self.smtp_username = os.getenv("SMTP_USERNAME")
         self.smtp_password = os.getenv("SMTP_PASSWORD")
 
-    async def generate_daily_summary(self, user_id: str):
+    @staticmethod
+    async def generate_daily_summary(user_id: str):
         yesterday = datetime.now() - timedelta(days=1)
 
         # Get study sessions

@@ -53,11 +53,13 @@ class CodeReviewService:
             logger.error(f"Error applying fixes to {file_path}: {str(e)}")
             return content
 
-    def _apply_simple_fix(self, content: str, pattern: str, replacement: str) -> str:
+    @staticmethod
+    def _apply_simple_fix(content: str, pattern: str, replacement: str) -> str:
         import re
         return re.sub(pattern, replacement, content, flags=re.MULTILINE)
 
-    def _apply_callable_fix(self, content: str, pattern: str, replacement_func) -> str:
+    @staticmethod
+    def _apply_callable_fix(content: str, pattern: str, replacement_func) -> str:
         import re
         lines = content.splitlines()
         fixed_lines = []

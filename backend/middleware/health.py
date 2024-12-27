@@ -135,7 +135,8 @@ class HealthMiddleware(BaseMiddleware):
             "load_average": self._get_load_average()
         }
 
-    def _get_memory_usage(self) -> Union[MemoryMetrics, Dict[str, str]]:
+    @staticmethod
+    def _get_memory_usage() -> Union[MemoryMetrics, Dict[str, str]]:
         """Get detailed memory usage metrics."""
         try:
             process = psutil.Process()
@@ -151,7 +152,8 @@ class HealthMiddleware(BaseMiddleware):
             logger.error(f"Error getting memory usage: {str(e)}")
             return {"error": str(e)}
 
-    def _get_cpu_usage(self) -> Union[CPUMetrics, Dict[str, str]]:
+    @staticmethod
+    def _get_cpu_usage() -> Union[CPUMetrics, Dict[str, str]]:
         """Get detailed CPU usage metrics."""
         try:
             return {
@@ -164,7 +166,8 @@ class HealthMiddleware(BaseMiddleware):
             logger.error(f"Error getting CPU usage: {str(e)}")
             return {"error": str(e)}
 
-    def _get_load_average(self) -> List[float]:
+    @staticmethod
+    def _get_load_average() -> List[float]:
         """Get system load average with proper error handling."""
         try:
             return [round(x, 2) for x in psutil.getloadavg()]
@@ -172,7 +175,8 @@ class HealthMiddleware(BaseMiddleware):
             logger.error(f"Error getting load average: {str(e)}")
             return [-1.0, -1.0, -1.0]
 
-    def _get_detailed_memory_info(self) -> Dict[str, Any]:
+    @staticmethod
+    def _get_detailed_memory_info() -> Dict[str, Any]:
         """Get comprehensive memory information."""
         try:
             virtual_memory = psutil.virtual_memory()
@@ -196,7 +200,8 @@ class HealthMiddleware(BaseMiddleware):
             logger.error(f"Error getting detailed memory info: {str(e)}")
             return {"error": str(e)}
 
-    def _get_disk_usage(self) -> Dict[str, Any]:
+    @staticmethod
+    def _get_disk_usage() -> Dict[str, Any]:
         """Get comprehensive disk usage information."""
         try:
             disk = psutil.disk_usage('/')
@@ -219,7 +224,8 @@ class HealthMiddleware(BaseMiddleware):
             logger.error(f"Error getting disk usage: {str(e)}")
             return {"error": str(e)}
 
-    def _get_network_info(self) -> Dict[str, Any]:
+    @staticmethod
+    def _get_network_info() -> Dict[str, Any]:
         """Get detailed network interface information."""
         try:
             net_io = psutil.net_io_counters()
@@ -237,7 +243,8 @@ class HealthMiddleware(BaseMiddleware):
             logger.error(f"Error getting network info: {str(e)}")
             return {"error": str(e)}
 
-    def _check_database_health(self, app: Flask) -> Dict[str, Any]:
+    @staticmethod
+    def _check_database_health(app: Flask) -> Dict[str, Any]:
         """Check database connection health with comprehensive diagnostics."""
         try:
             with app.app_context():

@@ -52,7 +52,8 @@ class AdaptiveLearningService:
             "level": self._determine_level(scores),
         }
 
-    def _determine_difficulty(self, metrics: Dict) -> str:
+    @staticmethod
+    def _determine_difficulty(metrics: Dict) -> str:
         if metrics["average"] > 0.8:
             return "advanced"
         if metrics["average"] > 0.6:

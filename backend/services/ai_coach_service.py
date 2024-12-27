@@ -90,7 +90,8 @@ class AICoachService:
             self.logger.error(f"Welcome message generation error: {str(e)}")
             return "Welcome to your NCLEX study session. Let's work together to improve your understanding."
 
-    async def _get_user_context(self, user_id: str) -> Dict:
+    @staticmethod
+    async def _get_user_context(user_id: str) -> Dict:
         return {
             "level": "intermediate",
             "recent_topics": ["Pharmacology", "Patient Care"],
@@ -101,7 +102,8 @@ class AICoachService:
             },
         }
 
-    def _prepare_conversation_context(self, context: Optional[Dict]) -> List[Dict]:
+    @staticmethod
+    def _prepare_conversation_context(context: Optional[Dict]) -> List[Dict]:
         if not context:
             return []
         return [
@@ -151,11 +153,14 @@ class AICoachService:
             self.logger.error(f"Metadata generation error: {str(e)}")
             return {}
 
-    def _extract_topics(self, analysis: str) -> List[str]:
+    @staticmethod
+    def _extract_topics(analysis: str) -> List[str]:
         return ["Pharmacology", "Patient Care"]
 
-    def _extract_learning_points(self, analysis: str) -> List[str]:
+    @staticmethod
+    def _extract_learning_points(analysis: str) -> List[str]:
         return ["Medication administration", "Patient safety"]
 
-    def _extract_suggestions(self, analysis: str) -> List[str]:
+    @staticmethod
+    def _extract_suggestions(analysis: str) -> List[str]:
         return ["Review medication calculations", "Practice prioritization scenarios"]

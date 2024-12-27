@@ -9,7 +9,8 @@ class MigrationCLI:
     def __init__(self):
         self.manager = MigrationManager()
 
-    def display_health_status(self, status: Dict[str, Any]) -> None:
+    @staticmethod
+    def display_health_status(status: Dict[str, Any]) -> None:
         """Display migration system health status."""
         print("\nMigration System Health Status:")
         print("-" * 40)

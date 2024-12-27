@@ -110,7 +110,8 @@ class SystemHealthMonitor:
                 name="Disk Usage", status="fail", message="Failed to check disk usage"
             )
 
-    def check_network(self) -> HealthCheck:
+    @staticmethod
+    def check_network() -> HealthCheck:
         """Check network connectivity"""
         try:
             net_io = psutil.net_io_counters()

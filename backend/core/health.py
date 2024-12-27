@@ -88,7 +88,8 @@ class HealthCheck:
             self._last_check = now
             return error_status
 
-    def _check_database(self):
+    @staticmethod
+    def _check_database():
         """Check database connection"""
         try:
             if not hasattr(current_app, "db"):
@@ -101,7 +102,8 @@ class HealthCheck:
             logger.error(f"Database health check failed: {str(e)}")
             return {"status": "unhealthy", "message": str(e)}
 
-    def _check_system_resources(self, cpu, memory, disk):
+    @staticmethod
+    def _check_system_resources(cpu, memory, disk):
         """Check system resource usage"""
         try:
             status = "healthy"
@@ -132,7 +134,8 @@ class HealthCheck:
             logger.error(f"System resource check failed: {str(e)}")
             return {"status": "unhealthy", "message": str(e)}
 
-    def _check_middleware(self):
+    @staticmethod
+    def _check_middleware():
         """Check middleware status"""
         try:
             middleware_components = {}
@@ -191,7 +194,8 @@ class HealthCheck:
             logger.error(f"Middleware status check failed: {str(e)}")
             return {"status": "unhealthy", "message": str(e)}
 
-    def _update_metrics(self, health_status):
+    @staticmethod
+    def _update_metrics(health_status):
         """Update Prometheus metrics"""
         try:
             # Update overall health

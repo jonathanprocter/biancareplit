@@ -121,14 +121,16 @@ class AdaptiveContentGenerator:
 
         return optimized
 
-    def _calculate_optimal_difficulty(self, performance: Dict) -> float:
+    @staticmethod
+    def _calculate_optimal_difficulty(performance: Dict) -> float:
         """Calculate optimal difficulty level based on performance"""
         base_difficulty = performance.get("average_score", 0.7)
         recent_trend = performance.get("improvement_trend", 0.0)
         return min(1.0, max(0.1, base_difficulty + recent_trend * 0.2))
 
+    @staticmethod
     def _determine_cognitive_level(
-        self, assessments: List, comprehension: float
+        assessments: List, comprehension: float
     ) -> str:
         """Determine appropriate cognitive level"""
         if comprehension > 0.8:
@@ -137,23 +139,27 @@ class AdaptiveContentGenerator:
             return "application"
         return "comprehension"
 
-    def _identify_focus_topics(self, performance: Dict, patterns: Dict) -> List[str]:
+    @staticmethod
+    def _identify_focus_topics(performance: Dict, patterns: Dict) -> List[str]:
         """Identify topics that need focus"""
         weak_areas = performance.get("weak_areas", [])
         gaps = patterns.get("learning_gaps", [])
         return list(set(weak_areas + gaps))
 
-    def _select_content_type(self, patterns: Dict) -> str:
+    @staticmethod
+    def _select_content_type(patterns: Dict) -> str:
         """Select appropriate content type based on patterns"""
         effectiveness = patterns.get("content_effectiveness", {})
         return max(effectiveness.items(), key=lambda x: x[1])[0]
 
-    def _calculate_optimal_time(self, patterns: Dict) -> int:
+    @staticmethod
+    def _calculate_optimal_time(patterns: Dict) -> int:
         """Calculate optimal time allocation"""
         attention_span = patterns.get("attention_span", 30)
         return max(15, min(60, attention_span))
 
-    def _create_content_prompt(self, params: ContentParameters) -> str:
+    @staticmethod
+    def _create_content_prompt(params: ContentParameters) -> str:
         """Create prompt for content generation"""
         return (
             f"Generate a {params.content_type} about {', '.join(params.focus_topics)} "
@@ -161,17 +167,20 @@ class AdaptiveContentGenerator:
             f"cognitive level, optimized for {params.learning_style} learning style."
         )
 
-    def _add_visual_elements(self, content: Dict) -> Dict:
+    @staticmethod
+    def _add_visual_elements(content: Dict) -> Dict:
         """Add visual elements to content"""
         content["visual_aids"] = True
         return content
 
-    def _enhance_verbal_explanations(self, content: Dict) -> Dict:
+    @staticmethod
+    def _enhance_verbal_explanations(content: Dict) -> Dict:
         """Enhance verbal explanations"""
         content["enhanced_explanations"] = True
         return content
 
-    def _add_interactive_elements(self, content: Dict) -> Dict:
+    @staticmethod
+    def _add_interactive_elements(content: Dict) -> Dict:
         """Add interactive elements"""
         content["interactive_elements"] = True
         return content
@@ -184,11 +193,13 @@ class AdaptiveContentGenerator:
             "practice_suggestions": self._generate_practice_suggestions(params),
         }
 
-    def _calculate_review_frequency(self, params: ContentParameters) -> int:
+    @staticmethod
+    def _calculate_review_frequency(params: ContentParameters) -> int:
         """Calculate optimal review frequency"""
         return max(1, min(7, int(10 - params.difficulty_level * 5)))
 
-    def _generate_practice_suggestions(self, params: ContentParameters) -> List[str]:
+    @staticmethod
+    def _generate_practice_suggestions(params: ContentParameters) -> List[str]:
         """Generate practice suggestions"""
         return [
             f"Focus on {topic} for {params.time_allocation} minutes"

@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseConfig:
-    def init_app(self, app: Flask) -> None:
+    @staticmethod
+    def init_app(app: Flask) -> None:
         try:
             database_url = os.getenv(
                 "DATABASE_URL", "postgresql://postgres:postgres@0.0.0.0:5432/postgres"

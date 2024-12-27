@@ -30,7 +30,8 @@ class MigrationResolver:
         self.logger = self._setup_logger()
         self.engine = self._create_engine()
 
-    def _setup_logger(self) -> logging.Logger:
+    @staticmethod
+    def _setup_logger() -> logging.Logger:
         """Initialize logging configuration"""
         logger = logging.getLogger("MigrationResolver")
         logger.setLevel(logging.INFO)
@@ -44,7 +45,8 @@ class MigrationResolver:
 
         return logger
 
-    def _create_engine(self):
+    @staticmethod
+    def _create_engine():
         """Create SQLAlchemy engine from environment settings"""
         database_url = os.getenv("DATABASE_URL")
         if not database_url:
