@@ -2,6 +2,7 @@ import logging
 from backend.monitoring.deployment_monitor import DeploymentMonitor
 from backend.config.system_verifier import SystemVerification
 from backend.core.context import context_manager
+import sys
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,4 +38,4 @@ def run_deployment():
 
 if __name__ == "__main__":
     success = run_deployment()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

@@ -4,6 +4,7 @@ import asyncio
 import logging
 from pathlib import Path
 from services.code_review_service import CodeReviewService
+import sys
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,4 +40,4 @@ async def main():
 
 if __name__ == "__main__":
     success = asyncio.run(main())
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

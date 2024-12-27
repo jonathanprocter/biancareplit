@@ -7,6 +7,7 @@ import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+import sys
 
 # Configure logging
 logging.basicConfig(
@@ -70,4 +71,4 @@ if __name__ == "__main__":
         logger.info("Migration setup completed successfully!")
     else:
         logger.error("Migration setup failed!")
-        exit(1)
+        sys.exit(1)

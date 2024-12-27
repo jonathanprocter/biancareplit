@@ -2,6 +2,7 @@ import asyncio
 import os
 import logging
 from openai import AsyncOpenAI
+import sys
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
@@ -43,8 +44,8 @@ if __name__ == "__main__":
         result = asyncio.run(test_openai())
         if not result:
             logger.error("Test failed - check the logs above for details")
-            exit(1)
+            sys.exit(1)
         logger.info("Test completed successfully")
     except Exception as e:
         logger.error(f"Test execution failed: {str(e)}")
-        exit(1)
+        sys.exit(1)

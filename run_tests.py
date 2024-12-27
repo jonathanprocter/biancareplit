@@ -1,3 +1,4 @@
+import sys
 import unittest
 import asyncio
 from tests.test_morning_greeting import TestMorningGreeting
@@ -28,4 +29,4 @@ def run_tests():
 
 if __name__ == "__main__":
     success = run_tests()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

@@ -3,6 +3,7 @@ import os
 import subprocess
 import logging
 from pathlib import Path
+import sys
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,4 +56,4 @@ def format_python_files():
 
 if __name__ == "__main__":
     success = format_python_files()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)
