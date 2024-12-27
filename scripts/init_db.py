@@ -1,13 +1,17 @@
-
 #!/usr/bin/env python3
 """Initialize database and migrations."""
-import sys
+
 import logging
+import sys
 from pathlib import Path
+
 from flask import Flask
-from flask_migrate import Migrate, init as init_migrations
-from flask_migrate import migrate as create_migration
-from flask_migrate import upgrade as apply_migration
+from flask_migrate import (
+    Migrate,
+    init as init_migrations,
+    migrate as create_migration,
+    upgrade as apply_migration,
+)
 from sqlalchemy import text
 
 logging.basicConfig(
@@ -15,16 +19,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def create_app():
     """Create Flask application."""
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     from backend.database.db_config import db
+
     db.init_app(app)
 
     return app, db
+
 
 def initialize_database():
     """Initialize fresh database and migrations"""
@@ -55,6 +62,7 @@ def initialize_database():
     except Exception as e:
         logger.error(f"Database initialization failed: {str(e)}")
         return False
+
 
 if __name__ == "__main__":
     if initialize_database():
