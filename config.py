@@ -1,4 +1,9 @@
+import logging
 import os
+from pathlib import Path
+from typing import Any, Dict
+
+from dotenv import load_dotenv
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MAIL_SERVER = "smtp.gmail.com"
@@ -7,12 +12,7 @@ MAIL_USE_TLS = True
 MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
-
 """Configuration management for the NCLEX coaching platform."""
-from pathlib import Path
-from typing import Dict, Any
-import logging
-from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
