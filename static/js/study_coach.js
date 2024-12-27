@@ -1,8 +1,7 @@
 class AIStudyCoach {
   constructor() {
     this.currentFlashcard = null;
-    this.flashcardSystem =
-      window.flashcardSystem || new EnhancedFlashcardSystem();
+    this.flashcardSystem = window.flashcardSystem || new EnhancedFlashcardSystem();
   }
 
   async askQuestion(question) {
@@ -40,21 +39,11 @@ class AIStudyCoach {
       // Extract topics from content
       const nursingTopics = {
         pharmacology: ['medication', 'drug', 'dosage', 'administration'],
-        medical_surgical: [
-          'assessment',
-          'intervention',
-          'care plan',
-          'condition',
-        ],
+        medical_surgical: ['assessment', 'intervention', 'care plan', 'condition'],
         pediatric: ['child', 'pediatric', 'development', 'growth'],
         maternal_newborn: ['pregnancy', 'labor', 'newborn', 'maternal'],
         mental_health: ['psychiatric', 'mental', 'behavioral', 'therapy'],
-        community_health: [
-          'community',
-          'public health',
-          'prevention',
-          'education',
-        ],
+        community_health: ['community', 'public health', 'prevention', 'education'],
         leadership: ['management', 'leadership', 'delegation', 'supervision'],
       };
 
@@ -98,9 +87,9 @@ class AIStudyCoach {
         id: Date.now(),
         front: this.currentFlashcard.question,
         back: this.currentFlashcard.answer,
-        difficulty: difficulty,
+        difficulty,
         category: tags[0] || 'general',
-        tags: tags,
+        tags,
         lastReviewed: null,
         nextReview: new Date().toISOString(),
         repetitions: 0,
@@ -138,8 +127,8 @@ class AIStudyCoach {
         success: true,
         id: result.id,
         collection: 'Flashcards > ' + (tags[0] || 'General'),
-        difficulty: difficulty,
-        tags: tags,
+        difficulty,
+        tags,
       };
     } catch (error) {
       console.error('Error saving flashcard:', error);
@@ -269,24 +258,18 @@ class StudyCoachInterface {
     if (result.success) {
       this.addMessageToChat(
         'assistant',
-        "Flashcard saved successfully!\n" +
+        'Flashcard saved successfully!\n' +
           `Location: ${result.collection}\n` +
           `Difficulty: ${difficulty}\n` +
           `Topics: ${tags.join(', ')}`,
       );
     } else {
-      this.addMessageToChat(
-        'assistant',
-        'Failed to save flashcard. Please try again.',
-      );
+      this.addMessageToChat('assistant', 'Failed to save flashcard. Please try again.');
     }
   }
 
   skipFlashcard() {
-    this.addMessageToChat(
-      'assistant',
-      'Flashcard skipped. Ask another question!',
-    );
+    this.addMessageToChat('assistant', 'Flashcard skipped. Ask another question!');
   }
 }
 
