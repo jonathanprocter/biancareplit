@@ -26,11 +26,7 @@ class AlertManager:
             else:
                 ALERT_STATUS.labels(type=metric).set(0)
         return alerts
-
-
-import logging
-from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -105,12 +101,6 @@ class AlertManager:
             self.alerts[index].resolved = True
             return True
         return False
-
-
-import logging
-from typing import Dict, Any
-from datetime import datetime
-from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 

@@ -49,9 +49,6 @@ def cleanup_metrics(registry: Optional[CollectorRegistry] = None) -> Set[str]:
     except Exception as e:
         logger.error(f"Error during metrics cleanup: {str(e)}")
         raise
-
-
-import logging
 import time
 from datetime import datetime, timedelta
 from typing import Dict, Any
