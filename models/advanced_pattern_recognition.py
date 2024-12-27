@@ -1,12 +1,14 @@
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
+from datetime import datetime
+
 import numpy as np
 import tensorflow as tf
-from datetime import datetime
-from extensions import db
+from sklearn.decomposition import PCA
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
 from sqlalchemy.dialects.postgresql import JSON
+
+from extensions import db
 
 
 class AdvancedPatternModel(db.Model):

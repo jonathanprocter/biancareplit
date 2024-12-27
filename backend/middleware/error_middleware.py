@@ -1,6 +1,7 @@
-from flask import Flask, jsonify
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
+from flask import Flask, jsonify
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)

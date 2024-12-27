@@ -1,11 +1,13 @@
 """Database migrations manager."""
 
-import os
 import logging
-from pathlib import Path
+import os
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
+
 from flask import Flask
+
 from .db_config import db, migrate
 
 logger = logging.getLogger(__name__)

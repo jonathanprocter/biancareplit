@@ -1,17 +1,18 @@
-import os
-import sys
-import shutil
-import logging
-from pathlib import Path
-from typing import Optional, List, Dict, Tuple
-import subprocess
-from datetime import datetime
 import json
+import logging
+import os
+import shutil
+import subprocess
+import sys
 from contextlib import contextmanager
-from sqlalchemy import create_engine, MetaData, inspect
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
 from alembic.config import Config
-from alembic.script import ScriptDirectory
 from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
+from sqlalchemy import MetaData, create_engine, inspect
 
 
 class MigrationResolver:

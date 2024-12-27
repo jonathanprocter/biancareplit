@@ -1,9 +1,11 @@
-import os
-import logging
-import openai
-from models import Content, SubjectCategory, DifficultyLevel, ContentType
-from typing import List, Dict, Any, Optional
 import json
+import logging
+import os
+from typing import Any, Dict, List, Optional
+
+import openai
+
+from models import Content, ContentType, DifficultyLevel, SubjectCategory
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

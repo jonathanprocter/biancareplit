@@ -1,8 +1,9 @@
-import psutil
 import logging
 from datetime import datetime
-from typing import Dict, Any
-from prometheus_client import Gauge, Counter
+from typing import Any, Dict
+
+import psutil
+from prometheus_client import Counter, Gauge
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +90,7 @@ class DeploymentMonitor:
             "timestamp": datetime.now().isoformat(),
             "metrics": metrics,
             "aggregates": {
-                name: self.metric_aggregator.get_aggregate(name)
-                for name in metrics
+                name: self.metric_aggregator.get_aggregate(name) for name in metrics
             },
             "uptime": self.get_uptime(),
             "alerts": self.notification_handler.notification_queue[-5:],

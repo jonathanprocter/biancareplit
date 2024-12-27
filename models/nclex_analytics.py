@@ -1,7 +1,9 @@
-from datetime import datetime
-from typing import Dict, Any, List
 import logging
+from datetime import datetime
+from typing import Any, Dict, List
+
 from extensions import db
+
 
 class NCLEXAnalytics(db.Model):
     __tablename__ = "nclex_analytics"

@@ -1,14 +1,16 @@
 """Health check endpoint."""
 
-import psutil
 import logging
 import time
 from datetime import datetime
-from sqlalchemy import text
-from flask import Blueprint, jsonify, current_app
+
+import psutil
+from flask import Blueprint, current_app, jsonify
 from flask_cors import cross_origin
-from backend.monitoring.metrics_manager import metrics_manager
+from sqlalchemy import text
+
 from backend.middleware.config import middleware_registry
+from backend.monitoring.metrics_manager import metrics_manager
 
 logger = logging.getLogger(__name__)
 

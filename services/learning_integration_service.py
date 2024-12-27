@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-from models import Flashcard, AdaptivePattern
-from typing import Dict, Any
+from typing import Any, Dict
+
+from models import AdaptivePattern, Flashcard
 
 
 class LearningIntegrationService:

@@ -1,5 +1,6 @@
 import os
 import re
+
 import requests
 
 BOLD_ASTERISKS_RE = re.compile(r"\*\*(.*?)\*\*")

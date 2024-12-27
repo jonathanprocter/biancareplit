@@ -1,7 +1,8 @@
 import time
-from typing import Dict, Any
-import psutil
 from datetime import datetime
+from typing import Any, Dict
+
+import psutil
 
 
 class MetricsAggregator:

@@ -2,9 +2,11 @@
 
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional
-from ..core import db_manager
+from typing import Any, Dict, Optional
+
 from flask import current_app
+
+from ..core import db_manager
 
 
 class MigrationVerifier:

@@ -1,17 +1,19 @@
+import logging
+import os
+
 from flask import Blueprint, jsonify, request
+
+from ai_coach_service import AICoachService
+from extensions import db
 from models import (
     Content,
-    Flashcard,
-    DifficultyLevel,
-    SubjectCategory,
     ContentType,
+    DifficultyLevel,
+    Flashcard,
     Review,
+    SubjectCategory,
     study_material_questions,
 )
-from extensions import db
-from ai_coach_service import AICoachService
-import os
-import logging
 
 # Configure logging
 logger = logging.getLogger(__name__)

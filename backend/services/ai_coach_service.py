@@ -1,8 +1,9 @@
-from openai import OpenAI
+import logging
 import os
 from datetime import datetime
-import logging
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
+
+from openai import OpenAI
 
 
 class AICoachService:

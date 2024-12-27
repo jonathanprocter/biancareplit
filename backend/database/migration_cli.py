@@ -1,7 +1,8 @@
 """CLI interface for database migration management."""
 
 import sys
-from typing import Dict, Any
+from typing import Any, Dict
+
 from backend.database.migration_manager import MigrationManager
 
 

@@ -1,9 +1,11 @@
 """Security middleware implementation."""
 
-from typing import Optional
-from flask import Flask, Request, Response, abort, g
 import logging
 from functools import wraps
+from typing import Optional
+
+from flask import Flask, Request, Response, abort, g
+
 from .base import BaseMiddleware
 
 logger = logging.getLogger(__name__)

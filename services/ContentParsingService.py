@@ -1,29 +1,35 @@
+import asyncio
+import json
 import logging
 import os
-import json
-import asyncio
-from typing import Dict, Optional, Union, List
-from pathlib import Path
 from datetime import datetime
-import magic  # python-magic for file type detection
-import fitz  # PyMuPDF
+from pathlib import Path
+from typing import Dict, List, Optional, Union
+
 import docx
+import fitz  # PyMuPDF
+import magic  # python-magic for file type detection
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
+
 class MedicalContent(BaseModel):
     """Schema for medical educational content analysis"""
+
     learning_objectives: List[str] = Field(default_factory=list)
-    key_concepts: List[Dict[str, str]] = Field(default_factory=list, 
-        description="List of objects with term and definition keys")
+    key_concepts: List[Dict[str, str]] = Field(
+        default_factory=list,
+        description="List of objects with term and definition keys",
+    )
     topics: List[str] = Field(default_factory=list)
     quiz_questions: List[Dict] = Field(default_factory=list)
     flashcards: List[Dict[str, str]] = Field(default_factory=list)
     difficulty_level: str = Field(default="intermediate")
     estimated_duration_minutes: int = Field(default=30)
     prerequisites: List[str] = Field(default_factory=list)
+
 
 class ContentParsingService:
     _instance = None
@@ -60,7 +66,7 @@ class ContentParsingService:
             "application/pdf": self._parse_pdf,
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document": self._parse_docx,
             "application/msword": self._parse_docx,
-            "text/plain": self._parse_text
+            "text/plain": self._parse_text,
         }
         logger.info("ContentParsingService initialization completed")
 
@@ -70,7 +76,7 @@ class ContentParsingService:
             response = await self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[{"role": "system", "content": "API connection test"}],
-                max_tokens=5
+                max_tokens=5,
             )
             logger.info("OpenAI API connection verified successfully")
             return True
@@ -196,12 +202,12 @@ Remember:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a medical education content analyzer. Always respond with valid JSON matching the exact schema specified."
+                        "content": "You are a medical education content analyzer. Always respond with valid JSON matching the exact schema specified.",
                     },
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
                 temperature=0.3,
-                max_tokens=2000
+                max_tokens=2000,
             )
 
             try:
@@ -209,7 +215,11 @@ Remember:
                 # Ensure key_concepts format is correct
                 if "key_concepts" in analysis_dict:
                     for concept in analysis_dict["key_concepts"]:
-                        if not isinstance(concept, dict) or "term" not in concept or "definition" not in concept:
+                        if (
+                            not isinstance(concept, dict)
+                            or "term" not in concept
+                            or "definition" not in concept
+                        ):
                             raise ValueError("Invalid key_concepts format")
 
                 # Create and validate the model

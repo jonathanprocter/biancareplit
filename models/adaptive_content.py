@@ -1,10 +1,12 @@
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import numpy as np
 from dataclasses import dataclass
-from typing import Dict, List, Optional
-from extensions import db
-from sqlalchemy.dialects.postgresql import JSON
 from datetime import datetime
+from typing import Dict, List, Optional
+
+import numpy as np
+from sqlalchemy.dialects.postgresql import JSON
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
+from extensions import db
 
 
 @dataclass
@@ -129,9 +131,7 @@ class AdaptiveContentGenerator:
         return min(1.0, max(0.1, base_difficulty + recent_trend * 0.2))
 
     @staticmethod
-    def _determine_cognitive_level(
-        assessments: List, comprehension: float
-    ) -> str:
+    def _determine_cognitive_level(assessments: List, comprehension: float) -> str:
         """Determine appropriate cognitive level"""
         if comprehension > 0.8:
             return "analysis"

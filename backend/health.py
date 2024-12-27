@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify
-import psutil
 import logging
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List
+
+import psutil
+from flask import Blueprint, jsonify
 
 logger = logging.getLogger(__name__)
 

@@ -1,15 +1,18 @@
 """Health check middleware implementation."""
 
-import psutil
 import logging
-from typing import Dict, Any, Optional, List, Union, TypedDict
-from flask import Flask, jsonify, make_response
 from datetime import datetime
-from .base import BaseMiddleware
+from typing import Any, Dict, List, Optional, TypedDict, Union
+
+import psutil
+from flask import Flask, jsonify, make_response
+
 from ..config.unified_config import config_manager
 from ..database.core import db_manager
+from .base import BaseMiddleware
 
 logger = logging.getLogger(__name__)
+
 
 class MemoryMetrics(TypedDict):
     process_used_mb: float
@@ -18,11 +21,13 @@ class MemoryMetrics(TypedDict):
     system_available_gb: float
     system_percent: float
 
+
 class CPUMetrics(TypedDict):
     process_percent: float
     system_percent: float
     cores_physical: int
     cores_logical: int
+
 
 class HealthMiddleware(BaseMiddleware):
     """Handles application health monitoring with comprehensive system checks."""
@@ -64,14 +69,20 @@ class HealthMiddleware(BaseMiddleware):
                 try:
                     current_time = datetime.now()
                     if (
-                        not self._last_check or 
-                        (current_time - self._last_check.get("timestamp", datetime.min)).total_seconds() > self._check_interval
+                        not self._last_check
+                        or (
+                            current_time
+                            - self._last_check.get("timestamp", datetime.min)
+                        ).total_seconds()
+                        > self._check_interval
                     ):
                         health_data = self._perform_health_check(app, detailed)
                         health_data["timestamp"] = current_time.isoformat()
                         self._last_check = health_data
 
-                    status_code = 200 if self._last_check.get("status") == "healthy" else 503
+                    status_code = (
+                        200 if self._last_check.get("status") == "healthy" else 503
+                    )
                     response = make_response(jsonify(self._last_check), status_code)
                     response.headers["Content-Type"] = "application/json"
                     return response
@@ -80,11 +91,16 @@ class HealthMiddleware(BaseMiddleware):
                     logger.error(f"Health check failed: {str(e)}")
                     if app.debug:
                         logger.exception("Detailed health check error:")
-                    return jsonify({
-                        "status": "error",
-                        "error": str(e),
-                        "timestamp": datetime.now().isoformat()
-                    }), 503
+                    return (
+                        jsonify(
+                            {
+                                "status": "error",
+                                "error": str(e),
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                        ),
+                        503,
+                    )
 
         except Exception as e:
             logger.error(f"Failed to initialize health check middleware: {str(e)}")
@@ -92,7 +108,9 @@ class HealthMiddleware(BaseMiddleware):
                 logger.exception("Detailed initialization error:")
             raise
 
-    def _perform_health_check(self, app: Flask, detailed: bool = True) -> Dict[str, Any]:
+    def _perform_health_check(
+        self, app: Flask, detailed: bool = True
+    ) -> Dict[str, Any]:
         """Perform comprehensive system health check."""
         try:
             health_data = {
@@ -101,16 +119,18 @@ class HealthMiddleware(BaseMiddleware):
                 "system": self._get_system_health(),
                 "database": self._check_database_health(app),
                 "environment": app.config.get("ENV", "production"),
-                "debug_mode": app.debug
+                "debug_mode": app.debug,
             }
 
             # Add detailed metrics if enabled
             if detailed:
-                health_data.update({
-                    "memory_detailed": self._get_detailed_memory_info(),
-                    "disk": self._get_disk_usage(),
-                    "network": self._get_network_info()
-                })
+                health_data.update(
+                    {
+                        "memory_detailed": self._get_detailed_memory_info(),
+                        "disk": self._get_disk_usage(),
+                        "network": self._get_network_info(),
+                    }
+                )
 
             # Determine overall health status
             if not health_data["database"]["connected"]:
@@ -124,7 +144,7 @@ class HealthMiddleware(BaseMiddleware):
             return {
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     def _get_system_health(self) -> Dict[str, Any]:
@@ -132,7 +152,7 @@ class HealthMiddleware(BaseMiddleware):
         return {
             "cpu": self._get_cpu_usage(),
             "memory": self._get_memory_usage(),
-            "load_average": self._get_load_average()
+            "load_average": self._get_load_average(),
         }
 
     @staticmethod
@@ -144,9 +164,9 @@ class HealthMiddleware(BaseMiddleware):
             return {
                 "process_used_mb": round(process.memory_info().rss / 1024 / 1024, 2),
                 "process_percent": round(process.memory_percent(), 2),
-                "system_total_gb": round(virtual_memory.total / (1024 ** 3), 2),
-                "system_available_gb": round(virtual_memory.available / (1024 ** 3), 2),
-                "system_percent": virtual_memory.percent
+                "system_total_gb": round(virtual_memory.total / (1024**3), 2),
+                "system_available_gb": round(virtual_memory.available / (1024**3), 2),
+                "system_percent": virtual_memory.percent,
             }
         except Exception as e:
             logger.error(f"Error getting memory usage: {str(e)}")
@@ -160,7 +180,7 @@ class HealthMiddleware(BaseMiddleware):
                 "process_percent": round(psutil.Process().cpu_percent(interval=0.1), 2),
                 "system_percent": round(psutil.cpu_percent(interval=0.1), 2),
                 "cores_physical": psutil.cpu_count(logical=False),
-                "cores_logical": psutil.cpu_count(logical=True)
+                "cores_logical": psutil.cpu_count(logical=True),
             }
         except Exception as e:
             logger.error(f"Error getting CPU usage: {str(e)}")
@@ -187,14 +207,14 @@ class HealthMiddleware(BaseMiddleware):
                     "available": virtual_memory.available,
                     "percent": virtual_memory.percent,
                     "used": virtual_memory.used,
-                    "free": virtual_memory.free
+                    "free": virtual_memory.free,
                 },
                 "swap_memory": {
                     "total": swap_memory.total,
                     "used": swap_memory.used,
                     "free": swap_memory.free,
-                    "percent": swap_memory.percent
-                }
+                    "percent": swap_memory.percent,
+                },
             }
         except Exception as e:
             logger.error(f"Error getting detailed memory info: {str(e)}")
@@ -204,21 +224,21 @@ class HealthMiddleware(BaseMiddleware):
     def _get_disk_usage() -> Dict[str, Any]:
         """Get comprehensive disk usage information."""
         try:
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             io_counters = psutil.disk_io_counters()
             return {
                 "usage": {
-                    "total_gb": round(disk.total / (1024 ** 3), 2),
-                    "used_gb": round(disk.used / (1024 ** 3), 2),
-                    "free_gb": round(disk.free / (1024 ** 3), 2),
-                    "percent": disk.percent
+                    "total_gb": round(disk.total / (1024**3), 2),
+                    "used_gb": round(disk.used / (1024**3), 2),
+                    "free_gb": round(disk.free / (1024**3), 2),
+                    "percent": disk.percent,
                 },
                 "io": {
                     "read_bytes": io_counters.read_bytes if io_counters else 0,
                     "write_bytes": io_counters.write_bytes if io_counters else 0,
                     "read_count": io_counters.read_count if io_counters else 0,
-                    "write_count": io_counters.write_count if io_counters else 0
-                }
+                    "write_count": io_counters.write_count if io_counters else 0,
+                },
             }
         except Exception as e:
             logger.error(f"Error getting disk usage: {str(e)}")
@@ -237,7 +257,7 @@ class HealthMiddleware(BaseMiddleware):
                 "error_in": net_io.errin,
                 "error_out": net_io.errout,
                 "drop_in": net_io.dropin,
-                "drop_out": net_io.dropout
+                "drop_out": net_io.dropout,
             }
         except Exception as e:
             logger.error(f"Error getting network info: {str(e)}")
@@ -253,7 +273,7 @@ class HealthMiddleware(BaseMiddleware):
 
                 health_status = {
                     "connected": is_connected,
-                    "connection_info": connection_info
+                    "connection_info": connection_info,
                 }
 
                 if not is_connected:
@@ -266,7 +286,4 @@ class HealthMiddleware(BaseMiddleware):
             logger.error(f"Database health check failed: {str(e)}")
             if app.debug:
                 logger.exception("Detailed database error:")
-            return {
-                "connected": False,
-                "error": str(e)
-            }
+            return {"connected": False, "error": str(e)}

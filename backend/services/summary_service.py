@@ -1,9 +1,10 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
 import os
-from models import StudySession, QuestionAttempt
+import smtplib
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from models import QuestionAttempt, StudySession
 
 
 class SummaryService:

@@ -1,7 +1,8 @@
-import psutil
-import time
-from typing import Dict, Any
 import logging
+import time
+from typing import Any, Dict
+
+import psutil
 
 logger = logging.getLogger(__name__)
 

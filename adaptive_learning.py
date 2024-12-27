@@ -1,8 +1,10 @@
+import logging
 from datetime import datetime
+
+from sqlalchemy import func
+
 from models.adaptive_learning import AdaptivePattern
 from models.content import Content, Review
-from sqlalchemy import func
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

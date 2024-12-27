@@ -1,7 +1,8 @@
 import logging
 import traceback
 from typing import Any, Dict, Optional
-from flask import jsonify, request, current_app
+
+from flask import current_app, jsonify, request
 from werkzeug.exceptions import HTTPException
 
 logger = logging.getLogger(__name__)

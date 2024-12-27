@@ -1,8 +1,9 @@
-import psutil
 import json
 import logging
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
+import psutil
 from flask import current_app
 
 logger = logging.getLogger(__name__)
