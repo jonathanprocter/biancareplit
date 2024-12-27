@@ -89,7 +89,7 @@ class DeploymentMonitor:
             "metrics": metrics,
             "aggregates": {
                 name: self.metric_aggregator.get_aggregate(name)
-                for name in metrics.keys()
+                for name in metrics
             },
             "uptime": self.get_uptime(),
             "alerts": self.notification_handler.notification_queue[-5:],
