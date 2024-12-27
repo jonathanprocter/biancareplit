@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any
-from flask import Flask, Request, Response
+from flask import Request, Response
 import time
 import json
 from .base import BaseMiddleware

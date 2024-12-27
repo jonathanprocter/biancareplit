@@ -4,7 +4,7 @@ import logging
 import time
 from functools import wraps
 
-from flask import current_app, g, request
+from flask import g, request
 
 logger = logging.getLogger(__name__)
 

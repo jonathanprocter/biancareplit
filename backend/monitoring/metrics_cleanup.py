@@ -52,7 +52,6 @@ def cleanup_metrics(registry: Optional[CollectorRegistry] = None) -> Set[str]:
 
 
 import logging
-import time
 from datetime import datetime, timedelta
 from typing import Dict, Any
 

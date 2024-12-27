@@ -1,10 +1,7 @@
 import logging
 import os
-import asyncio
 from typing import List, Dict, Optional
-from datetime import datetime
 from flask import current_app
-import openai
 from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)

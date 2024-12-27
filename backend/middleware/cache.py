@@ -3,7 +3,6 @@ from functools import wraps
 from typing import Any, Callable
 from flask import request, Response
 from datetime import datetime, timedelta
-from werkzeug.security import safe_str_cmp
 from hashlib import sha256
 
 logger = logging.getLogger(__name__)

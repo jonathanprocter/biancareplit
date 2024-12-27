@@ -1,12 +1,8 @@
 
 import os
 import logging
-import json
-import time
-import asyncio
-from pathlib import Path
 from typing import Dict, Any, List, Optional
-from openai import OpenAI, OpenAIError
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,3 @@
-import os
 import logging
 from backend.deployment_manager import deploy_application
 from backend.monitoring.deployment_monitor import DeploymentMonitor

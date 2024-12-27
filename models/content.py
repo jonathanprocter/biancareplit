@@ -1,7 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import relationship
 from app import db
-from .study_material import StudyMaterial
 from typing import List, Optional
 from enum import Enum
 

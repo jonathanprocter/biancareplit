@@ -6,7 +6,6 @@ import jwt
 import logging
 from datetime import datetime, timedelta
 from typing import Callable, Optional
-from backend.database.core import db_manager
 from backend.config.secure_config import config_manager
 
 logger = logging.getLogger(__name__)

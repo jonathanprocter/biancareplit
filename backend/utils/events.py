@@ -1,7 +1,6 @@
 from typing import Dict, Any, Callable, List
 import logging
 import asyncio
-from datetime import datetime
 
 
 class EventEmitter:

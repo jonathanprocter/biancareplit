@@ -2,11 +2,10 @@ from flask import current_app
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 from models import User, DailyProgress, QuizAttempt
 from sqlalchemy import func
-from extensions import db
 
 logger = logging.getLogger(__name__)
 

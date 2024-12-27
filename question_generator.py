@@ -3,7 +3,6 @@ import logging
 import openai
 from models import Content, SubjectCategory, DifficultyLevel, ContentType
 from typing import List, Dict, Any, Optional
-import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

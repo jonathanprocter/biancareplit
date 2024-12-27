@@ -1,14 +1,11 @@
-from flask import Blueprint, request, jsonify, current_app
-from datetime import datetime, timedelta
-from flask_cors import cross_origin
+from flask import Blueprint, request, jsonify
+from datetime import datetime
 from backend.models.analytics import StudySession, QuestionAttempt, UserProgress
 from backend.database.config import db
 import openai
 import os
 from typing import Dict, List, Optional
-import json
 import logging
-from werkzeug.exceptions import HTTPException
 
 logger = logging.getLogger(__name__)
 

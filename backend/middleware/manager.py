@@ -2,10 +2,10 @@
 
 import logging
 from typing import Dict, Type, Optional, List, Any
-from flask import Flask, g, request, current_app
+from flask import Flask
 from .base import BaseMiddleware
 from .middleware_config import middleware_registry
-from ..config.unified_config import config_manager, ConfigurationError
+from ..config.unified_config import config_manager
 
 logger = logging.getLogger(__name__)
 

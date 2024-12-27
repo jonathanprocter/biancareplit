@@ -1,6 +1,5 @@
 from flask import Flask
 from prometheus_client import Counter, Histogram, Gauge
-import psutil
 
 # Metrics
 REQUEST_COUNT = Counter("http_requests_total", "Total request count")

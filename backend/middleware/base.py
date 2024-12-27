@@ -2,7 +2,7 @@
 
 import logging
 from typing import Optional, Any, Dict, TypeVar, Generic, Callable
-from flask import Flask, request
+from flask import Flask
 from ..config.unified_config import config_manager
 
 logger = logging.getLogger(__name__)

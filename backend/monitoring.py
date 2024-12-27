@@ -4,7 +4,7 @@ import time
 import logging
 from typing import Optional, Dict, Any
 from flask import Flask, request, jsonify
-from .config.unified_config import config_manager, ConfigurationError
+from .config.unified_config import config_manager
 from .middleware.base import BaseMiddleware
 
 logger = logging.getLogger(__name__)

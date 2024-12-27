@@ -6,7 +6,6 @@ from flask_migrate import Migrate
 import logging
 from typing import Optional
 import os
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

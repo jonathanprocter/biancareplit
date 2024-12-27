@@ -3,7 +3,7 @@
 import logging
 from contextlib import contextmanager
 from typing import Generator, Optional, Dict, Any
-from flask import current_app, has_app_context
+from flask import has_app_context
 from backend.database.db_config import DatabaseConfig
 from datetime import datetime
 

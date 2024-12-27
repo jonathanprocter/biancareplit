@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime
 from enum import Enum
 from flask_sqlalchemy import SQLAlchemy
 
