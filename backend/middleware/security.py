@@ -1,7 +1,7 @@
 """Security middleware implementation."""
 
 from typing import Optional
-from flask import Flask, Request, Response, abort, g
+from flask import Flask, Response, abort, g
 import logging
 from functools import wraps
 from .base import BaseMiddleware

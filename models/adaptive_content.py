@@ -1,5 +1,4 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import numpy as np
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 from extensions import db

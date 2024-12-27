@@ -1,4 +1,4 @@
-from flask import Blueprint, Flask
+from flask import Flask
 from .api import bp as api_bp
 from .auth import bp as auth_bp
 from .admin import bp as admin_bp

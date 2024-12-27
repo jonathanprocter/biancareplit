@@ -1,9 +1,7 @@
 from flask import Blueprint, jsonify, request
-from models import db, Review, Flashcard, StudyMaterial, Content, AdaptivePattern
+from models import db, Review, Content, AdaptivePattern
 from datetime import datetime, timedelta
 from sqlalchemy import func
-import numpy as np
-from sklearn.preprocessing import StandardScaler
 import logging
 from typing import Dict, List, Optional, Union, Any
 

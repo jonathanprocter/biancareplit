@@ -1,6 +1,5 @@
 import unittest
 import asyncio
-from datetime import datetime
 from backend.services.morning_greeting_service import MorningGreetingService
 
 

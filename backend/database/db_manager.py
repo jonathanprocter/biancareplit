@@ -9,7 +9,6 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from backend.config.unified_config import config_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -1,8 +1,6 @@
 """Database migrations management."""
 
 import subprocess
-import sys
-import os
 from pathlib import Path
 from typing import Optional, List, Tuple
 import logging

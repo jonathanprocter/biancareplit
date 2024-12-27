@@ -1,7 +1,5 @@
 """Routes package initialization."""
 
-from flask import Blueprint
-
 
 def init_routes(app):
     """Initialize and register all route blueprints."""

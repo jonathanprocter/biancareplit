@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date
 from extensions import db
 from . import SubjectCategory, DifficultyLevel
 from sqlalchemy.dialects.postgresql import JSONB

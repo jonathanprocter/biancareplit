@@ -2,7 +2,7 @@
 
 import logging
 from typing import Dict, Any, Optional
-from flask import Flask, g, request
+from flask import Flask, g
 from sqlalchemy.exc import SQLAlchemyError
 from ..database.core import db_manager
 from ..config.unified_config import config_manager, ConfigurationError

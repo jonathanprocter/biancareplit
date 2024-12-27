@@ -1,14 +1,12 @@
 import os
-import sys
 import shutil
 import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 import subprocess
 from datetime import datetime
-import json
 from contextlib import contextmanager
-from sqlalchemy import create_engine, MetaData, inspect
+from sqlalchemy import create_engine, inspect
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 from alembic.runtime.migration import MigrationContext

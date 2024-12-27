@@ -3,7 +3,6 @@ from models.advanced_pattern_recognition import (
     AdvancedPatternRecognition,
     AdvancedPatternModel,
 )
-from datetime import datetime
 
 advanced_pattern_routes = Blueprint("advanced_pattern_routes", __name__)
 pattern_recognizer = AdvancedPatternRecognition()

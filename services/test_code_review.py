@@ -1,4 +1,3 @@
-import os
 from code_review_service import CodeReviewService
 import json
 

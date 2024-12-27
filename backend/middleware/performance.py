@@ -3,7 +3,7 @@
 import time
 import logging
 from functools import wraps
-from flask import Flask, g, request, Response
+from flask import Flask, g, request
 from prometheus_client import Counter, Histogram, CollectorRegistry
 
 # Initialize registry

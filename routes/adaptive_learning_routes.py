@@ -4,8 +4,6 @@ from extensions import db
 from datetime import datetime, timedelta
 from sqlalchemy import func, case
 import logging
-from sklearn.preprocessing import StandardScaler
-import numpy as np
 from adaptive_learning import AdaptiveLearningSystem, LearningIntegrationService
 
 # Configure logging

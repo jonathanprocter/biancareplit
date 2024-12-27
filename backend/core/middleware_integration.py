@@ -2,7 +2,7 @@
 
 from typing import Optional, List, Dict
 import logging
-from flask import Flask, Response, Request
+from flask import Flask, Response
 from .base import BaseMiddleware
 from .middleware_config import middleware_registry
 

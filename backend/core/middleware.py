@@ -1,7 +1,5 @@
 """Core middleware system for the NCLEX coaching platform."""
-
-from functools import wraps
-from flask import request, g, current_app, after_this_request
+from flask import request, after_this_request
 import logging
 import time
 from flask import Flask

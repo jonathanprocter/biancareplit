@@ -2,8 +2,7 @@
 
 from typing import Dict, Any, List, Optional, TypedDict
 import logging
-from pathlib import Path
-from ..config.unified_config import config_manager, ConfigurationError
+from ..config.unified_config import config_manager
 
 logger = logging.getLogger(__name__)
 

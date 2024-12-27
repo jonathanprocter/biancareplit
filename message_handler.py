@@ -1,5 +1,4 @@
 from datetime import datetime
-import json
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
 

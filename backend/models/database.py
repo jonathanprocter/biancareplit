@@ -1,6 +1,6 @@
 """Database initialization module."""
 
-from backend.database.core import db, DatabaseManager
+from backend.database.core import DatabaseManager
 
 # Export for backward compatibility
 database_manager = DatabaseManager()

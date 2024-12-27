@@ -1,12 +1,9 @@
 """Core database initialization and configuration."""
 
 import logging
-import os
 from typing import Optional, Dict, Any
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.exc import SQLAlchemyError
-from flask import Flask, current_app
+from sqlalchemy import text
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 

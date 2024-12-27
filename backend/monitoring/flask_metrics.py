@@ -1,7 +1,7 @@
 from functools import wraps
 import time
 from flask import request
-from prometheus_client import generate_latest, Counter, Histogram
+from prometheus_client import Counter, Histogram
 import logging
 from .base_metrics import BaseMetricsRegistry
 

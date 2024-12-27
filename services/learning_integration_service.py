@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from models import Flashcard, AdaptivePattern
+from models import Flashcard
 from typing import Dict, Any
 
 
