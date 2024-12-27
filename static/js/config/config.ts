@@ -97,8 +97,7 @@ export type Config = z.infer<typeof ConfigSchema>;
 // Default configuration
 const defaultConfig: Config = {
   version: CONFIG_VERSION,
-  environment:
-    process.env.NODE_ENV === 'production' ? 'production' : 'development',
+  environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
   api: {
     baseUrl: '/api',
     timeout: 30000,
@@ -155,9 +154,10 @@ class ConfigManager {
     // Default configuration with initialized flag
     this.config = ConfigSchema.parse({
       version: CONFIG_VERSION,
-      environment: (process.env.NODE_ENV === 'production'
-        ? 'production'
-        : 'development') as 'development' | 'production' | 'test',
+      environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as
+        | 'development'
+        | 'production'
+        | 'test',
       api: {
         baseUrl: '/api',
         timeout: 30000,
@@ -221,9 +221,10 @@ class ConfigManager {
       // Load environment-specific configuration
       const envConfig = {
         version: CONFIG_VERSION,
-        environment: (process.env.NODE_ENV === 'production'
-          ? 'production'
-          : 'development') as 'development' | 'production' | 'test',
+        environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as
+          | 'development'
+          | 'production'
+          | 'test',
         api: {
           baseUrl: process.env.API_BASE_URL || '/api',
           timeout: parseInt(process.env.API_TIMEOUT || '30000'),
