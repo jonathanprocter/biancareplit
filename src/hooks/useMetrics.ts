@@ -21,7 +21,7 @@ export function useMetrics(): Metrics | null {
     if (lastMessage) {
       try {
         const data: Metrics = JSON.parse(lastMessage.data);
-        if (data && data.metrics) {
+        if (data?.metrics) {
           setMetrics(data);
         }
       } catch (err) {
