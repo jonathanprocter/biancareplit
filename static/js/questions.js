@@ -201,7 +201,7 @@ function showError(message) {
 
 function showStoredFeedback(questionId) {
   const storedData = state.answerHistory[questionId];
-  if (storedData && storedData.feedback) {
+  if (storedData?.feedback) {
     showFeedback(storedData.feedback);
   }
 }
