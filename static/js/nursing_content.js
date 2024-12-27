@@ -254,8 +254,7 @@ class NursingContentHandler {
       if (result.success) {
         this.questions = result.questions.filter(
           (q) =>
-            q &&
-            q.question &&
+            q?.question &&
             Array.isArray(q.options) &&
             q.options.length > 0 &&
             typeof q.correct === 'number',
