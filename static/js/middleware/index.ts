@@ -21,7 +21,7 @@ type LogLevel = z.infer<typeof LogLevelSchema>;
 
 class MiddlewareManager {
   private middlewares: MiddlewareFunction[] = [];
-  private initialized: boolean = false;
+  private initialized = false;
 
   constructor() {
     this.setupDefaultMiddleware();
