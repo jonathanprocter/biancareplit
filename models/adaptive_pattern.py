@@ -25,7 +25,7 @@ class AdaptivePattern(db.Model):
         self.total_time += time_spent
         if is_correct:
             self.correct_answers += 1
-        
+
         # Update averages
         self.avg_time_per_question = self.total_time / self.total_questions
         self.accuracy_rate = (self.correct_answers / self.total_questions) * 100

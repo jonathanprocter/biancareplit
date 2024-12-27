@@ -218,7 +218,7 @@ class CodeReviewSystem:
 
         # Maximum file size to process (1MB)
         MAX_FILE_SIZE = 1024 * 1024
-        
+
         # Files to exclude
         exclude_files = {
             # Configuration files
@@ -259,20 +259,20 @@ class CodeReviewSystem:
         files_to_process = []
         total_files = 0
         skipped_files = {'size': [], 'excluded': [], 'unsupported': []}
-        
+
         for root, dirs, files in os.walk(directory):
             # Skip excluded directories
             dirs[:] = [d for d in dirs if d not in exclude_dirs]
-            
+
             for file_name in files:
                 total_files += 1
                 file_path = os.path.join(root, file_name)
-                
+
                 # Check for excluded files
                 if any(file_name.endswith(exc) or file_name == exc for exc in exclude_files):
                     skipped_files['excluded'].append(file_path)
                     continue
-                
+
                 # Skip files that are too large
                 try:
                     if os.path.getsize(file_path) > MAX_FILE_SIZE:
@@ -282,12 +282,12 @@ class CodeReviewSystem:
                 except OSError:
                     logger.warning(f"Could not check size of {file_path}")
                     continue
-    
+
                 language = self.detect_language(file_path)
                 if language:
                     # Check priority level (0-4, where 0 is critical and 4 is lowest)
                     priority = 4  # Default lowest priority
-                    
+
                     # First check exact matches for critical files
                     if file_path in priority_paths['critical']:
                         priority = 0
@@ -302,7 +302,7 @@ class CodeReviewSystem:
                             if any(pattern in file_path for pattern in patterns):
                                 priority = p_level
                                 break
-                    
+
                     # Only append if priority is not lowest
                     if priority < 4:
                         files_to_process.append((file_path, language, priority))
@@ -312,10 +312,10 @@ class CodeReviewSystem:
                         logger.debug(f"Skipped low priority file: {file_path}")
                 else:
                     results["skipped"].append(file_path)
-        
+
         # Sort files with priority paths first, keeping priority info
         files_to_process.sort(key=lambda x: (x[2], x[0]))
-        
+
         # Process files one at a time with careful error handling
         total_files = len(files_to_process)
         async with self as review_system:
@@ -326,13 +326,13 @@ class CodeReviewSystem:
                 try:
                     # Add delay between API calls to avoid rate limits
                     await asyncio.sleep(1)
-                    
+
                     # Step 1: Fix code
                     fixed_code = await review_system.fix_code(file_path, language)
                     if not fixed_code:
                         results["failed"].append(file_path)
                         continue
-        
+
                     # Step 2: Save fixes
                     if review_system.save_fixed_code(file_path, fixed_code):
                         # Step 3: Apply linters
@@ -343,11 +343,11 @@ class CodeReviewSystem:
                             results["failed"].append(file_path)
                     else:
                         results["failed"].append(file_path)
-        
+
                 except Exception as e:
                     logger.error(f"Error processing {file_path}: {str(e)}")
                     results["failed"].append(file_path)
-                        
+
                 try:
                     # Set timeout based on priority level
                     timeout = {
@@ -356,25 +356,25 @@ class CodeReviewSystem:
                         2: 45,  # High priority
                         3: 60   # Medium priority
                     }.get(priority, 90)  # Default longer timeout for other files
-                    
+
                     # Use asyncio.wait_for for the entire file processing
                     try:
                         async with asyncio.timeout(timeout):
                             logger.info(f"Starting review of {file_path} with {timeout}s timeout")
                             fixed_code = await review_system.fix_code(file_path, language)
-                            
+
                             if not fixed_code:
                                 logger.warning(f"No fixes generated for {file_path}")
                                 results["failed"].append(file_path)
                                 continue
-        
+
                             # Save and lint in smaller steps with individual error handling
                             save_success = review_system.save_fixed_code(file_path, fixed_code)
                             if not save_success:
                                 logger.error(f"Failed to save fixes for {file_path}")
                                 results["failed"].append(file_path)
                                 continue
-                                
+
                             lint_success = review_system.apply_linters(file_path, language)
                             if not lint_success:
                                 logger.warning(f"Linting failed for {file_path}")
@@ -383,14 +383,14 @@ class CodeReviewSystem:
                             else:
                                 results["fixed"].append(file_path)
                                 logger.info(f"Successfully processed {file_path}")
-                                
+
                     except asyncio.TimeoutError:
                         logger.error(f"Timeout ({timeout}s) exceeded for {file_path}")
                         results["timeout"].append(file_path)
                     except Exception as e:
                         logger.error(f"Unexpected error processing {file_path}: {str(e)}")
                         results["failed"].append(file_path)
-                    
+
                     # Adaptive delay based on priority and file size
                     file_size = os.path.getsize(file_path)
                     base_delay = {
@@ -399,21 +399,21 @@ class CodeReviewSystem:
                         2: 3,   # High priority
                         3: 4    # Medium priority
                     }.get(priority, 5)  # Default longer delay for other files
-                    
+
                     size_factor = min(file_size / (500 * 1024), 2)  # Cap at 2x for files larger than 500KB
                     delay = base_delay * size_factor
-                    
+
                     await asyncio.sleep(delay)
-                    
+
                 except Exception as e:
                     logger.error(f"Error processing {file_path}: {str(e)}")
                     results["failed"].append(file_path)
                     results["in_progress"].remove(file_path)
                     await asyncio.sleep(5)
                     continue
-                    
+
                 results["in_progress"].remove(file_path)
-                    
+
                 # Progress update after each file
                 logger.info(f"\nProgress Update:")
                 logger.info(f"Fixed: {len(results['fixed'])} files")
@@ -421,14 +421,14 @@ class CodeReviewSystem:
                 logger.info(f"Timeout: {len(results['timeout'])} files")
                 logger.info(f"In Progress: {len(results['in_progress'])} files")
                 logger.info(f"Remaining: {total_files - (index + 1)} files")
-                
+
                 # Add periodic progress update
                 if (index + 1) % 5 == 0:  # Update every 5 files
                     await asyncio.sleep(3)
                     percent_complete = ((index + 1) / total_files) * 100
                     logger.info(f"Progress: {percent_complete:.1f}% ({index + 1}/{total_files} files)")
                     logger.info(f"Status: Fixed={len(results['fixed'])}, Failed={len(results['failed'])}, Timeout={len(results['timeout'])}")
-                    
+
 
         # Log comprehensive processing summary
         logger.info("\nCode Review Summary:")
@@ -438,25 +438,25 @@ class CodeReviewSystem:
         logger.info(f"Successfully fixed: {len(results['fixed'])} files")
         logger.info(f"Failed to process: {len(results['failed'])} files")
         logger.info(f"Timed out: {len(results['timeout'])} files")
-        
+
         logger.info("\nSkipped Files:")
         logger.info(f"Size limit exceeded: {len(skipped_files['size'])}")
         logger.info(f"Excluded patterns: {len(skipped_files['excluded'])}")
         logger.info(f"Unsupported types: {len(skipped_files['unsupported'])}")
-        
+
         # Calculate success rate
         processed_files = len(results['fixed']) + len(results['failed']) + len(results['timeout'])
         if processed_files > 0:
             success_rate = (len(results['fixed']) / processed_files) * 100
             logger.info(f"\nSuccess Rate: {success_rate:.1f}%")
-        
+
         logger.info("=" * 50)
-        
+
         if results['failed']:
             logger.error("\nFailed files:")
             for file in results['failed']:
                 logger.error(f"- {file}")
-        
+
         return results
 
 async def main():
