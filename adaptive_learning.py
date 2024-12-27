@@ -437,6 +437,6 @@ class AdaptiveLearningSystem:
 
         if any(keyword in content_text for keyword in visual_keywords):
             return "visual"
-        elif any(keyword in content_text for keyword in interactive_keywords):
+        if any(keyword in content_text for keyword in interactive_keywords):
             return "interactive"
         return "verbal"

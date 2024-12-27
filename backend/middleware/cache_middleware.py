@@ -29,8 +29,7 @@ class CacheMiddleware(BaseMiddleware):
                     return WerkzeugResponse(
                         json.dumps(data), mimetype="application/json"
                     )
-                else:
-                    del self.cache[cache_key]
+                del self.cache[cache_key]
 
         return None
 

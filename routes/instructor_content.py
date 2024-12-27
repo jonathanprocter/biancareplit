@@ -49,12 +49,12 @@ def extract_text(filepath: str) -> Optional[str]:
             doc.close()
             return text
 
-        elif ext == "docx":
+        if ext == "docx":
             doc = docx.Document(filepath)
             text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
             return text
 
-        elif ext == "txt":
+        if ext == "txt":
             with open(filepath, "r", encoding="utf-8") as f:
                 return f.read()
 
@@ -108,21 +108,19 @@ def upload_content():
                     "questions": questions
                 })
 
-            elif content_type == "flashcard":
+            if content_type == "flashcard":
                 flashcards = ai_service.generate_flashcards(text_content, topic or "general")
                 return jsonify({
                     "success": True,
                     "message": "Flashcards generated",
                     "flashcards": flashcards
                 })
-
-            else:
-                analysis = ai_service.analyze_content(text_content, topic or "general")
-                return jsonify({
-                    "success": True,
-                    "message": "Content processed",
-                    "analysis": analysis
-                })
+            analysis = ai_service.analyze_content(text_content, topic or "general")
+            return jsonify({
+                "success": True,
+                "message": "Content processed",
+                "analysis": analysis
+            })
 
         finally:
             # Clean up the uploaded file after processing

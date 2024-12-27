@@ -80,9 +80,9 @@ class ConfigLoader:
             ):
                 env_var = value[2:-1]
                 return os.getenv(env_var, value)
-            elif isinstance(value, dict):
+            if isinstance(value, dict):
                 return {k: substitute_env_vars(v) for k, v in value.items()}
-            elif isinstance(value, list):
+            if isinstance(value, list):
                 return [substitute_env_vars(v) for v in value]
             return value
 

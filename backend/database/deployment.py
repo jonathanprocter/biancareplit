@@ -40,10 +40,9 @@ def deploy_migrations():
                 if resolver.synchronize_migrations():
                     logger.info("Migrations synchronized successfully!")
                     return True
-                else:
-                    logger.warning(
-                        "Migration synchronization failed, attempting clean setup..."
-                    )
+                logger.warning(
+                    "Migration synchronization failed, attempting clean setup..."
+                )
 
             # If sync fails or no migrations exist, start fresh
             logger.info("Starting fresh migration setup...")

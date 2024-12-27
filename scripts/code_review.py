@@ -111,14 +111,13 @@ class CodeReviewSystem:
                     fixed_code = data["choices"][0]["message"]["content"]
                     logger.info(f"Successfully fixed {file_path}")
                     return fixed_code
-                elif response.status == 429:  # Rate limit exceeded
+                if response.status == 429:  # Rate limit exceeded
                     retry_after = int(response.headers.get("retry-after", 60))
                     logger.warning(f"Rate limit exceeded. Waiting {retry_after} seconds...")
                     await asyncio.sleep(retry_after)
                     return await self.fix_code(file_path, language)
-                else:
-                    logger.error(f"API error: {response.status} - {await response.text()}")
-                    return None
+                logger.error(f"API error: {response.status} - {await response.text()}")
+                return None
 
         except Exception as e:
             logger.error(f"Error fixing {file_path}: {str(e)}")

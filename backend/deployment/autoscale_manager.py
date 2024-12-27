@@ -35,7 +35,7 @@ class AutoscaleManager:
             ):
                 self._scale_up()
                 return True
-            elif (
+            if (
                 cpu_percent < target_cpu / 2
                 and self.current_instances > self.config["min_instances"]
             ):

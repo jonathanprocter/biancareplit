@@ -245,7 +245,6 @@ class AdvancedPatternRecognition:
         """Recommend learning pace based on trajectory analysis"""
         if trajectory["direction"] > 0.5:
             return "accelerate"
-        elif trajectory["direction"] < -0.2:
+        if trajectory["direction"] < -0.2:
             return "consolidate"
-        else:
-            return "maintain"
+        return "maintain"

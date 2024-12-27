@@ -37,7 +37,7 @@ class SystemHealthMonitor:
                     status="fail",
                     message=f"Critical: CPU usage at {cpu_percent}%",
                 )
-            elif cpu_percent >= self.thresholds["cpu_warning"]:
+            if cpu_percent >= self.thresholds["cpu_warning"]:
                 return HealthCheck(
                     name="CPU Usage",
                     status="pass",
@@ -64,7 +64,7 @@ class SystemHealthMonitor:
                     status="fail",
                     message=f"Critical: Memory usage at {memory.percent}%",
                 )
-            elif memory.percent >= self.thresholds["memory_warning"]:
+            if memory.percent >= self.thresholds["memory_warning"]:
                 return HealthCheck(
                     name="Memory Usage",
                     status="pass",
@@ -93,7 +93,7 @@ class SystemHealthMonitor:
                     status="fail",
                     message=f"Critical: Disk usage at {disk.percent}%",
                 )
-            elif disk.percent >= self.thresholds["disk_warning"]:
+            if disk.percent >= self.thresholds["disk_warning"]:
                 return HealthCheck(
                     name="Disk Usage",
                     status="pass",

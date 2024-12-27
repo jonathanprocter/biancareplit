@@ -305,9 +305,8 @@ def deploy_system():
 
                 print("System deployed successfully!")
                 return True
-            else:
-                print("System is already properly configured.")
-                return True
+            print("System is already properly configured.")
+            return True
 
     except Exception as e:
         print(f"Deployment failed: {str(e)}")
