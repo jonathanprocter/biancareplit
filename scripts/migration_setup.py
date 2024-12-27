@@ -1,13 +1,14 @@
 """Database migration setup script."""
 
+import logging
 import os
 import shutil
-from pathlib import Path
-import logging
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 import sys
+from pathlib import Path
+
+from flask import Flask
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 # Configure logging
 logging.basicConfig(

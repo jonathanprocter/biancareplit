@@ -1,13 +1,16 @@
 import asyncio
-import os
 import logging
-from openai import AsyncOpenAI
+import os
 import sys
 
+from openai import AsyncOpenAI
+
 # Configure logging
-logging.basicConfig(level=logging.INFO, 
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 async def test_openai():
     """Test OpenAI API connection with detailed logging"""
@@ -25,9 +28,9 @@ async def test_openai():
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a medical content analyzer."},
-                {"role": "user", "content": "Say hello"}
+                {"role": "user", "content": "Say hello"},
             ],
-            max_tokens=10
+            max_tokens=10,
         )
 
         logger.info("OpenAI test successful")
@@ -37,6 +40,7 @@ async def test_openai():
     except Exception as e:
         logger.error(f"OpenAI test failed with error: {str(e)}")
         return False
+
 
 if __name__ == "__main__":
     try:

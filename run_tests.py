@@ -1,8 +1,9 @@
+import asyncio
 import sys
 import unittest
-import asyncio
-from tests.test_morning_greeting import TestMorningGreeting
+
 from tests.test_analytics import TestAnalytics
+from tests.test_morning_greeting import TestMorningGreeting
 
 
 def run_tests():
