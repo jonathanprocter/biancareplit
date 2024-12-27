@@ -32,3 +32,24 @@ name = "javascript"
 
 [[analyzers]]
 name = "shell"
+
+[[transformers]]
+name = "standardjs"
+
+[[transformers]]
+name = "prettier"
+
+[[transformers]]
+name = "isort"
+
+[[transformers]]
+name = "black"
+
+[[transformers]]
+name = "ruff"
+
+[[transformers]]
+name = "autopep8"
+
+[[transformers]]
+name = "yapf"
