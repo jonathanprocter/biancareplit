@@ -181,7 +181,7 @@ class SystemTester:
                 if data["method"] == "POST" and "request_data" not in data:
                     self.logger.error("POST response missing request_data field")
                     return False
-                elif data["method"] == "POST" and data["request_data"] != post_data:
+                if data["method"] == "POST" and data["request_data"] != post_data:
                     self.logger.error("POST request data mismatch")
                     return False
 

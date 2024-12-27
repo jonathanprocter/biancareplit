@@ -35,9 +35,9 @@ class AdaptivePattern(db.Model):
         """Get recommended difficulty level based on performance"""
         if not self.accuracy_rate:
             return "BEGINNER"
-        elif self.accuracy_rate >= 80:
+        if self.accuracy_rate >= 80:
             return "ADVANCED"
-        elif self.accuracy_rate >= 60:
+        if self.accuracy_rate >= 60:
             return "INTERMEDIATE"
         return "BEGINNER"
 

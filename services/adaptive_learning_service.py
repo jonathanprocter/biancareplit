@@ -55,6 +55,6 @@ class AdaptiveLearningService:
     def _determine_difficulty(self, metrics: Dict) -> str:
         if metrics["average"] > 0.8:
             return "advanced"
-        elif metrics["average"] > 0.6:
+        if metrics["average"] > 0.6:
             return "intermediate"
         return "beginner"

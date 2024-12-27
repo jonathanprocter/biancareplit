@@ -165,10 +165,9 @@ def calculate_current_level(reviews: List[Review]) -> str:
 
         if accuracy >= 0.8:
             return "Advanced"
-        elif accuracy >= 0.6:
+        if accuracy >= 0.6:
             return "Intermediate"
-        else:
-            return "Beginner"
+        return "Beginner"
     except Exception as e:
         logger.error(f"Error calculating current level: {str(e)}")
         return "Beginner"
@@ -257,10 +256,9 @@ def analyze_time_performance(reviews: List[Review]) -> Optional[str]:
         best_hour = max(time_scores.items(), key=lambda x: sum(x[1])/len(x[1]))[0]
         if 5 <= best_hour < 12:
             return "morning"
-        elif 12 <= best_hour < 17:
+        if 12 <= best_hour < 17:
             return "afternoon"
-        else:
-            return "evening"
+        return "evening"
     except Exception as e:
         logger.error(f"Error analyzing time performance: {str(e)}")
         return None
@@ -277,16 +275,15 @@ def analyze_topic_mastery(reviews: List[Review]) -> Optional[Dict[str, str]]:
                 "title": "Mastery Progress",
                 "description": "You're showing excellent mastery of recent topics!"
             }
-        elif improvement_rate >= 0.6:
+        if improvement_rate >= 0.6:
             return {
                 "title": "Steady Progress",
                 "description": "You're making steady progress in your learning journey."
             }
-        else:
-            return {
-                "title": "Learning Opportunity",
-                "description": "Focus on reviewing challenging topics to improve mastery."
-            }
+        return {
+            "title": "Learning Opportunity",
+            "description": "Focus on reviewing challenging topics to improve mastery."
+        }
     except Exception as e:
         logger.error(f"Error analyzing topic mastery: {str(e)}")
         return None

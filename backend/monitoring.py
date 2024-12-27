@@ -139,8 +139,7 @@ class MetricsMiddleware(BaseMiddleware):
                 try:
                     if PROMETHEUS_AVAILABLE:
                         return generate_latest(REGISTRY), 200, {"Content-Type": CONTENT_TYPE_LATEST}
-                    else:
-                        return jsonify(self.basic_metrics.get_metrics()), 200
+                    return jsonify(self.basic_metrics.get_metrics()), 200
                 except Exception as e:
                     logger.error(f"Error serving metrics: {str(e)}")
                     return jsonify({"error": str(e)}), 500

@@ -60,7 +60,7 @@ class MetricsCollector:
             memory >= self.critical_thresholds['memory'] or
             disk >= self.critical_thresholds['disk']):
             return 'critical'
-        elif (cpu >= self.warning_thresholds['cpu'] or
+        if (cpu >= self.warning_thresholds['cpu'] or
               memory >= self.warning_thresholds['memory'] or
               disk >= self.warning_thresholds['disk']):
             return 'warning'

@@ -23,9 +23,8 @@ def initialize_database():
         if all(health_check.values()):
             logger.info("Database initialization successful")
             return True
-        else:
-            logger.error("Database verification failed")
-            return False
+        logger.error("Database verification failed")
+        return False
 
     except Exception as e:
         logger.error(f"Database initialization failed: {str(e)}")

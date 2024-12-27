@@ -50,9 +50,9 @@ class NCLEXAnalytics(db.Model):
         """Calculate mastery level based on score"""
         if score >= 0.85:
             return "Advanced"
-        elif score >= 0.65:
+        if score >= 0.65:
             return "Proficient"
-        elif score >= 0.45:
+        if score >= 0.45:
             return "Developing"
         return "Needs Improvement"
 

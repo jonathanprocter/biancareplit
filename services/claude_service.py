@@ -161,9 +161,8 @@ if __name__ == "__main__":
             if result.returncode == 0:
                 logger.info("Deployment completed successfully")
                 return True
-            else:
-                logger.error(f"Deployment failed: {result.stderr}")
-                return False
+            logger.error(f"Deployment failed: {result.stderr}")
+            return False
         except Exception as e:
             logger.error(f"Deployment error: {str(e)}")
             raise

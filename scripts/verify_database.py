@@ -64,9 +64,8 @@ def verify_system():
         if all(results.values()):
             logger.info("All system checks passed successfully!")
             return True
-        else:
-            logger.warning("Some system checks failed. " "Check logs for details.")
-            return False
+        logger.warning("Some system checks failed. " "Check logs for details.")
+        return False
 
     except Exception as e:
         logger.error(f"System verification failed: {str(e)}")

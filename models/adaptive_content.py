@@ -133,10 +133,9 @@ class AdaptiveContentGenerator:
         """Determine appropriate cognitive level"""
         if comprehension > 0.8:
             return "analysis"
-        elif comprehension > 0.6:
+        if comprehension > 0.6:
             return "application"
-        else:
-            return "comprehension"
+        return "comprehension"
 
     def _identify_focus_topics(self, performance: Dict, patterns: Dict) -> List[str]:
         """Identify topics that need focus"""

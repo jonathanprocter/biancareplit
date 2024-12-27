@@ -43,7 +43,7 @@ def _calculate_trend(history: list) -> str:
     recent_status = [m.get("status", "unknown") for m in history]
     if recent_status.count("critical") > len(recent_status) * 0.3:
         return "deteriorating"
-    elif recent_status.count("healthy") > len(recent_status) * 0.7:
+    if recent_status.count("healthy") > len(recent_status) * 0.7:
         return "improving"
     return "stable"
 
